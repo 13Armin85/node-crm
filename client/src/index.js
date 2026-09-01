@@ -10,7 +10,7 @@ import {
 import AuthLayout from "./layouts/auth";
 import AdminLayout from "layouts/admin";
 import UserLayout from "layouts/user";
-import { ChakraProvider } from "@chakra-ui/react";
+import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
 import theme from "theme/theme";
 import { ThemeEditorProvider } from "@hypertheme-editor/chakra-ui";
 import { ToastContainer } from "react-toastify";
@@ -18,6 +18,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
+import { LanguageProvider, TranslationBoundary } from "i18n";
 
 function App() {
   const token =
@@ -49,15 +50,20 @@ function App() {
 ReactDOM.render(
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
-      <ChakraProvider theme={theme}>
-        <React.StrictMode>
-          <ThemeEditorProvider>
-            <Router>
-              <App />
-            </Router>
-          </ThemeEditorProvider>
-        </React.StrictMode>
-      </ChakraProvider>
+      <LanguageProvider>
+        <ColorModeScript initialColorMode={theme.config.initialColorMode} />
+        <ChakraProvider theme={theme}>
+          <React.StrictMode>
+            <ThemeEditorProvider>
+              <TranslationBoundary>
+                <Router>
+                  <App />
+                </Router>
+              </TranslationBoundary>
+            </ThemeEditorProvider>
+          </React.StrictMode>
+        </ChakraProvider>
+      </LanguageProvider>
     </PersistGate>
   </Provider>,
   document.getElementById("root"),

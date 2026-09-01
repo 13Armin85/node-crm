@@ -8,11 +8,13 @@ import { Box, Flex, useColorModeValue } from "@chakra-ui/react";
 // Layout components
 import { SidebarContext } from "contexts/SidebarContext";
 import Spinner from "components/spinner/Spinner";
+import { useLanguage } from "i18n";
 
 // Custom Chakra theme
 export default function Auth({ setIsLogin }) {
   // states and functions
   const [toggleSidebar, setToggleSidebar] = useState(false);
+  const { direction } = useLanguage();
   // functions for changing the states from components
   const getRoute = () => {
     return window.location.pathname !== "/auth/full-screen-maps";
@@ -39,10 +41,9 @@ export default function Auth({ setIsLogin }) {
     });
   };
 
-  const authBg = useColorModeValue("white", "navy.900");
-  document.documentElement.dir = "ltr";
+  const authBg = useColorModeValue("transparent", "transparent");
   return (
-    <Box>
+    <Box className="crm-auth-shell" dir={direction}>
       <SidebarContext.Provider
         value={{
           toggleSidebar,

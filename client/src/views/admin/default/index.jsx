@@ -36,6 +36,28 @@ export default function UserReports() {
   // Chakra Color Mode
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
+  const leadStatStyles = {
+    total: {
+      bg: useColorModeValue("#ebf5ff", "rgba(122, 183, 255, 0.14)"),
+      border: useColorModeValue("1px solid transparent", "1px solid rgba(122, 183, 255, 0.28)"),
+      color: useColorModeValue("#1f7eeb", "#9cccff"),
+    },
+    active: {
+      bg: useColorModeValue("#eaf9e6", "rgba(56, 223, 183, 0.14)"),
+      border: useColorModeValue("1px solid transparent", "1px solid rgba(56, 223, 183, 0.28)"),
+      color: useColorModeValue("#43882f", "#62f0ca"),
+    },
+    pending: {
+      bg: useColorModeValue("#fbf4dd", "rgba(246, 200, 95, 0.14)"),
+      border: useColorModeValue("1px solid transparent", "1px solid rgba(246, 200, 95, 0.28)"),
+      color: useColorModeValue("#a37f08", "#ffd77b"),
+    },
+    sold: {
+      bg: useColorModeValue("#ffeeeb", "rgba(255, 125, 125, 0.14)"),
+      border: useColorModeValue("1px solid transparent", "1px solid rgba(255, 125, 125, 0.28)"),
+      color: useColorModeValue("#d6401d", "#ff9a9a"),
+    },
+  };
   const user = JSON.parse(localStorage.getItem("user"));
   const [isLoding, setIsLoding] = useState(false);
 
@@ -265,54 +287,58 @@ export default function UserReports() {
           </Card>
         }
 
-        {leadView?.view && (leadModule?.isActive) && <Card>
+        {leadView?.view && (leadModule?.isActive) && <Card className="crm-lead-chart">
           <Heading size="md" pb={2}>Lead Statistics</Heading>
           {(leadView?.view) &&
             <Grid templateColumns="repeat(12, 1fr)" gap={2}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box backgroundColor={"#ebf5ff"}
+                <Box bg={leadStatStyles.total.bg}
+                  border={leadStatStyles.total.border}
                   borderRadius={"10px"}
                   cursor={"pointer"}
                   onClick={() => navigate('/lead')}
                   p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={"#1f7eeb"}>Total Leads </Heading>
-                  <Text fontWeight={600} color={"#1f7eeb"}><CountUpComponent targetNumber={allData?.leadData?.length || 0} /> </Text>
+                  <Heading size="sm" pb={3} color={leadStatStyles.total.color}>Total Leads </Heading>
+                  <Text fontWeight={600} color={leadStatStyles.total.color}><CountUpComponent targetNumber={allData?.leadData?.length || 0} /> </Text>
                 </Box>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box backgroundColor={"#eaf9e6"}
+                <Box bg={leadStatStyles.active.bg}
+                  border={leadStatStyles.active.border}
                   borderRadius={"10px"}
                   cursor={"pointer"}
                   onClick={() => navigate('/lead', { state: 'active' })}
                   p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={"#43882f"} >Active Leads </Heading>
-                  <Text fontWeight={600} color={"#43882f"}><CountUpComponent targetNumber={findLeadStatus("active")} /></Text>
+                  <Heading size="sm" pb={3} color={leadStatStyles.active.color} >Active Leads </Heading>
+                  <Text fontWeight={600} color={leadStatStyles.active.color}><CountUpComponent targetNumber={findLeadStatus("active")} /></Text>
                 </Box>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box backgroundColor={"#fbf4dd"}
+                <Box bg={leadStatStyles.pending.bg}
+                  border={leadStatStyles.pending.border}
                   onClick={() => navigate('/lead', { state: 'pending' })}
                   borderRadius={"10px"}
                   cursor={"pointer"}
                   p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={"#a37f08"}>Pending Leads</Heading>
-                  <Text fontWeight={600} color={"#a37f08"}><CountUpComponent targetNumber={findLeadStatus("pending")} /></Text>
+                  <Heading size="sm" pb={3} color={leadStatStyles.pending.color}>Pending Leads</Heading>
+                  <Text fontWeight={600} color={leadStatStyles.pending.color}><CountUpComponent targetNumber={findLeadStatus("pending")} /></Text>
                 </Box>
               </GridItem>
 
               <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box backgroundColor={"#ffeeeb"}
+                <Box bg={leadStatStyles.sold.bg}
+                  border={leadStatStyles.sold.border}
                   borderRadius={"10px"}
                   cursor={"pointer"}
                   onClick={() => navigate('/lead', { state: 'sold' })}
                   p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={"#d6401d"}>Sold Leads </Heading>
-                  <Text fontWeight={600} color={"#d6401d"}><CountUpComponent targetNumber={findLeadStatus("sold")} /></Text>
+                  <Heading size="sm" pb={3} color={leadStatStyles.sold.color}>Sold Leads </Heading>
+                  <Text fontWeight={600} color={leadStatStyles.sold.color}><CountUpComponent targetNumber={findLeadStatus("sold")} /></Text>
                 </Box>
               </GridItem>
             </Grid>
           }
-          <Flex justifyContent={"center"}  >
+          <Flex justifyContent={"center"} overflow="visible"  >
             <PieChart leadData={allData?.leadData} />
           </Flex>
 

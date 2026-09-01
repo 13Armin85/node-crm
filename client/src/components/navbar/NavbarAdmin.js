@@ -16,6 +16,7 @@ import { AiOutlineMenuUnfold } from "react-icons/ai";
 import { AiOutlineMenuFold } from "react-icons/ai";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchImage } from "../../redux/slices/imageSlice";
+import { useLanguage } from "i18n";
 
 export default function AdminNavbar(props) {
   const [scrolled, setScrolled] = useState(false);
@@ -38,6 +39,7 @@ export default function AdminNavbar(props) {
     largeLogo,
     routes,
   } = props;
+  const { direction } = useLanguage();
   // Here are all the props that may change depending on navbar's type or state.(secondary, variant, scrolled)
   let mainText = useColorModeValue("navy.700", "white");
   let secondaryText = useColorModeValue("gray.700", "white");
@@ -45,8 +47,14 @@ export default function AdminNavbar(props) {
   let navbarFilter = "none";
   let navbarBackdrop = "blur(20px)";
   let navbarShadow = "none";
-  let navbarBg = useColorModeValue("#fff", "rgba(11,20,55,0.5)");
-  let navbarBorder = "transparent";
+  let navbarBg = useColorModeValue(
+    "rgba(255,255,255,0.78)",
+    "rgba(13,24,42,0.72)",
+  );
+  let navbarBorder = useColorModeValue(
+    "rgba(15,102,184,0.10)",
+    "rgba(255,255,255,0.08)",
+  );
   let secondaryMargin = "-9px";
   let paddingX = "15px";
   let gap = "0px";
@@ -71,7 +79,8 @@ export default function AdminNavbar(props) {
       // borderRadius='16px'
       borderWidth="1.5px"
       borderStyle="solid"
-      zIndex={1}
+      zIndex={1400}
+      pointerEvents="auto"
       transitionDelay="0s, 0s, 0s, 0s"
       transitionDuration=" 0.25s, 0.25s, 0.25s, 0s"
       transition-property="box-shadow, background-color, filter, border"
@@ -85,6 +94,7 @@ export default function AdminNavbar(props) {
       mt={secondaryMargin}
       pb="6px"
       right={{ base: "0px" }}
+      left={{ base: "0px" }}
       // right={{ base: '12px', md: '30px', lg: '30px', xl: '30px' }}
       px={{
         sm: paddingX,
@@ -96,7 +106,7 @@ export default function AdminNavbar(props) {
       pt="8px"
       top={{ base: "0px" }}
       w={{
-        base: "100vw",
+        base: "100%",
         // base: 'calc(100vw - 0%)',
         // md: 'calc(100vw - 0%)',
         // lg: 'calc(100vw - 0%)',
@@ -104,6 +114,7 @@ export default function AdminNavbar(props) {
         // '2xl': openSidebar === true ? 'calc(100vw - 286px)' : 'calc(100vw - 80px)'
       }}
       sx={{ boxShadow: "14px 17px 40px 4px rgba(112, 144, 176, 0.08)" }}
+      dir={direction}
     >
       <Flex
         w="100%"

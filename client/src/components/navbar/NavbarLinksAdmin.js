@@ -28,6 +28,8 @@ import jwtDecode from "jwt-decode";
 import { ThemeEditor } from "./ThemeEditor";
 import FixedPlugin from "components/fixedPlugin/FixedPlugin";
 import { useDispatch, useSelector } from "react-redux";
+import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect";
+import { useLanguage } from "i18n";
 export default function HeaderLinks(props) {
   const { secondary, setOpenSidebar, openSidebar, routes } = props;
   // Chakra Color Mode
@@ -43,6 +45,7 @@ export default function HeaderLinks(props) {
     "14px 17px 40px 4px rgba(112, 144, 176, 0.18)",
     "14px 17px 40px 4px rgba(112, 144, 176, 0.06)",
   );
+  const { t } = useLanguage();
   // const borderButton = useColorModeValue('secondaryGray.500', 'whiteAlpha.200');
 
   // const [loginUser, setLoginUser] = useState();
@@ -64,7 +67,7 @@ export default function HeaderLinks(props) {
     if (message) {
       toast.error(message);
     } else {
-      toast.success("Log out Successfully");
+      toast.success(t("Log out Successfully"));
     }
     setIsLogoutScheduled(true);
   };
@@ -102,12 +105,15 @@ export default function HeaderLinks(props) {
       alignItems="center"
       justifyContent={"end"}
       flexDirection="row"
+      gap="8px"
       bg={menuBg}
       flexWrap={secondary ? { base: "wrap", md: "nowrap" } : "unset"}
       p="6px"
       mt={2.5}
       borderRadius="30px"
       boxShadow={shadow}
+      position="relative"
+      zIndex="1500"
     >
       {/* <SearchBar
 				mb={secondary ? { base: "10px", md: "unset" } : "unset"}
@@ -180,7 +186,7 @@ export default function HeaderLinks(props) {
         >
           <Flex jusitfy="space-between" w="100%" mb="20px">
             <Text fontSize="md" fontWeight="600" color={textColor}>
-              Notifications
+              {t("Notifications")}
             </Text>
             <Text
               fontSize="sm"
@@ -189,7 +195,7 @@ export default function HeaderLinks(props) {
               ms="auto"
               cursor="pointer"
             >
-              Mark all read
+              {t("Mark all read")}
             </Text>
           </Flex>
           <Flex flexDirection="column">
@@ -219,6 +225,10 @@ export default function HeaderLinks(props) {
       </Menu>
       {/* <FixedPlugin /> */}
       {/* <ThemeEditor navbarIcon={navbarIcon} /> */}
+      <Flex gap="8px" align="center" me="10px" flexShrink={0}>
+        <ThemeToggle />
+        <LanguageSelect compact />
+      </Flex>
 
       <Menu style={{ zIndex: 1500 }}>
         <MenuButton p="0px">
@@ -253,7 +263,7 @@ export default function HeaderLinks(props) {
               textTransform={"capitalize"}
               color={textColor}
             >
-              👋&nbsp; Hey, {user}
+              {t("Hey")}, {user}
             </Text>
           </Flex>
 
@@ -265,7 +275,7 @@ export default function HeaderLinks(props) {
               px="14px"
             >
               <Text fontSize="sm" onClick={() => navigate(`/admin/`)}>
-                Home
+                {t("Home")}
               </Text>
             </MenuItem>
 
@@ -277,7 +287,7 @@ export default function HeaderLinks(props) {
                 px="14px"
               >
                 <Text fontSize="sm" onClick={() => navigate("/admin-setting")}>
-                  Admin Settings
+                  {t("Admin Settings")}
                 </Text>
               </MenuItem>
             )}
@@ -295,7 +305,7 @@ export default function HeaderLinks(props) {
                   )
                 }
               >
-                Profile Settings
+                {t("Profile Settings")}
               </Text>
             </MenuItem>
             {/*<MenuItem _hover={{ bg: 'none' }} _focus={{ bg: 'none' }} borderRadius="8px" px="14px">
@@ -303,13 +313,13 @@ export default function HeaderLinks(props) {
 						</MenuItem> */}
             <MenuItem
               _hover={{ bg: "none" }}
-              onClick={logOut}
+              onClick={() => logOut()}
               _focus={{ bg: "none" }}
               color="red.400"
               borderRadius="8px"
               px="14px"
             >
-              <Text fontSize="sm">Log out</Text>
+              <Text fontSize="sm">{t("Log out")}</Text>
             </MenuItem>
           </Flex>
         </MenuList>

@@ -1,102 +1,97 @@
-import React, { useState } from "react";
-import ReactApexChart from "react-apexcharts";
+import React, { useMemo } from "react";
+import { Box, Flex, Text, useColorModeValue } from "@chakra-ui/react";
+import { useLanguage } from "i18n";
 
-const ApexChart = (props) => {
-  const { leadData } = props;
+const chartSize = 280;
+const center = chartSize / 2;
+const segments = [
+  { key: "active", label: "Active", color: "#38DFB7", radius: 108 },
+  { key: "pending", label: "Pending", color: "#F6C85F", radius: 88 },
+  { key: "sold", label: "Sold", color: "#FF7D7D", radius: 68 },
+];
 
-  let activeLength =
-    leadData && leadData.length > 0
-      ? leadData?.filter((lead) => lead?.leadStatus === "active")?.length
-      : 0;
-  let pendingLength =
-    leadData && leadData.length > 0
-      ? leadData?.filter((lead) => lead?.leadStatus === "pending")?.length
-      : 0;
-  let soldLength =
-    leadData && leadData.length > 0
-      ? leadData?.filter((lead) => lead?.leadStatus === "sold")?.length
-      : 0;
+const LeadChart = ({ leadData }) => {
+  const { t } = useLanguage();
+  const trackColor = useColorModeValue("#E9EEF7", "#1B2436");
+  const textColor = useColorModeValue("#172033", "#F6F8FB");
+  const mutedColor = useColorModeValue("#667085", "#A8B3C7");
+  const totalLeads = leadData?.length || 0;
 
-  const series = [activeLength, pendingLength, soldLength];
-  const scaledSeries = series?.map((value) => {
-    if (leadData?.length === 0) {
-      return NaN;
-    } else {
-      return value === 0 ? NaN : (value * 100) / leadData?.length;
-    }
-  });
-
-  const options = {
-    chart: {
-      type: "radialBar",
-      width: 330,
-    },
-    plotOptions: {
-      radialBar: {
-        size: undefined,
-        inverseOrder: true,
-        hollow: {
-          margin: 40,
-          size: "48%",
-          background: "transparent",
-        },
-        dataLabels: {
-          name: {
-            fontSize: "22px",
-          },
-          value: {
-            fontSize: "16px",
-          },
-          total: {
-            show: true,
-            label: "Total",
-            color: "#1F7EEB",
-            formatter: function () {
-              return leadData?.length || 0;
-            },
-          },
-          value: {
-            show: true,
-            formatter: function (val) {
-              return ((val / 100) * leadData.length).toFixed(0);
-            },
-          },
-        },
-        track: {
-          show: true,
-        },
-        startAngle: -180,
-        endAngle: 180,
-        hover: {
-          size: undefined,
-          sizeOffset: 3,
-          colors: ["#ff5959", "#ECC94B", "#01B574"], // Add hover effect colors
-        },
-      },
-    },
-    stroke: {
-      lineCap: "round",
-    },
-    colors: ["#25BE87", "#ECC94B", "#ff5959"],
-    labels: ["Active", "Pending", "Sold"],
-    legend: {
-      show: true,
-      floating: true,
-      position: "bottom",
-    },
-  };
+  const counts = useMemo(
+    () => ({
+      active: leadData?.filter((lead) => lead?.leadStatus === "active")?.length || 0,
+      pending: leadData?.filter((lead) => lead?.leadStatus === "pending")?.length || 0,
+      sold: leadData?.filter((lead) => lead?.leadStatus === "sold")?.length || 0,
+    }),
+    [leadData],
+  );
 
   return (
-    <div>
-      <ReactApexChart
-        key={leadData?.length}
-        options={options}
-        series={scaledSeries}
-        type="radialBar"
-        height={320}
-      />
-    </div>
+    <Box className="crm-radial-chart">
+      <svg className="crm-radial-chart__svg" viewBox={`0 0 ${chartSize} ${chartSize}`}>
+        <g transform={`rotate(-90 ${center} ${center})`}>
+          {segments.map((segment) => {
+            const circumference = 2 * Math.PI * segment.radius;
+            const percent = totalLeads ? counts[segment.key] / totalLeads : 0;
+            const visibleLength = circumference * percent;
+
+            return (
+              <g key={segment.key}>
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={segment.radius}
+                  fill="none"
+                  stroke={trackColor}
+                  strokeWidth="14"
+                />
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={segment.radius}
+                  fill="none"
+                  stroke={segment.color}
+                  strokeWidth="14"
+                  strokeLinecap="round"
+                  strokeDasharray={`${visibleLength} ${circumference}`}
+                  className="crm-radial-chart__ring"
+                />
+              </g>
+            );
+          })}
+        </g>
+        <text
+          x={center}
+          y={center - 6}
+          textAnchor="middle"
+          className="crm-radial-chart__label"
+          fill={mutedColor}
+        >
+          {t("Total")}
+        </text>
+        <text
+          x={center}
+          y={center + 28}
+          textAnchor="middle"
+          className="crm-radial-chart__value"
+          fill={textColor}
+        >
+          {totalLeads}
+        </text>
+      </svg>
+
+      <Flex className="crm-chart-legend" justify="center" wrap="wrap" gap="12px">
+        {segments.map((segment) => (
+          <Flex key={segment.key} align="center" gap="7px">
+            <Box className="crm-chart-legend__dot" bg={segment.color} />
+            <Text fontSize="sm" fontWeight="700" color={mutedColor}>
+              {t(segment.label)}: {counts[segment.key]}
+            </Text>
+          </Flex>
+        ))}
+      </Flex>
+    </Box>
   );
 };
 
-export default ApexChart;
+export default LeadChart;

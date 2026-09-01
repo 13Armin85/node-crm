@@ -27,6 +27,7 @@ import { IoMenuOutline } from "react-icons/io5";
 
 function Sidebar(props) {
   const { routes, setOpenSidebar, openSidebar, largeLogo } = props;
+  const sidebarWidth = openSidebar ? "280px" : "80px";
 
   let variantChange = "0.2s linear";
   let shadow = useColorModeValue(
@@ -40,21 +41,25 @@ function Sidebar(props) {
   // SIDEBAR
   return (
     <Box
+      className="crm-sidebar-shell"
       display={{ sm: "none", xl: "block" }}
-      w="100%"
+      w={sidebarWidth}
       position="fixed"
       minH="100%"
+      pointerEvents="none"
     >
       <Box
+        className="crm-sidebar-panel"
         bg={sidebarBg}
         transition={variantChange}
         // w='280px'
-        w={openSidebar ? "280px" : "80px"}
+        w={sidebarWidth}
         h="100vh"
         m={sidebarMargins}
         minH="100%"
         overflowX="hidden"
         boxShadow={shadow}
+        pointerEvents="auto"
       >
         <Scrollbars
           autoHide
@@ -113,7 +118,7 @@ export function SidebarResponsive(props) {
       <Drawer
         isOpen={isOpen}
         onClose={handlesidebarClose}
-        placement={document?.documentElement?.dir === "rtl" ? "right" : "left"}
+        placement="left"
         finalFocusRef={btnRef}
       >
         <DrawerOverlay />

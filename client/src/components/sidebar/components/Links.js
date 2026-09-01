@@ -12,6 +12,7 @@ import {
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
+import { useLanguage } from "i18n";
 
 export function SidebarLinks(props) {
   //   Chakra color mode
@@ -25,11 +26,13 @@ export function SidebarLinks(props) {
   let textColor = useColorModeValue("secondaryGray.500", "white");
   let brandColor = useColorModeValue("brand.500", "brand.400");
   let sidebarBgColor = useColorModeValue("gray.200", "brand.200");
+  let hoverBgColor = useColorModeValue("blackAlpha.50", "whiteAlpha.100");
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const user = JSON.parse(localStorage.getItem("user"));
 
   const { routes, setOpenSidebar, openSidebar } = props;
+  const { t } = useLanguage();
 
   // verifies if routeName is the one active (in browser input)
   const activeRoute = (routeName) => {
@@ -55,7 +58,7 @@ export function SidebarLinks(props) {
               pb="10px"
               key={index}
             >
-              {route?.name}
+              {t(route?.name)}
             </Text>
             {createLinks(route?.items)}
           </>
@@ -86,9 +89,18 @@ export function SidebarLinks(props) {
                 backgroundColor={
                   activeRoute(route?.path?.toLowerCase()) ? sidebarBgColor : ""
                 }
-                ps={"25px"}
+                ps={openSidebar ? "16px" : "14px"}
+                pe="10px"
                 pb={"6px"}
                 pt={"10px"}
+                borderRadius="14px"
+                mx="10px"
+                transition="all .2s ease"
+                _hover={{
+                  backgroundColor: activeRoute(route?.path?.toLowerCase())
+                    ? sidebarBgColor
+                    : hoverBgColor,
+                }}
               >
                 <HStack
                   spacing={
@@ -132,8 +144,8 @@ export function SidebarLinks(props) {
                             : "normal"
                         }
                       >
-                        <Tooltip hasArrow label={route?.name}>
-                          {route?.name}
+                        <Tooltip hasArrow label={t(route?.name)}>
+                          {t(route?.name)}
                         </Tooltip>
                       </Text>
                     </Flex>
@@ -159,11 +171,7 @@ export function SidebarLinks(props) {
                   <Box
                     // h='36px'
                     w="4px"
-                    bg={
-                      activeRoute(route?.path?.toLowerCase())
-                        ? brandColor
-                        : brandColor
-                    }
+                    bg={activeRoute(route?.path?.toLowerCase()) ? brandColor : "transparent"}
                     borderRadius="5px"
                   />
                 </HStack>
@@ -190,7 +198,7 @@ export function SidebarLinks(props) {
                         : "normal"
                     }
                   >
-                    {route?.name}
+                    {t(route?.name)}
                   </Text>
                   <Box h="36px" w="4px" bg="brand.400" borderRadius="5px" />
                 </HStack>

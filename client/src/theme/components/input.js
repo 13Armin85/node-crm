@@ -12,28 +12,42 @@ export const inputStyles = {
       variants: {
         main: (props) => ({
           field: {
-            bg: mode("transparent", "navy.800")(props),
+            bg: mode("rgba(255,255,255,0.86)", "rgba(13,24,42,0.72)")(props),
             border: "1px solid",
             color: mode("secondaryGray.900", "white")(props),
-            borderColor: mode("secondaryGray.100", "whiteAlpha.100")(props),
-            borderRadius: "16px",
+            borderColor: mode("blackAlpha.100", "whiteAlpha.200")(props),
+            borderRadius: "12px",
             fontSize: "sm",
             p: "20px",
             _placeholder: { color: "secondaryGray.400" },
+            _focus: {
+              borderColor: mode("brand.400", "brand.300")(props),
+              boxShadow: mode(
+                "0 0 0 3px rgba(23, 125, 220, .14)",
+                "0 0 0 3px rgba(113, 186, 248, .18)",
+              )(props),
+            },
           },
         }),
         auth: (props) => ({
           field: {
             fontWeight: "500",
             color: mode("navy.700", "white")(props),
-            bg: mode("transparent", "transparent")(props),
+            bg: mode("rgba(255,255,255,0.78)", "rgba(255,255,255,0.06)")(props),
             border: "1px solid",
             borderColor: mode(
-              "secondaryGray.100",
-              "rgba(135, 140, 189, 0.3)",
+              "blackAlpha.200",
+              "rgba(255,255,255,0.16)",
             )(props),
-            borderRadius: "16px",
+            borderRadius: "12px",
             _placeholder: { color: "secondaryGray.600", fontWeight: "400" },
+            _focus: {
+              borderColor: mode("brand.400", "brand.300")(props),
+              boxShadow: mode(
+                "0 0 0 3px rgba(23, 125, 220, .14)",
+                "0 0 0 3px rgba(113, 186, 248, .18)",
+              )(props),
+            },
           },
         }),
         authSecondary: (props) => ({
@@ -50,6 +64,7 @@ export const inputStyles = {
             border: "none",
             py: "11px",
             borderRadius: "inherit",
+            color: mode("gray.700", "whiteAlpha.900")(props),
             _placeholder: { color: "secondaryGray.600" },
           },
         }),

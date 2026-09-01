@@ -3,10 +3,11 @@ export const buttonStyles = {
   components: {
     Button: {
       baseStyle: {
-        borderRadius: "16px",
-        boxShadow: "45px 76px 113px 7px rgba(112, 144, 176, 0.08)",
+        borderRadius: "12px",
+        boxShadow: "none",
         transition: ".25s all ease",
         boxSizing: "border-box",
+        fontWeight: "700",
         _focus: {
           boxShadow: "none",
         },
@@ -21,6 +22,10 @@ export const buttonStyles = {
         brand: (props) => ({
           bg: mode("brand.500", "brand.400")(props),
           color: "white",
+          boxShadow: mode(
+            "0 10px 24px rgba(23, 125, 220, 0.25)",
+            "0 10px 28px rgba(62, 155, 239, 0.24)",
+          )(props),
           _focus: {
             bg: mode("brand.500", "brand.400")(props),
           },
@@ -29,6 +34,11 @@ export const buttonStyles = {
           },
           _hover: {
             bg: mode("brand.600", "brand.400")(props),
+            transform: "translateY(-1px)",
+            boxShadow: mode(
+              "0 16px 32px rgba(23, 125, 220, 0.30)",
+              "0 16px 34px rgba(62, 155, 239, 0.30)",
+            )(props),
           },
         }),
         darkBrand: (props) => ({
@@ -58,8 +68,10 @@ export const buttonStyles = {
           },
         }),
         light: (props) => ({
-          bg: mode("secondaryGray.400", "whiteAlpha.100")(props),
+          bg: mode("white", "whiteAlpha.100")(props),
           color: mode("secondaryGray.900", "white")(props),
+          border: "1px solid",
+          borderColor: mode("blackAlpha.100", "whiteAlpha.200")(props),
           _focus: {
             bg: mode("secondaryGray.300", "whiteAlpha.100")(props),
           },
@@ -67,7 +79,8 @@ export const buttonStyles = {
             bg: mode("secondaryGray.300", "whiteAlpha.100")(props),
           },
           _hover: {
-            bg: mode("secondaryGray.400", "whiteAlpha.200")(props),
+            bg: mode("brand.50", "whiteAlpha.200")(props),
+            transform: "translateY(-1px)",
           },
         }),
         action: (props) => ({

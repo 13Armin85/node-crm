@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { InputGroup, InputLeftElement, Input } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
+import { useLanguage } from "i18n";
 
 const CustomSearchInput = ({
   allData,
@@ -12,6 +13,7 @@ const CustomSearchInput = ({
   setGetTagValues,
   setGopageValue,
 }) => {
+  const { t } = useLanguage();
   const handleInputChange = (e) => {
     const searchTerm = e?.target?.value?.toLowerCase();
 
@@ -57,7 +59,7 @@ const CustomSearchInput = ({
         value={searchbox}
         onChange={handleInputChange}
         fontWeight="500"
-        placeholder="Search..."
+        placeholder={t("Search...")}
         borderRadius="16px"
       />
     </InputGroup>

@@ -10,10 +10,12 @@ import {
   useColorMode,
   useColorModeValue,
 } from "@chakra-ui/react";
+import { useLanguage } from "i18n";
 
 export default function Footer() {
   const textColor = useColorModeValue("blue.700", "white");
   const { toggleColorMode } = useColorMode();
+  const { t } = useLanguage();
   return (
     <Flex
       zIndex="3"
@@ -49,8 +51,7 @@ export default function Footer() {
             {" "}
             Prolink Infotech.
           </Link>{" "}
-          Need help, facing issues, or looking for a new feature? Contact us for
-          paid support and services at{" "}
+          {t("Need help, facing issues, or looking for a new feature? Contact us for paid support and services at")}{" "}
           <Link
             href="mailto:alternatecrm@gmail.com"
             fontWeight="500"

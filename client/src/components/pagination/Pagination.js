@@ -18,6 +18,7 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import { useEffect } from "react";
+import { useLanguage } from "i18n";
 
 const Pagination = (props) => {
   const {
@@ -34,6 +35,7 @@ const Pagination = (props) => {
     pageSize,
     pageIndex,
   } = props;
+  const { t } = useLanguage();
 
   useEffect(() => {
     setGopageValue(1);
@@ -47,7 +49,7 @@ const Pagination = (props) => {
     >
       {pageOptions?.length !== 1 && (
         <Flex>
-          <Tooltip label="First Page">
+          <Tooltip label={t("First Page")}>
             <IconButton
               onClick={() => {
                 gotoPage(0);
@@ -58,7 +60,7 @@ const Pagination = (props) => {
               mr={4}
             />
           </Tooltip>
-          <Tooltip label="Previous Page">
+          <Tooltip label={t("Previous Page")}>
             <IconButton
               onClick={() => {
                 previousPage();
@@ -75,16 +77,16 @@ const Pagination = (props) => {
         {pageOptions?.length !== 1 && (
           <>
             <Text flexShrink="0" mr={8}>
-              Page{" "}
+              {t("Page")}{" "}
               <Text fontWeight="bold" as="span">
                 {pageIndex + 1}
               </Text>{" "}
-              of{" "}
+              {t("of")}{" "}
               <Text fontWeight="bold" as="span">
                 {pageOptions?.length}
               </Text>
             </Text>
-            <Text flexShrink="0">Go to page:</Text>{" "}
+            <Text flexShrink="0">{t("Go to page:")}</Text>{" "}
             <NumberInput
               ml={2}
               mr={8}
@@ -116,7 +118,7 @@ const Pagination = (props) => {
         >
           {[5, 10, 20, 30, 40, 50]?.map((pageSize) => (
             <option key={pageSize} value={pageSize}>
-              Show {pageSize}
+              {t("Show")} {pageSize}
             </option>
           ))}
         </Select>
@@ -124,7 +126,7 @@ const Pagination = (props) => {
 
       {pageOptions?.length !== 1 && (
         <Flex>
-          <Tooltip label="Next Page">
+          <Tooltip label={t("Next Page")}>
             <IconButton
               onClick={() => {
                 nextPage();
@@ -134,7 +136,7 @@ const Pagination = (props) => {
               icon={<ChevronRightIcon h={6} w={6} />}
             />
           </Tooltip>
-          <Tooltip label="Last Page">
+          <Tooltip label={t("Last Page")}>
             <IconButton
               onClick={() => {
                 gotoPage(pageCount - 1);

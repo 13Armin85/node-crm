@@ -21,6 +21,7 @@ import { fetchRouteData } from "../../redux/slices/routeSlice";
 import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchRoles } from "../../redux/slices/roleSlice";
 import { fetchModules } from "../../redux/slices/moduleSlice";
+import { useLanguage } from "i18n";
 
 const MainDashboard = React.lazy(() => import("views/admin/default"));
 
@@ -31,6 +32,7 @@ export default function Dashboard(props) {
   const [fixed] = useState(false);
   const [toggleSidebar, setToggleSidebar] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
+  const { direction, t } = useLanguage();
   // const user = JSON.parse(localStorage.getItem("user"))
   const userId = JSON.parse(localStorage.getItem("user"))?._id;
 
@@ -319,11 +321,9 @@ export default function Dashboard(props) {
     }
   }, [userId]);
 
-  document.documentElement.dir = "ltr";
   const { onOpen } = useDisclosure();
-  document.documentElement.dir = "ltr";
   return (
-    <Box>
+    <Box className="crm-shell" dir={direction}>
       <Box>
         <SidebarContext.Provider
           value={{
@@ -340,6 +340,7 @@ export default function Dashboard(props) {
             setOpenSidebar={setOpenSidebar}
           />
           <Box
+            className="crm-main"
             float="right"
             minHeight="100vh"
             height="100%"
@@ -371,9 +372,9 @@ export default function Dashboard(props) {
                 <Navbar
                   onOpen={onOpen}
                   logoText={"Horizon UI Dashboard PRO"}
-                  brandText={getActiveRoute(routes)}
+                  brandText={t(getActiveRoute(routes))}
                   secondary={getActiveNavbar(routes)}
-                  message={getActiveNavbarText(routes)}
+                  message={t(getActiveNavbarText(routes))}
                   routes={routes}
                   fixed={fixed}
                   under={under(routes)}
@@ -387,12 +388,13 @@ export default function Dashboard(props) {
             <Box pt={{ base: "150px", md: "95px", xl: "95px" }}>
               {getRoute() ? (
                 <Box
+                  className="crm-content"
                   mx="auto"
                   pe="20px"
                   minH="84vh"
                   pt="50px"
                   style={{
-                    padding: openSidebar ? "8px 20px 8px 0px" : "8px 20px",
+                    padding: "8px 20px",
                   }}
                 >
                   <Suspense

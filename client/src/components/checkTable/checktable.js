@@ -466,7 +466,7 @@ const CommonCheckTable = (props) => {
             <Flex alignItems={"center"} flexWrap={"wrap"}>
               {title && (
                 <Text
-                  color={"secondaryGray.900"}
+                  color={textColor}
                   fontSize="22px"
                   fontWeight="700"
                   lineHeight="100%"
@@ -661,7 +661,7 @@ const CommonCheckTable = (props) => {
                         align="center"
                         justifyContent={column.center ? "center" : "start"}
                         fontSize={{ sm: "14px", lg: "16px" }}
-                        color="secondaryGray.900"
+                        color={textColor}
                       >
                         <span
                           style={{

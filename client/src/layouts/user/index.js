@@ -27,6 +27,7 @@ import DynamicPage from "views/admin/dynamicPage";
 import { LuChevronRightCircle } from "react-icons/lu";
 import { FaCalendarAlt } from "react-icons/fa";
 import { fetchModules } from "../../redux/slices/moduleSlice";
+import { useLanguage } from "i18n";
 
 const MainDashboard = React.lazy(() => import("views/admin/default"));
 const SignInCentered = React.lazy(() => import("views/auth/signIn"));
@@ -41,6 +42,7 @@ export default function User(props) {
   const [toggleSidebar, setToggleSidebar] = useState(false);
   const [route, setRoute] = useState();
   const [openSidebar, setOpenSidebar] = useState(true);
+  const { direction, t } = useLanguage();
   const user = JSON.parse(localStorage.getItem("user"));
   const modules = useSelector((state) => state?.modules?.data);
   // functions for changing the states from components
@@ -296,9 +298,7 @@ export default function User(props) {
       }
     });
   };
-  document.documentElement.dir = "ltr";
   const { onOpen } = useDisclosure();
-  document.documentElement.dir = "ltr";
 
   const dispatch = useDispatch();
 
@@ -313,7 +313,7 @@ export default function User(props) {
   );
 
   return (
-    <Box>
+    <Box className="crm-shell" dir={direction}>
       <Box>
         <SidebarContext.Provider
           value={{
@@ -330,6 +330,7 @@ export default function User(props) {
             largeLogo={largeLogo}
           />
           <Box
+            className="crm-main"
             float="right"
             minHeight="100vh"
             height="100%"
@@ -361,9 +362,9 @@ export default function User(props) {
                 <Navbar
                   onOpen={onOpen}
                   logoText={"Horizon UI Dashboard PRO"}
-                  brandText={getActiveRoute(routes)}
+                  brandText={t(getActiveRoute(routes))}
                   secondary={getActiveNavbar(routes)}
-                  message={getActiveNavbarText(routes)}
+                  message={t(getActiveNavbarText(routes))}
                   fixed={fixed}
                   routes={routes}
                   under={under(routes)}
@@ -377,6 +378,7 @@ export default function User(props) {
             <Box pt={{ base: "150px", md: "95px", xl: "95px" }}>
               {getRoute() ? (
                 <Box
+                  className="crm-content"
                   mx="auto"
                   pe="20px"
                   minH="84vh"

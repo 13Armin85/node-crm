@@ -10,6 +10,7 @@ import {
   FormControl,
   FormErrorMessage,
   FormLabel,
+  HStack,
   Heading,
   Icon,
   Input,
@@ -32,12 +33,24 @@ import Spinner from "components/spinner/Spinner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchImage } from "../../../redux/slices/imageSlice";
 import { setUser } from "../../../redux/slices/localSlice";
+import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect";
+import { useLanguage } from "i18n";
 
 function SignIn() {
   // Chakra color mode
   const textColor = useColorModeValue("navy.700", "white");
-  const textColorSecondary = "gray.400";
+  const textColorSecondary = useColorModeValue("gray.500", "whiteAlpha.700");
   const brandStars = useColorModeValue("brand.500", "brand.400");
+  const cardBg = useColorModeValue(
+    "rgba(255,255,255,0.82)",
+    "rgba(13,24,42,0.78)",
+  );
+  const borderColor = useColorModeValue("blackAlpha.100", "whiteAlpha.200");
+  const authCardShadow = useColorModeValue(
+    "0 24px 60px rgba(15, 42, 75, 0.12)",
+    "0 24px 70px rgba(0, 0, 0, 0.34)",
+  );
+  const { t } = useLanguage();
   const [isLoding, setIsLoding] = React.useState(false);
   const [checkBox, setCheckBox] = React.useState(true);
 
@@ -80,7 +93,7 @@ function SignIn() {
       let response = await postApi("api/user/login", values, checkBox);
       if (response && response?.status === 200) {
         navigate("/superAdmin");
-        toast.success("Login Successfully!");
+        toast.success(t("Login Successfully!"));
         resetForm();
         dispatch(setUser(response?.data?.user))
       } else {
@@ -99,30 +112,33 @@ function SignIn() {
       image={image?.length > 0 && image[0]?.authImg}
     >
       <Flex
-        maxW={{ base: "100%", md: "max-content" }}
+        maxW="100%"
         w="100%"
-        mx={{ base: "auto", lg: "0px" }}
-        me="auto"
-        h="fit-content"
-        alignItems="start"
+        mx="auto"
+        h="auto"
+        alignItems="center"
         justifyContent="center"
-        mb={{ base: "30px", md: "60px" }}
-        px={{ base: "25px", md: "0px" }}
-        mt={{ base: "40px", md: "14vh" }}
+        mb="0"
+        px="0"
+        mt="0"
         flexDirection="column"
       >
-        <Box me="auto">
+        <HStack w="100%" justify="flex-end" mb="28px" spacing="8px">
+          <ThemeToggle />
+          <LanguageSelect />
+        </HStack>
+        <Box w="100%" textAlign="center">
           <Heading color={textColor} fontSize="36px" mb="10px">
-            Sign In
+            {t("Sign In")}
           </Heading>
           <Text
             mb="36px"
-            ms="4px"
+            ms="0"
             color={textColorSecondary}
             fontWeight="400"
             fontSize="md"
           >
-            Enter your email and password to sign in!
+            {t("Enter your email and password to sign in!")}
           </Text>
         </Box>
         <Flex
@@ -130,11 +146,16 @@ function SignIn() {
           direction="column"
           w={{ base: "100%", md: "420px" }}
           maxW="100%"
-          background="transparent"
-          borderRadius="15px"
-          mx={{ base: "auto", lg: "unset" }}
+          background={cardBg}
+          border="1px solid"
+          borderColor={borderColor}
+          borderRadius="20px"
+          boxShadow={authCardShadow}
+          backdropFilter="blur(18px)"
+          p={{ base: "22px", md: "28px" }}
+          mx="auto"
           me="auto"
-          mb={{ base: "20px", md: "auto" }}
+          mb="0"
         >
           <form onSubmit={handleSubmit}>
             <FormControl isInvalid={errors?.username && touched?.username}>
@@ -146,7 +167,7 @@ function SignIn() {
                 color={textColor}
                 mb="8px"
               >
-                Email<Text color={brandStars}>*</Text>
+                {t("Email")}<Text color={brandStars}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -156,7 +177,7 @@ function SignIn() {
                 name="username"
                 ms={{ base: "0px", md: "0px" }}
                 type="email"
-                placeholder="mail@simmmple.com"
+                placeholder="mail@company.com"
                 mb={errors?.username && touched?.username ? undefined : "24px"}
                 fontWeight="500"
                 size="lg"
@@ -170,7 +191,7 @@ function SignIn() {
               {errors?.username && touched?.username && (
                 <FormErrorMessage mb="24px">
                   {" "}
-                  {errors?.username}
+                  {t(errors?.username)}
                 </FormErrorMessage>
               )}
             </FormControl>
@@ -186,13 +207,13 @@ function SignIn() {
                 color={textColor}
                 display="flex"
               >
-                Password<Text color={brandStars}>*</Text>
+                {t("Password")}<Text color={brandStars}>*</Text>
               </FormLabel>
               <InputGroup size="md">
                 <Input
                   isRequired={true}
                   fontSize="sm"
-                  placeholder="Enter Your Password"
+                  placeholder={t("Enter Your Password")}
                   name="password"
                   mb={errors?.password && touched?.password ? undefined : "24px"}
                   value={values?.password}
@@ -220,7 +241,7 @@ function SignIn() {
               {errors?.password && touched?.password && (
                 <FormErrorMessage mb="24px">
                   {" "}
-                  {errors?.password}
+                  {t(errors?.password)}
                 </FormErrorMessage>
               )}
               <Flex justifyContent="space-between" align="center" mb="24px">
@@ -240,7 +261,7 @@ function SignIn() {
                     color={textColor}
                     fontSize="sm"
                   >
-                    Keep me logged in
+                    {t("Keep me logged in")}
                   </FormLabel>
                 </FormControl>
               </Flex>
@@ -260,7 +281,7 @@ function SignIn() {
                 mb="24px"
                 disabled={isLoding ? true : false}
               >
-                {isLoding ? <Spinner /> : "Sign In"}
+                {isLoding ? <Spinner /> : t("Sign In")}
               </Button>
             </FormControl>
           </form>

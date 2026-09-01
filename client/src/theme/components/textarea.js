@@ -12,11 +12,11 @@ export const textareaStyles = {
       variants: {
         main: (props) => ({
           field: {
-            bg: mode("transparent", "navy.800")(props),
+            bg: mode("rgba(255,255,255,0.86)", "rgba(13,24,42,0.72)")(props),
             border: "1px solid !important",
             color: mode("secondaryGray.900", "white")(props),
-            borderColor: mode("secondaryGray.100", "whiteAlpha.100")(props),
-            borderRadius: "16px",
+            borderColor: mode("blackAlpha.100", "whiteAlpha.200")(props),
+            borderRadius: "12px",
             fontSize: "sm",
             p: "20px",
             _placeholder: { color: "secondaryGray.400" },
@@ -24,10 +24,10 @@ export const textareaStyles = {
         }),
         auth: (props) => ({
           field: {
-            bg: "white",
+            bg: mode("rgba(255,255,255,0.78)", "rgba(255,255,255,0.06)")(props),
             border: "1px solid",
-            borderColor: "secondaryGray.100",
-            borderRadius: "16px",
+            borderColor: mode("blackAlpha.200", "whiteAlpha.200")(props),
+            borderRadius: "12px",
             _placeholder: { color: "secondaryGray.600" },
           },
         }),

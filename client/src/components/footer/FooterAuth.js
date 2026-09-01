@@ -8,6 +8,7 @@ import {
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
+import { useLanguage } from "i18n";
 
 export default function Footer() {
   let textColor = useColorModeValue("blue.700", "white");
@@ -15,6 +16,7 @@ export default function Footer() {
     { base: "gray.400", lg: "gray.400" },
     "gray.400",
   );
+  const { t } = useLanguage();
   return (
     <Flex
       zIndex="3"
@@ -41,25 +43,8 @@ export default function Footer() {
         {" "}
         &copy; {1900 + new Date().getYear()}
         <Text as="span" fontWeight="500" ms="4px">
-          <Link
-            fontWeight="500"
-            color={textColor}
-            target="_blank"
-            href="https://prolinkinfotech.com/"
-          >
-            {" "}
-            Prolink Infotech.
-          </Link>{" "}
-          Need help, facing issues, or looking for a new feature? Contact us for
-          paid support and services at{" "}
-          <Link
-            href="mailto:alternatecrm@gmail.com"
-            fontWeight="500"
-            color={textColor}
-            target="_blank"
-          >
-            alternatecrm@gmail.com
-          </Link>
+          {" "}
+          {t("All rights reserved for Amard Company.")}
         </Text>
       </Text>
       {/* <List display='flex'>

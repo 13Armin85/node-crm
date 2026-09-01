@@ -36,6 +36,17 @@ export default function UserReports() {
   // Chakra Color Mode
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
+  const statisticsItemBg = useColorModeValue("white", "rgba(255, 255, 255, 0.05)");
+  const statisticsItemBorder = useColorModeValue("1px solid #edf2f7", "1px solid rgba(255, 255, 255, 0.12)");
+  const statisticsItemShadow = useColorModeValue("0 10px 24px rgba(15, 23, 42, 0.06)", "none");
+  const statisticsTextColor = useColorModeValue("secondaryGray.900", "white");
+  const statisticsMutedColor = useColorModeValue("secondaryGray.600", "secondaryGray.300");
+  const statisticsTrackBg = useColorModeValue("secondaryGray.100", "whiteAlpha.200");
+  const taskItemBg = useColorModeValue("#f8fafc", "rgba(255, 255, 255, 0.05)");
+  const taskItemBorder = useColorModeValue("1px solid #edf2f7", "1px solid rgba(255, 255, 255, 0.1)");
+  const taskTotalBg = useColorModeValue("#ebf5ff", "rgba(31, 126, 235, 0.16)");
+  const taskTotalBorder = useColorModeValue("1px solid transparent", "1px solid rgba(122, 183, 255, 0.32)");
+  const taskTotalColor = useColorModeValue("#1f7eeb", "#9cccff");
   const leadStatStyles = {
     total: {
       bg: useColorModeValue("#ebf5ff", "rgba(122, 183, 255, 0.14)"),
@@ -149,6 +160,7 @@ export default function UserReports() {
     Email: '/email',
     Property: '/properties',
   };
+  const maxStatisticLength = Math.max(...(data || []).map((item) => item?.length || 0), 1);
 
   useEffect(() => {
     fetchData();
@@ -266,21 +278,53 @@ export default function UserReports() {
         {
           data && data.length > 0 &&
           <Card >
-            <Heading size="md" pb={3}>Statistics</Heading>
+            <Flex alignItems={"center"} justifyContent={"space-between"} pb={3}>
+              <Heading size="md">Statistics</Heading>
+              <Text color={statisticsMutedColor} fontSize="sm" fontWeight={700}>
+                {data.length}
+              </Text>
+            </Flex>
             {
               !isLoding ?
                 data && data.length > 0 && data?.map((item, i) => (
-                  <>
-                    <Box border={"1px solid #e5e5e5"} p={2} m={1} cursor={'pointer'} key={i} onClick={() => navigate(navigateTo[item.name])}>
-                      <Flex justifyContent={"space-between"}>
-                        <Text fontSize="sm" fontWeight={600} pb={2}>{item?.name}</Text>
-                        <Text fontSize="sm" fontWeight={600} pb={2}><CountUpComponent targetNumber={item?.length} /></Text>
+                  <Box
+                    key={i}
+                    bg={statisticsItemBg}
+                    border={statisticsItemBorder}
+                    boxShadow={statisticsItemShadow}
+                    borderRadius={"10px"}
+                    p={3}
+                    mb={3}
+                    cursor={'pointer'}
+                    transition="all 0.2s ease"
+                    _hover={{ transform: "translateY(-2px)", borderColor: "brand.300" }}
+                    onClick={() => navigate(navigateTo[item.name])}
+                  >
+                    <Flex justifyContent={"space-between"} alignItems={"center"} mb={3}>
+                      <Flex alignItems={"center"} minW={0}>
+                        <Box
+                          w="10px"
+                          h="10px"
+                          borderRadius="50%"
+                          bg={`${item?.color}.400`}
+                          me={3}
+                          flexShrink={0}
+                        />
+                        <Text color={statisticsTextColor} fontSize="sm" fontWeight={700} noOfLines={1}>{item?.name}</Text>
                       </Flex>
-                      <Progress
-                        colorScheme={item?.color}
-                        size='xs' value={item?.length} width={"100%"} />
-                    </Box>
-                  </>
+                      <Text color={statisticsTextColor} fontSize="md" fontWeight={800}>
+                        <CountUpComponent targetNumber={item?.length} />
+                      </Text>
+                    </Flex>
+                    <Progress
+                      bg={statisticsTrackBg}
+                      borderRadius="full"
+                      colorScheme={item?.color}
+                      size='sm'
+                      value={((item?.length || 0) / maxStatisticLength) * 100}
+                      width={"100%"}
+                    />
+                  </Box>
 
                 )) : <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}><Spinner /></div>
             }
@@ -348,19 +392,29 @@ export default function UserReports() {
           <Heading size="md" pb={3}>Task Statistics</Heading>
           <Grid templateColumns="repeat(12, 1fr)" gap={2} mb={2}>
             <GridItem colSpan={{ base: 12 }}>
-              <Box backgroundColor={"#ebf5ff"}
+              <Box
+                bg={taskTotalBg}
+                border={taskTotalBorder}
                 onClick={() => navigate('/task')}
                 borderRadius={"10px"} cursor={'pointer'}
                 p={2} m={1} textAlign={"center"}>
-                <Heading size="sm" pb={3} color={"#1f7eeb"}>Total Tasks </Heading>
-                <Text fontWeight={600} color={"#1f7eeb"}><CountUpComponent targetNumber={allData?.taskData?.length || 0} /></Text>
+                <Heading size="sm" pb={3} color={taskTotalColor}>Total Tasks </Heading>
+                <Text fontWeight={600} color={taskTotalColor}><CountUpComponent targetNumber={allData?.taskData?.length || 0} /></Text>
               </Box>
             </GridItem>
           </Grid>
           {taskStatus && taskStatus.length > 0 && taskStatus?.map((item, i) => (
             <Box my={1.5} key={i}>
               {/* <Flex justifyContent={"space-between"} cursor={'pointer'} onClick={() => navigate('/task', { state: item.status })} alignItems={"center"} padding={4} backgroundColor={"#0b0b0b17"} borderRadius={"10px"}> */}
-              <Flex justifyContent={"space-between"} cursor={'pointer'} alignItems={"center"} padding={4} backgroundColor={"#0b0b0b17"} borderRadius={"10px"}>
+              <Flex
+                justifyContent={"space-between"}
+                cursor={'pointer'}
+                alignItems={"center"}
+                padding={4}
+                bg={taskItemBg}
+                border={taskItemBorder}
+                borderRadius={"10px"}
+              >
                 <Flex alignItems={"center"}>
                   <Box height={"18px"} width={"18px"} lineHeight={"18px"} textAlign={"center"} border={`1px solid ${item.color}`} display={"flex"} justifyContent={"center"} alignItems={"center"} borderRadius={"50%"} margin={"0 auto"} >
                     <Box backgroundColor={`${item.color}`} height={"10px"} width={"10px"} borderRadius={"50%"}></Box>

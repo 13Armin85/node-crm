@@ -196,6 +196,9 @@ const fa = {
     "به‌روزرسانی جدیدی برای آیتم دانلودشده شما آماده است.",
   "Need help, facing issues, or looking for a new feature? Contact us for paid support and services at":
     "برای دریافت پشتیبانی، رفع مشکل یا درخواست قابلیت جدید با ما تماس بگیرید:",
+  "All rights reserved for Amard Company.": "تمامی حقوق برای شرکت آمارد محفوظ است.",
+  "Todo": "برای انجام",
+  "On Hold": "متوقف شده",
 };
 
 const tr = {
@@ -379,6 +382,9 @@ const tr = {
     "İndirdiğiniz öğe için yeni bir güncelleme var.",
   "Need help, facing issues, or looking for a new feature? Contact us for paid support and services at":
     "Yardım, sorun çözümü veya yeni özellik talepleri için ücretli destek ekibimize ulaşın:",
+  "All rights reserved for Amard Company.": "Tüm hakları Amard Şirketi için saklıdır.",
+  "Todo": "Yapılacak",
+  "On Hold": "Beklemede",
 };
 
 const dictionaries = { en: {}, fa, tr };

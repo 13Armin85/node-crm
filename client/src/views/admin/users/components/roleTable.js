@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Box,
   Button,
@@ -97,9 +98,7 @@ export default function RoleTable(props) {
             bg={buttonbg}
             size="sm"
             colorScheme="gray"
-          >
-            Change Role
-          </Button>
+          ><LocalizedText text="Change Role" /></Button>
         )}
       </Flex>
       <Box overflowY={"auto"} className="table-container-property">

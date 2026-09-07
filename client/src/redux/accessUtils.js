@@ -30,7 +30,7 @@ export const HasAccess = (actions) => {
   actions?.forEach((action) => {
     const access = rolesToCheck.map((roleToCheck) => {
       const role = roles.find((r) => r.roleName === roleToCheck);
-      return role?.access?.find((a) => a.title === action);
+      return role?.access?.find((a) => (a.title === action || (action === 'Account' && a.title === 'Partner Customers') || (action === 'Partner Customers' && a.title === 'Account')));
     });
 
     access?.forEach((permission) => {
@@ -57,6 +57,6 @@ export const HasAccess = (actions) => {
   return actions.map((action) =>
     user?.role === "superAdmin"
       ? superAdminPermission
-      : mergedPermissions[action],
+      : mergedPermissions[action] || mergedPermissions[action === 'Account' ? 'Partner Customers' : action === 'Partner Customers' ? 'Account' : action],
   );
 };

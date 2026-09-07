@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -57,9 +58,9 @@ const Editopportunityproject = (props) => {
   const [assignToProperyData, setAssignToPropertyData] = useState([]);
   const [leadModelOpen, setLeadModel] = useState(false);
   const validationSchema = yup.object({
-    name: yup.string().required("Name is required"),
-    requirement: yup.string().required("Requirement is required"),
-    property: yup.array().required("Property is required"),
+    name: yup.string().required(tr("Name is required")),
+    requirement: yup.string().required(tr("Requirement is required")),
+    property: yup.array().required(tr("Property is required")),
     category: yup.string(),
   });
 
@@ -220,8 +221,8 @@ const Editopportunityproject = (props) => {
       <ModalContent>
         <ModalHeader justifyContent="space-between" display="flex">
           {userAction === "add"
-            ? "Add Opportunity Project"
-            : "Edit Opportunity Project"}
+            ? tr("Add Opportunity Project")
+            : tr("Edit Opportunity Project")}
           <IconButton onClick={onClose} icon={<CloseIcon />} />
         </ModalHeader>
         <ModalBody>
@@ -265,8 +266,7 @@ const Editopportunityproject = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Name<Text color={"red"}>*</Text>
+              ><LocalizedText text="Name" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -274,7 +274,7 @@ const Editopportunityproject = (props) => {
                 onBlur={handleBlur}
                 value={values?.name}
                 name="name"
-                placeholder="Name"
+                placeholder={tr("Name")}
                 fontWeight="500"
                 borderColor={errors?.name && touched?.name ? "red.300" : null}
                 error={formik?.touched?.name && Boolean(formik?.errors?.name)}
@@ -291,8 +291,7 @@ const Editopportunityproject = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Requirement<Text color={"red"}>*</Text>
+              ><LocalizedText text="Requirement" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -300,7 +299,7 @@ const Editopportunityproject = (props) => {
                 onBlur={handleBlur}
                 value={values?.requirement}
                 name="requirement"
-                placeholder="Requirement"
+                placeholder={tr("Requirement")}
                 fontWeight="500"
                 borderColor={
                   errors?.requirement && touched?.requirement ? "red.300" : null
@@ -327,9 +326,7 @@ const Editopportunityproject = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Related
-              </FormLabel>
+              ><LocalizedText text="Related" /></FormLabel>
               <RadioGroup
                 onChange={(e) => {
                   setFieldValue("category", e);
@@ -339,13 +336,13 @@ const Editopportunityproject = (props) => {
                 value={values?.category}
               >
                 <Stack direction="row">
-                  <Radio value="None">None</Radio>
+                  <Radio value="None"><LocalizedText text="None" /></Radio>
                   <>
                     {(user?.role === "superAdmin" || contactAccess?.create) && (
-                      <Radio value="Contact">Contact</Radio>
+                      <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
                     )}
                     {(user?.role === "superAdmin" || leadAccess?.create) && (
-                      <Radio value="Lead">Lead</Radio>
+                      <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                     )}
                   </>
                 </Stack>
@@ -365,9 +362,7 @@ const Editopportunityproject = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Assign To Contact
-                    </FormLabel>
+                    ><LocalizedText text="Assign To Contact" /></FormLabel>
                     <Flex>
                       <Select
                         value={values?.contact}
@@ -379,7 +374,7 @@ const Editopportunityproject = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.contact && touched?.contact ? "red.300" : null
                         }
@@ -419,9 +414,7 @@ const Editopportunityproject = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Assign To Lead
-                    </FormLabel>
+                    ><LocalizedText text="Assign To Lead" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values?.lead}
@@ -429,7 +422,7 @@ const Editopportunityproject = (props) => {
                         onChange={handleChange}
                         mb={errors?.lead && touched?.lead ? undefined : "10px"}
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.lead && touched?.lead ? "red.300" : null
                         }
@@ -472,8 +465,7 @@ const Editopportunityproject = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     style={{ marginBottom: "-15px" }}
-                  >
-                    Property<Text color={"red"}>*</Text>
+                  ><LocalizedText text="Property" /><Text color={"red"}>*</Text>
                   </FormLabel>
                   <CUIAutoComplete
                     items={setValueProperty}
@@ -493,7 +485,7 @@ const Editopportunityproject = (props) => {
                       errors?.property && touched?.property ? undefined : "10px"
                     }
                     fontWeight="500"
-                    placeholder={"Assign To Property"}
+                    placeholder={tr("Assign To Property")}
                     borderColor={
                       errors?.property && touched?.property ? "red.300" : null
                     }
@@ -522,7 +514,7 @@ const Editopportunityproject = (props) => {
             type="submit"
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
 
           <Button
@@ -537,13 +529,11 @@ const Editopportunityproject = (props) => {
               formik.resetForm();
               onClose();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default Editopportunityproject;
+export default withLocalization(Editopportunityproject);

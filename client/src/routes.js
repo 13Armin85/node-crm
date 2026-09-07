@@ -9,6 +9,8 @@ import {
 } from "react-icons/md";
 // icon
 import React from "react";
+import { PropertiesPage, PartnerCustomersPage, ResidencesPage } from 'views/admin/estate/EntityPage';
+import FormBuilder from 'views/admin/estate/FormBuilder';
 import { AiFillFolderOpen, AiOutlineMail } from "react-icons/ai";
 import { FaCalendarAlt, FaRupeeSign, FaTasks, FaWpforms , FaPiggyBank} from "react-icons/fa";
 import { LuBuilding2 } from "react-icons/lu";
@@ -61,15 +63,9 @@ const InvoicesImport = React.lazy(
 const User = React.lazy(() => import("views/admin/users"));
 const UserView = React.lazy(() => import("views/admin/users/View"));
 
-const Property = React.lazy(() => import("views/admin/property"));
-const PropertyView = React.lazy(() => import("views/admin/property/View"));
+const Property = PropertiesPage;
+const PropertyView = PropertiesPage;
 const PropertyImport = React.lazy(() => import("views/admin/property/components/PropertyImport"))
-// const Property = React.lazy(() => import("views/admin/newProperty"));
-// const PropertyView = React.lazy(() => import("views/admin/newProperty/View"));
-// const PropertyImport = React.lazy(
-//   () => import("views/admin/property/components/PropertyImport")
-// );
-
 const BankDetails = React.lazy(()=>import("views/admin/bankDetails/BankDetails.js"))
 const BankDetailsView = React.lazy(()=> import("views/admin/bankDetails/View.js"))
 const Lead = React.lazy(() => import("views/admin/lead"));
@@ -85,7 +81,6 @@ const TaskView = React.lazy(
   () => import("views/admin/task/components/taskView")
 );
 const Calender = React.lazy(() => import("views/admin/calender"));
-const Payments = React.lazy(() => import("views/admin/payments"));
 const Role = React.lazy(() => import("views/admin/role"));
 
 const Document = React.lazy(() => import("views/admin/document"));
@@ -121,11 +116,8 @@ const OpportunitiesView = React.lazy(
 const OpportunitiesImport = React.lazy(
   () => import("views/admin/opportunities/components/OpprtunityImport")
 );
-const Account = React.lazy(() => import("views/admin/account"));
-const AccountView = React.lazy(() => import("views/admin/account/View"));
-const AccountImport = React.lazy(
-  () => import("views/admin/account/components/AccountImport")
-);
+const PartnerCustomers = PartnerCustomersPage;
+const PartnerCustomerView = PartnerCustomersPage;
 const Opportunityproject = React.lazy(
   () => import("views/admin/opportunityproject")
 );
@@ -277,11 +269,11 @@ const routes = [
   //   path: "/opportunityProjectImport",
   //   component: OpportunityProjectImport,
   // },
-  // -----------------------------Account-------------------------------------
+  // ------------------------ Partner Customers ------------------------------
   {
-    name: "Account",
+    name: "Partner Customers",
     layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
-    path: "/account",
+    path: "/partner-customers",
     icon: (
       <Icon
         as={RiAccountCircleFill}
@@ -290,14 +282,14 @@ const routes = [
         color="inherit"
       />
     ),
-    component: Account,
+    component: PartnerCustomers,
   },
   {
-    name: "Account",
+    name: "Partner Customers",
     layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
-    path: "/accountView/:id",
-    under: "account",
-    parentName: "Account",
+    path: "/partner-customers/:id",
+    under: "partner-customers",
+    parentName: "Partner Customers",
     icon: (
       <Icon
         as={RiAccountCircleFill}
@@ -306,14 +298,12 @@ const routes = [
         color="inherit"
       />
     ),
-    component: AccountView,
+    component: PartnerCustomerView,
   },
   {
-    name: "Account",
+    name: "Residences",
     layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
-    path: "/accountImport",
-    under: "account",
-    parentName: "Account",
+    path: "/residences",
     icon: (
       <Icon
         as={RiAccountCircleFill}
@@ -322,7 +312,7 @@ const routes = [
         color="inherit"
       />
     ),
-    component: AccountImport,
+    component: ResidencesPage,
   },
   // --------------- Quotes Routes --------------------
   // {
@@ -509,13 +499,12 @@ const routes = [
     ),
     component: Calender,
   },
-  // ------------- Payments Routes ------------------------
   {
-    name: "Payments",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
-    path: "/payments",
-    icon: <Icon as={FaRupeeSign} width="20px" height="20px" color="inherit" />,
-    component: Payments,
+    name: "estate.formBuilder",
+    layout: [ROLE_PATH.superAdmin],
+    path: "/form-builder",
+    icon: <Icon as={FaWpforms} width="20px" height="20px" color="inherit" />,
+    component: FormBuilder,
   },
 
   // -----------------------------Admin setting-------------------------------------
@@ -544,11 +533,11 @@ const routes = [
   },
   {
     name: "Custom Fields",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.superAdmin],
     path: "/custom-Fields",
     under: "customField",
     icon: <Icon as={FaWpforms} width="20px" height="20px" color="inherit" />,
-    component: CustomField,
+    component: FormBuilder,
   },
   {
     name: "Change Images",

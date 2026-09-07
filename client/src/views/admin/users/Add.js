@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon, PhoneIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -82,9 +83,7 @@ const AddUser = (props) => {
     <Modal isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader justifyContent="space-between" display="flex">
-          Add User
-          <IconButton onClick={onClose} icon={<CloseIcon />} />
+        <ModalHeader justifyContent="space-between" display="flex"><LocalizedText text="Add User" /><IconButton onClick={onClose} icon={<CloseIcon />} />
         </ModalHeader>
         <ModalBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -95,8 +94,7 @@ const AddUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                First Name<Text color={"red"}>*</Text>
+              ><LocalizedText text="First Name" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -104,7 +102,7 @@ const AddUser = (props) => {
                 onBlur={handleBlur}
                 value={values?.firstName}
                 name="firstName"
-                placeholder="firstName"
+                placeholder={tr("firstName")}
                 fontWeight="500"
                 borderColor={
                   errors?.firstName && touched?.firstName ? "red.300" : null
@@ -122,16 +120,14 @@ const AddUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Last Name
-              </FormLabel>
+              ><LocalizedText text="Last Name" /></FormLabel>
               <Input
                 fontSize="sm"
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={values?.lastName}
                 name="lastName"
-                placeholder="Last Name"
+                placeholder={tr("Last Name")}
                 fontWeight="500"
                 borderColor={
                   errors?.lastName && touched?.lastName ? "red.300" : null
@@ -149,8 +145,7 @@ const AddUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Email<Text color={"red"}>*</Text>
+              ><LocalizedText text="Email" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -159,7 +154,7 @@ const AddUser = (props) => {
                 onBlur={handleBlur}
                 value={values?.username}
                 name="username"
-                placeholder="Email Address"
+                placeholder={tr("Email Address")}
                 fontWeight="500"
                 borderColor={
                   errors?.username && touched?.username ? "red.300" : null
@@ -177,8 +172,7 @@ const AddUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Phone Number<Text color={"red"}>*</Text>
+              ><LocalizedText text="Phone Number" /><Text color={"red"}>*</Text>
               </FormLabel>
               <InputGroup>
                 <InputLeftElement
@@ -198,7 +192,7 @@ const AddUser = (props) => {
                       ? "red.300"
                       : null
                   }
-                  placeholder="Phone number"
+                  placeholder={tr("Phone number")}
                   borderRadius="16px"
                 />
               </InputGroup>
@@ -215,14 +209,12 @@ const AddUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Password
-              </FormLabel>
+              ><LocalizedText text="Password" /></FormLabel>
               <InputGroup size="md">
                 <Input
                   isRequired={true}
                   fontSize="sm"
-                  placeholder="Enter Your Password"
+                  placeholder={tr("Enter Your Password")}
                   name="password"
                   size="lg"
                   variant="auth"
@@ -260,7 +252,7 @@ const AddUser = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             sx={{
@@ -274,13 +266,11 @@ const AddUser = (props) => {
               formik.resetForm();
               onClose();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddUser;
+export default withLocalization(AddUser);

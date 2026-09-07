@@ -10,7 +10,6 @@ const customField = require('../model/schema/customField.js');
 const { contactFields } = require('./contactFields.js');
 const { leadFields } = require('./leadFields.js');
 const { propertiesFields } = require('./propertiesFields.js');
-const { defaultRole } = require("./defaultRoles.js");
 
 const initializedSchemas = async () => {
     await initializeLeadSchema();
@@ -39,7 +38,7 @@ const initializedSchemas = async () => {
         }
     };
 
-    createDynamicSchemas(CustomFields);
+    await createDynamicSchemas(CustomFields);
 
 }
 
@@ -51,14 +50,6 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
 
         mongoose.set("strictQuery", false);
         await mongoose.connect(DATABASE_URL, DB_OPTIONS);
-
-        // const collectionsToDelete = ['abc', 'Report and analytics', 'test', 'krushil', 'bca', 'xyz', 'lkjhg', 'testssssss', 'tel', 'levajav', 'tellevajav', 'Contact'];
-        // const db = mongoose.connection.db;
-        // console.log(db)
-        // for (const collectionName of collectionsToDelete) {
-        //     await db.collection(collectionName).drop();
-        //     console.log(`Collection ${collectionName} deleted successfully.`);
-        // }
 
         await initializedSchemas();
 
@@ -83,31 +74,31 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
         /*  */
         await initializedSchemas();
 
+        const initialAdminUsername = process.env.INITIAL_ADMIN_EMAIL;
+        const initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD;
         let adminExisting = await User.find({ role: 'superAdmin' });
-        if (adminExisting.length <= 0) {
-            const phoneNumber = 7874263694
-            const firstName = 'Prolink'
-            const lastName = 'Infotech'
-            const username = 'admin@gmail.com'
-            const password = 'admin123'
+        const validInitialAdmin = initialAdminUsername && initialAdminPassword && initialAdminPassword !== 'replace-with-a-strong-password';
+        if (adminExisting.length <= 0 && validInitialAdmin) {
+            const phoneNumber = process.env.INITIAL_ADMIN_PHONE || undefined;
+            const firstName = process.env.INITIAL_ADMIN_FIRST_NAME || 'System';
+            const lastName = process.env.INITIAL_ADMIN_LAST_NAME || 'Administrator';
+            const username = initialAdminUsername;
+            const password = initialAdminPassword;
             // Hash the password
             const hashedPassword = await bcrypt.hash(password, 10);
             // Create a new user
-            const user = new User({ _id: new mongoose.Types.ObjectId('64d33173fd7ff3fa0924a109'), username, password: hashedPassword, firstName, lastName, phoneNumber, role: 'superAdmin' });
+            const user = new User({ username, password: hashedPassword, firstName, lastName, phoneNumber, role: 'superAdmin' });
             // Save the user to the database
             await user.save();
             console.log("Admin created successfully..");
-        } else if (adminExisting[0].deleted === true) {
-            await User.findByIdAndUpdate(adminExisting[0]._id, { deleted: false });
-            console.log("Admin Update successfully..");
-        } else if (adminExisting[0].username !== "admin@gmail.com") {
-            await User.findByIdAndUpdate(adminExisting[0]._id, { username: 'admin@gmail.com' });
-            console.log("Admin Update successfully..");
+        } else if (adminExisting.length <= 0) {
+            console.warn('No super administrator exists. Set INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD for the first startup.');
         }
 
         console.log("Database Connected Successfully..");
     } catch (err) {
-        console.log("Database Not connected", err.message);
+        console.error("Database not connected", err.message);
+        throw err;
     }
 }
 module.exports = connectDB

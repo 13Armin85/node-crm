@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Flex,
   FormLabel,
@@ -85,9 +86,7 @@ const UserDetailsForm = (props) => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          Related
-        </FormLabel>
+        ><LocalizedText text="Related" /></FormLabel>
         <RadioGroup
           onChange={(e) => {
             setFieldValue("category", e);
@@ -98,10 +97,10 @@ const UserDetailsForm = (props) => {
         >
           <Stack direction="row">
             {(user?.role === "superAdmin" || contactAccess?.create) && (
-              <Radio value="Contact">Contact</Radio>
+              <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
             )}
             {(user?.role === "superAdmin" || leadAccess?.create) && (
-              <Radio value="Lead">Lead</Radio>
+              <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
             )}
           </Stack>
         </RadioGroup>
@@ -118,9 +117,7 @@ const UserDetailsForm = (props) => {
               fontSize="sm"
               fontWeight="500"
               mb="8px"
-            >
-              Releted To Contact
-            </FormLabel>
+            ><LocalizedText text="Releted To Contact" /></FormLabel>
             <Flex justifyContent="space-between">
               <Select
                 value={values?.reletedContact || null}
@@ -132,7 +129,7 @@ const UserDetailsForm = (props) => {
                     : "10px"
                 }
                 fontWeight="500"
-                placeholder={"Releted To Contact"}
+                placeholder={tr("Releted To Contact")}
                 borderColor={
                   errors?.reletedContact && touched?.reletedContact
                     ? "red.300"
@@ -170,9 +167,7 @@ const UserDetailsForm = (props) => {
               fontSize="sm"
               fontWeight="500"
               mb="8px"
-            >
-              Releted To Lead
-            </FormLabel>
+            ><LocalizedText text="Releted To Lead" /></FormLabel>
             <Flex justifyContent="space-between">
               <Select
                 value={values?.releetedLead || null}
@@ -184,7 +179,7 @@ const UserDetailsForm = (props) => {
                     : "10px"
                 }
                 fontWeight="500"
-                placeholder={"Releted To Lead"}
+                placeholder={tr("Releted To Lead")}
                 borderColor={
                   errors?.releetedLead && touched?.releetedLead
                     ? "red.300"
@@ -220,4 +215,4 @@ const UserDetailsForm = (props) => {
   );
 };
 
-export default UserDetailsForm;
+export default withLocalization(UserDetailsForm);

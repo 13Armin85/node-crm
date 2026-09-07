@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
@@ -40,9 +41,9 @@ const Index = () => {
   const [userAction, setUserAction] = useState("");
 
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Email Id",
+      Header: tr("Email Id"),
       accessor: "username",
       cell: (cell) => (
         <Link to={`/userView/${cell?.row?.values?._id}`}>
@@ -60,11 +61,11 @@ const Index = () => {
         </Link>
       ),
     },
-    { Header: "First Name", accessor: "firstName" },
-    { Header: "Last Name", accessor: "lastName" },
-    { Header: "Role", accessor: "role" },
+    { Header: tr("First Name"), accessor: "firstName" },
+    { Header: tr("Last Name"), accessor: "lastName" },
+    { Header: tr("Role"), accessor: "role" },
     {
-      Header: "Action",
+      Header: tr("Action"),
       accessor: "action",
       isSortable: false,
       center: true,
@@ -87,17 +88,13 @@ const Index = () => {
                   setUserAction("edit");
                 }}
                 icon={<EditIcon mb={1} fontSize={15} />}
-              >
-                Edit
-              </MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>
               <MenuItem
                 py={2.5}
                 color={"green"}
                 onClick={() => navigate(`/userView/${row?.values._id}`)}
                 icon={<ViewIcon mb={1} fontSize={15} />}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
               {row?.original?.role === "superAdmin" ? (
                 ""
               ) : (
@@ -109,9 +106,7 @@ const Index = () => {
                     setDelete(true);
                   }}
                   icon={<DeleteIcon fontSize={15} />}
-                >
-                  Delete
-                </MenuItem>
+                ><LocalizedText text="Delete" /></MenuItem>
               )}
             </MenuList>
           </Menu>
@@ -162,7 +157,7 @@ const Index = () => {
   return (
     <div>
       <CommonCheckTable
-        title={"Users"}
+        title={tr("Users")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
@@ -196,9 +191,7 @@ const Index = () => {
             size="sm"
             leftIcon={<IoIosArrowBack />}
             ml={2}
-          >
-            Back
-          </Button>
+          ><LocalizedText text="Back" /></Button>
         }
         AdvanceSearch={
           <Button
@@ -208,9 +201,7 @@ const Index = () => {
             mt={{ sm: "5px", md: "0" }}
             size="sm"
             onClick={() => setAdvanceSearch(true)}
-          >
-            Advance Search
-          </Button>
+          ><LocalizedText text="Advance Search" /></Button>
         }
         getTagValuesOutSide={getTagValuesOutSide}
         searchboxOutside={searchboxOutside}
@@ -251,4 +242,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

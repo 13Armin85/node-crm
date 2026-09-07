@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 // Chakra Imports
 import {
   Box,
@@ -104,9 +105,7 @@ export default function AdminNavbar(props) {
         <Box mb={{ sm: "8px", md: "0px" }}>
           <Breadcrumb>
             <BreadcrumbItem color={secondaryText} fontSize="sm" mb="5px">
-              <BreadcrumbLink href="#" color={secondaryText}>
-                Pages
-              </BreadcrumbLink>
+              <BreadcrumbLink href="#" color={secondaryText}><LocalizedText text="Pages" /></BreadcrumbLink>
             </BreadcrumbItem>
 
             <BreadcrumbItem color={secondaryText} fontSize="sm">

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
   ChevronDownIcon,
@@ -176,9 +177,9 @@ const View = () => {
   };
 
   const columnsDataColumns = [
-    { Header: "sender", accessor: "senderName" },
+    { Header: tr("sender"), accessor: "senderName" },
     {
-      Header: "recipient",
+      Header: tr("recipient"),
       accessor: "createByName",
       cell: (cell) => (
         <Link to={`/Email/${cell?.row?.original?._id}`}>
@@ -197,7 +198,7 @@ const View = () => {
       ),
     },
     {
-      Header: "time stamp",
+      Header: tr("time stamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -208,7 +209,7 @@ const View = () => {
       ),
     },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "createBy",
       cell: (cell) => (
         <div className="selectOpt">
@@ -226,7 +227,7 @@ const View = () => {
     setContactData(result?.payload?.data);
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...result?.payload?.data?.[0]?.fields
         ?.filter((field) => field?.isTableField === true)
         ?.map((field) => ({ Header: field?.label, accessor: field?.name })),
@@ -236,9 +237,9 @@ const View = () => {
   };
 
   const callColumns = [
-    { Header: "sender", accessor: "senderName" },
+    { Header: tr("sender"), accessor: "senderName" },
     {
-      Header: "recipient",
+      Header: tr("recipient"),
       accessor: "createByName",
       cell: (cell) => (
         <Link to={`/phone-call/${cell?.row?.original?._id}`}>
@@ -257,7 +258,7 @@ const View = () => {
       ),
     },
     {
-      Header: "time stamp",
+      Header: tr("time stamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -268,7 +269,7 @@ const View = () => {
       ),
     },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "createBy",
       cell: (cell) => (
         <div className="selectOpt">
@@ -281,19 +282,19 @@ const View = () => {
   ];
 
   const unitsColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
-    { Header: "Name", accessor: "name" },
-    { Header: "Sqm", accessor: "sqm" },
-    { Header: "Price", accessor: "price" },
-    { Header: "Executive", accessor: "executive" },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("Name"), accessor: "name" },
+    { Header: tr("Sqm"), accessor: "sqm" },
+    { Header: tr("Price"), accessor: "price" },
+    { Header: tr("Executive"), accessor: "executive" },
     {
-      Header: "Action",
+      Header: tr("Action"),
       center: true,
       cell: ({ row }) => (
         <Flex className="selectOpt">
           <Tooltip
             hasArrow
-            label={"Move Up"}
+            label={tr("Move Up")}
             bg="gray.200"
             color="gray"
             textTransform={"capitalize"}
@@ -311,7 +312,7 @@ const View = () => {
           </Tooltip>
           <Tooltip
             hasArrow
-            label={"Move Down"}
+            label={tr("Move Down")}
             bg="gray.200"
             color="gray"
             textTransform={"capitalize"}
@@ -329,7 +330,7 @@ const View = () => {
           </Tooltip>
           <Tooltip
             hasArrow
-            label="Edit"
+            label={tr("Edit")}
             bg="gray.200"
             color="gray"
             textTransform="capitalize"
@@ -347,7 +348,7 @@ const View = () => {
           </Tooltip>
           <Tooltip
             hasArrow
-            label="Delete"
+            label={tr("Delete")}
             bg="gray.200"
             color="gray"
             textTransform="capitalize"
@@ -577,7 +578,7 @@ const View = () => {
           );
           setAvailableModelOpen(false);
         }}
-        title="Available"
+        title={tr("Available")}
         message="Are you sure to change status available?"
         onClose={() => setAvailableModelOpen(false)}
       />
@@ -592,7 +593,7 @@ const View = () => {
           );
           setSoldModelOpen(false);
         }}
-        title="Sold"
+        title={tr("Sold")}
         message="Are you sure to change status sold?"
         onClose={() => setSoldModelOpen(false)}
       />
@@ -607,7 +608,7 @@ const View = () => {
           );
           setBlockedModelOpen(false);
         }}
-        title="Blocked"
+        title={tr("Blocked")}
         message="Are you sure to change status block?"
         onClose={() => setBlockedModelOpen(false)}
       />
@@ -651,12 +652,12 @@ const View = () => {
                     },
                   }}
                 >
-                  <Tab>Information</Tab>
+                  <Tab><LocalizedText text="Information" /></Tab>
                   {(emailAccess?.view || callAccess?.view) && (
-                    <Tab> Communication</Tab>
+                    <Tab><LocalizedText text="Communication" /></Tab>
                   )}
-                  <Tab>Units</Tab>
-                  <Tab>Gallery</Tab>
+                  <Tab><LocalizedText text="Units" /></Tab>
+                  <Tab><LocalizedText text="Gallery" /></Tab>
                 </TabList>
               </GridItem>
               <GridItem
@@ -677,9 +678,7 @@ const View = () => {
                           mr={2.5}
                           as={Button}
                           rightIcon={<ChevronDownIcon />}
-                        >
-                          Actions
-                        </MenuButton>
+                        ><LocalizedText text="Actions" /></MenuButton>
                       )}
                     <MenuDivider />
                     <MenuList minWidth={2}>
@@ -689,18 +688,14 @@ const View = () => {
                           color={"blue"}
                           onClick={() => onOpen()}
                           icon={<AddIcon />}
-                        >
-                          Add
-                        </MenuItem>
+                        ><LocalizedText text="Add" /></MenuItem>
                       )}
                       {(user?.role === "superAdmin" || permission?.update) && (
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => setEdit(true)}
                           icon={<EditIcon />}
-                        >
-                          Edit
-                        </MenuItem>
+                        ><LocalizedText text="Edit" /></MenuItem>
                       )}
                       <MenuItem
                         onClick={generatePDF}
@@ -708,9 +703,7 @@ const View = () => {
                         icon={<FaFilePdf />}
                         display={"flex"}
                         style={{ alignItems: "center" }}
-                      >
-                        Print as PDF
-                      </MenuItem>
+                      ><LocalizedText text="Print as PDF" /></MenuItem>
                       {(user?.role === "superAdmin" || permission?.delete) && (
                         <>
                           <MenuDivider />
@@ -719,9 +712,7 @@ const View = () => {
                             color={"red"}
                             onClick={() => setDelete(true)}
                             icon={<DeleteIcon />}
-                          >
-                            Delete
-                          </MenuItem>
+                          ><LocalizedText text="Delete" /></MenuItem>
                         </>
                       )}
                     </MenuList>
@@ -731,9 +722,7 @@ const View = () => {
                       size="sm"
                       leftIcon={<IoIosArrowBack />}
                       variant="brand"
-                    >
-                      Back
-                    </Button>
+                    ><LocalizedText text="Back" /></Button>
                   </Link>
                 </Flex>
               </GridItem>
@@ -761,7 +750,7 @@ const View = () => {
                               access={false}
                               columnData={columns ?? []}
                               // dataColumn={columns ?? []}
-                              title={"Interested Contact"}
+                              title={tr("Interested Contact")}
                               allData={filteredContacts ?? []}
                               tableData={filteredContacts}
                               // selectedColumns={selectedColumns}
@@ -796,7 +785,7 @@ const View = () => {
                         <GridItem colSpan={{ base: 12, md: 6 }}>
                           <Card>
                             <CommonCheckTable
-                              title={"Email"}
+                              title={tr("Email")}
                               isLoding={isLoding}
                               columnData={columnsDataColumns ?? []}
                               allData={[]}
@@ -817,7 +806,7 @@ const View = () => {
                         <GridItem colSpan={{ base: 12, md: 6 }}>
                           <Card>
                             <CommonCheckTable
-                              title={"Call"}
+                              title={tr("Call")}
                               isLoding={isLoding}
                               columnData={callColumns ?? []}
                               allData={[]}
@@ -841,7 +830,7 @@ const View = () => {
 
               <TabPanel pt={4} p={0}>
                 <CommonCheckTable
-                  title={"Units"}
+                  title={tr("Units")}
                   isLoding={isLoding}
                   columnData={unitsColumns ?? []}
                   allData={unitTypeList ?? []}
@@ -858,23 +847,19 @@ const View = () => {
                 {/* Status Card */}
                 <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={3}>
                   <GridItem rowSpan={2} colSpan={{ base: 12, md: 6, lg: 3 }}>
-                    <Card className="light-green" style={{ padding: "15px" }}>
-                      Available <span>{statusCount?.Available || "0"}</span>
+                    <Card className="light-green" style={{ padding: "15px" }}><LocalizedText text="Available" /><span>{statusCount?.Available || "0"}</span>
                     </Card>
                   </GridItem>
                   <GridItem rowSpan={2} colSpan={{ base: 12, md: 6, lg: 3 }}>
-                    <Card className="light-yellow" style={{ padding: "15px" }}>
-                      Booked <span>{statusCount?.Booked || "0"}</span>
+                    <Card className="light-yellow" style={{ padding: "15px" }}><LocalizedText text="Booked" /><span>{statusCount?.Booked || "0"}</span>
                     </Card>
                   </GridItem>
                   <GridItem rowSpan={2} colSpan={{ base: 12, md: 6, lg: 3 }}>
-                    <Card className="light-blue" style={{ padding: "15px" }}>
-                      Sold <span>{statusCount?.Sold || "0"}</span>
+                    <Card className="light-blue" style={{ padding: "15px" }}><LocalizedText text="Sold" /><span>{statusCount?.Sold || "0"}</span>
                     </Card>
                   </GridItem>
                   <GridItem rowSpan={2} colSpan={{ base: 12, md: 6, lg: 3 }}>
-                    <Card className="light-red" style={{ padding: "15px" }}>
-                      Blocked <span>{statusCount?.Blocked || "0"}</span>
+                    <Card className="light-red" style={{ padding: "15px" }}><LocalizedText text="Blocked" /><span>{statusCount?.Blocked || "0"}</span>
                     </Card>
                   </GridItem>
                 </Grid>
@@ -884,8 +869,7 @@ const View = () => {
                     <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={3}>
                       <GridItem rowSpan={2} colSpan={{ base: 12 }}>
                         {`${floor?.floorNumber}`}
-                        <sup>{getOrdinalSuffix(floor?.floorNumber)}</sup> Floor
-                      </GridItem>
+                        <sup>{getOrdinalSuffix(floor?.floorNumber)}</sup><LocalizedText text="Floor" /></GridItem>
                       {floor?.flats?.map((item, i) => (
                         <GridItem
                           rowSpan={2}
@@ -964,9 +948,7 @@ const View = () => {
                                             status: "Available",
                                           });
                                         }}
-                                      >
-                                        Available
-                                      </MenuItem>
+                                      ><LocalizedText text="Available" /></MenuItem>
                                     )}
                                     {!["Booked", "Sold", "Blocked"]?.includes(
                                       item?.status
@@ -987,9 +969,7 @@ const View = () => {
                                               status: "Booked",
                                             });
                                           }}
-                                        >
-                                          Booked
-                                        </MenuItem>
+                                        ><LocalizedText text="Booked" /></MenuItem>
                                       )}
                                     {item?.status === "Booked" &&
                                       item?.status !== "Sold" && (
@@ -1009,9 +989,7 @@ const View = () => {
                                               status: "Sold",
                                             });
                                           }}
-                                        >
-                                          Sold
-                                        </MenuItem>
+                                        ><LocalizedText text="Sold" /></MenuItem>
                                       )}
                                     {user?.role === "superAdmin" &&
                                       item?.status !== "Blocked" && (
@@ -1031,9 +1009,7 @@ const View = () => {
                                               status: "Blocked",
                                             });
                                           }}
-                                        >
-                                          Blocked
-                                        </MenuItem>
+                                        ><LocalizedText text="Blocked" /></MenuItem>
                                       )}
                                   </MenuList>
                                 </Menu>
@@ -1072,15 +1048,13 @@ const View = () => {
                               justifyContent={"space-between"}
                               alingItem={"center"}
                             >
-                              <Heading size="md">Property Photos</Heading>
+                              <Heading size="md"><LocalizedText text="Property Photos" /></Heading>
                               <Button
                                 size="sm"
                                 leftIcon={<AddIcon />}
                                 onClick={() => setPropertyPhoto(true)}
                                 variant="brand"
-                              >
-                                Add New
-                              </Button>
+                              ><LocalizedText text="Add New" /></Button>
                               <PropertyPhoto
                                 text="Property Photos"
                                 fetchData={fetchData}
@@ -1131,9 +1105,7 @@ const View = () => {
                                   setDisplayPropertyPhoto(true);
                                   setType("photo");
                                 }}
-                              >
-                                Show more
-                              </Button>
+                              ><LocalizedText text="Show more" /></Button>
                             </Flex>
                           ) : (
                             ""
@@ -1153,17 +1125,13 @@ const View = () => {
                               justifyContent={"space-between"}
                               alingItem={"center"}
                             >
-                              <Heading size="md">
-                                Virtual Tours or Videos
-                              </Heading>
+                              <Heading size="md"><LocalizedText text="Virtual Tours or Videos" /></Heading>
                               <Button
                                 size="sm"
                                 leftIcon={<AddIcon />}
                                 onClick={() => setVirtualToursorVideos(true)}
                                 variant="brand"
-                              >
-                                Add New
-                              </Button>
+                              ><LocalizedText text="Add New" /></Button>
                               <PropertyPhoto
                                 text="Virtual Tours or Videos"
                                 fetchData={fetchData}
@@ -1223,15 +1191,13 @@ const View = () => {
                               justifyContent={"space-between"}
                               alingItem={"center"}
                             >
-                              <Heading size="md">Floor Plans</Heading>
+                              <Heading size="md"><LocalizedText text="Floor Plans" /></Heading>
                               <Button
                                 size="sm"
                                 leftIcon={<AddIcon />}
                                 onClick={() => setFloorPlans(true)}
                                 variant="brand"
-                              >
-                                Add New
-                              </Button>
+                              ><LocalizedText text="Add New" /></Button>
                               <PropertyPhoto
                                 text="Floor Plans"
                                 fetchData={fetchData}
@@ -1283,9 +1249,7 @@ const View = () => {
                                   setDisplayPropertyPhoto(true);
                                   setType("floor");
                                 }}
-                              >
-                                Show more
-                              </Button>
+                              ><LocalizedText text="Show more" /></Button>
                             </Flex>
                           ) : (
                             ""
@@ -1305,15 +1269,13 @@ const View = () => {
                               justifyContent={"space-between"}
                               alingItem={"center"}
                             >
-                              <Heading size="md">Property Documents</Heading>
+                              <Heading size="md"><LocalizedText text="Property Documents" /></Heading>
                               <Button
                                 size="sm"
                                 variant="brand"
                                 leftIcon={<AddIcon />}
                                 onClick={() => setPropertyDocuments(true)}
-                              >
-                                Add New
-                              </Button>
+                              ><LocalizedText text="Add New" /></Button>
                               <PropertyPhoto
                                 text="Property Documents"
                                 fetchData={fetchData}
@@ -1403,9 +1365,7 @@ const View = () => {
                               setShowProperty(true);
                               setType("Doucument");
                             }}
-                          >
-                            Show more
-                          </Button>
+                          ><LocalizedText text="Show more" /></Button>
                         </Flex>
                       ) : (
                         ""
@@ -1432,9 +1392,7 @@ const View = () => {
                           mr={2.5}
                           variant="outline"
                           colorScheme="green"
-                        >
-                          Edit
-                        </Button>
+                        ><LocalizedText text="Edit" /></Button>
                       )}
                       {permission?.delete && (
                         <Button
@@ -1443,9 +1401,7 @@ const View = () => {
                           onClick={() => setDelete(true)}
                           leftIcon={<DeleteIcon />}
                           colorScheme="red"
-                        >
-                          Delete
-                        </Button>
+                        ><LocalizedText text="Delete" /></Button>
                       )}
                     </Flex>
                   </GridItem>
@@ -1464,7 +1420,7 @@ const View = () => {
         <ModalContent maxWidth={"6xl"} height={"750px"}>
           <ModalHeader>
             {type === "photo"
-              ? "Property All Photos"
+              ? tr("Property All Photos")
               : type === "video"
                 ? "Virtual Tours or Videos"
                 : type === "floor"
@@ -1529,9 +1485,7 @@ const View = () => {
               colorScheme="red"
               mr={2}
               onClick={() => setDisplayPropertyPhoto(false)}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1539,7 +1493,7 @@ const View = () => {
       <Modal onClose={() => setShowProperty(false)} isOpen={showProperty}>
         <ModalOverlay />
         <ModalContent maxWidth={"xl"} height={"750px"}>
-          <ModalHeader>Property All Document</ModalHeader>
+          <ModalHeader><LocalizedText text="Property All Document" /></ModalHeader>
           <ModalCloseButton onClick={() => setShowProperty(false)} />
           <ModalBody overflowY={"auto"} height={"700px"}>
             {data?.propertyDocuments?.length > 0 ? (
@@ -1602,9 +1556,7 @@ const View = () => {
               colorScheme="red"
               mr={2}
               onClick={() => setShowProperty(false)}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1612,4 +1564,4 @@ const View = () => {
   );
 };
 
-export default View;
+export default withLocalization(View);

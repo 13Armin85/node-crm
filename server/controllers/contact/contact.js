@@ -275,7 +275,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'Accounts',
+                    from: 'PartnerCustomers',
                     localField: 'account',
                     foreignField: '_id',
                     as: 'accountData'
@@ -287,7 +287,7 @@ const view = async (req, res) => {
             {
                 $addFields: {
                     contactName: { $concat: ['$contactData.title', ' ', '$contactData.firstName', ' ', '$contactData.lastName'] },
-                    accountName: { $concat: ['$accountData.name'] },
+                    accountName: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] },
                 }
             },
             { $project: { contactData: 0, accountData: 0 } },
@@ -304,7 +304,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'Accounts',
+                    from: 'PartnerCustomers',
                     localField: 'account',
                     foreignField: '_id',
                     as: 'accountData'
@@ -316,7 +316,7 @@ const view = async (req, res) => {
             {
                 $addFields: {
                     contactName: { $concat: ['$contactData.title', ' ', '$contactData.firstName', ' ', '$contactData.lastName'] },
-                    accountName: { $concat: ['$accountData.name'] },
+                    accountName: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] },
                 }
             },
             { $project: { contactData: 0, accountData: 0 } },

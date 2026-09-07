@@ -92,7 +92,38 @@ option {
   min-height: 100vh;
 }
 
+.crm-shell {
+  --crm-sidebar-width: 80px;
+}
+
+.crm-shell[data-sidebar-open="true"] {
+  --crm-sidebar-width: 280px;
+}
+
+.crm-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 88px;
+  z-index: 1300;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--crm-border);
+  backdrop-filter: blur(18px);
+}
+
+.crm-header-profile {
+  margin-left: auto;
+}
+
 .crm-sidebar-shell {
+  position: fixed;
+  width: var(--crm-sidebar-width);
+  overflow: hidden;
+  transition: width 200ms ease;
   left: 0;
   right: auto;
   top: 88px;
@@ -103,6 +134,11 @@ option {
 
 .crm-main {
   isolation: isolate;
+  margin-left: var(--crm-sidebar-width);
+  width: calc(100% - var(--crm-sidebar-width));
+  max-width: calc(100% - var(--crm-sidebar-width));
+  min-width: 0;
+  transition: width 200ms ease, max-width 200ms ease, margin-left 200ms ease;
 }
 
 .crm-content {
@@ -122,7 +158,9 @@ option {
   height: calc(100vh - 88px) !important;
   min-height: calc(100vh - 88px) !important;
   border-radius: 0 18px 18px 0 !important;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .chakra-menu__menu-list {
@@ -607,21 +645,14 @@ option {
 }
 
 @media (max-width: 1279px) {
-  .crm-sidebar-shell,
-  .crm-sidebar-panel {
-    top: 0;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    border-radius: 0 !important;
+  .crm-shell {
+    --crm-sidebar-width: 0px;
   }
-
-  .crm-main {
-    width: 100% !important;
-    max-width: 100% !important;
+  .crm-shell[data-sidebar-open="true"] {
+    --crm-sidebar-width: min(280px, 42vw);
   }
-
-  .header > div {
-    min-height: 72px !important;
+  .crm-shell[data-sidebar-open="false"] .crm-sidebar-shell {
+    visibility: hidden;
   }
 }
 
@@ -664,8 +695,24 @@ option {
     padding-inline: 12px !important;
   }
 
-  .header > div {
-    min-height: 92px !important;
+  .crm-header {
+    padding-inline: 12px;
+  }
+
+  .crm-header .chakra-heading {
+    display: none;
+  }
+
+  .crm-sidebar-panel nav > a > div {
+    margin-inline: 4px;
+    padding-inline: 8px;
+  }
+
+  .crm-content .table-container,
+  .crm-content .table-container-property,
+  .crm-content .table-fix-container,
+  .crm-content .small-table-fix-container {
+    max-width: 100%;
   }
 
   .chakra-heading {

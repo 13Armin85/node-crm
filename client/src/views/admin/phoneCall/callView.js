@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { CloseIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   DrawerFooter,
@@ -55,9 +56,7 @@ const CallView = (props) => {
     <Modal isOpen={isOpen} size={"md"} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader justifyContent="space-between" display="flex">
-          Call
-          <IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
+        <ModalHeader justifyContent="space-between" display="flex"><LocalizedText text="Call" /><IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
         </ModalHeader>
         {isLoding ? (
           <Flex
@@ -78,8 +77,7 @@ const CallView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Recipient{" "}
+                    {" "}<LocalizedText text="Recipient" />{" "}
                   </Text>
                   <Text>{data?.recipient ? data?.recipient : " - "}</Text>
                 </GridItem>
@@ -89,8 +87,7 @@ const CallView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Sender Name{" "}
+                    {" "}<LocalizedText text="Sender Name" />{" "}
                   </Text>
                   <Text>{data?.senderName ? data?.senderName : "-"}</Text>
                 </GridItem>
@@ -100,8 +97,7 @@ const CallView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Start Date{" "}
+                    {" "}<LocalizedText text="Start Date" />{" "}
                   </Text>
                   <Text>
                     {data?.startDate
@@ -115,8 +111,7 @@ const CallView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    End Date{" "}
+                    {" "}<LocalizedText text="End Date" />{" "}
                   </Text>
                   <Text>
                     {data?.endDate
@@ -130,9 +125,7 @@ const CallView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Call Duration
-                  </Text>
+                    {" "}<LocalizedText text="Call Duration" /></Text>
                   <Text>{data?.callDuration ? data?.callDuration : "-"}</Text>
                 </GridItem>
                 <GridItem colSpan={{ base: 12, md: 6 }}>
@@ -141,9 +134,7 @@ const CallView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Created By
-                  </Text>
+                    {" "}<LocalizedText text="Created By" /></Text>
                   <Text>{data?.createByName ? data?.createByName : "-"}</Text>
                 </GridItem>
                 <GridItem colSpan={{ base: 12, md: 6 }}>
@@ -152,9 +143,7 @@ const CallView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Call Notes
-                  </Text>
+                    {" "}<LocalizedText text="Call Notes" /></Text>
                   <Text>{data?.callNotes ? data?.callNotes : "-"}</Text>
                 </GridItem>
               </Grid>

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -40,26 +41,26 @@ const OpprtunityModel = (props) => {
     }
   };
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Opportunity Name",
+      Header: tr("Opportunity Name"),
       accessor: "opportunityName",
     },
     {
-      Header: "Account Name",
+      Header: tr("Account Name"),
       accessor: "accountName",
     },
     {
-      Header: "Opportunity Amount",
+      Header: tr("Opportunity Amount"),
       accessor: "opportunityAmount",
     },
     {
-      Header: "Expected Close Date",
+      Header: tr("Expected Close Date"),
       accessor: "expectedCloseDate",
       cell: (cell) => <div>{moment(cell?.value).format("YYYY-MM-DD")}</div>,
     },
     {
-      Header: "Sales Stage",
+      Header: tr("Sales Stage"),
       accessor: "salesStage",
     },
   ];
@@ -90,7 +91,7 @@ const OpprtunityModel = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select Opportunity</ModalHeader>
+        <ModalHeader><LocalizedText text="Select Opportunity" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -125,20 +126,18 @@ const OpprtunityModel = (props) => {
             onClick={handleSubmit}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Select"}
+            {isLoding ? <Spinner /> : tr("Select")}
           </Button>
           <Button
             variant="outline"
             size="sm"
             colorScheme="red"
             onClick={() => onClose()}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default OpprtunityModel;
+export default withLocalization(OpprtunityModel);

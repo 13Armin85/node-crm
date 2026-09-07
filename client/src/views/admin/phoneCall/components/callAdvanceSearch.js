@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
@@ -111,7 +112,7 @@ const CallAdvanceSearch = (props) => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Advance Search</ModalHeader>
+          <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
               setAdvanceSearch(false);
@@ -129,16 +130,14 @@ const CallAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Sender Name
-                </FormLabel>
+                ><LocalizedText text="Sender Name" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.senderName}
                   name="senderName"
-                  placeholder="Enter senderName"
+                  placeholder={tr("Enter senderName")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -157,19 +156,17 @@ const CallAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Realeted To
-                </FormLabel>
+                ><LocalizedText text="Realeted To" /></FormLabel>
                 <Select
                   value={values?.realetedTo}
                   fontSize="sm"
                   name="realetedTo"
                   onChange={handleChange}
                   fontWeight="500"
-                  placeholder={"Select Realeted To"}
+                  placeholder={tr("Select Realeted To")}
                 >
-                  <option value="contact">Contact</option>
-                  <option value="lead">Lead</option>
+                  <option value="contact"><LocalizedText text="Contact" /></option>
+                  <option value="lead"><LocalizedText text="Lead" /></option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}
@@ -188,16 +185,14 @@ const CallAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Recipient
-                </FormLabel>
+                ><LocalizedText text="Recipient" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.createByName}
                   name="createByName"
-                  placeholder="Enter Recipient"
+                  placeholder={tr("Enter Recipient")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -217,16 +212,14 @@ const CallAdvanceSearch = (props) => {
               onClick={handleSubmit}
               disabled={isLoding || !dirty ? true : false}
             >
-              {isLoding ? <Spinner /> : "Search"}
+              {isLoding ? <Spinner /> : tr("Search")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               colorScheme="red"
               onClick={() => resetForm()}
-            >
-              Clear
-            </Button>
+            ><LocalizedText text="Clear" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -234,4 +227,4 @@ const CallAdvanceSearch = (props) => {
   );
 };
 
-export default CallAdvanceSearch;
+export default withLocalization(CallAdvanceSearch);

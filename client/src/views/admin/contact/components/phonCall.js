@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Box,
   Button,
@@ -96,9 +97,7 @@ export default function PhoneCall(props) {
               size="sm"
               colorScheme="gray"
               bg={buttonbg}
-            >
-              Add New
-            </Button>
+            ><LocalizedText text="Add New" /></Button>
           )
         ) : (
           <Button
@@ -106,9 +105,7 @@ export default function PhoneCall(props) {
             size="sm"
             leftIcon={<MdOutlineMessage />}
             colorScheme="gray"
-          >
-            send text Msg
-          </Button>
+          ><LocalizedText text="send text Msg" /></Button>
         )}
         <AddPhoneCall
           lead={props?.lead}

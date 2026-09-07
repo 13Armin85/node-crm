@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Papa from "papaparse";
@@ -27,8 +28,8 @@ function LeadImport() {
   const [filterLead, setFilterLead] = useState([]);
 
   const columns = [
-    { Header: "Fields In Crm", accessor: "crmFields" },
-    { Header: "Fields In File", accessor: "fileFields" },
+    { Header: tr("Fields In Crm"), accessor: "crmFields" },
+    { Header: tr("Fields In File"), accessor: "fileFields" },
   ];
 
   const initialFieldValues = Object?.fromEntries(
@@ -132,7 +133,7 @@ function LeadImport() {
           const fileHeadingFields = Object?.keys(parsedData[0]);
           setImportedFileFields(fileHeadingFields);
         } else {
-          toast.error("Empty or invalid CSV file");
+          toast.error(tr("Empty or invalid CSV file"));
           navigate("/lead");
         }
       } else if (extension === "xlsx") {
@@ -159,7 +160,7 @@ function LeadImport() {
           const fileHeadingFields = Object?.keys(jsonData[0]);
           setImportedFileFields(fileHeadingFields);
         } else {
-          toast.error("Empty or invalid XLSX file");
+          toast.error(tr("Empty or invalid XLSX file"));
           navigate("/lead");
         }
       }
@@ -202,9 +203,7 @@ function LeadImport() {
           fontSize="22px"
           fontWeight="700"
           mb="20px"
-        >
-          Import Leads
-        </Text>
+        ><LocalizedText text="Import Leads" /></Text>
         <Grid
           templateColumns="repeat(12, 1fr)"
           mb={3}
@@ -261,7 +260,7 @@ function LeadImport() {
                               data,
                           )
                         : "Select Field In File"
-                      : "Select Field In File"}
+                      : tr("Select Field In File")}
                   </option>
                   {importedFileFields?.map((field) => (
                     <option value={field} key={field}>
@@ -274,13 +273,11 @@ function LeadImport() {
           ))}
         </Grid>
         <Flex Flex justifyContent={"end"} mt="5">
-          <Button size="sm" onClick={() => handleSubmit()} variant="brand">
-            Save
-          </Button>
+          <Button size="sm" onClick={() => handleSubmit()} variant="brand"><LocalizedText text="Save" /></Button>
         </Flex>
       </Card>
     </>
   );
 }
 
-export default LeadImport;
+export default withLocalization(LeadImport);

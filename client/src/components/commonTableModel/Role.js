@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Box,
   Checkbox,
@@ -176,9 +177,7 @@ export default function RoleTable(props) {
                     color={textColor}
                     fontSize="sm"
                     fontWeight="700"
-                  >
-                    -- No Data Found --
-                  </Text>
+                  ><LocalizedText text="-- No Data Found --" /></Text>
                 </Td>
               </Tr>
             )}

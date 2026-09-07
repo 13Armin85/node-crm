@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -73,10 +74,10 @@ const Index = () => {
     if (result?.payload?.status === 200) {
       setContactData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     const actionHeader = {
-      Header: "Action",
+      Header: tr("Action"),
       accessor: "action",
       isSortable: false,
       center: true,
@@ -98,9 +99,7 @@ const Index = () => {
                     setEdit(true);
                     setSelectedId(row?.values?._id);
                   }}
-                >
-                  Edit
-                </MenuItem>
+                ><LocalizedText text="Edit" /></MenuItem>
               )}
               {callAccess?.create && (
                 <MenuItem
@@ -112,9 +111,7 @@ const Index = () => {
                     setCallSelectedId(row?.values?._id);
                   }}
                   icon={<PhoneIcon fontSize={15} mb={1} />}
-                >
-                  Create Call
-                </MenuItem>
+                ><LocalizedText text="Create Call" /></MenuItem>
               )}
               {emailAccess?.create && (
                 <MenuItem
@@ -125,9 +122,7 @@ const Index = () => {
                     setSelectedId(row?.values?._id);
                   }}
                   icon={<EmailIcon fontSize={15} mb={1} />}
-                >
-                  Send Email
-                </MenuItem>
+                ><LocalizedText text="Send Email" /></MenuItem>
               )}
               {permission?.view && (
                 <MenuItem
@@ -137,9 +132,7 @@ const Index = () => {
                   onClick={() => {
                     navigate(`/contactView/${row?.values?._id}`);
                   }}
-                >
-                  View
-                </MenuItem>
+                ><LocalizedText text="View" /></MenuItem>
               )}
               {permission?.delete && (
                 <MenuItem
@@ -150,9 +143,7 @@ const Index = () => {
                     setDelete(true);
                     setSelectedValues([row?.values?._id]);
                   }}
-                >
-                  Delete
-                </MenuItem>
+                ><LocalizedText text="Delete" /></MenuItem>
               )}
             </MenuList>
           </Menu>
@@ -161,7 +152,7 @@ const Index = () => {
     };
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(result?.payload?.data && result?.payload?.data?.length > 0
         ? result?.payload?.data[0]?.fields
             ?.filter((field) => field?.isTableField === true && field?.isView)
@@ -232,7 +223,7 @@ const Index = () => {
         {!isLoding && (
           <GridItem colSpan={6}>
             <CommonCheckTable
-              title={"Contacts"}
+              title={tr("Contacts")}
               isLoding={isLoding}
               columnData={columns ?? []}
               // dataColumn={dataColumn ?? []}
@@ -321,4 +312,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

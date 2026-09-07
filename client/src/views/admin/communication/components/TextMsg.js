@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   FormLabel,
@@ -45,7 +46,7 @@ const TextMsg = () => {
     formik;
 
   if (touched?.to && errors?.createFor) {
-    toast.error("Please select an authorized to");
+    toast.error(tr("Please select an authorized to"));
     formik.resetForm();
   }
 
@@ -91,9 +92,7 @@ const TextMsg = () => {
   return (
     <Grid templateColumns="repeat(12, 1fr)" gap={3}>
       <GridItem colSpan={{ base: 12 }}>
-        <Heading as="h2" size="xl" noOfLines={1}>
-          Text Message
-        </Heading>
+        <Heading as="h2" size="xl" noOfLines={1}><LocalizedText text="Text Message" /></Heading>
       </GridItem>
       <GridItem colSpan={{ base: 12 }}>
         <FormLabel
@@ -102,8 +101,7 @@ const TextMsg = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          To<Text color={"red"}>*</Text>
+        ><LocalizedText text="To" /><Text color={"red"}>*</Text>
         </FormLabel>
         <Input
           onFocus={onOpen}
@@ -113,7 +111,7 @@ const TextMsg = () => {
           onBlur={() => setTimeout(onClose, 200)}
           value={values?.to}
           name="to"
-          placeholder="to"
+          placeholder={tr("to")}
           fontWeight="500"
           borderColor={errors?.to && touched?.to ? "red.300" : null}
         />
@@ -168,9 +166,7 @@ const TextMsg = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          Message
-        </FormLabel>
+        ><LocalizedText text="Message" /></FormLabel>
         <Textarea
           height={"20vh"}
           fontSize="sm"
@@ -178,7 +174,7 @@ const TextMsg = () => {
           onChange={handleChange}
           value={values?.message}
           name="message"
-          placeholder="message"
+          placeholder={tr("message")}
           fontWeight="500"
           borderColor={errors?.message && touched?.message ? "red.300" : null}
         />
@@ -197,14 +193,12 @@ const TextMsg = () => {
           leftIcon={<MdOutlineMessage />}
         >
           {" "}
-          {isLoding ? <Spinner /> : "Send Msg"}
+          {isLoding ? <Spinner /> : tr("Send Msg")}
         </Button>
-        <Button onClick={() => formik.resetForm()} size="sm">
-          Clear
-        </Button>
+        <Button onClick={() => formik.resetForm()} size="sm"><LocalizedText text="Clear" /></Button>
       </GridItem>
     </Grid>
   );
 };
 
-export default TextMsg;
+export default withLocalization(TextMsg);

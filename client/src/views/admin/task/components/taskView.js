@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -160,9 +161,7 @@ const TaskView = (props) => {
               <GridItem colSpan={2}>
                 <Box>
                   <Box display={"flex"} justifyContent={"space-between"}>
-                    <Heading size="md" mb={3}>
-                      Task Details
-                    </Heading>
+                    <Heading size="md" mb={3}><LocalizedText text="Task Details" /></Heading>
                     <Flex id="hide-btn">
                       <Menu>
                         {(user?.role === "superAdmin" ||
@@ -177,9 +176,7 @@ const TaskView = (props) => {
                             mr={2.5}
                             as={Button}
                             rightIcon={<ChevronDownIcon />}
-                          >
-                            Actions
-                          </MenuButton>
+                          ><LocalizedText text="Actions" /></MenuButton>
                         )}
                         <MenuDivider />
                         <MenuList minWidth={2}>
@@ -190,9 +187,7 @@ const TaskView = (props) => {
                               alignItems={"start"}
                               color={"blue"}
                               icon={<AddIcon />}
-                            >
-                              Add
-                            </MenuItem>
+                            ><LocalizedText text="Add" /></MenuItem>
                           )}
                           {(user?.role === "superAdmin" ||
                             permission?.update) && (
@@ -200,9 +195,7 @@ const TaskView = (props) => {
                               onClick={() => setEdit(true)}
                               alignItems={"start"}
                               icon={<EditIcon />}
-                            >
-                              Edit
-                            </MenuItem>
+                            ><LocalizedText text="Edit" /></MenuItem>
                           )}
                           <MenuItem
                             onClick={generatePDF}
@@ -210,9 +203,7 @@ const TaskView = (props) => {
                             icon={<FaFilePdf />}
                             display={"flex"}
                             style={{ alignItems: "center" }}
-                          >
-                            Print as PDF
-                          </MenuItem>
+                          ><LocalizedText text="Print as PDF" /></MenuItem>
 
                           {(user?.role === "superAdmin" ||
                             permission?.delete) && (
@@ -223,9 +214,7 @@ const TaskView = (props) => {
                                 onClick={() => setDeleteManyModel(true)}
                                 color={"red"}
                                 icon={<DeleteIcon />}
-                              >
-                                Delete
-                              </MenuItem>
+                              ><LocalizedText text="Delete" /></MenuItem>
                             </>
                           )}
                         </MenuList>
@@ -235,9 +224,7 @@ const TaskView = (props) => {
                         size="sm"
                         variant="brand"
                         onClick={() => navigate(-1)}
-                      >
-                        Back
-                      </Button>
+                      ><LocalizedText text="Back" /></Button>
                     </Flex>
                   </Box>
                   <HSeparator />
@@ -245,8 +232,7 @@ const TaskView = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task Title{" "}
+                  {" "}<LocalizedText text="Task Title" />{" "}
                 </Text>
                 {editableField === "title" ? (
                   <>
@@ -283,15 +269,13 @@ const TaskView = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task Related To{" "}
+                  {" "}<LocalizedText text="Task Related To" />{" "}
                 </Text>
                 <Text>{data?.category ? data?.category : " - "}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task start{" "}
+                  {" "}<LocalizedText text="Task start" />{" "}
                 </Text>
                 {editableField === "start" ? (
                   <>
@@ -342,8 +326,7 @@ const TaskView = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task end{" "}
+                  {" "}<LocalizedText text="Task end" />{" "}
                 </Text>
                 {editableField === "end" ? (
                   <>
@@ -386,8 +369,7 @@ const TaskView = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task Link{" "}
+                  {" "}<LocalizedText text="Task Link" />{" "}
                 </Text>
                 {data?.url ? (
                   <a target="_blank" href={data?.url}>
@@ -403,15 +385,13 @@ const TaskView = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task reminder{" "}
+                  {" "}<LocalizedText text="Task reminder" />{" "}
                 </Text>
                 <Text>{data?.reminder ? data?.reminder : " - "}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Assign To{" "}
+                  {" "}<LocalizedText text="Assign To" />{" "}
                 </Text>
                 <Link
                   to={
@@ -444,16 +424,13 @@ const TaskView = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task createBy{" "}
+                  {" "}<LocalizedText text="Task createBy" />{" "}
                 </Text>
                 <Text>{data?.createByName ? data?.createByName : " - "}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task Description
-                </Text>
+                  {" "}<LocalizedText text="Task Description" /></Text>
                 {editableField === "description" ? (
                   <>
                     <Input
@@ -490,8 +467,7 @@ const TaskView = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Task notes{" "}
+                  {" "}<LocalizedText text="Task notes" />{" "}
                 </Text>
                 {editableField === "notes" ? (
                   <>
@@ -545,9 +521,7 @@ const TaskView = (props) => {
                     mr={2.5}
                     variant="outline"
                     colorScheme="green"
-                  >
-                    Edit
-                  </Button>
+                  ><LocalizedText text="Edit" /></Button>
                 )}
                 {(permission?.delete || user?.role === "superAdmin") && (
                   <Button
@@ -556,9 +530,7 @@ const TaskView = (props) => {
                     onClick={() => setDeleteManyModel(true)}
                     leftIcon={<DeleteIcon />}
                     colorScheme="red"
-                  >
-                    Delete
-                  </Button>
+                  ><LocalizedText text="Delete" /></Button>
                 )}
               </Flex>
             </GridItem>

@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 import Card from "components/card/Card";
 import React from "react";
@@ -10,9 +11,9 @@ const Index = () => {
     <div>
       <Tabs>
         <TabList sx={{ "& button:focus": { boxShadow: "none" } }}>
-          <Tab>Email</Tab>
-          <Tab>Call</Tab>
-          <Tab>Text Msg</Tab>
+          <Tab><LocalizedText text="Email" /></Tab>
+          <Tab><LocalizedText text="Call" /></Tab>
+          <Tab><LocalizedText text="Text Msg" /></Tab>
         </TabList>
 
         <TabPanels>

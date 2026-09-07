@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -175,9 +176,7 @@ const View = (props) => {
                 <Box>
                   <Box display={"flex"} justifyContent={"space-between"}>
                     <Flex id="hide-btn">
-                      <Heading size="md" mb={3}>
-                        Opportunities Details
-                      </Heading>
+                      <Heading size="md" mb={3}><LocalizedText text="Opportunities Details" /></Heading>
                       <Menu>
                         {(user.role === "superAdmin" ||
                           opportunityAccess?.create ||
@@ -191,9 +190,7 @@ const View = (props) => {
                             mr={2.5}
                             as={Button}
                             rightIcon={<ChevronDownIcon />}
-                          >
-                            Actions
-                          </MenuButton>
+                          ><LocalizedText text="Actions" /></MenuButton>
                         )}
                         <MenuDivider />
                         <MenuList minWidth={2}>
@@ -208,9 +205,7 @@ const View = (props) => {
                               alignItems={"start"}
                               color={"blue"}
                               icon={<AddIcon />}
-                            >
-                              Add
-                            </MenuItem>
+                            ><LocalizedText text="Add" /></MenuItem>
                           )}
                           {(user?.role === "superAdmin" ||
                             opportunityAccess?.update) && (
@@ -221,9 +216,7 @@ const View = (props) => {
                               }}
                               alignItems={"start"}
                               icon={<EditIcon />}
-                            >
-                              Edit
-                            </MenuItem>
+                            ><LocalizedText text="Edit" /></MenuItem>
                           )}
                           <MenuItem
                             onClick={generatePDF}
@@ -231,9 +224,7 @@ const View = (props) => {
                             icon={<FaFilePdf />}
                             display={"flex"}
                             style={{ alignItems: "center" }}
-                          >
-                            Print as PDF
-                          </MenuItem>
+                          ><LocalizedText text="Print as PDF" /></MenuItem>
 
                           {(user?.role === "superAdmin" ||
                             opportunityAccess?.delete) && (
@@ -244,9 +235,7 @@ const View = (props) => {
                                 onClick={() => setDeleteManyModel(true)}
                                 color={"red"}
                                 icon={<DeleteIcon />}
-                              >
-                                Delete
-                              </MenuItem>
+                              ><LocalizedText text="Delete" /></MenuItem>
                             </>
                           )}
                         </MenuList>
@@ -256,9 +245,7 @@ const View = (props) => {
                         size="sm"
                         variant="brand"
                         onClick={() => navigate(-1)}
-                      >
-                        Back
-                      </Button>
+                      ><LocalizedText text="Back" /></Button>
                     </Flex>
                   </Box>
                   <HSeparator />
@@ -266,8 +253,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Opportunity Name{" "}
+                  {" "}<LocalizedText text="Opportunity Name" />{" "}
                 </Text>
                 {editableField === "opportunityName" ? (
                   <>
@@ -309,13 +295,12 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Account Name{" "}
+                  {" "}<LocalizedText text="Account Name" />{" "}
                 </Text>
                 {data?.accountName ? (
                   <Link
                     to={
-                      accountAccess?.view && `/accountView/${data?.accountName}`
+                      accountAccess?.view && `/partner-customers/${data?.accountName}`
                     }
                   >
                     <Text
@@ -357,8 +342,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Assigned User{" "}
+                  {" "}<LocalizedText text="Assigned User" />{" "}
                 </Text>
                 {data?.assignUser ? (
                   <Link
@@ -411,9 +395,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Type
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Type" /></Text>
                 {editableField === "type" ? (
                   <>
                     <Select
@@ -427,17 +409,15 @@ const View = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Type"}
+                      placeholder={tr("Type")}
                       borderColor={
                         formik?.errors?.type && formik?.touched?.type
                           ? "red.300"
                           : null
                       }
                     >
-                      <option value={"Existing Bussiness"}>
-                        Existing Bussiness
-                      </option>
-                      <option value={"New Bussiness"}>New Bussiness</option>
+                      <option value={"Existing Bussiness"}><LocalizedText text="Existing Bussiness" /></option>
+                      <option value={"New Bussiness"}><LocalizedText text="New Bussiness" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
                       {" "}
@@ -458,9 +438,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Lead Source
-                </Text>
+                  {" "}<LocalizedText text="Lead Source" /></Text>
                 {editableField === "leadSource" ? (
                   <>
                     <Select
@@ -475,7 +453,7 @@ const View = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Lead Source"}
+                      placeholder={tr("Lead Source")}
                       borderColor={
                         formik?.errors?.leadSource &&
                         formik?.touched?.leadSource
@@ -483,21 +461,19 @@ const View = (props) => {
                           : null
                       }
                     >
-                      <option value={"Cold Call"}>Cold Call</option>
-                      <option value={"Existing Customer"}>
-                        Existing Customer
-                      </option>
-                      <option value={"Self Generated"}>Self Generated</option>
-                      <option value={"Employee"}>Employee</option>
-                      <option value={"Partner"}>Partner</option>
-                      <option value={"Public Relation"}>Public Relation</option>
-                      <option value={"Direct Mail"}>Direct Mail</option>
-                      <option value={"Conference"}>Conference</option>
-                      <option value={"Trade Show"}>Trade Show</option>
-                      <option value={"Web Site"}>Web Site</option>
-                      <option value={"Word Of Mouth"}>Word Of Mouth</option>
-                      <option value={"Email"}>Email</option>
-                      <option value={"Other"}>Other</option>
+                      <option value={"Cold Call"}><LocalizedText text="Cold Call" /></option>
+                      <option value={"Existing Customer"}><LocalizedText text="Existing Customer" /></option>
+                      <option value={"Self Generated"}><LocalizedText text="Self Generated" /></option>
+                      <option value={"Employee"}><LocalizedText text="Employee" /></option>
+                      <option value={"Partner"}><LocalizedText text="Partner" /></option>
+                      <option value={"Public Relation"}><LocalizedText text="Public Relation" /></option>
+                      <option value={"Direct Mail"}><LocalizedText text="Direct Mail" /></option>
+                      <option value={"Conference"}><LocalizedText text="Conference" /></option>
+                      <option value={"Trade Show"}><LocalizedText text="Trade Show" /></option>
+                      <option value={"Web Site"}><LocalizedText text="Web Site" /></option>
+                      <option value={"Word Of Mouth"}><LocalizedText text="Word Of Mouth" /></option>
+                      <option value={"Email"}><LocalizedText text="Email" /></option>
+                      <option value={"Other"}><LocalizedText text="Other" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
                       {" "}
@@ -521,9 +497,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Currency
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Currency" /></Text>
                 {editableField === "currency" ? (
                   <>
                     <Select
@@ -537,14 +511,14 @@ const View = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Select Currency"}
+                      placeholder={tr("Select Currency")}
                       borderColor={
                         formik?.errors?.currency && formik?.touched?.currency
                           ? "red.300"
                           : null
                       }
                     >
-                      <option value={"$"}>USD</option>
+                      <option value={"$"}><LocalizedText text="USD" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
                       {" "}
@@ -565,9 +539,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Opportunity Amount
-                </Text>
+                  {" "}<LocalizedText text="Opportunity Amount" /></Text>
                 {editableField === "opportunityAmount" ? (
                   <>
                     <Input
@@ -608,9 +580,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Amount
-                </Text>
+                  {" "}<LocalizedText text="Amount" /></Text>
                 {editableField === "amount" ? (
                   <>
                     <Input
@@ -646,9 +616,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Expected Close Date
-                </Text>
+                  {" "}<LocalizedText text="Expected Close Date" /></Text>
                 {editableField === "expectedCloseDate" ? (
                   <>
                     <Input
@@ -693,9 +661,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Next Step
-                </Text>
+                  {" "}<LocalizedText text="Next Step" /></Text>
                 {editableField === "nextStep" ? (
                   <>
                     <Input
@@ -731,9 +697,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Sales Stage
-                </Text>
+                  {" "}<LocalizedText text="Sales Stage" /></Text>
                 {editableField === "salesStage" ? (
                   <>
                     <Select
@@ -748,7 +712,7 @@ const View = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Sales Stage"}
+                      placeholder={tr("Sales Stage")}
                       borderColor={
                         formik?.errors?.salesStage &&
                         formik?.touched?.salesStage
@@ -756,26 +720,16 @@ const View = (props) => {
                           : null
                       }
                     >
-                      <option value={"Prospecting"}>Prospecting</option>
-                      <option value={"Qualification"}>Qualification</option>
-                      <option value={"Needs Analysis"}>Needs Analysis</option>
-                      <option value={"Value Propositon"}>
-                        Value Propositon
-                      </option>
-                      <option value={"Identifying Decision Makers"}>
-                        Identifying Decision Makers
-                      </option>
-                      <option value={"Perception Analysis"}>
-                        Perception Analysis
-                      </option>
-                      <option value={"Proposal/Price Quote"}>
-                        Proposal/Price Quote
-                      </option>
-                      <option value={"Negotiation/Review"}>
-                        Negotiation/Review
-                      </option>
-                      <option value={"Closed/Won"}>Closed/Won</option>
-                      <option value={"Closed/Lost"}>Closed/Lost</option>
+                      <option value={"Prospecting"}><LocalizedText text="Prospecting" /></option>
+                      <option value={"Qualification"}><LocalizedText text="Qualification" /></option>
+                      <option value={"Needs Analysis"}><LocalizedText text="Needs Analysis" /></option>
+                      <option value={"Value Propositon"}><LocalizedText text="Value Propositon" /></option>
+                      <option value={"Identifying Decision Makers"}><LocalizedText text="Identifying Decision Makers" /></option>
+                      <option value={"Perception Analysis"}><LocalizedText text="Perception Analysis" /></option>
+                      <option value={"Proposal/Price Quote"}><LocalizedText text="Proposal/Price Quote" /></option>
+                      <option value={"Negotiation/Review"}><LocalizedText text="Negotiation/Review" /></option>
+                      <option value={"Closed/Won"}><LocalizedText text="Closed/Won" /></option>
+                      <option value={"Closed/Lost"}><LocalizedText text="Closed/Lost" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
                       {" "}
@@ -800,9 +754,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Probability
-                </Text>
+                  {" "}<LocalizedText text="Probability" /></Text>
                 {editableField === "probability" ? (
                   <>
                     <Input
@@ -843,9 +795,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Description
-                </Text>
+                  {" "}<LocalizedText text="Description" /></Text>
                 {editableField === "description" ? (
                   <>
                     <Input
@@ -964,9 +914,7 @@ const View = (props) => {
                     mr={2.5}
                     variant="outline"
                     colorScheme="green"
-                  >
-                    Edit
-                  </Button>
+                  ><LocalizedText text="Edit" /></Button>
                 )}
                 {(opportunityAccess?.delete || user?.role === "superAdmin") && (
                   <Button
@@ -975,9 +923,7 @@ const View = (props) => {
                     onClick={() => setDeleteManyModel(true)}
                     leftIcon={<DeleteIcon />}
                     colorScheme="red"
-                  >
-                    Delete
-                  </Button>
+                  ><LocalizedText text="Delete" /></Button>
                 )}
               </Flex>
             </GridItem>
@@ -1003,4 +949,4 @@ const View = (props) => {
   );
 };
 
-export default View;
+export default withLocalization(View);

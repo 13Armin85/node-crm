@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HasAccess } from "../../../redux/accessUtils";
@@ -139,11 +140,11 @@ const Index = () => {
       if (result?.payload?.status === 200) {
         setLeadData(result?.payload?.data);
       } else {
-        toast.error("Failed to fetch data", "error");
+        toast.error(tr("Failed to fetch data"), tr("error"));
       }
 
       const actionHeader = {
-        Header: "Action",
+        Header: tr("Action"),
         accessor: "action",
         isSortable: false,
         center: true,
@@ -165,9 +166,7 @@ const Index = () => {
                       setEdit(true);
                       setSelectedId(row?.values?._id);
                     }}
-                  >
-                    Edit
-                  </MenuItem>
+                  ><LocalizedText text="Edit" /></MenuItem>
                 )}
                 {callAccess?.create && (
                   <MenuItem
@@ -179,9 +178,7 @@ const Index = () => {
                       setCallSelectedId(row?.values?._id);
                     }}
                     icon={<PhoneIcon fontSize={15} mb={1} />}
-                  >
-                    Create Call
-                  </MenuItem>
+                  ><LocalizedText text="Create Call" /></MenuItem>
                 )}
                 {emailAccess?.create && (
                   <MenuItem
@@ -192,8 +189,7 @@ const Index = () => {
                       setSelectedId(row?.values?._id);
                     }}
                     icon={<EmailIcon fontSize={15} mb={1} />}
-                  >
-                    Email Send{" "}
+                  ><LocalizedText text="Email Send" />{" "}
                   </MenuItem>
                 )}
                 {permission?.view && (
@@ -206,9 +202,7 @@ const Index = () => {
                         state: { leadList: data },
                       });
                     }}
-                  >
-                    View
-                  </MenuItem>
+                  ><LocalizedText text="View" /></MenuItem>
                 )}
                 {permission?.delete && (
                   <MenuItem
@@ -219,9 +213,7 @@ const Index = () => {
                       setDelete(true);
                       setSelectedValues([row?.values?._id]);
                     }}
-                  >
-                    Delete
-                  </MenuItem>
+                  ><LocalizedText text="Delete" /></MenuItem>
                 )}
               </MenuList>
             </Menu>
@@ -229,9 +221,9 @@ const Index = () => {
         ),
       };
       const tempTableColumns = [
-        { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+        { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
         {
-          Header: "Status",
+          Header: tr("Status"),
           accessor: "leadStatus",
           isSortable: true,
           center: true,
@@ -246,9 +238,9 @@ const Index = () => {
                 value={row?.original?.leadStatus}
                 style={{ fontSize: "14px" }}
               >
-                <option value="active">Active</option>
-                <option value="sold">Sold</option>
-                <option value="pending">Pending</option>
+                <option value="active"><LocalizedText text="Active" /></option>
+                <option value="sold"><LocalizedText text="Sold" /></option>
+                <option value="pending"><LocalizedText text="Pending" /></option>
               </Select>
             </div>
           ),
@@ -308,7 +300,7 @@ const Index = () => {
       setIsLoding(false);
     } catch (error) {
       console?.error("Error fetching custom data fields:", error);
-      toast.error("Failed to fetch data ", "error");
+      toast.error(tr("Failed to fetch data "), tr("error"));
     }
   };
 
@@ -457,4 +449,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

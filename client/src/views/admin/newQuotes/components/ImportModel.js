@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -66,7 +67,7 @@ const ImportModal = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Import Quotes</ModalHeader>
+        <ModalHeader><LocalizedText text="Import Quotes" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -78,7 +79,7 @@ const ImportModal = (props) => {
               />
               <Text mb="10px" color={"red"}>
                 {" "}
-                {errors?.quotes && touched?.quotes && <>Please Select {text}</>}
+                {errors?.quotes && touched?.quotes && <><LocalizedText text="Please Select" />{text}</>}
               </Text>
             </GridItem>
           </Grid>
@@ -90,7 +91,7 @@ const ImportModal = (props) => {
             onClick={handleSubmit}
             disabled={isLoding ? true : false}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             sx={{
@@ -104,13 +105,11 @@ const ImportModal = (props) => {
               onClose();
               formik?.resetForm();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default ImportModal;
+export default withLocalization(ImportModal);

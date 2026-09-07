@@ -1,165 +1,22 @@
-import React, { useState } from "react";
+import { Box, IconButton, useColorModeValue } from '@chakra-ui/react';
+import { IoMenuOutline } from 'react-icons/io5';
+import Content from './components/Content';
+import { useLanguage } from 'i18n';
 
-// chakra imports
-import {
-  Box,
-  Flex,
-  Drawer,
-  DrawerBody,
-  Icon,
-  useColorModeValue,
-  DrawerOverlay,
-  useDisclosure,
-  DrawerContent,
-  DrawerCloseButton,
-} from "@chakra-ui/react";
-import Content from "components/sidebar/components/Content";
-import {
-  renderThumb,
-  renderTrack,
-  renderView,
-} from "components/scrollbar/Scrollbar";
-import { Scrollbars } from "react-custom-scrollbars-2";
-import PropTypes from "prop-types";
-
-// Assets
-import { IoMenuOutline } from "react-icons/io5";
-
-function Sidebar(props) {
-  const { routes, setOpenSidebar, openSidebar, largeLogo } = props;
-  const sidebarWidth = openSidebar ? "280px" : "80px";
-
-  let variantChange = "0.2s linear";
-  let shadow = useColorModeValue(
-    "14px 17px 40px 4px rgba(112, 144, 176, 0.08)",
-    "unset",
-  );
-  // Chakra Color Mode
-  let sidebarBg = useColorModeValue("white", "navy.800");
-  let sidebarMargins = "0px";
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  // SIDEBAR
+export default function Sidebar({ routes, openSidebar }) {
+  const background = useColorModeValue('white', 'navy.800');
+  const { t } = useLanguage();
   return (
-    <Box
-      className="crm-sidebar-shell"
-      display={{ sm: "none", xl: "block" }}
-      w={sidebarWidth}
-      position="fixed"
-      minH="100%"
-      pointerEvents="none"
-    >
-      <Box
-        className="crm-sidebar-panel"
-        bg={sidebarBg}
-        transition={variantChange}
-        // w='280px'
-        w={sidebarWidth}
-        h="100vh"
-        m={sidebarMargins}
-        minH="100%"
-        overflowX="hidden"
-        boxShadow={shadow}
-        pointerEvents="auto"
-      >
-        <Scrollbars
-          autoHide
-          renderTrackVertical={renderTrack}
-          renderThumbVertical={renderThumb}
-          renderView={renderView}
-        >
-          <Content
-            routes={routes}
-            largeLogo={largeLogo}
-            openSidebar={openSidebar}
-            setOpenSidebar={setOpenSidebar}
-          />
-        </Scrollbars>
+    <Box as="aside" id="crm-sidebar" className="crm-sidebar-shell" dir="ltr" aria-label={t('Navigation')}>
+      <Box className="crm-sidebar-panel" bg={background}>
+        <Content routes={routes} openSidebar={openSidebar} />
       </Box>
     </Box>
   );
 }
 
-// FUNCTIONS
-export function SidebarResponsive(props) {
-  let sidebarBackgroundColor = useColorModeValue("white", "navy.800");
-  let menuColor = useColorModeValue("gray.400", "white");
-  // // SIDEBAR
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const btnRef = React.useRef();
-  const { routes, setOpenSidebar, openSidebar } = props;
-  // let isWindows = navigator.platform.startsWith("Win");
-  //  BRAND
-  const handlesidebarClose = () => {
-    // setOpenSidebar(false)
-    onClose();
-  };
-  return (
-    <Flex display={{ sm: "flex", xl: "none" }} alignItems="center">
-      <Flex
-        ref={btnRef}
-        w="max-content"
-        h="max-content"
-        onClick={() => {
-          onOpen();
-          setOpenSidebar(true);
-        }}
-      >
-        <Icon
-          as={IoMenuOutline}
-          color={menuColor}
-          my="auto"
-          w="20px"
-          h="20px"
-          me="10px"
-          _hover={{ cursor: "pointer" }}
-        />
-      </Flex>
-
-      <Drawer
-        isOpen={isOpen}
-        onClose={handlesidebarClose}
-        placement="left"
-        finalFocusRef={btnRef}
-      >
-        <DrawerOverlay />
-        <DrawerContent
-          boxShadow={"xl"}
-          w="285px"
-          maxW="285px"
-          bg={sidebarBackgroundColor}
-        >
-          <DrawerCloseButton
-            zIndex="3"
-            onClose={handlesidebarClose}
-            _focus={{ boxShadow: "none" }}
-            _hover={{ boxShadow: "none" }}
-          />
-          <DrawerBody maxW="285px" px="0rem" pb="0">
-            <Scrollbars
-              autoHide
-              renderTrackVertical={renderTrack}
-              renderThumbVertical={renderThumb}
-              renderView={renderView}
-            >
-              <Content
-                from={"modal"}
-                routes={routes}
-                openSidebar={openSidebar}
-                setOpenSidebar={setOpenSidebar}
-              />
-            </Scrollbars>
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
-    </Flex>
-  );
+// Shared toggle for the alternate navbar components; the shell owns the panel.
+export function SidebarResponsive({ openSidebar, setOpenSidebar }) {
+  const { t } = useLanguage();
+  return <IconButton aria-label={t(openSidebar ? 'Close sidebar' : 'Open sidebar')} icon={<IoMenuOutline />} onClick={() => setOpenSidebar(value => !value)} variant="ghost" />;
 }
-// PROPS
-
-Sidebar.propTypes = {
-  logoText: PropTypes?.string,
-  routes: PropTypes?.arrayOf(PropTypes?.object),
-  variant: PropTypes?.string,
-};
-
-export default Sidebar;

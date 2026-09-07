@@ -1,3 +1,5 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import {
   Button,
   FormLabel,
@@ -162,9 +164,9 @@ const AddPhoneCall = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Add Call </ModalHeader>
+        <ModalHeader><LocalizedText text="Add Call" /></ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
+        <ModalBody><ManagedFormLayout moduleName="Calls" formik={formik}>
           {/* User Model for sales person */}
           <UserModel
             onClose={() => setSalesPersonsModelOpen(false)}
@@ -184,8 +186,7 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Recipient<Text color={"red"}>*</Text>
+              ><LocalizedText text="Recipient" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -195,7 +196,7 @@ const AddPhoneCall = (props) => {
                 onBlur={handleBlur}
                 value={values?.recipient}
                 name="recipient"
-                placeholder="Recipient"
+                placeholder={tr("Recipient")}
                 fontWeight="500"
                 borderColor={
                   errors?.recipient && touched?.recipient ? "red.300" : null
@@ -213,8 +214,7 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Start Date<Text color={"red"}>*</Text>
+              ><LocalizedText text="Start Date" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 type="datetime-local"
@@ -242,8 +242,7 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Call Duration<Text color={"red"}>*</Text>
+              ><LocalizedText text="Call Duration" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -251,7 +250,7 @@ const AddPhoneCall = (props) => {
                 onBlur={handleBlur}
                 value={values?.callDuration}
                 name="callDuration"
-                placeholder="call Duration"
+                placeholder={tr("call Duration")}
                 fontWeight="500"
                 borderColor={
                   errors?.callDuration && touched?.callDuration
@@ -274,8 +273,7 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Assign To Sales Agent<Text color={"red"}>*</Text>
+              ><LocalizedText text="Assign To Sales Agent" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Flex justifyContent={"space-between"}>
                 <Select
@@ -288,7 +286,7 @@ const AddPhoneCall = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Assign To Sales Agent"}
+                  placeholder={tr("Assign To Sales Agent")}
                   borderColor={
                     errors?.salesAgent && touched?.salesAgent ? "red.300" : null
                   }
@@ -317,7 +315,8 @@ const AddPhoneCall = (props) => {
               </Text>
             </GridItem>
           </Grid>
-        </ModalBody>
+        </ManagedFormLayout>
+</ModalBody>
         <ModalFooter>
           <Button
             size="sm"
@@ -325,7 +324,7 @@ const AddPhoneCall = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             size="sm"
@@ -339,13 +338,11 @@ const AddPhoneCall = (props) => {
               formik.resetForm();
               onClose();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddPhoneCall;
+export default withLocalization(AddPhoneCall);

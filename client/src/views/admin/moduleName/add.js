@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
   Button,
@@ -82,7 +83,7 @@ const Add = (props) => {
       if (error?.response && error?.response?.data) {
         toast.error(error?.response?.data?.message);
       } else {
-        toast.error("An error occurred while processing your request.");
+        toast.error(tr("An error occurred while processing your request."));
       }
     } finally {
       setIsLoding(false);
@@ -94,7 +95,7 @@ const Add = (props) => {
       <Modal onClose={onClose} isOpen={isOpen} isCentered size="2xl">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add Module</ModalHeader>
+          <ModalHeader><LocalizedText text="Add Module" /></ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <>
@@ -121,17 +122,14 @@ const Add = (props) => {
                             fontSize="sm"
                             fontWeight="700"
                             color={brandColor}
-                          >
-                            Upload File
-                          </Text>
+                          ><LocalizedText text="Upload File" /></Text>
                         </Flex>
                         {values?.icon?.length > 0 && (
                           <Text
                             fontSize="sm"
                             fontWeight="500"
                             color="secondaryGray.500"
-                          >
-                            Selected Files : {values?.icon?.length}
+                          ><LocalizedText text="Selected Files :" />{values?.icon?.length}
                           </Text>
                         )}
                       </Box>
@@ -145,8 +143,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Name<Text color={"red"}>*</Text>
+                  ><LocalizedText text="Name" /><Text color={"red"}>*</Text>
                   </FormLabel>
                   <Input
                     fontSize="sm"
@@ -154,7 +151,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.moduleName}
                     name="moduleName"
-                    placeholder="Enter Name"
+                    placeholder={tr("Enter Name")}
                     fontWeight="500"
                     borderColor={
                       errors?.moduleName && touched?.moduleName
@@ -180,7 +177,7 @@ const Add = (props) => {
               disabled={isLoding ? true : false}
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Save"}
+              {isLoding ? <Spinner /> : tr("Save")}
             </Button>
             <Button
               sx={{
@@ -193,9 +190,7 @@ const Add = (props) => {
                 onClose();
                 resetForm();
               }}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -203,4 +198,4 @@ const Add = (props) => {
   );
 };
 
-export default Add;
+export default withLocalization(Add);

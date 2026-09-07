@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -58,39 +59,31 @@ const UnitTypeView = (props) => {
         <ModalContent>
           <ModalHeader>
             {`${data?.floorName?.floorNumber}`}
-            <sup>{data?.floorName?.floorNumberSuffix}</sup> Floor -{" "}
+            <sup>{data?.floorName?.floorNumberSuffix}</sup><LocalizedText text="Floor -" />{" "}
             {data?.unit?.flateName}
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 6 }}>
-                <Text fontSize="sm" fontWeight="bold" color="blackAlpha.900">
-                  Name
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color="blackAlpha.900"><LocalizedText text="Name" /></Text>
                 <Text>
                   {data?.unitType?.name ? data?.unitType?.name : " - "}
                 </Text>
               </GridItem>
               <GridItem colSpan={{ base: 6 }}>
-                <Text fontSize="sm" fontWeight="bold" color="blackAlpha.900">
-                  Sqm
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color="blackAlpha.900"><LocalizedText text="Sqm" /></Text>
                 <Text>{data?.unitType?.sqm ? data?.unitType?.sqm : " - "}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 6 }}>
-                <Text fontSize="sm" fontWeight="bold" color="blackAlpha.900">
-                  Price
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color="blackAlpha.900"><LocalizedText text="Price" /></Text>
                 <Text display="flex" alignItems="center">
                   {data?.unitType?.price ? data?.unitType?.price : "0"}
                   <IoLogoUsd color="gray.300" borderRadius="16px" />
                 </Text>
               </GridItem>
               <GridItem colSpan={{ base: 6 }}>
-                <Text fontSize="sm" fontWeight="bold" color="blackAlpha.900">
-                  Status
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color="blackAlpha.900"><LocalizedText text="Status" /></Text>
                 <Text>{data?.unit?.status ? data?.unit?.status : "-"}</Text>
               </GridItem>
             </Grid>
@@ -98,7 +91,7 @@ const UnitTypeView = (props) => {
           <ModalFooter>
             <Flex>
               <Select
-                placeholder={"Unit Type"}
+                placeholder={tr("Unit Type")}
                 value={selectedUnitType}
                 onChange={handleChange}
               >
@@ -118,13 +111,11 @@ const UnitTypeView = (props) => {
               variant="outline"
               colorScheme="red"
               onClick={handleCloseModel}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
     </>
   );
 };
-export default UnitTypeView;
+export default withLocalization(UnitTypeView);

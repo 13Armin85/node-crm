@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
   Button,
@@ -43,7 +44,7 @@ const View = () => {
     setIsLoding(true);
     const result = await dispatch(fetchPropertyCustomFiled());
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...result?.payload?.data?.[0]?.fields
         ?.filter((field) => field?.isTableField === true)
         ?.map((field) => ({ Header: field?.label, accessor: field?.name })),
@@ -114,9 +115,7 @@ const View = () => {
                   <GridItem colSpan={2}>
                     <Box>
                       <Box display={"flex"} justifyContent={"space-between"}>
-                        <Heading size="md" mb={3}>
-                          Call Details
-                        </Heading>
+                        <Heading size="md" mb={3}><LocalizedText text="Call Details" /></Heading>
                         <Box id="hide-btn">
                           <Button
                             leftIcon={<FaFilePdf />}
@@ -125,7 +124,7 @@ const View = () => {
                             onClick={generatePDF}
                             disabled={loading}
                           >
-                            {loading ? "Please Wait..." : "Print as PDF"}
+                            {loading ? tr("Please Wait...") : tr("Print as PDF")}
                           </Button>
                           <Button
                             leftIcon={<IoIosArrowBack />}
@@ -133,9 +132,7 @@ const View = () => {
                             variant="brand"
                             onClick={() => navigate(-1)}
                             style={{ marginLeft: 10 }}
-                          >
-                            Back
-                          </Button>
+                          ><LocalizedText text="Back" /></Button>
                         </Box>
                       </Box>
                       <HSeparator />
@@ -147,8 +144,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Sender{" "}
+                      {" "}<LocalizedText text="Sender" />{" "}
                     </Text>
                     <Text>{data?.senderName ? data?.senderName : " - "}</Text>
                   </GridItem>
@@ -158,8 +154,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Recipient{" "}
+                      {" "}<LocalizedText text="Recipient" />{" "}
                     </Text>
                     <Text>{data?.recipient ? data?.recipient : " - "}</Text>
                   </GridItem>
@@ -169,8 +164,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Create to{" "}
+                      {" "}<LocalizedText text="Create to" />{" "}
                     </Text>
                     {data?.createBy ? (
                       <Link
@@ -229,12 +223,11 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Realeted To{" "}
+                      {" "}<LocalizedText text="Realeted To" />{" "}
                     </Text>
                     <Text>
                       {data?.createBy
-                        ? "contact"
+                        ? tr("contact")
                         : data?.createByLead && "lead"}
                     </Text>
                   </GridItem>
@@ -245,8 +238,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Start Date{" "}
+                      {" "}<LocalizedText text="Start Date" />{" "}
                     </Text>
                     <Text>
                       {" "}
@@ -260,8 +252,7 @@ const View = () => {
                       fontSize="sm"
                       fontWeight="bold"
                       color={"blackAlpha.900"}
-                    >
-                      End Date{" "}
+                    ><LocalizedText text="End Date" />{" "}
                     </Text>
                     <Text>
                       {" "}
@@ -276,8 +267,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Timestamp{" "}
+                      {" "}<LocalizedText text="Timestamp" />{" "}
                     </Text>
                     <Text>
                       {" "}
@@ -297,8 +287,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Call Duration{" "}
+                      {" "}<LocalizedText text="Call Duration" />{" "}
                     </Text>
                     <Text>
                       {data?.callDuration ? data?.callDuration : " - "}
@@ -310,8 +299,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Sales Agent{" "}
+                      {" "}<LocalizedText text="Sales Agent" />{" "}
                     </Text>
                     <pre style={{ whiteSpace: "pre-wrap" }}>
                       {data?.salesAgentName ? data?.salesAgentName : " - "}
@@ -330,8 +318,7 @@ const View = () => {
             <Grid templateColumns="repeat(6, 1fr)" gap={1}>
               <GridItem colSpan={{ base: 2 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Call Notes{" "}
+                  {" "}<LocalizedText text="Call Notes" />{" "}
                 </Text>
                 <pre style={{ whiteSpace: "pre-wrap" }}>
                   {data?.callNotes ? data?.callNotes : " - "}
@@ -343,7 +330,7 @@ const View = () => {
           <Grid templateColumns="repeat(2, 1fr)" gap={1} mt={3}>
             <GridItem colSpan={{ base: 2 }}>
               <CommonCheckTable
-                title={"Properties"}
+                title={tr("Properties")}
                 isLoding={isLoding}
                 columnData={columns ?? []}
                 allData={data?.properties ?? []}
@@ -370,4 +357,4 @@ const View = () => {
   );
 };
 
-export default View;
+export default withLocalization(View);

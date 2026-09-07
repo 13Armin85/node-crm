@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { DeleteIcon, ViewIcon } from "@chakra-ui/icons";
 import {
@@ -42,7 +43,7 @@ const Index = () => {
   const dispatch = useDispatch();
 
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     isSortable: false,
     center: true,
     cell: ({ row }) => (
@@ -61,9 +62,7 @@ const Index = () => {
                 color={"green"}
                 onClick={() => navigate(`/metting/${row?.values?._id}`)}
                 icon={<ViewIcon fontSize={15} />}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             {permission?.delete && (
               <MenuItem
@@ -74,9 +73,7 @@ const Index = () => {
                   setSelectedValues([row?.values?._id]);
                 }}
                 icon={<DeleteIcon fontSize={15} />}
-              >
-                Delete
-              </MenuItem>
+              ><LocalizedText text="Delete" /></MenuItem>
             )}
           </MenuList>
         </Menu>
@@ -85,13 +82,13 @@ const Index = () => {
   };
   const tableColumns = [
     {
-      Header: "#",
+      Header: tr("#"),
       accessor: "_id",
       isSortable: false,
       width: 10,
     },
     {
-      Header: "Agenda",
+      Header: tr("Agenda"),
       accessor: "agenda",
       cell: (cell) => (
         <Link to={`/metting/${cell?.row?.values?._id}`}>
@@ -110,9 +107,9 @@ const Index = () => {
         </Link>
       ),
     },
-    { Header: "Date & Time", accessor: "dateTime" },
-    { Header: "Time Stamp", accessor: "timestamp" },
-    { Header: "Create By", accessor: "createdByName" },
+    { Header: tr("Date & Time"), accessor: "dateTime" },
+    { Header: tr("Time Stamp"), accessor: "timestamp" },
+    { Header: tr("Create By"), accessor: "createdByName" },
     ...(permission?.update || permission?.view || permission?.delete
       ? [actionHeader]
       : []),
@@ -124,7 +121,7 @@ const Index = () => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -185,9 +182,7 @@ const Index = () => {
             mt={{ sm: "5px", md: "0" }}
             size="sm"
             onClick={() => setAdvanceSearch(true)}
-          >
-            Advance Search
-          </Button>
+          ><LocalizedText text="Advance Search" /></Button>
         }
         getTagValuesOutSide={getTagValuesOutSide}
         searchboxOutside={searchboxOutside}
@@ -220,4 +215,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

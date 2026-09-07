@@ -4,6 +4,8 @@ const customField = require("./customField");
 const img = require('../../controllers/images/imagesController');
 
 const router = express.Router();
+const { loadUser, adminOnly } = require('../../middelwares/permissions');
+router.use(auth, loadUser, (req, res, next) => req.method === 'GET' ? next() : adminOnly(req, res, next));
 
 // module
 router.get('/', auth, customField.index);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
@@ -58,12 +59,12 @@ const TaskAdvanceSearch = (props) => {
     end: yup.date(),
     leadAddress: yup.string(),
     assignToName: yup.string(),
-    fromLeadScore: yup.number().min(0, "From Lead Score is invalid"),
+    fromLeadScore: yup.number().min(0, tr("From Lead Score is invalid")),
     toLeadScore: yup
       .number()
       .min(
         yup.ref("fromLeadScore"),
-        "To Lead Score must be greater than or equal to From Lead Score",
+        tr("To Lead Score must be greater than or equal to From Lead Score"),
       ),
   });
   const formik = useFormik({
@@ -135,7 +136,7 @@ const TaskAdvanceSearch = (props) => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Advance Search</ModalHeader>
+          <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
               setAdvanceSearch(false);
@@ -153,16 +154,14 @@ const TaskAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Title
-                </FormLabel>
+                ><LocalizedText text="Title" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.title}
                   name="title"
-                  placeholder="Enter Title"
+                  placeholder={tr("Enter Title")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -179,9 +178,7 @@ const TaskAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Status
-                </FormLabel>
+                ><LocalizedText text="Status" /></FormLabel>
                 <Select
                   value={values?.status}
                   fontSize="sm"
@@ -189,12 +186,12 @@ const TaskAdvanceSearch = (props) => {
                   onChange={handleChange}
                   fontWeight="500"
                 >
-                  {!state && <option value="">Select Status</option>}
-                  <option value="completed">Completed</option>
-                  <option value="todo">Todo</option>
-                  <option value="pending">Pending</option>
-                  <option value="inProgress">In Progress</option>
-                  <option value="onHold">On Hold</option>
+                  {!state && <option value=""><LocalizedText text="Select Status" /></option>}
+                  <option value="completed"><LocalizedText text="Completed" /></option>
+                  <option value="todo"><LocalizedText text="Todo" /></option>
+                  <option value="pending"><LocalizedText text="Pending" /></option>
+                  <option value="inProgress"><LocalizedText text="In Progress" /></option>
+                  <option value="onHold"><LocalizedText text="On Hold" /></option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}
@@ -210,20 +207,18 @@ const TaskAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Related
-                </FormLabel>
+                ><LocalizedText text="Related" /></FormLabel>
                 <Select
                   value={values?.category}
                   fontSize="sm"
                   name="category"
                   onChange={handleChange}
                   fontWeight="500"
-                  placeholder={"Select Category"}
+                  placeholder={tr("Select Category")}
                 >
-                  <option value="contact">Contact</option>
-                  <option value="lead">Lead</option>
-                  <option value="none">None</option>
+                  <option value="contact"><LocalizedText text="Contact" /></option>
+                  <option value="lead"><LocalizedText text="Lead" /></option>
+                  <option value="none"><LocalizedText text="None" /></option>
                 </Select>
 
                 <Text mb="10px" color={"red"}>
@@ -240,16 +235,14 @@ const TaskAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Assign To
-                </FormLabel>
+                ><LocalizedText text="Assign To" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.assignToName}
                   name="assignToName"
-                  placeholder="Enter Assign To"
+                  placeholder={tr("Enter Assign To")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -268,9 +261,7 @@ const TaskAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Start Date
-                </FormLabel>
+                ><LocalizedText text="Start Date" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -278,7 +269,7 @@ const TaskAdvanceSearch = (props) => {
                   value={values?.start}
                   name="start"
                   type="date"
-                  placeholder="Enter Start Date"
+                  placeholder={tr("Enter Start Date")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -295,9 +286,7 @@ const TaskAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  End Date
-                </FormLabel>
+                ><LocalizedText text="End Date" /></FormLabel>
                 <Input
                   fontSize="sm"
                   type="date"
@@ -306,7 +295,7 @@ const TaskAdvanceSearch = (props) => {
                   value={values?.end}
                   min={values?.start}
                   name="end"
-                  placeholder="Enter  End Date"
+                  placeholder={tr("Enter  End Date")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -324,16 +313,14 @@ const TaskAdvanceSearch = (props) => {
               onClick={handleSubmit}
               disabled={isLoding || !dirty ? true : false}
             >
-              {isLoding ? <Spinner /> : "Search"}
+              {isLoding ? <Spinner /> : tr("Search")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               colorScheme="red"
               onClick={() => resetForm()}
-            >
-              Clear
-            </Button>
+            ><LocalizedText text="Clear" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -341,4 +328,4 @@ const TaskAdvanceSearch = (props) => {
   );
 };
 
-export default TaskAdvanceSearch;
+export default withLocalization(TaskAdvanceSearch);

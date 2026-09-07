@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -125,9 +126,7 @@ const Add = (props) => {
             alignItems={"center"}
             justifyContent="space-between"
             display="flex"
-          >
-            Add Lead
-            <IconButton onClick={props?.onClose} icon={<CloseIcon />} />
+          ><LocalizedText text="Add Lead" /><IconButton onClick={props?.onClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
             <CustomForm
@@ -147,9 +146,7 @@ const Add = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Associated Listing
-                </FormLabel>
+                ><LocalizedText text="Associated Listing" /></FormLabel>
                 <Flex justifyContent="space-between">
                   <Select
                     value={values?.associatedListing}
@@ -161,7 +158,7 @@ const Add = (props) => {
                         : "10px"
                     }
                     fontWeight="500"
-                    placeholder="select associated listing"
+                    placeholder={tr("select associated listing")}
                     borderColor={
                       errors?.associatedListing && touched?.associatedListing
                         ? "red.300"
@@ -198,9 +195,7 @@ const Add = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Assign to User
-                </FormLabel>
+                ><LocalizedText text="Assign to User" /></FormLabel>
                 <Flex justifyContent="space-between">
                   <Select
                     value={values?.assignUser}
@@ -212,7 +207,7 @@ const Add = (props) => {
                         : "10px"
                     }
                     fontWeight="500"
-                    placeholder="select user"
+                    placeholder={tr("select user")}
                     borderColor={
                       errors?.assignUser && touched?.assignUser
                         ? "red.300"
@@ -251,7 +246,7 @@ const Add = (props) => {
               type="submit"
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Save"}
+              {isLoding ? <Spinner /> : tr("Save")}
             </Button>
             <Button
               variant="outline"
@@ -262,9 +257,7 @@ const Add = (props) => {
                 textTransform: "capitalize",
               }}
               onClick={handleCancel}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -290,4 +283,4 @@ const Add = (props) => {
   );
 };
 
-export default Add;
+export default withLocalization(Add);

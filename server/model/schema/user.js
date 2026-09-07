@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 // create login schema
 const user = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     username: {
         type: String,
         required: true,
@@ -10,6 +11,7 @@ const user = new mongoose.Schema({
     password: {
         type: String,
         required: true,
+        select: false,
     },
     role: { type: String, default: 'user' },
     emailsent: { type: Number, default: 0 },

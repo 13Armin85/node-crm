@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
 const Opportunity = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     opportunityName: String,
     accountName: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Accounts',
+        ref: 'PartnerCustomers',
     },
     assignUser: {
         type: mongoose.Schema.Types.ObjectId,

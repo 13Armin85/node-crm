@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Checkbox,
@@ -148,7 +149,7 @@ const Add = (props) => {
       <Modal onClose={onClose} isOpen={isOpen} isCentered size="2xl">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add Validation</ModalHeader>
+          <ModalHeader><LocalizedText text="Add Validation" /></ModalHeader>
           <ModalCloseButton />
           {/* <HSeparator /> */}
           <ModalBody>
@@ -161,16 +162,14 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Name
-                  </FormLabel>
+                  ><LocalizedText text="Name" /></FormLabel>
                   <Input
                     fontSize="sm"
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values?.name}
                     name="name"
-                    placeholder="Enter Name"
+                    placeholder={tr("Enter Name")}
                     fontWeight="500"
                     borderColor={
                       errors?.name && touched?.name ? "red.300" : null
@@ -190,9 +189,7 @@ const Add = (props) => {
                       fontSize="lg"
                       fontWeight="600"
                       mb="0"
-                    >
-                      Validations
-                    </FormLabel>
+                    ><LocalizedText text="Validations" /></FormLabel>
                   </Flex>
                 </GridItem>
 
@@ -217,9 +214,7 @@ const Add = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="0"
-                    >
-                      Require
-                    </FormLabel>
+                    ><LocalizedText text="Require" /></FormLabel>
                   </Flex>
                 </GridItem>
                 <GridItem colSpan={{ base: 12, md: 8 }}>
@@ -229,9 +224,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Message
-                  </FormLabel>
+                  ><LocalizedText text="Message" /></FormLabel>
                   <Input
                     disabled={
                       values?.validations[0]?.require === true ? false : true
@@ -241,7 +234,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.validations[0]?.message}
                     name={`validations[${0}].message`}
-                    placeholder="Enter message"
+                    placeholder={tr("Enter message")}
                     fontWeight="500"
                     borderColor={
                       errors?.validations &&
@@ -286,9 +279,7 @@ const Add = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="0"
-                    >
-                      Min
-                    </FormLabel>
+                    ><LocalizedText text="Min" /></FormLabel>
                   </Flex>
                 </GridItem>
                 <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
@@ -298,9 +289,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Value
-                  </FormLabel>
+                  ><LocalizedText text="Value" /></FormLabel>
                   <Input
                     disabled={
                       values?.validations[1].min === true ? false : true
@@ -310,7 +299,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.validations[1]?.value}
                     name={`validations[${1}].value`}
-                    placeholder="Enter Min Value"
+                    placeholder={tr("Enter Min Value")}
                     fontWeight="500"
                     borderColor={
                       errors?.validations &&
@@ -336,9 +325,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Message
-                  </FormLabel>
+                  ><LocalizedText text="Message" /></FormLabel>
                   <Input
                     disabled={
                       values?.validations[1]?.min === true ? false : true
@@ -348,7 +335,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.validations[1]?.message}
                     name={`validations[${1}].message`}
-                    placeholder="Enter Min message"
+                    placeholder={tr("Enter Min message")}
                     fontWeight="500"
                     // borderColor={errors.`validations[${1}].message` && touched.validations[1].message ? "red.300" : null}
                   />
@@ -377,9 +364,7 @@ const Add = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="0"
-                    >
-                      Max
-                    </FormLabel>
+                    ><LocalizedText text="Max" /></FormLabel>
                   </Flex>
                 </GridItem>
                 <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
@@ -389,9 +374,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Value
-                  </FormLabel>
+                  ><LocalizedText text="Value" /></FormLabel>
                   <Input
                     disabled={
                       values.validations[2]?.max === true ? false : true
@@ -401,7 +384,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.validations[2]?.value}
                     name={`validations[${2}].value`}
-                    placeholder="Enter Max Value"
+                    placeholder={tr("Enter Max Value")}
                     fontWeight="500"
                     borderColor={
                       errors?.validations &&
@@ -427,9 +410,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Message
-                  </FormLabel>
+                  ><LocalizedText text="Message" /></FormLabel>
                   <Input
                     disabled={
                       values?.validations[2]?.max === true ? false : true
@@ -439,7 +420,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.validations[2]?.massage}
                     name={`validations[${2}].message`}
-                    placeholder="Enter Max Message"
+                    placeholder={tr("Enter Max Message")}
                     fontWeight="500"
                     borderColor={
                       errors?.massage && touched?.massage ? "red.300" : null
@@ -473,9 +454,7 @@ const Add = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="0"
-                    >
-                      Match
-                    </FormLabel>
+                    ><LocalizedText text="Match" /></FormLabel>
                   </Flex>
                 </GridItem>
                 <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
@@ -485,9 +464,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Value
-                  </FormLabel>
+                  ><LocalizedText text="Value" /></FormLabel>
                   <Input
                     disabled={
                       values?.validations[3]?.match === true ? false : true
@@ -497,7 +474,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.validations[3]?.value}
                     name={`validations[${3}].value`}
-                    placeholder="Enter Max Value"
+                    placeholder={tr("Enter Max Value")}
                     fontWeight="500"
                     borderColor={
                       errors?.validations &&
@@ -523,9 +500,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Message
-                  </FormLabel>
+                  ><LocalizedText text="Message" /></FormLabel>
                   <Input
                     disabled={
                       values?.validations[3]?.match === true ? false : true
@@ -535,7 +510,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.validations[3]?.massage}
                     name={`validations[${3}].message`}
-                    placeholder="Enter Match Message"
+                    placeholder={tr("Enter Match Message")}
                     fontWeight="500"
                     borderColor={
                       errors?.validations &&
@@ -581,9 +556,7 @@ const Add = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="0"
-                    >
-                      Formik Type
-                    </FormLabel>
+                    ><LocalizedText text="Formik Type" /></FormLabel>
                   </Flex>
                 </GridItem>
 
@@ -594,9 +567,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    FormikType
-                  </FormLabel>
+                  ><LocalizedText text="FormikType" /></FormLabel>
                   <Select
                     disabled={
                       values?.validations[4]?.types === true ? false : true
@@ -605,7 +576,7 @@ const Add = (props) => {
                     name={`validations[${4}].formikType`}
                     onChange={handleChange}
                     fontWeight="500"
-                    placeholder={"Select Type"}
+                    placeholder={tr("Select Type")}
                     borderColor={
                       errors?.validations &&
                       touched?.validations &&
@@ -615,17 +586,17 @@ const Add = (props) => {
                         : null
                     }
                   >
-                    <option value="string">String </option>
-                    <option value="email">Email </option>
-                    <option value="date">Date </option>
-                    <option value="number">Number </option>
-                    <option value="object">Object </option>
-                    <option value="array">Array </option>
-                    <option value="url">Url </option>
-                    <option value="boolean">Boolean </option>
-                    <option value="positive">Positive </option>
-                    <option value="negative">Negative </option>
-                    <option value="integer">Integer </option>
+                    <option value="string"><LocalizedText text="String" /></option>
+                    <option value="email"><LocalizedText text="Email" /></option>
+                    <option value="date"><LocalizedText text="Date" /></option>
+                    <option value="number"><LocalizedText text="Number" /></option>
+                    <option value="object"><LocalizedText text="Object" /></option>
+                    <option value="array"><LocalizedText text="Array" /></option>
+                    <option value="url"><LocalizedText text="Url" /></option>
+                    <option value="boolean"><LocalizedText text="Boolean" /></option>
+                    <option value="positive"><LocalizedText text="Positive" /></option>
+                    <option value="negative"><LocalizedText text="Negative" /></option>
+                    <option value="integer"><LocalizedText text="Integer" /></option>
                   </Select>
                   <Text fontSize="sm" mb="10px" color={"red"}>
                     {" "}
@@ -642,9 +613,7 @@ const Add = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Message
-                  </FormLabel>
+                  ><LocalizedText text="Message" /></FormLabel>
                   <Input
                     disabled={
                       values?.validations[4]?.types === true ? false : true
@@ -654,7 +623,7 @@ const Add = (props) => {
                     onBlur={handleBlur}
                     value={values?.validations[3]?.massage}
                     name={`validations[${3}].message`}
-                    placeholder="Enter Formik Type Message"
+                    placeholder={tr("Enter Formik Type Message")}
                     fontWeight="500"
                     borderColor={
                       errors?.validations &&
@@ -684,7 +653,7 @@ const Add = (props) => {
               disabled={isLoding ? true : false}
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Save"}
+              {isLoding ? <Spinner /> : tr("Save")}
             </Button>
             <Button
               sx={{
@@ -697,9 +666,7 @@ const Add = (props) => {
                 onClose();
                 resetForm();
               }}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -707,4 +674,4 @@ const Add = (props) => {
   );
 };
 
-export default Add;
+export default withLocalization(Add);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
   Button,
@@ -99,15 +100,14 @@ const AddDocumentModal = ({
               fontSize="sm"
               fontWeight="500"
               mb="8px"
-            >
-              Folder Name<Text color={"red"}>*</Text>
+            ><LocalizedText text="Folder Name" /><Text color={"red"}>*</Text>
             </FormLabel>
             <Input
               fontSize="sm"
               onChange={handleChange}
               value={values?.folderName}
               name="folderName"
-              placeholder="Enter Folder Name"
+              placeholder={tr("Enter Folder Name")}
               fontWeight="500"
               borderColor={
                 errors?.folderName && touched?.folderName ? "red.300" : null
@@ -125,15 +125,13 @@ const AddDocumentModal = ({
               fontSize="sm"
               fontWeight="500"
               mb="8px"
-            >
-              File Name
-            </FormLabel>
+            ><LocalizedText text="File Name" /></FormLabel>
             <Input
               fontSize="sm"
               onChange={handleChange}
               value={values?.filename}
               name="filename"
-              placeholder="Enter File Name"
+              placeholder={tr("Enter File Name")}
               fontWeight="500"
               borderColor={
                 errors?.filename && touched?.filename ? "red.300" : null
@@ -157,7 +155,7 @@ const AddDocumentModal = ({
             onClick={handleSubmit}
             disabled={isLoding ? true : false}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             size="sm"
@@ -167,13 +165,11 @@ const AddDocumentModal = ({
               setAddDocument(false);
               resetForm();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddDocumentModal;
+export default withLocalization(AddDocumentModal);

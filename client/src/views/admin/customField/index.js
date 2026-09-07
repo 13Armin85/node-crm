@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useEffect, useState } from "react";
 import {
   AddIcon,
@@ -259,7 +260,7 @@ const CustomField = () => {
         <Flex justifyContent={"space-between"} alignItems={"center"}>
           <Flex alignItems="center">
             <Text color={"secondaryGray.900"} fontSize="22px" fontWeight="700">
-              {moduleName ? "Custom Heading" : "Select Module"}
+              {moduleName ? tr("Custom Heading") : tr("Select Module")}
             </Text>
             {selectedHeadings?.length > 0 && (
               <Button
@@ -283,7 +284,7 @@ const CustomField = () => {
                     rightIcon={<ChevronDownIcon />}
                     variant="outline"
                   >
-                    {moduleName ? moduleName : "Select Module"}
+                    {moduleName ? tr(moduleName) : tr("Select Module")}
                   </MenuButton>
                   <MenuList
                     minWidth={"10rem"}
@@ -296,9 +297,7 @@ const CustomField = () => {
                         setData([]);
                         setDataFilter([]);
                       }}
-                    >
-                      Select Module
-                    </MenuItem>
+                    ><LocalizedText text="Select Module" /></MenuItem>
                     {fields?.map((item, id) => (
                       <MenuItem
                         key={id}
@@ -308,7 +307,7 @@ const CustomField = () => {
                           setHeadingId("");
                         }}
                       >
-                        {item?.moduleName}
+                        <LocalizedText text={item?.moduleName} />
                       </MenuItem>
                     ))}
                   </MenuList>
@@ -322,9 +321,7 @@ const CustomField = () => {
                   leftIcon={<AddIcon />}
                   variant="brand"
                   size="sm"
-                >
-                  Add Heading
-                </Button>
+                ><LocalizedText text="Add Heading" /></Button>
               )}
               <Button
                 onClick={() => navigate("/admin-setting")}
@@ -332,9 +329,7 @@ const CustomField = () => {
                 size="sm"
                 leftIcon={<IoIosArrowBack />}
                 ml={2}
-              >
-                Back
-              </Button>
+              ><LocalizedText text="Back" /></Button>
             </Flex>
           </Box>
         </Flex>
@@ -346,9 +341,7 @@ const CustomField = () => {
             fontSize="sm"
             my="7"
             fontWeight="700"
-          >
-            -- Please Select Module --
-          </Text>
+          ><LocalizedText text="-- Please Select Module --" /></Text>
         )}
         {isLoading ? (
           <Flex
@@ -374,9 +367,7 @@ const CustomField = () => {
                       fontSize="sm"
                       my="7"
                       fontWeight="700"
-                    >
-                      -- No Data Found --
-                    </Text>
+                    ><LocalizedText text="-- No Data Found --" /></Text>
                   ) : (
                     <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={5}>
                       {data[0]?.headings?.map((item, i) => (
@@ -431,7 +422,7 @@ const CustomField = () => {
                                         me="10px"
                                       />
                                     )}
-                                    {item?.heading}
+                                    <LocalizedText text={item?.heading} />
                                   </Text>
                                   <span className="EditDelete">
                                     {item?.editable ? (
@@ -507,7 +498,7 @@ const CustomField = () => {
                 fontSize="22px"
                 fontWeight="700"
               >
-                {moduleName && "Custom Field"}
+                {moduleName && tr("Custom Field")}
               </Text>
               {selectedValues?.length > 0 && (
                 <Button
@@ -530,7 +521,7 @@ const CustomField = () => {
                     rightIcon={<ChevronDownIcon />}
                     variant="outline"
                   >
-                    {heading ? heading : "Select All Headings"}
+                    {heading ? tr(heading) : tr("Select All Headings")}
                   </MenuButton>
                   <MenuList
                     minWidth={"10rem"}
@@ -542,9 +533,7 @@ const CustomField = () => {
                         setHeading("");
                         setHeadingId("");
                       }}
-                    >
-                      Select All Headings
-                    </MenuItem>
+                    ><LocalizedText text="Select All Headings" /></MenuItem>
                     {data[0]?.headings?.map((item, id) => (
                       <MenuItem
                         key={id}
@@ -553,7 +542,7 @@ const CustomField = () => {
                           setHeadingId(item?._id);
                         }}
                       >
-                        {item?.heading}
+                        <LocalizedText text={item?.heading} />
                       </MenuItem>
                     ))}
                   </MenuList>
@@ -567,9 +556,7 @@ const CustomField = () => {
                   variant="brand"
                   leftIcon={<AddIcon />}
                   size="sm"
-                >
-                  Add Field
-                </Button>
+                ><LocalizedText text="Add Field" /></Button>
               )}
             </Box>
           </Flex>
@@ -598,9 +585,7 @@ const CustomField = () => {
                           fontSize="sm"
                           my="7"
                           fontWeight="700"
-                        >
-                          -- No Data Found --
-                        </Text>
+                        ><LocalizedText text="-- No Data Found --" /></Text>
                       ) : (
                         <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={5}>
                           {dataFilter &&
@@ -657,7 +642,7 @@ const CustomField = () => {
                                               me="10px"
                                             />
                                           )}
-                                          {item?.label}
+                                          <LocalizedText text={item?.label} />
                                         </Text>
                                         <span className="EditDelete">
                                           {item?.editable ? (
@@ -776,4 +761,4 @@ const CustomField = () => {
   );
 };
 
-export default CustomField;
+export default withLocalization(CustomField);

@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 // Chakra imports
 // Chakra imports
 import {
@@ -29,15 +30,16 @@ export default function Default(props) {
       >
         {startContent}
 
-        <Stat my="auto" ms={startContent ? "18px" : "0px"}>
+        <Stat my="auto" minW="0" ms={startContent ? "18px" : "0px"}>
           <StatLabel
-            lineHeight="100%"
+            lineHeight="1.5"
+            overflowWrap="anywhere"
             color={textColorSecondary}
             fontSize={{
               base: props.fontsize ? props.fontsize : "sm",
             }}
           >
-            {name}
+            <LocalizedText text={name} />
           </StatLabel>
           <StatNumber
             color={textColor}
@@ -45,7 +47,7 @@ export default function Default(props) {
               base: "2xl",
             }}
           >
-            <CountUpComponent targetNumber={value} />
+            {value != null && <CountUpComponent targetNumber={value} />}
             {/* {value} */}
           </StatNumber>
           {growth ? (
@@ -53,9 +55,7 @@ export default function Default(props) {
               <Text color="green.500" fontSize="xs" fontWeight="700" me="5px">
                 {growth}
               </Text>
-              <Text color="secondaryGray.600" fontSize="xs" fontWeight="400">
-                since last month
-              </Text>
+              <Text color="secondaryGray.600" fontSize="xs" fontWeight="400"><LocalizedText text="since last month" /></Text>
             </Flex>
           ) : null}
         </Stat>

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -43,7 +44,7 @@ const ContactModel = (props) => {
     setContactData(result?.payload?.data);
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(result?.payload?.data?.[0]?.fields || [])
         .filter((field) => field?.isTableField === true)
         .map((field) => ({ Header: field?.label, accessor: field?.name })),
@@ -60,7 +61,7 @@ const ContactModel = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select Contact</ModalHeader>
+        <ModalHeader><LocalizedText text="Select Contact" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -69,7 +70,7 @@ const ContactModel = (props) => {
             </Flex>
           ) : (
             <CommonCheckTable
-              title={"Contacts"}
+              title={tr("Contacts")}
               isLoding={isLoding}
               columnData={columns ?? []}
               // dataColumn={columns ?? []}
@@ -100,20 +101,18 @@ const ContactModel = (props) => {
             leftIcon={<GiClick />}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Select"}
+            {isLoding ? <Spinner /> : tr("Select")}
           </Button>
           <Button
             variant="outline"
             size="sm"
             colorScheme="red"
             onClick={() => onClose()}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default ContactModel;
+export default withLocalization(ContactModel);

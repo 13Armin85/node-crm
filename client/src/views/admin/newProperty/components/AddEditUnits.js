@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -40,16 +41,16 @@ const AddEditUnits = (props) => {
   });
 
   const validationSchema = yup.object({
-    name: yup.string().required("Name Is required"),
+    name: yup.string().required(tr("Name Is required")),
     sqm: yup
       .number()
-      .required("Sqm Is required")
+      .required(tr("Sqm Is required"))
       .typeError("Sqm must be a number"),
     price: yup
       .number()
-      .required("Price Is required")
+      .required(tr("Price Is required"))
       .typeError("Price must be a number"),
-    executive: yup.string().required("Executive Is required"),
+    executive: yup.string().required(tr("Executive Is required")),
   });
 
   const formik = useFormik({
@@ -118,8 +119,7 @@ const AddEditUnits = (props) => {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader justifyContent="space-between" display="flex">
-          {actionType === "Edit" ? "Edit" : "Add"} Unit
-          <IconButton onClick={handelClose} icon={<CloseIcon />} />
+          {actionType === "Edit" ? tr("Edit") : tr("Add")}<LocalizedText text="Unit" /><IconButton onClick={handelClose} icon={<CloseIcon />} />
         </ModalHeader>
         <ModalBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -130,8 +130,7 @@ const AddEditUnits = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Name<Text color={"red"}>*</Text>
+              ><LocalizedText text="Name" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -139,7 +138,7 @@ const AddEditUnits = (props) => {
                 onBlur={handleBlur}
                 value={values?.name}
                 name="name"
-                placeholder="Enter Name"
+                placeholder={tr("Enter Name")}
                 fontWeight="500"
                 borderColor={errors?.name && touched?.name ? "red.300" : null}
               />
@@ -154,8 +153,7 @@ const AddEditUnits = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Sqm<Text color={"red"}>*</Text>
+              ><LocalizedText text="Sqm" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -163,7 +161,7 @@ const AddEditUnits = (props) => {
                 onBlur={handleBlur}
                 value={values?.sqm}
                 name="sqm"
-                placeholder="Enter Sqm"
+                placeholder={tr("Enter Sqm")}
                 fontWeight="500"
                 borderColor={errors?.sqm && touched?.sqm ? "red.300" : null}
               />
@@ -178,8 +176,7 @@ const AddEditUnits = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Executive<Text color={"red"}>*</Text>
+              ><LocalizedText text="Executive" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -187,7 +184,7 @@ const AddEditUnits = (props) => {
                 onBlur={handleBlur}
                 value={values?.executive}
                 name="executive"
-                placeholder="Enter Executive"
+                placeholder={tr("Enter Executive")}
                 fontWeight="500"
                 borderColor={
                   errors?.executive && touched?.executive ? "red.300" : null
@@ -204,8 +201,7 @@ const AddEditUnits = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Price<Text color={"red"}>*</Text>
+              ><LocalizedText text="Price" /><Text color={"red"}>*</Text>
               </FormLabel>
               <InputGroup>
                 <Input
@@ -214,7 +210,7 @@ const AddEditUnits = (props) => {
                   onBlur={handleBlur}
                   value={values?.price}
                   name="price"
-                  placeholder="Enter Price"
+                  placeholder={tr("Enter Price")}
                   fontWeight="500"
                   borderColor={
                     errors?.price && touched?.price ? "red.300" : null
@@ -249,13 +245,11 @@ const AddEditUnits = (props) => {
             colorScheme="red"
             size="sm"
             onClick={handelClose}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddEditUnits;
+export default withLocalization(AddEditUnits);

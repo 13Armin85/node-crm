@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -41,11 +42,11 @@ const Edit = (props) => {
   };
 
   const validationSchema = yup.object({
-    accountName: yup.string().required("AccountName Is required"),
-    accountNumber: yup.number().required("AccountNumber Is required"),
-    bank: yup.string().required("Bank Is required"),
-    branch: yup.string().required("Branch Is required"),
-    swiftCode: yup.number().required("SwiftCode Is required"),
+    accountName: yup.string().required(tr("Bank Account Holder is required")),
+    accountNumber: yup.number().required(tr("AccountNumber Is required")),
+    bank: yup.string().required(tr("Bank Is required")),
+    branch: yup.string().required(tr("Branch Is required")),
+    swiftCode: yup.number().required(tr("SwiftCode Is required")),
   });
 
   const formik = useFormik({
@@ -102,8 +103,7 @@ const Edit = (props) => {
             alignItems={"center"}
             justifyContent="space-between"
             display="flex"
-          >
-            Edit {values?.accountName || "Bank Details"}
+          ><LocalizedText text="Edit" />{values?.accountName || "Bank Details"}
             <IconButton onClick={handleClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
@@ -115,8 +115,7 @@ const Edit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Account Name<Text color={"red"}>*</Text>
+                ><LocalizedText text="Bank Account Holder" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -124,7 +123,7 @@ const Edit = (props) => {
                   onBlur={handleBlur}
                   value={values?.accountName}
                   name="accountName"
-                  placeholder="Account Name"
+                  placeholder={tr("Bank Account Holder")}
                   fontWeight="500"
                   borderColor={
                     errors?.accountName && touched?.accountName
@@ -153,8 +152,7 @@ const Edit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Account Number<Text color={"red"}>*</Text>
+                ><LocalizedText text="Account Number" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -162,7 +160,7 @@ const Edit = (props) => {
                   onBlur={handleBlur}
                   value={values?.accountNumber}
                   name="accountNumber"
-                  placeholder="Account Number"
+                  placeholder={tr("Account Number")}
                   fontWeight="500"
                   borderColor={
                     errors?.accountNumber && touched?.accountNumber
@@ -192,8 +190,7 @@ const Edit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Bank<Text color={"red"}>*</Text>
+                ><LocalizedText text="Bank" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -201,7 +198,7 @@ const Edit = (props) => {
                   onBlur={handleBlur}
                   value={values?.bank}
                   name="bank"
-                  placeholder="Bank"
+                  placeholder={tr("Bank")}
                   fontWeight="500"
                   borderColor={errors?.bank && touched?.bank ? "red.300" : null}
                   error={formik?.touched?.bank && Boolean(formik?.errors?.bank)}
@@ -219,8 +216,7 @@ const Edit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Branch<Text color={"red"}>*</Text>
+                ><LocalizedText text="Branch" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -228,7 +224,7 @@ const Edit = (props) => {
                   onBlur={handleBlur}
                   value={values?.branch}
                   name="branch"
-                  placeholder="Branch"
+                  placeholder={tr("Branch")}
                   fontWeight="500"
                   borderColor={
                     errors?.branch && touched?.branch ? "red.300" : null
@@ -250,8 +246,7 @@ const Edit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Swift Code<Text color={"red"}>*</Text>
+                ><LocalizedText text="Swift Code" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -259,7 +254,7 @@ const Edit = (props) => {
                   onBlur={handleBlur}
                   value={values?.swiftCode}
                   name="swiftCode"
-                  placeholder="Swift Code"
+                  placeholder={tr("Swift Code")}
                   fontWeight="500"
                   borderColor={
                     errors?.swiftCode && touched?.swiftCode ? "red.300" : null
@@ -288,7 +283,7 @@ const Edit = (props) => {
               disabled={isLoding ? true : false}
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Update"}
+              {isLoding ? <Spinner /> : tr("Update")}
             </Button>
             <Button
               variant="outline"
@@ -299,9 +294,7 @@ const Edit = (props) => {
                 textTransform: "capitalize",
               }}
               onClick={handleClose}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -309,4 +302,4 @@ const Edit = (props) => {
   );
 };
 
-export default Edit;
+export default withLocalization(Edit);

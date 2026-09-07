@@ -14,7 +14,7 @@ const Index = () => {
   const navigate = useNavigate();
   return (
     <div>
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap="20px" mb="20px">
+      <SimpleGrid templateColumns="repeat(auto-fit, minmax(min(100%, 220px), 1fr))" gap="20px" mb="20px">
         <MiniStatistics
           fontsize="md"
           onClick={() => navigate("/user")}

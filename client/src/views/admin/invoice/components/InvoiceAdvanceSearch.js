@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
@@ -122,7 +123,7 @@ const InvoiceAdvanceSearch = (props) => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Advance Search</ModalHeader>
+          <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
               setAdvanceSearch(false);
@@ -140,9 +141,7 @@ const InvoiceAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Invoice Number
-                </FormLabel>
+                ><LocalizedText text="Invoice Number" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -150,7 +149,7 @@ const InvoiceAdvanceSearch = (props) => {
                   value={values?.invoiceNumber}
                   name="invoiceNumber"
                   type="number"
-                  placeholder="Enter Invoice Number"
+                  placeholder={tr("Enter Invoice Number")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -169,16 +168,14 @@ const InvoiceAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Title
-                </FormLabel>
+                ><LocalizedText text="Title" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.title}
                   name="title"
-                  placeholder="Enter Title"
+                  placeholder={tr("Enter Title")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -195,23 +192,21 @@ const InvoiceAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Status
-                </FormLabel>
+                ><LocalizedText text="Status" /></FormLabel>
                 <Select
                   value={values?.status}
                   name="status"
                   onChange={handleChange}
                   mb={errors?.status && touched?.status ? undefined : "10px"}
                   fontWeight="500"
-                  placeholder={"Status"}
+                  placeholder={tr("Status")}
                   borderColor={
                     errors?.status && touched?.status ? "red.300" : null
                   }
                 >
-                  <option value="Paid">Paid</option>
-                  <option value="Unpaid">Unpaid</option>
-                  <option value="Cancelled">Cancelled</option>
+                  <option value="Paid"><LocalizedText text="Paid" /></option>
+                  <option value="Unpaid"><LocalizedText text="Unpaid" /></option>
+                  <option value="Cancelled"><LocalizedText text="Cancelled" /></option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}
@@ -227,16 +222,14 @@ const InvoiceAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Contact Name
-                </FormLabel>
+                ><LocalizedText text="Contact Name" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.contactName}
                   name="contactName"
-                  placeholder="Enter Contact Name"
+                  placeholder={tr("Enter Contact Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -255,16 +248,14 @@ const InvoiceAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Account Name
-                </FormLabel>
+                ><LocalizedText text="Account Name" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.accountName}
                   name="accountName"
-                  placeholder="Enter Account Name"
+                  placeholder={tr("Enter Account Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -283,16 +274,14 @@ const InvoiceAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Grand Total
-                </FormLabel>
+                ><LocalizedText text="Grand Total" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.grandTotal}
                   name="grandTotal"
-                  placeholder="Enter Grand Total"
+                  placeholder={tr("Enter Grand Total")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -312,16 +301,14 @@ const InvoiceAdvanceSearch = (props) => {
               onClick={handleSubmit}
               disabled={isLoding || !dirty ? true : false}
             >
-              {isLoding ? <Spinner /> : "Search"}
+              {isLoding ? <Spinner /> : tr("Search")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               colorScheme="red"
               onClick={() => resetForm()}
-            >
-              Clear
-            </Button>
+            ><LocalizedText text="Clear" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -329,4 +316,4 @@ const InvoiceAdvanceSearch = (props) => {
   );
 };
 
-export default InvoiceAdvanceSearch;
+export default withLocalization(InvoiceAdvanceSearch);

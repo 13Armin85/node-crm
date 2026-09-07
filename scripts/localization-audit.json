@@ -1,0 +1,34 @@
+[
+  [
+    "Element with ID 'reports' not found.",
+    16
+  ],
+  [
+    "Failed to fetch users data:",
+    6
+  ],
+  [
+    "Active",
+    1
+  ],
+  [
+    "Pending",
+    1
+  ],
+  [
+    "Sold",
+    1
+  ],
+  [
+    "Error decoding token:",
+    1
+  ],
+  [
+    "Error fetching data:",
+    1
+  ],
+  [
+    "Bank Details Not Found",
+    1
+  ]
+]

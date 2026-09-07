@@ -1,3 +1,4 @@
+import { LocalizedText, tr } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -210,9 +211,7 @@ export const BankDetails = (props) => {
                 borderRadius: "15px",
                 marginTop: "20px",
               }}
-            >
-              View More
-            </Button>
+            ><LocalizedText text="View More" /></Button>
           </GridItem>
         )}
       </Grid>
@@ -226,9 +225,7 @@ export const BankDetails = (props) => {
             fontSize="sm"
             fontWeight="500"
             mb="8px"
-          >
-            Account Name
-            <Text color={"red"}>*</Text>
+          ><LocalizedText text="Account Name" /><Text color={"red"}>*</Text>
           </FormLabel>
           <Input
             fontSize="sm"
@@ -237,7 +234,7 @@ export const BankDetails = (props) => {
             value={values?.accountName}
             id="accountName"
             name="accountName"
-            placeholder="Enter Account Name"
+            placeholder={tr("Enter Account Name")}
             fontWeight="500"
             borderColor={
               errors?.accountName && touched?.accountName ? "red.300" : null
@@ -254,8 +251,7 @@ export const BankDetails = (props) => {
             fontSize="sm"
             fontWeight="500"
             mb="8px"
-          >
-            Bank<Text color={"red"}>*</Text>
+          ><LocalizedText text="Bank" /><Text color={"red"}>*</Text>
           </FormLabel>
           <Input
             fontSize="sm"
@@ -263,7 +259,7 @@ export const BankDetails = (props) => {
             value={values?.bank}
             onBlur={handleBlur}
             name="bank"
-            placeholder="Enter Bank"
+            placeholder={tr("Enter Bank")}
             fontWeight="500"
             borderColor={errors?.bank && touched?.bank ? "red.300" : null}
           />
@@ -278,8 +274,7 @@ export const BankDetails = (props) => {
             fontSize="sm"
             fontWeight="500"
             mb="8px"
-          >
-            Branch<Text color={"red"}>*</Text>
+          ><LocalizedText text="Branch" /><Text color={"red"}>*</Text>
           </FormLabel>
           <Input
             fontSize="sm"
@@ -287,7 +282,7 @@ export const BankDetails = (props) => {
             onBlur={handleBlur}
             value={values?.branch}
             name="branch"
-            placeholder="Enter Branch"
+            placeholder={tr("Enter Branch")}
             fontWeight="500"
             borderColor={errors?.branch && touched?.branch ? "red.300" : null}
           />
@@ -302,8 +297,7 @@ export const BankDetails = (props) => {
             fontSize="sm"
             fontWeight="500"
             mb="8px"
-          >
-            Account Number<Text color={"red"}>*</Text>
+          ><LocalizedText text="Account Number" /><Text color={"red"}>*</Text>
           </FormLabel>
           <Input
             fontSize="sm"
@@ -311,7 +305,7 @@ export const BankDetails = (props) => {
             onChange={handleChange}
             value={values?.accountNumber}
             name="accountNumber"
-            placeholder="Enter Account Number"
+            placeholder={tr("Enter Account Number")}
             fontWeight="500"
             borderColor={
               errors?.accountNumber && touched?.accountNumber ? "red.300" : null
@@ -330,8 +324,7 @@ export const BankDetails = (props) => {
             fontSize="sm"
             fontWeight="500"
             mb="8px"
-          >
-            Swift Code<Text color={"red"}>*</Text>
+          ><LocalizedText text="Swift Code" /><Text color={"red"}>*</Text>
           </FormLabel>
           <Input
             fontSize="sm"
@@ -339,7 +332,7 @@ export const BankDetails = (props) => {
             onBlur={handleBlur}
             value={values?.swiftCode}
             name="swiftCode"
-            placeholder="Enter swift Code"
+            placeholder={tr("Enter swift Code")}
             fontWeight="500"
             borderColor={
               errors?.swiftCode && touched?.swiftCode ? "red.300" : null
@@ -357,8 +350,7 @@ export const BankDetails = (props) => {
             fontSize="sm"
             fontWeight="500"
             mb="8px"
-          >
-            Currency<Text color={"red"}>*</Text>
+          ><LocalizedText text="Currency" /><Text color={"red"}>*</Text>
           </FormLabel>
           <RadioGroup
             onChange={(e) => {
@@ -368,8 +360,8 @@ export const BankDetails = (props) => {
             value={values?.currency}
           >
             <Stack direction="row">
-              <Radio value="ksh">KSH</Radio>
-              <Radio value="usd">USD</Radio>
+              <Radio value="ksh"><LocalizedText text="KSH" /></Radio>
+              <Radio value="usd"><LocalizedText text="USD" /></Radio>
             </Stack>
           </RadioGroup>
         </GridItem>
@@ -381,7 +373,7 @@ export const BankDetails = (props) => {
               name="amount"
               onChange={handleChange}
               onBlur={handleBlur}
-              placeholder="Enter amount"
+              placeholder={tr("Enter amount")}
               value={values?.amount}
               borderColor={errors?.amount && touched?.amount ? "red.300" : null}
             />
@@ -404,9 +396,7 @@ export const BankDetails = (props) => {
             colorScheme="brand"
             disabled={!isValid || !dirty}
             leftIcon={<FaFilePdf />}
-          >
-            Download Recipient
-          </Button>
+          ><LocalizedText text="Download Recipient" /></Button>
         </GridItem>
         <GridItem
           colSpan={{ base: 6 }}
@@ -421,9 +411,7 @@ export const BankDetails = (props) => {
             disabled={!isValid || !dirty}
             colorScheme="brand"
             leftIcon={<FaSave />}
-          >
-            Save Bank Details
-          </Button>
+          ><LocalizedText text="Save Bank Details" /></Button>
         </GridItem>
         <BankDetailsModel
           isOpen={bankDetailsModel}

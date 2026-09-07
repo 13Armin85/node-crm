@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
   ChevronDownIcon,
@@ -124,9 +125,9 @@ const View = () => {
   ]);
 
   const emailColumn = [
-    { Header: "sender", accessor: "senderName" },
+    { Header: tr("sender"), accessor: "senderName" },
     {
-      Header: "recipient",
+      Header: tr("recipient"),
       accessor: "recipient",
       cell: (cell) => (
         <Link to={`/Email/${cell?.row?.original?._id}`}>
@@ -145,7 +146,7 @@ const View = () => {
       ),
     },
     {
-      Header: "time stamp",
+      Header: tr("time stamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -156,7 +157,7 @@ const View = () => {
       ),
     },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "createBy",
       cell: (cell) => (
         <div className="selectOpt">
@@ -168,12 +169,12 @@ const View = () => {
     },
   ];
   const contactColumns = [
-    { Header: "Title", accessor: "title" },
-    { Header: "First Name", accessor: "firstName" },
-    { Header: "Last Name", accessor: "lastName" },
-    { Header: "Phone Number", accessor: "phoneNumber" },
-    { Header: "Email Address", accessor: "email" },
-    { Header: "Contact Method", accessor: "preferredContactMethod" },
+    { Header: tr("Title"), accessor: "title" },
+    { Header: tr("First Name"), accessor: "firstName" },
+    { Header: tr("Last Name"), accessor: "lastName" },
+    { Header: tr("Phone Number"), accessor: "phoneNumber" },
+    { Header: tr("Email Address"), accessor: "email" },
+    { Header: tr("Contact Method"), accessor: "preferredContactMethod" },
   ];
 
   const fetchCustomDataFields = async () => {
@@ -182,7 +183,7 @@ const View = () => {
     setContactData(result?.payload?.data);
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...result?.payload?.data?.[0]?.fields
         ?.filter((field) => field?.isTableField === true)
         ?.map((field) => ({ Header: field?.label, accessor: field?.name })),
@@ -192,9 +193,9 @@ const View = () => {
   };
 
   const callColumns = [
-    { Header: "sender", accessor: "senderName" },
+    { Header: tr("sender"), accessor: "senderName" },
     {
-      Header: "recipient",
+      Header: tr("recipient"),
       accessor: "recipient",
       cell: (cell) => (
         <Link to={`/phone-call/${cell?.row?.original?._id}`}>
@@ -213,7 +214,7 @@ const View = () => {
       ),
     },
     {
-      Header: "time stamp",
+      Header: tr("time stamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -224,7 +225,7 @@ const View = () => {
       ),
     },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "createBy",
       cell: (cell) => (
         <div className="selectOpt">
@@ -378,11 +379,11 @@ const View = () => {
                     },
                   }}
                 >
-                  <Tab>Information</Tab>
+                  <Tab><LocalizedText text="Information" /></Tab>
                   {(emailAccess?.view || callAccess?.view) && (
-                    <Tab>Communication</Tab>
+                    <Tab><LocalizedText text="Communication" /></Tab>
                   )}
-                  <Tab>Gallery</Tab>
+                  <Tab><LocalizedText text="Gallery" /></Tab>
                 </TabList>
               </GridItem>
               <GridItem
@@ -403,9 +404,7 @@ const View = () => {
                         mr={2.5}
                         as={Button}
                         rightIcon={<ChevronDownIcon />}
-                      >
-                        Actions
-                      </MenuButton>
+                      ><LocalizedText text="Actions" /></MenuButton>
                     )}
                     <MenuDivider />
                     <MenuList minWidth={2}>
@@ -415,18 +414,14 @@ const View = () => {
                           color={"blue"}
                           onClick={() => onOpen()}
                           icon={<AddIcon />}
-                        >
-                          Add
-                        </MenuItem>
+                        ><LocalizedText text="Add" /></MenuItem>
                       )}
                       {(user?.role === "superAdmin" || permission?.update) && (
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => setEdit(true)}
                           icon={<EditIcon />}
-                        >
-                          Edit
-                        </MenuItem>
+                        ><LocalizedText text="Edit" /></MenuItem>
                       )}
                       <MenuItem
                         onClick={generatePDF}
@@ -434,9 +429,7 @@ const View = () => {
                         icon={<FaFilePdf />}
                         display={"flex"}
                         style={{ alignItems: "center" }}
-                      >
-                        Print as PDF
-                      </MenuItem>
+                      ><LocalizedText text="Print as PDF" /></MenuItem>
                       {(user?.role === "superAdmin" || permission?.delete) && (
                         <>
                           <MenuDivider />
@@ -445,9 +438,7 @@ const View = () => {
                             color={"red"}
                             onClick={() => setDelete(true)}
                             icon={<DeleteIcon />}
-                          >
-                            Delete
-                          </MenuItem>
+                          ><LocalizedText text="Delete" /></MenuItem>
                         </>
                       )}
                     </MenuList>
@@ -457,9 +448,7 @@ const View = () => {
                       size="sm"
                       leftIcon={<IoIosArrowBack />}
                       variant="brand"
-                    >
-                      Back
-                    </Button>
+                    ><LocalizedText text="Back" /></Button>
                   </Link>
                 </Flex>
               </GridItem>
@@ -487,7 +476,7 @@ const View = () => {
                               access={false}
                               columnData={columns ?? []}
                               // dataColumn={columns ?? []}
-                              title={"Interested Contact"}
+                              title={tr("Interested Contact")}
                               allData={filteredContacts ?? []}
                               tableData={filteredContacts}
                               // selectedColumns={selectedColumns}
@@ -521,7 +510,7 @@ const View = () => {
                         <GridItem colSpan={{ base: 12, md: 6 }}>
                           <Card>
                             <CommonCheckTable
-                              title={"Email"}
+                              title={tr("Email")}
                               isLoding={isLoding}
                               columnData={emailColumn ?? []}
                               allData={setEmail}
@@ -543,7 +532,7 @@ const View = () => {
                         <GridItem colSpan={{ base: 12, md: 6 }}>
                           <Card>
                             <CommonCheckTable
-                              title={"Call"}
+                              title={tr("Call")}
                               isLoding={isLoding}
                               columnData={callColumns ?? []}
                               allData={phoneCall}
@@ -577,15 +566,13 @@ const View = () => {
                               justifyContent={"space-between"}
                               alingItem={"center"}
                             >
-                              <Heading size="md">Property Photos</Heading>
+                              <Heading size="md"><LocalizedText text="Property Photos" /></Heading>
                               <Button
                                 size="sm"
                                 leftIcon={<AddIcon />}
                                 onClick={() => setPropertyPhoto(true)}
                                 variant="brand"
-                              >
-                                Add New
-                              </Button>
+                              ><LocalizedText text="Add New" /></Button>
                               <PropertyPhoto
                                 text="Property Photos"
                                 fetchData={fetchData}
@@ -636,9 +623,7 @@ const View = () => {
                                   setDisplayPropertyPhoto(true);
                                   setType("photo");
                                 }}
-                              >
-                                Show more
-                              </Button>
+                              ><LocalizedText text="Show more" /></Button>
                             </Flex>
                           ) : (
                             ""
@@ -658,17 +643,13 @@ const View = () => {
                               justifyContent={"space-between"}
                               alingItem={"center"}
                             >
-                              <Heading size="md">
-                                Virtual Tours or Videos
-                              </Heading>
+                              <Heading size="md"><LocalizedText text="Virtual Tours or Videos" /></Heading>
                               <Button
                                 size="sm"
                                 leftIcon={<AddIcon />}
                                 onClick={() => setVirtualToursorVideos(true)}
                                 variant="brand"
-                              >
-                                Add New
-                              </Button>
+                              ><LocalizedText text="Add New" /></Button>
                               <PropertyPhoto
                                 text="Virtual Tours or Videos"
                                 fetchData={fetchData}
@@ -728,15 +709,13 @@ const View = () => {
                               justifyContent={"space-between"}
                               alingItem={"center"}
                             >
-                              <Heading size="md">Floor Plans</Heading>
+                              <Heading size="md"><LocalizedText text="Floor Plans" /></Heading>
                               <Button
                                 size="sm"
                                 leftIcon={<AddIcon />}
                                 onClick={() => setFloorPlans(true)}
                                 variant="brand"
-                              >
-                                Add New
-                              </Button>
+                              ><LocalizedText text="Add New" /></Button>
                               <PropertyPhoto
                                 text="Floor Plans"
                                 fetchData={fetchData}
@@ -788,9 +767,7 @@ const View = () => {
                                   setDisplayPropertyPhoto(true);
                                   setType("floor");
                                 }}
-                              >
-                                Show more
-                              </Button>
+                              ><LocalizedText text="Show more" /></Button>
                             </Flex>
                           ) : (
                             ""
@@ -810,15 +787,13 @@ const View = () => {
                               justifyContent={"space-between"}
                               alingItem={"center"}
                             >
-                              <Heading size="md">Property Documents</Heading>
+                              <Heading size="md"><LocalizedText text="Property Documents" /></Heading>
                               <Button
                                 size="sm"
                                 variant="brand"
                                 leftIcon={<AddIcon />}
                                 onClick={() => setPropertyDocuments(true)}
-                              >
-                                Add New
-                              </Button>
+                              ><LocalizedText text="Add New" /></Button>
                               <PropertyPhoto
                                 text="Property Documents"
                                 fetchData={fetchData}
@@ -908,9 +883,7 @@ const View = () => {
                               setShowProperty(true);
                               setType("Doucument");
                             }}
-                          >
-                            Show more
-                          </Button>
+                          ><LocalizedText text="Show more" /></Button>
                         </Flex>
                       ) : (
                         ""
@@ -937,9 +910,7 @@ const View = () => {
                         mr={2.5}
                         variant="outline"
                         colorScheme="green"
-                      >
-                        Edit
-                      </Button>
+                      ><LocalizedText text="Edit" /></Button>
                     )}
                     {permission?.delete && (
                       <Button
@@ -948,9 +919,7 @@ const View = () => {
                         onClick={() => setDelete(true)}
                         leftIcon={<DeleteIcon />}
                         colorScheme="red"
-                      >
-                        Delete
-                      </Button>
+                      ><LocalizedText text="Delete" /></Button>
                     )}
                   </Flex>
                 </GridItem>
@@ -969,7 +938,7 @@ const View = () => {
         <ModalContent maxWidth={"6xl"} height={"750px"}>
           <ModalHeader>
             {type === "photo"
-              ? "Property All Photos"
+              ? tr("Property All Photos")
               : type === "video"
                 ? "Virtual Tours or Videos"
                 : type === "floor"
@@ -1035,9 +1004,7 @@ const View = () => {
               colorScheme="red"
               mr={2}
               onClick={() => setDisplayPropertyPhoto(false)}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1046,7 +1013,7 @@ const View = () => {
       <Modal onClose={() => setShowProperty(false)} isOpen={showProperty}>
         <ModalOverlay />
         <ModalContent maxWidth={"xl"} height={"750px"}>
-          <ModalHeader>Property All Document</ModalHeader>
+          <ModalHeader><LocalizedText text="Property All Document" /></ModalHeader>
           <ModalCloseButton onClick={() => setShowProperty(false)} />
           <ModalBody overflowY={"auto"} height={"700px"}>
             {data?.propertyDocuments?.length > 0 ? (
@@ -1109,9 +1076,7 @@ const View = () => {
               colorScheme="red"
               mr={2}
               onClick={() => setShowProperty(false)}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1119,4 +1084,4 @@ const View = () => {
   );
 };
 
-export default View;
+export default withLocalization(View);

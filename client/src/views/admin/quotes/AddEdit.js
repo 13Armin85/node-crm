@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { AddIcon, CloseIcon } from "@chakra-ui/icons";
 import {
   Box,
@@ -372,15 +373,12 @@ const AddEdit = (props) => {
             justifyContent="space-between"
             display="flex"
           >
-            {type === "add" ? "Add" : "Edit"} Quotes
-            <IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
+            {type === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="Quotes" /><IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 12 }}>
-                <Heading as="h1" size="md" mt="10px">
-                  Overview
-                </Heading>
+                <Heading as="h1" size="md" mt="10px"><LocalizedText text="Overview" /></Heading>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel
@@ -389,15 +387,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Title<Text color={"red"}>*</Text>
+                ><LocalizedText text="Title" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.title}
                   name="title"
                   onChange={handleChange}
-                  placeholder="Title"
+                  placeholder={tr("Title")}
                   fontWeight="500"
                   borderColor={
                     errors?.title && touched?.title ? "red.300" : null
@@ -416,9 +413,7 @@ const AddEdit = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Opportunity
-                  </FormLabel>
+                  ><LocalizedText text="Opportunity" /></FormLabel>
                   <Flex justifyContent={"space-between"}>
                     <Select
                       value={values?.oppotunity}
@@ -430,7 +425,7 @@ const AddEdit = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Opportunity"}
+                      placeholder={tr("Opportunity")}
                       borderColor={
                         errors?.oppotunity && touched?.oppotunity
                           ? "red.300"
@@ -469,8 +464,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Quote Stage<Text color={"red"}>*</Text>
+                ><LocalizedText text="Quote Stage" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Select
                   value={values?.quoteStage}
@@ -482,19 +476,19 @@ const AddEdit = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Quote Stage"}
+                  placeholder={tr("Quote Stage")}
                   borderColor={
                     errors?.quoteStage && touched?.quoteStage ? "red.300" : null
                   }
                 >
-                  <option value="Draft">Draft</option>
-                  <option value="Negotiation">Negotiation</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="On Hold">On Hold</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Closed Accepted">Closed Accepted</option>
-                  <option value="Closed Lost">Closed Lost</option>
-                  <option value="Closed Dead">Closed Dead</option>
+                  <option value="Draft"><LocalizedText text="Draft" /></option>
+                  <option value="Negotiation"><LocalizedText text="Negotiation" /></option>
+                  <option value="Delivered"><LocalizedText text="Delivered" /></option>
+                  <option value="On Hold"><LocalizedText text="On Hold" /></option>
+                  <option value="Confirmed"><LocalizedText text="Confirmed" /></option>
+                  <option value="Closed Accepted"><LocalizedText text="Closed Accepted" /></option>
+                  <option value="Closed Lost"><LocalizedText text="Closed Lost" /></option>
+                  <option value="Closed Dead"><LocalizedText text="Closed Dead" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -510,9 +504,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Invoice Status
-                </FormLabel>
+                ><LocalizedText text="Invoice Status" /></FormLabel>
                 <Select
                   value={values?.invoiceStatus}
                   name="invoiceStatus"
@@ -523,15 +515,15 @@ const AddEdit = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Invoice Status"}
+                  placeholder={tr("Invoice Status")}
                   borderColor={
                     errors?.invoiceStatus && touched?.invoiceStatus
                       ? "red.300"
                       : null
                   }
                 >
-                  <option value="Not Invoiced">Not Invoiced</option>
-                  <option value="Invoiced">Invoiced</option>
+                  <option value="Not Invoiced"><LocalizedText text="Not Invoiced" /></option>
+                  <option value="Invoiced"><LocalizedText text="Invoiced" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -548,8 +540,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Valid Until<Text color={"red"}>*</Text>
+                ><LocalizedText text="Valid Until" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -557,7 +548,7 @@ const AddEdit = (props) => {
                   name="validUntil"
                   type="date"
                   onChange={handleChange}
-                  placeholder="Valid Until"
+                  placeholder={tr("Valid Until")}
                   fontWeight="500"
                   borderColor={
                     errors?.validUntil && touched?.validUntil ? "red.300" : null
@@ -578,9 +569,7 @@ const AddEdit = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Assigned To
-                  </FormLabel>
+                  ><LocalizedText text="Assigned To" /></FormLabel>
                   <Flex justifyContent={"space-between"}>
                     <Select
                       value={values?.assignedTo}
@@ -592,7 +581,7 @@ const AddEdit = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Assigned To"}
+                      placeholder={tr("Assigned To")}
                       borderColor={
                         errors?.assignedTo && touched?.assignedTo
                           ? "red.300"
@@ -624,9 +613,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Payment Terms
-                </FormLabel>
+                ><LocalizedText text="Payment Terms" /></FormLabel>
                 <Select
                   value={values?.paymentTerms}
                   name="paymentTerms"
@@ -637,15 +624,15 @@ const AddEdit = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Payment Terms"}
+                  placeholder={tr("Payment Terms")}
                   borderColor={
                     errors?.paymentTerms && touched?.paymentTerms
                       ? "red.300"
                       : null
                   }
                 >
-                  <option value="Nett 15">Nett 15</option>
-                  <option value="Nett 30">Nett 30</option>
+                  <option value="Nett 15"><LocalizedText text="Nett 15" /></option>
+                  <option value="Nett 30"><LocalizedText text="Nett 30" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -661,9 +648,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Approval Status
-                </FormLabel>
+                ><LocalizedText text="Approval Status" /></FormLabel>
                 <Select
                   value={values?.approvalStatus}
                   name="approvalStatus"
@@ -674,14 +659,14 @@ const AddEdit = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Approval Status"}
+                  placeholder={tr("Approval Status")}
                   borderColor={
                     errors?.approvalStatus && touched?.approvalStatus
                       ? "red.300"
                       : null
                   }
                 >
-                  <option value="Approved">Approved</option>
+                  <option value="Approved"><LocalizedText text="Approved" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -697,16 +682,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Approval Issues
-                </FormLabel>
+                ><LocalizedText text="Approval Issues" /></FormLabel>
                 <Textarea
                   fontSize="sm"
                   value={values?.approvalIssues}
                   name="approvalIssues"
                   resize={"none"}
                   onChange={handleChange}
-                  placeholder="Approval Issues"
+                  placeholder={tr("Approval Issues")}
                   fontWeight="500"
                   borderColor={
                     errors?.approvalIssues && touched?.approvalIssues
@@ -728,16 +711,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Terms
-                </FormLabel>
+                ><LocalizedText text="Terms" /></FormLabel>
                 <Textarea
                   fontSize="sm"
                   value={values?.terms}
                   name="terms"
                   resize={"none"}
                   onChange={handleChange}
-                  placeholder="Terms"
+                  placeholder={tr("Terms")}
                   fontWeight="500"
                   borderColor={
                     errors?.terms && touched?.terms ? "red.300" : null
@@ -755,16 +736,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Description
-                </FormLabel>
+                ><LocalizedText text="Description" /></FormLabel>
                 <Textarea
                   fontSize="sm"
                   value={values?.description}
                   name="description"
                   resize={"none"}
                   onChange={handleChange}
-                  placeholder="Description"
+                  placeholder={tr("Description")}
                   fontWeight="500"
                   borderColor={
                     errors?.description && touched?.description
@@ -780,9 +759,7 @@ const AddEdit = (props) => {
                 </Text>
               </GridItem>
               <GridItem colSpan={{ base: 12 }}>
-                <Heading as="h1" size="md" mt="10px">
-                  Address Information
-                </Heading>
+                <Heading as="h1" size="md" mt="10px"><LocalizedText text="Address Information" /></Heading>
               </GridItem>
               {(user?.role === "superAdmin" || accountAccess?.view) && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
@@ -792,9 +769,7 @@ const AddEdit = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Account
-                  </FormLabel>
+                  ><LocalizedText text="Account" /></FormLabel>
                   <Flex justifyContent={"space-between"}>
                     <Select
                       value={values?.account}
@@ -804,7 +779,7 @@ const AddEdit = (props) => {
                         errors?.account && touched?.account ? undefined : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Account"}
+                      placeholder={tr("Account")}
                       borderColor={
                         errors?.account && touched?.account ? "red.300" : null
                       }
@@ -840,9 +815,7 @@ const AddEdit = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Contact
-                  </FormLabel>
+                  ><LocalizedText text="Contact" /></FormLabel>
                   <Flex justifyContent={"space-between"}>
                     <Select
                       value={values?.contact}
@@ -852,7 +825,7 @@ const AddEdit = (props) => {
                         errors?.contact && touched?.contact ? undefined : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Contact"}
+                      placeholder={tr("Contact")}
                       borderColor={
                         errors?.contact && touched?.contact ? "red.300" : null
                       }
@@ -882,23 +855,17 @@ const AddEdit = (props) => {
               )}
 
               <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Heading as="h1" size="md" mt="10px">
-                  Billing Address
-                </Heading>
+                <Heading as="h1" size="md" mt="10px"><LocalizedText text="Billing Address" /></Heading>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Heading as="h1" size="md" mt="10px">
-                  Shipping Address
-                </Heading>
+                <Heading as="h1" size="md" mt="10px"><LocalizedText text="Shipping Address" /></Heading>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <Checkbox
                   isChecked={values?.isCheck}
                   onChange={(e) => handleCheck(e)}
                   visibility={"hidden"}
-                >
-                  Copy address from left
-                </Checkbox>
+                ><LocalizedText text="Copy address from left" /></Checkbox>
                 <FormLabel
                   display="flex"
                   ms="4px"
@@ -906,15 +873,13 @@ const AddEdit = (props) => {
                   fontWeight="500"
                   mb="8px"
                   mt={3}
-                >
-                  Billing Street
-                </FormLabel>
+                ><LocalizedText text="Billing Street" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.billingStreet}
                   name="billingStreet"
                   onChange={handleChange}
-                  placeholder="Billing Street"
+                  placeholder={tr("Billing Street")}
                   fontWeight="500"
                   borderColor={
                     errors?.billingStreet && touched?.billingStreet
@@ -933,9 +898,7 @@ const AddEdit = (props) => {
                 <Checkbox
                   isChecked={values?.isCheck}
                   onChange={(e) => handleCheck(e)}
-                >
-                  Copy address from left
-                </Checkbox>
+                ><LocalizedText text="Copy address from left" /></Checkbox>
                 <FormLabel
                   display="flex"
                   ms="4px"
@@ -943,16 +906,14 @@ const AddEdit = (props) => {
                   fontWeight="500"
                   mb="8px"
                   mt={3}
-                >
-                  Shipping Street
-                </FormLabel>
+                ><LocalizedText text="Shipping Street" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.shippingStreet}
                   name="shippingStreet"
                   disabled={values?.isCheck}
                   onChange={handleChange}
-                  placeholder="Shipping Street"
+                  placeholder={tr("Shipping Street")}
                   fontWeight="500"
                   borderColor={
                     errors?.shippingStreet && touched?.shippingStreet
@@ -974,15 +935,13 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Billing City
-                </FormLabel>
+                ><LocalizedText text="Billing City" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.billingCity}
                   name="billingCity"
                   onChange={handleChange}
-                  placeholder="Billing City"
+                  placeholder={tr("Billing City")}
                   fontWeight="500"
                   borderColor={
                     errors?.billingCity && touched?.billingCity
@@ -1004,16 +963,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Shipping City
-                </FormLabel>
+                ><LocalizedText text="Shipping City" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.shippingCity}
                   name="shippingCity"
                   disabled={values?.isCheck}
                   onChange={handleChange}
-                  placeholder="Shipping City"
+                  placeholder={tr("Shipping City")}
                   fontWeight="500"
                   borderColor={
                     errors?.shippingCity && touched?.shippingCity
@@ -1035,15 +992,13 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Billing State
-                </FormLabel>
+                ><LocalizedText text="Billing State" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.billingState}
                   name="billingState"
                   onChange={handleChange}
-                  placeholder="Billing State"
+                  placeholder={tr("Billing State")}
                   fontWeight="500"
                   borderColor={
                     errors?.billingState && touched?.billingState
@@ -1065,16 +1020,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Shipping State
-                </FormLabel>
+                ><LocalizedText text="Shipping State" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.shippingState}
                   disabled={values?.isCheck}
                   name="shippingState"
                   onChange={handleChange}
-                  placeholder="Shipping State"
+                  placeholder={tr("Shipping State")}
                   fontWeight="500"
                   borderColor={
                     errors?.shippingState && touched?.shippingState
@@ -1096,16 +1049,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Billing Postal Code
-                </FormLabel>
+                ><LocalizedText text="Billing Postal Code" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.billingPostalCode}
                   name="billingPostalCode"
                   onChange={handleChange}
                   type="number"
-                  placeholder="Billing Postal Code"
+                  placeholder={tr("Billing Postal Code")}
                   fontWeight="500"
                   borderColor={
                     errors?.billingPostalCode && touched?.billingPostalCode
@@ -1127,9 +1078,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Shipping Postal Code
-                </FormLabel>
+                ><LocalizedText text="Shipping Postal Code" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.shippingPostalCode}
@@ -1137,7 +1086,7 @@ const AddEdit = (props) => {
                   name="shippingPostalCode"
                   type="number"
                   onChange={handleChange}
-                  placeholder="Shipping Postal Code"
+                  placeholder={tr("Shipping Postal Code")}
                   fontWeight="500"
                   borderColor={
                     errors?.shippingPostalCode && touched?.shippingPostalCode
@@ -1159,15 +1108,13 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Billing Country
-                </FormLabel>
+                ><LocalizedText text="Billing Country" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.billingCountry}
                   name="billingCountry"
                   onChange={handleChange}
-                  placeholder="Billing Country"
+                  placeholder={tr("Billing Country")}
                   fontWeight="500"
                   borderColor={
                     errors?.billingCountry && touched?.billingCountry
@@ -1189,16 +1136,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Shipping Country
-                </FormLabel>
+                ><LocalizedText text="Shipping Country" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.shippingCountry}
                   name="shippingCountry"
                   onChange={handleChange}
                   disabled={values?.isCheck}
-                  placeholder="Shipping Country"
+                  placeholder={tr("Shipping Country")}
                   fontWeight="500"
                   borderColor={
                     errors?.shippingCountry && touched?.shippingCountry
@@ -1215,9 +1160,7 @@ const AddEdit = (props) => {
               </GridItem>
 
               <GridItem colSpan={{ base: 12 }}>
-                <Heading as="h1" size="md" mt="10px">
-                  Line Items
-                </Heading>
+                <Heading as="h1" size="md" mt="10px"><LocalizedText text="Line Items" /></Heading>
               </GridItem>
               <GridItem colSpan={{ base: 12 }}>
                 <FormLabel
@@ -1226,9 +1169,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Currency
-                </FormLabel>
+                ><LocalizedText text="Currency" /></FormLabel>
                 <Select
                   value={values?.currency}
                   name="currency"
@@ -1238,14 +1179,12 @@ const AddEdit = (props) => {
                     errors?.currency && touched?.currency ? undefined : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Select Currency"}
+                  placeholder={tr("Select Currency")}
                   borderColor={
                     errors?.currency && touched?.currency ? "red.300" : null
                   }
                 >
-                  <option value="$" selected>
-                    USD
-                  </option>
+                  <option value="$" selected><LocalizedText text="USD" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -1265,11 +1204,11 @@ const AddEdit = (props) => {
                       <Tr>
                         <Th></Th>
                         <Th>#</Th>
-                        <Th>Item</Th>
-                        <Th>Qty</Th>
-                        <Th>Rate</Th>
-                        <Th>Discount</Th>
-                        <Th>Amount</Th>
+                        <Th><LocalizedText text="Item" /></Th>
+                        <Th><LocalizedText text="Qty" /></Th>
+                        <Th><LocalizedText text="Rate" /></Th>
+                        <Th><LocalizedText text="Discount" /></Th>
+                        <Th><LocalizedText text="Amount" /></Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -1361,7 +1300,7 @@ const AddEdit = (props) => {
                                   }}
                                   size="sm"
                                 >
-                                  <option value="none">none</option>
+                                  <option value="none"><LocalizedText text="none" /></option>
                                   <option value="percent">%</option>
                                   <option value="flatAmount">
                                     {values?.currency}
@@ -1407,15 +1346,13 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Total
-                </FormLabel>
+                ><LocalizedText text="Total" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.total}
                   name="total"
                   onChange={handleChange}
-                  placeholder="Total"
+                  placeholder={tr("Total")}
                   fontWeight="500"
                   type="number"
                   borderColor={
@@ -1434,9 +1371,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Total Discount
-                </FormLabel>
+                ><LocalizedText text="Total Discount" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.discount}
@@ -1461,16 +1396,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Subtotal
-                </FormLabel>
+                ><LocalizedText text="Subtotal" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.subtotal}
                   name="subtotal"
                   type="number"
                   onChange={handleChange}
-                  placeholder="Subtotal"
+                  placeholder={tr("Subtotal")}
                   fontWeight="500"
                   borderColor={
                     errors?.subtotal && touched?.subtotal ? "red.300" : null
@@ -1488,16 +1421,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Shipping
-                </FormLabel>
+                ><LocalizedText text="Shipping" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.shipping}
                   name="shipping"
                   type="number"
                   onChange={handleChange}
-                  placeholder="Shipping"
+                  placeholder={tr("Shipping")}
                   fontWeight="500"
                   borderColor={
                     errors?.shipping && touched?.shipping ? "red.300" : null
@@ -1515,15 +1446,13 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Shipping Tax
-                </FormLabel>
+                ><LocalizedText text="Shipping Tax" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.shippingTax}
                   name="shippingTax"
                   onChange={handleChange}
-                  placeholder="Shipping Tax"
+                  placeholder={tr("Shipping Tax")}
                   type="number"
                   fontWeight="500"
                   borderColor={
@@ -1574,9 +1503,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Tax
-                </FormLabel>
+                ><LocalizedText text="Tax" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.tax}
@@ -1584,7 +1511,7 @@ const AddEdit = (props) => {
                   onChange={handleChange}
                   fontWeight="500"
                   type="number"
-                  placeholder="Tax"
+                  placeholder={tr("Tax")}
                   borderColor={errors?.tax && touched?.tax ? "red.300" : null}
                 />
                 <Text mb="10px" fontSize="sm" color={"red"}>
@@ -1599,9 +1526,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Grand Total
-                </FormLabel>
+                ><LocalizedText text="Grand Total" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.grandTotal}
@@ -1609,7 +1534,7 @@ const AddEdit = (props) => {
                   onChange={handleChange}
                   fontWeight="500"
                   type="number"
-                  placeholder="Grand Total"
+                  placeholder={tr("Grand Total")}
                   borderColor={
                     errors?.grandTotal && touched?.grandTotal ? "red.300" : null
                   }
@@ -1632,7 +1557,7 @@ const AddEdit = (props) => {
               type="submit"
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Save"}
+              {isLoding ? <Spinner /> : tr("Save")}
             </Button>
             <Button
               variant="outline"
@@ -1643,9 +1568,7 @@ const AddEdit = (props) => {
                 textTransform: "capitalize",
               }}
               onClick={handleCancel}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -1653,4 +1576,4 @@ const AddEdit = (props) => {
   );
 };
 
-export default AddEdit;
+export default withLocalization(AddEdit);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
   Button,
@@ -111,9 +112,7 @@ const View = () => {
                   <GridItem colSpan={2}>
                     <Box>
                       <Flex justifyContent={"space-between"}>
-                        <Heading size="md" mb={3}>
-                          Meeting Details
-                        </Heading>
+                        <Heading size="md" mb={3}><LocalizedText text="Meeting Details" /></Heading>
                         <Box id="hide-btn">
                           <Button
                             leftIcon={<FaFilePdf />}
@@ -122,7 +121,7 @@ const View = () => {
                             onClick={generatePDF}
                             disabled={loading}
                           >
-                            {loading ? "Please Wait..." : "Print as PDF"}
+                            {loading ? tr("Please Wait...") : tr("Print as PDF")}
                           </Button>
                           <Button
                             leftIcon={<IoIosArrowBack />}
@@ -130,9 +129,7 @@ const View = () => {
                             variant="brand"
                             onClick={() => navigate(-1)}
                             style={{ marginLeft: 10 }}
-                          >
-                            Back
-                          </Button>
+                          ><LocalizedText text="Back" /></Button>
                         </Box>
                       </Flex>
                       <HSeparator />
@@ -144,8 +141,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Agenda{" "}
+                      {" "}<LocalizedText text="Agenda" />{" "}
                     </Text>
                     <Text>{data?.agenda ? data?.agenda : " - "}</Text>
                   </GridItem>
@@ -155,8 +151,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Created By{" "}
+                      {" "}<LocalizedText text="Created By" />{" "}
                     </Text>
                     <Text>
                       {data?.createdByName ? data?.createdByName : " - "}
@@ -169,8 +164,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      DateTime{" "}
+                      {" "}<LocalizedText text="DateTime" />{" "}
                     </Text>
                     <Text>
                       {" "}
@@ -187,8 +181,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Timestamp{" "}
+                      {" "}<LocalizedText text="Timestamp" />{" "}
                     </Text>
                     <Text>
                       {" "}
@@ -208,8 +201,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Location{" "}
+                      {" "}<LocalizedText text="Location" />{" "}
                     </Text>
                     <Text>{data?.location ? data?.location : " - "}</Text>
                   </GridItem>
@@ -219,8 +211,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Notes{" "}
+                      {" "}<LocalizedText text="Notes" />{" "}
                     </Text>
                     <Text>{data?.notes ? data?.notes : " - "}</Text>
                   </GridItem>
@@ -230,8 +221,7 @@ const View = () => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Attendes{" "}
+                      {" "}<LocalizedText text="Attendes" />{" "}
                     </Text>
                     {data?.related === "Contact" && contactAccess?.view
                       ? data?.attendes &&
@@ -312,9 +302,7 @@ const View = () => {
                         onClick={() => setDeleteMany(true)}
                         leftIcon={<DeleteIcon />}
                         colorScheme="red"
-                      >
-                        Delete
-                      </Button>
+                      ><LocalizedText text="Delete" /></Button>
                     ) : (
                       ""
                     )}
@@ -337,4 +325,4 @@ const View = () => {
   );
 };
 
-export default View;
+export default withLocalization(View);

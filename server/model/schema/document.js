@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 // Define the schema for individual files
 const fileSchema = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     fileName: {
         type: String,
         required: true,

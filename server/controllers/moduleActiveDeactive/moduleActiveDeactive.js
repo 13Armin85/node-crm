@@ -25,7 +25,8 @@ const index = async (req, res) => {
             "Properties",
             "Opportunities",
             "Opportunity Project",
-            "Account",
+            "Partner Customers",
+            "Residences",
             "Quotes",
             "Invoices",
             "Tasks",
@@ -34,7 +35,7 @@ const index = async (req, res) => {
             "Emails",
             "Email Template",
             "Calender",
-            "Payments",
+
             "Reporting and Analytics",
             "Documents",
         ];
@@ -66,7 +67,7 @@ const index = async (req, res) => {
         data = await ModuleActiveDeactive?.find(query);
         data = data.sort((a, b) => a?.order - b?.order);
 
-        return res.status(200).json(data);
+        return res.status(200).json(data.filter(item => !['Account', 'Accounts', 'Payments'].includes(item.moduleName)));
     } catch (err) {
         console.error("Error :", err);
         return res.status(400).json({ err, error: "Something wents wrong" });

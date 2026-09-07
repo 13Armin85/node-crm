@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { AddIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -79,10 +80,10 @@ const Index = () => {
     if (result?.payload?.status === 200) {
       setPropertyData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     const actionHeader = {
-      Header: "Action",
+      Header: tr("Action"),
       accessor: "action",
       isSortable: false,
       center: true,
@@ -104,9 +105,7 @@ const Index = () => {
                     setEdit(true);
                     setSelectedId(row?.values?._id);
                   }}
-                >
-                  Edit
-                </MenuItem>
+                ><LocalizedText text="Edit" /></MenuItem>
               )}
               {permission?.view && (
                 <MenuItem
@@ -116,9 +115,7 @@ const Index = () => {
                   onClick={() => {
                     navigate(`/propertyView/${row?.values?._id}`);
                   }}
-                >
-                  View
-                </MenuItem>
+                ><LocalizedText text="View" /></MenuItem>
               )}
               {permission?.delete && (
                 <MenuItem
@@ -130,9 +127,7 @@ const Index = () => {
                     setSelectedValues([row?.values?._id]);
                     setSelectedId(row?.values?._id);
                   }}
-                >
-                  Delete
-                </MenuItem>
+                ><LocalizedText text="Delete" /></MenuItem>
               )}
             </MenuList>
           </Menu>
@@ -141,7 +136,7 @@ const Index = () => {
     };
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(result?.payload?.data && result?.payload?.data?.length > 0
         ? result.payload.data[0]?.fields
             ?.filter((field) => field?.isTableField === true && field?.isView)
@@ -360,9 +355,7 @@ const Index = () => {
               setDelete(true);
             }}
             size="sm"
-          >
-            Delete
-          </Button>
+          ><LocalizedText text="Delete" /></Button>
         )}
         <Menu isLazy>
           <MenuButton p={4}>
@@ -373,25 +366,23 @@ const Index = () => {
             transform={"translate(1670px, 60px)"}
             zIndex={2}
           >
-            <MenuItem width="165px" onClick={() => setIsImportProperty(true)}>
-              Import Properties
-            </MenuItem>
+            <MenuItem width="165px" onClick={() => setIsImportProperty(true)}><LocalizedText text="Import Properties" /></MenuItem>
             <MenuDivider />
             <MenuItem
               width="165px"
               onClick={() => handleExportNewProperties("csv")}
             >
               {selectedValues && selectedValues?.length > 0
-                ? "Export Selected Data as CSV"
-                : "Export as CSV"}
+                ? tr("Export Selected Data as CSV")
+                : tr("Export as CSV")}
             </MenuItem>
             <MenuItem
               width="165px"
               onClick={() => handleExportNewProperties("xlsx")}
             >
               {selectedValues && selectedValues?.length > 0
-                ? "Export Selected Data as Excel"
-                : "Export as Excel"}
+                ? tr("Export Selected Data as Excel")
+                : tr("Export as Excel")}
             </MenuItem>
           </MenuList>
         </Menu>
@@ -401,9 +392,7 @@ const Index = () => {
           me={1}
           onClick={() => onOpen()}
           leftIcon={<AddIcon />}
-        >
-          Add New
-        </Button>
+        ><LocalizedText text="Add New" /></Button>
       </Flex>
       <Grid templateColumns="repeat(12, 1fr)" gap={3} my={3}>
         <GridItem
@@ -412,9 +401,7 @@ const Index = () => {
           colSpan={{ base: 12, md: 6, lg: 3 }}
           onClick={() => handleStatusChange("Available")}
         >
-          <Card className="light-green" style={{ padding: "15px" }}>
-            Available
-          </Card>
+          <Card className="light-green" style={{ padding: "15px" }}><LocalizedText text="Available" /></Card>
         </GridItem>
         <GridItem
           cursor="pointer"
@@ -422,9 +409,7 @@ const Index = () => {
           colSpan={{ base: 12, md: 6, lg: 3 }}
           onClick={() => handleStatusChange("Booked")}
         >
-          <Card className="light-yellow" style={{ padding: "15px" }}>
-            Booked
-          </Card>
+          <Card className="light-yellow" style={{ padding: "15px" }}><LocalizedText text="Booked" /></Card>
         </GridItem>
         <GridItem
           cursor="pointer"
@@ -432,9 +417,7 @@ const Index = () => {
           colSpan={{ base: 12, md: 6, lg: 3 }}
           onClick={() => handleStatusChange("Sold")}
         >
-          <Card className="light-blue" style={{ padding: "15px" }}>
-            Sold
-          </Card>
+          <Card className="light-blue" style={{ padding: "15px" }}><LocalizedText text="Sold" /></Card>
         </GridItem>
         <GridItem
           cursor="pointer"
@@ -442,9 +425,7 @@ const Index = () => {
           colSpan={{ base: 12, md: 6, lg: 3 }}
           onClick={() => handleStatusChange("Blocked")}
         >
-          <Card className="light-red" style={{ padding: "15px" }}>
-            Blocked
-          </Card>
+          <Card className="light-red" style={{ padding: "15px" }}><LocalizedText text="Blocked" /></Card>
         </GridItem>
       </Grid>
       <HStack spacing={4} mb={2}>
@@ -545,9 +526,7 @@ const Index = () => {
                             setEdit(true);
                             setSelectedId(item?._id);
                           }}
-                        >
-                          Edit
-                        </MenuItem>
+                        ><LocalizedText text="Edit" /></MenuItem>
                       )}
                       {permission?.view && (
                         <MenuItem
@@ -557,9 +536,7 @@ const Index = () => {
                           onClick={() => {
                             navigate(`/propertyView/${item?._id}`);
                           }}
-                        >
-                          View
-                        </MenuItem>
+                        ><LocalizedText text="View" /></MenuItem>
                       )}
                       {permission?.delete && (
                         <MenuItem
@@ -570,9 +547,7 @@ const Index = () => {
                             setSelectedValues([item?._id]);
                             setDelete(true);
                           }}
-                        >
-                          Delete
-                        </MenuItem>
+                        ><LocalizedText text="Delete" /></MenuItem>
                       )}
                     </MenuList>
                   </Menu>
@@ -650,4 +625,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

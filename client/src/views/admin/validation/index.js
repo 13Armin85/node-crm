@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { AddIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -136,9 +137,7 @@ const Index = () => {
             leftIcon={<DeleteIcon />}
             onClick={() => handleOpenDeleteMany("", "many")}
             size="sm"
-          >
-            Delete
-          </Button>
+          ><LocalizedText text="Delete" /></Button>
         )}
         <Button
           size="sm"
@@ -146,18 +145,14 @@ const Index = () => {
           me={1}
           onClick={() => handleAddOpen()}
           leftIcon={<AddIcon />}
-        >
-          Add New
-        </Button>
+        ><LocalizedText text="Add New" /></Button>
         <Button
           size="sm"
           variant="brand"
           onClick={() => navigate(-1)}
           leftIcon={<IoIosArrowBack />}
         >
-          {" "}
-          Back
-        </Button>
+          {" "}<LocalizedText text="Back" /></Button>
       </Flex>
       <Grid templateColumns="repeat(12, 1fr)" gap={3}>
         {validationData &&
@@ -180,7 +175,7 @@ const Index = () => {
                       fontWeight={"500"}
                       textTransform={"capitalize"}
                     >
-                      {item?.name}
+                      <LocalizedText text={item?.name} />
                     </Heading>
                   </Flex>
                   <Menu isLazy>
@@ -196,93 +191,75 @@ const Index = () => {
                         alignItems={"start"}
                         onClick={() => handleEditOpen(item)}
                         icon={<EditIcon fontSize={15} />}
-                      >
-                        Edit
-                      </MenuItem>
+                      ><LocalizedText text="Edit" /></MenuItem>
                       <MenuItem
                         py={2.5}
                         alignItems={"start"}
                         color={"green"}
                         onClick={() => handleViewOpen(item)}
                         icon={<ViewIcon fontSize={15} />}
-                      >
-                        View
-                      </MenuItem>
+                      ><LocalizedText text="View" /></MenuItem>
                       <MenuItem
                         py={2.5}
                         alignItems={"start"}
                         color={"red"}
                         icon={<DeleteIcon fontSize={15} />}
                         onClick={() => handleOpenDeleteMany(item?._id, "one")}
-                      >
-                        Delete
-                      </MenuItem>
+                      ><LocalizedText text="Delete" /></MenuItem>
                     </MenuList>
                   </Menu>
                 </Flex>
-                <Text pt={3} textTransform={"capitalize"}>
-                  validations
-                </Text>
+                <Text pt={3} textTransform={"capitalize"}><LocalizedText text="validations" /></Text>
                 <HSeparator mb={2} mt={1} />
                 <Flex>
-                  <Text width={"50%"} pr={2} textTransform={"capitalize"}>
-                    require:
-                  </Text>
+                  <Text width={"50%"} pr={2} textTransform={"capitalize"}><LocalizedText text="require:" /></Text>
                   <Text width={"50%"} fontWeight={"500"}>
                     {" "}
                     {item?.validations &&
                     item?.validations?.length > 0 &&
                     item?.validations[0]?.require === true
-                      ? "True"
-                      : "False"}
+                      ? tr("True")
+                      : tr("False")}
                   </Text>
                 </Flex>
                 <Flex>
-                  <Text width={"50%"} pr={2} textTransform={"capitalize"}>
-                    min:
-                  </Text>
+                  <Text width={"50%"} pr={2} textTransform={"capitalize"}><LocalizedText text="min:" /></Text>
                   <Text width={"50%"} fontWeight={"500"}>
                     {item?.validations &&
                     item?.validations?.length > 0 &&
                     item?.validations[1]?.min === true
-                      ? "True"
-                      : "False"}
+                      ? tr("True")
+                      : tr("False")}
                   </Text>
                 </Flex>
                 <Flex>
-                  <Text width={"50%"} pr={2} textTransform={"capitalize"}>
-                    max:
-                  </Text>
+                  <Text width={"50%"} pr={2} textTransform={"capitalize"}><LocalizedText text="max:" /></Text>
                   <Text width={"50%"} fontWeight={"500"}>
                     {item?.validations &&
                     item?.validations?.length > 0 &&
                     item?.validations[2]?.max === true
-                      ? "True"
-                      : "False"}
+                      ? tr("True")
+                      : tr("False")}
                   </Text>
                 </Flex>
                 <Flex>
-                  <Text width={"50%"} pr={2} textTransform={"capitalize"}>
-                    match:
-                  </Text>
+                  <Text width={"50%"} pr={2} textTransform={"capitalize"}><LocalizedText text="match:" /></Text>
                   <Text width={"50%"} fontWeight={"500"}>
                     {item?.validations &&
                     item?.validations?.length > 0 &&
                     item?.validations[3]?.match === true
-                      ? "True"
-                      : "False"}
+                      ? tr("True")
+                      : tr("False")}
                   </Text>
                 </Flex>
                 <Flex>
-                  <Text width={"50%"} pr={2} textTransform={"capitalize"}>
-                    formik type:
-                  </Text>
+                  <Text width={"50%"} pr={2} textTransform={"capitalize"}><LocalizedText text="formik type:" /></Text>
                   <Text width={"50%"} fontWeight={"500"}>
                     {item?.validations &&
                     item?.validations?.length > 0 &&
                     item?.validations[4]?.formikType
-                      ? "True"
-                      : "False"}
+                      ? tr("True")
+                      : tr("False")}
                   </Text>
                 </Flex>
               </Card>
@@ -338,4 +315,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

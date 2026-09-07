@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 
 const Task = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     title: String,
     category: String,
     description: String,

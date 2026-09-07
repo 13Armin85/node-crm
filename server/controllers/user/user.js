@@ -1,43 +1,23 @@
 const User = require("../../model/schema/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { jwtSecret } = require('../../config/auth');
 
-// Admin register
-const adminRegister = async (req, res) => {
-  try {
-    const { username, password, firstName, lastName, phoneNumber } = req.body;
-    const user = await User.findOne({ username: username });
-    if (user) {
-      return res
-        .status(400)
-        .json({ message: "Admin already exist please try another email" });
-    } else {
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-      // Create a new user
-      const user = new User({
-        username,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        phoneNumber,
-        role: "superAdmin",
-      });
-      // Save the user to the database
-      await user.save();
-      res.status(200).json({ message: "Admin created successfully" });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error });
-  }
-};
+const normalizeEmail = (value) =>
+  typeof value === "string" ? value.trim().toLowerCase() : value;
+
+const normalizePassword = (value) =>
+  typeof value === "string" ? value.trim() : value;
 
 // User Registration
 const register = async (req, res) => {
   try {
     const { username, password, firstName, lastName, phoneNumber, roles } =
       req.body;
-    const user = await User.findOne({ username: username });
+    const normalizedUsername = normalizeEmail(username);
+    const normalizedPassword = normalizePassword(password);
+    if (!normalizedUsername || !normalizedPassword || normalizedPassword.length < 8) return res.status(400).json({ code: 'invalid' });
+    const user = await User.findOne({ username: normalizedUsername });
 
     if (user) {
       return res
@@ -45,16 +25,17 @@ const register = async (req, res) => {
         .json({ message: "user already exist please try another email" });
     } else {
       // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
       // Create a new user
       const user = new User({
-        username,
+        username: normalizedUsername,
         password: hashedPassword,
         roles,
         firstName,
         lastName,
         phoneNumber,
         createdDate: new Date(),
+        customFields: req.body.customFields,
       });
       // Save the user to the database
       await user.save();
@@ -100,10 +81,11 @@ let deleteData = async (req, res) => {
 
     // Assuming you have retrieved the user document using userId
     const user = await User.findById(userId);
-    if (process.env.DEFAULT_USERS.includes(user?.username)) {
+    const defaultUsers = String(process.env.DEFAULT_USERS || '').split(',').map(value => value.trim()).filter(Boolean);
+    if (defaultUsers.includes(user?.username)) {
       return res
         .status(400)
-        .json({ message: `You don't have access to delete ${username}` });
+        .json({ message: `You don't have access to delete ${user.username}` });
     }
     if (!user) {
       return res
@@ -133,14 +115,14 @@ const deleteMany = async (req, res) => {
     const users = await User.find({ _id: { $in: userIds } });
 
     // Check for default users and filter them out
-    const defaultUsers = process.env.DEFAULT_USERS;
+    const defaultUsers = String(process.env.DEFAULT_USERS || '').split(',').map(value => value.trim()).filter(Boolean);
     const filteredUsers = users.filter(
-      (user) => !defaultUsers.includes(user.username)
+      (user) => !defaultUsers.includes(user.username),
     );
 
     // Further filter out superAdmin users
     const nonSuperAdmins = filteredUsers.filter(
-      (user) => user.role !== "superAdmin"
+      (user) => user.role !== "superAdmin",
     );
     const nonSuperAdminIds = nonSuperAdmins.map((user) => user._id);
 
@@ -153,7 +135,7 @@ const deleteMany = async (req, res) => {
     // Update the 'deleted' field to true for the remaining users
     const updatedUsers = await User.updateMany(
       { _id: { $in: nonSuperAdminIds } },
-      { $set: { deleted: true } }
+      { $set: { deleted: true } },
     );
 
     res.status(200).json({ message: "done", updatedUsers });
@@ -174,8 +156,9 @@ const edit = async (req, res) => {
           firstName,
           lastName,
           phoneNumber,
+          customFields: req.body.customFields,
         },
-      }
+      },
     );
 
     res.status(200).json(result);
@@ -188,8 +171,14 @@ const edit = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    const normalizedUsername = normalizeEmail(username);
+    const normalizedPassword = normalizePassword(password);
+    if (!normalizedUsername || !normalizedPassword) return res.status(400).json({ code: 'invalid' });
     // Find the user by username
-    const user = await User.findOne({ username, deleted: false }).populate({
+    const user = await User.findOne({
+      username: normalizedUsername,
+      deleted: false,
+    }).select('+password').populate({
       path: "roles",
     });
     if (!user) {
@@ -199,7 +188,10 @@ const login = async (req, res) => {
       return;
     }
     // Compare the provided password with the hashed password stored in the database
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const passwordMatch = await bcrypt.compare(
+      normalizedPassword,
+      user.password,
+    );
     if (!passwordMatch) {
       res
         .status(401)
@@ -207,14 +199,16 @@ const login = async (req, res) => {
       return;
     }
     // Create a JWT token
-    const token = jwt.sign({ userId: user._id }, "secret_key", {
+    const token = jwt.sign({ userId: user._id }, jwtSecret, {
       expiresIn: "1d",
     });
 
+    const safeUser = user.toObject();
+    delete safeUser.password;
     res
       .status(200)
-      .setHeader("Authorization", `Bearer${token}`)
-      .json({ token: token, user });
+      .setHeader("Authorization", `Bearer ${token}`)
+      .json({ token: token, user: safeUser });
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });
   }
@@ -226,7 +220,7 @@ const changeRoles = async (req, res) => {
 
     let result = await User.updateOne(
       { _id: userId },
-      { $set: { roles: req.body } }
+      { $set: { roles: req.body } },
     );
 
     res.status(200).json(result);
@@ -239,7 +233,6 @@ const changeRoles = async (req, res) => {
 module.exports = {
   register,
   login,
-  adminRegister,
   index,
   deleteMany,
   view,

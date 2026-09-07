@@ -1,3 +1,4 @@
+import { tr, withLocalization } from 'i18n/runtime';
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
@@ -33,8 +34,16 @@ import Spinner from "components/spinner/Spinner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchImage } from "../../../redux/slices/imageSlice";
 import { setUser } from "../../../redux/slices/localSlice";
-import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect";
+import {
+  LanguageSelect,
+  ThemeToggle,
+} from "components/language/LanguageSelect";
 import { useLanguage } from "i18n";
+
+const normalizeLoginValues = (values) => ({
+  username: values?.username?.trim()?.toLowerCase(),
+  password: values?.password?.trim(),
+});
 
 function SignIn() {
   // Chakra color mode
@@ -90,14 +99,23 @@ function SignIn() {
   const login = async () => {
     try {
       setIsLoding(true);
-      let response = await postApi("api/user/login", values, checkBox);
+      let response = await postApi(
+        "api/user/login",
+        normalizeLoginValues(values),
+        checkBox,
+      );
       if (response && response?.status === 200) {
-        navigate("/superAdmin");
+        navigate("/default");
         toast.success(t("Login Successfully!"));
         resetForm();
-        dispatch(setUser(response?.data?.user))
+        dispatch(setUser(response?.data?.user));
       } else {
-        toast.error(response?.response?.data?.error);
+        toast.error(
+          response?.data?.error ||
+            response?.data?.message ||
+            response?.response?.data?.error ||
+            t("estate.serverError"),
+        );
       }
     } catch (e) {
       console.log(e);
@@ -167,7 +185,8 @@ function SignIn() {
                 color={textColor}
                 mb="8px"
               >
-                {t("Email")}<Text color={brandStars}>*</Text>
+                {t("Email")}
+                <Text color={brandStars}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -177,7 +196,7 @@ function SignIn() {
                 name="username"
                 ms={{ base: "0px", md: "0px" }}
                 type="email"
-                placeholder="mail@company.com"
+                placeholder={tr("mail@company.com")}
                 mb={errors?.username && touched?.username ? undefined : "24px"}
                 fontWeight="500"
                 size="lg"
@@ -207,7 +226,8 @@ function SignIn() {
                 color={textColor}
                 display="flex"
               >
-                {t("Password")}<Text color={brandStars}>*</Text>
+                {t("Password")}
+                <Text color={brandStars}>*</Text>
               </FormLabel>
               <InputGroup size="md">
                 <Input
@@ -215,7 +235,9 @@ function SignIn() {
                   fontSize="sm"
                   placeholder={t("Enter Your Password")}
                   name="password"
-                  mb={errors?.password && touched?.password ? undefined : "24px"}
+                  mb={
+                    errors?.password && touched?.password ? undefined : "24px"
+                  }
                   value={values?.password}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -291,4 +313,4 @@ function SignIn() {
   );
 }
 
-export default SignIn;
+export default withLocalization(SignIn);

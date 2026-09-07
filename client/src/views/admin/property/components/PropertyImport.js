@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Papa from "papaparse";
@@ -29,8 +30,8 @@ function PropertyImport() {
   const [filterProperty, setFilterProperty] = useState([]);
 
   const columns = [
-    { Header: "Fields In Crm", accessor: "crmFields" },
-    { Header: "Fields In File", accessor: "fileFields" },
+    { Header: tr("Fields In Crm"), accessor: "crmFields" },
+    { Header: tr("Fields In File"), accessor: "fileFields" },
   ];
 
   const initialFieldValues = Object?.fromEntries(
@@ -134,7 +135,7 @@ function PropertyImport() {
           const fileHeadingFields = Object?.keys(parsedData[0]);
           setImportedFileFields(fileHeadingFields);
         } else {
-          toast.error("Empty or invalid CSV file");
+          toast.error(tr("Empty or invalid CSV file"));
           navigate("/properties");
         }
       } else if (extension === "xlsx") {
@@ -161,7 +162,7 @@ function PropertyImport() {
           const fileHeadingFields = Object?.keys(jsonData[0]);
           setImportedFileFields(fileHeadingFields);
         } else {
-          toast.error("Empty or invalid XLSX file");
+          toast.error(tr("Empty or invalid XLSX file"));
           navigate("/properties");
         }
       }
@@ -204,8 +205,7 @@ function PropertyImport() {
           fontSize="22px"
           fontWeight="700"
           mb="20px"
-        >
-          Import Properties{" "}
+        ><LocalizedText text="Import Properties" />{" "}
         </Text>
         <Grid
           templateColumns="repeat(12, 1fr)"
@@ -263,7 +263,7 @@ function PropertyImport() {
                               data,
                           )
                         : "Select Field In File"
-                      : "Select Field In File"}
+                      : tr("Select Field In File")}
                   </option>{" "}
                   {importedFileFields?.map((field) => (
                     <option value={field} key={field}>
@@ -277,13 +277,11 @@ function PropertyImport() {
         </Grid>
 
         <Flex Flex justifyContent={"end"} mt="5">
-          <Button size="sm" onClick={() => handleSubmit()} variant="brand">
-            Save
-          </Button>
+          <Button size="sm" onClick={() => handleSubmit()} variant="brand"><LocalizedText text="Save" /></Button>
         </Flex>
       </Card>
     </>
   );
 }
 
-export default PropertyImport;
+export default withLocalization(PropertyImport);

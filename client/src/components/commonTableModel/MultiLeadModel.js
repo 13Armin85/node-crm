@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -33,7 +34,7 @@ const MultiLeadModel = (props) => {
     setLeadData(result?.payload?.data);
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(result?.payload?.data?.[0]?.fields
         ?.filter((field) => field?.isTableField === true)
         ?.map((field) => ({
@@ -70,7 +71,7 @@ const MultiLeadModel = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select Lead</ModalHeader>
+        <ModalHeader><LocalizedText text="Select Lead" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -84,7 +85,7 @@ const MultiLeadModel = (props) => {
               selectedValues={selectedValues}
               setSelectedValues={setSelectedValues}
               columnsData={columns}
-              title="Lead"
+              title={tr("Lead")}
             />
           )}
         </ModalBody>
@@ -96,13 +97,13 @@ const MultiLeadModel = (props) => {
             leftIcon={<GiClick />}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Select"}
+            {isLoding ? <Spinner /> : tr("Select")}
           </Button>
-          <Button onClick={() => onClose()}>Close</Button>
+          <Button onClick={() => onClose()}><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default MultiLeadModel;
+export default withLocalization(MultiLeadModel);

@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -49,7 +50,7 @@ const BankDetailsModel = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered size="full">
       <ModalOverlay />
       <ModalContent height={"580px"}>
-        <ModalHeader>Bank Details</ModalHeader>
+        <ModalHeader><LocalizedText text="Bank Details" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody overflowY={"auto"} height={"400px"}>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -67,8 +68,7 @@ const BankDetailsModel = (props) => {
                       {item?.accountName}
                     </Text>
                     <Text style={{ marginLeft: "20px" }}>
-                      {" "}
-                      Account Number: {item?.accountNumber}
+                      {" "}<LocalizedText text="Account Number:" />{item?.accountNumber}
                     </Text>
 
                     <Box display="flex" alignItems="center">
@@ -79,13 +79,11 @@ const BankDetailsModel = (props) => {
                       >
                         <Radio value={item?._id} />
                       </RadioGroup>
-                      <Text>Swift Code: {item?.swiftCode}</Text>
+                      <Text><LocalizedText text="Swift Code:" />{item?.swiftCode}</Text>
                     </Box>
-                    <Text style={{ marginLeft: "20px" }}>
-                      Bank: {item?.bank}
+                    <Text style={{ marginLeft: "20px" }}><LocalizedText text="Bank:" />{item?.bank}
                     </Text>
-                    <Text style={{ marginLeft: "20px" }}>
-                      Branch: {item?.branch}
+                    <Text style={{ marginLeft: "20px" }}><LocalizedText text="Branch:" />{item?.branch}
                     </Text>
                   </Box>
                 </div>
@@ -101,9 +99,7 @@ const BankDetailsModel = (props) => {
               handleRadioChange(selectedRecord?._id);
               selectHandleClose();
             }}
-          >
-            Select
-          </Button>
+          ><LocalizedText text="Select" /></Button>
           <Button
             sx={{
               marginLeft: 2,
@@ -115,9 +111,7 @@ const BankDetailsModel = (props) => {
               onClose();
             }}
             size="sm"
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

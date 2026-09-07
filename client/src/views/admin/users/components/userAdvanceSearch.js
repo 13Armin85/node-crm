@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
@@ -43,7 +44,7 @@ const UserAdvanceSearch = (props) => {
   };
   const validationSchema = yup.object({
     firstName: yup.string(),
-    username: yup.string().email("User Email is invalid"),
+    username: yup.string().email(tr("User Email is invalid")),
     lastName: yup.string(),
   });
   const formik = useFormik({
@@ -100,7 +101,7 @@ const UserAdvanceSearch = (props) => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Advance Search</ModalHeader>
+          <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
               setAdvanceSearch(false);
@@ -118,16 +119,14 @@ const UserAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  First Name
-                </FormLabel>
+                ><LocalizedText text="First Name" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.firstName}
                   name="firstName"
-                  placeholder="Enter First Name"
+                  placeholder={tr("Enter First Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -144,16 +143,14 @@ const UserAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Last Name
-                </FormLabel>
+                ><LocalizedText text="Last Name" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.lastName}
                   name="lastName"
-                  placeholder="Enter Last Name"
+                  placeholder={tr("Enter Last Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -170,16 +167,14 @@ const UserAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Email Id
-                </FormLabel>
+                ><LocalizedText text="Email Id" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.username}
                   name="username"
-                  placeholder="Enter User Name"
+                  placeholder={tr("Enter User Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -197,16 +192,14 @@ const UserAdvanceSearch = (props) => {
               onClick={handleSubmit}
               disabled={isLoding || !dirty ? true : false}
             >
-              {isLoding ? <Spinner /> : "Search"}
+              {isLoding ? <Spinner /> : tr("Search")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               colorScheme="red"
               onClick={() => resetForm()}
-            >
-              Clear
-            </Button>
+            ><LocalizedText text="Clear" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -214,4 +207,4 @@ const UserAdvanceSearch = (props) => {
   );
 };
 
-export default UserAdvanceSearch;
+export default withLocalization(UserAdvanceSearch);

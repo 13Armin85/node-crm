@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
   ChevronDownIcon,
@@ -80,9 +81,9 @@ const View = () => {
       let result = await getApi(`api/document/download/`, data);
       if (result && result.status === 200) {
         window.open(`${constant.baseUrl}api/document/download/${data}`);
-        toast.success("file Download successful");
+        toast.success(tr("file Download successful"));
       } else if (result && result.response.status === 404) {
-        toast.error("file Not Found");
+        toast.error(tr("file Not Found"));
       }
     }
   };
@@ -161,9 +162,7 @@ const View = () => {
                   mr={2.5}
                   as={Button}
                   rightIcon={<ChevronDownIcon />}
-                >
-                  Actions
-                </MenuButton>
+                ><LocalizedText text="Actions" /></MenuButton>
                 <MenuDivider />
                 <MenuList minWidth={2}>
                   <MenuItem
@@ -171,25 +170,19 @@ const View = () => {
                     onClick={() => onOpen()}
                     alignItems={"start"}
                     icon={<AddIcon />}
-                  >
-                    Add
-                  </MenuItem>
+                  ><LocalizedText text="Add" /></MenuItem>
                   <MenuItem
                     onClick={() => setEdit(true)}
                     alignItems={"start"}
                     icon={<EditIcon />}
-                  >
-                    Edit
-                  </MenuItem>
+                  ><LocalizedText text="Edit" /></MenuItem>
                   <MenuItem
                     onClick={generatePDF}
                     alignItems={"start"}
                     icon={<FaFilePdf />}
                     display={"flex"}
                     style={{ alignItems: "center" }}
-                  >
-                    Print as PDF
-                  </MenuItem>
+                  ><LocalizedText text="Print as PDF" /></MenuItem>
                   <>
                     <MenuDivider />
                     <MenuItem
@@ -197,16 +190,12 @@ const View = () => {
                       color={"red"}
                       onClick={() => setDelete(true)}
                       icon={<DeleteIcon />}
-                    >
-                      Delete
-                    </MenuItem>
+                    ><LocalizedText text="Delete" /></MenuItem>
                   </>
                 </MenuList>
               </Menu>
               <Link to={pathName(module.moduleName)}>
-                <Button leftIcon={<IoIosArrowBack />} size="sm" variant="brand">
-                  Back
-                </Button>
+                <Button leftIcon={<IoIosArrowBack />} size="sm" variant="brand"><LocalizedText text="Back" /></Button>
               </Link>
             </Flex>
           </GridItem>
@@ -224,18 +213,14 @@ const View = () => {
                     mr={2.5}
                     variant="outline"
                     colorScheme="green"
-                  >
-                    Edit
-                  </Button>
+                  ><LocalizedText text="Edit" /></Button>
                   <Button
                     size="sm"
                     style={{ background: "red.800" }}
                     onClick={() => setDelete(true)}
                     leftIcon={<DeleteIcon />}
                     colorScheme="red"
-                  >
-                    Delete
-                  </Button>
+                  ><LocalizedText text="Delete" /></Button>
                 </Flex>
               </GridItem>
             </Grid>
@@ -246,4 +231,4 @@ const View = () => {
   );
 };
 
-export default View;
+export default withLocalization(View);

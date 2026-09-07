@@ -1,3 +1,5 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -173,6 +175,7 @@ const AddEdit = (props) => {
       try {
         setIsLoding(true);
         let result = await getApi("api/task/view/", id);
+        setFieldValue("customFields", result?.data?.customFields || {});
         setFieldValue("title", result?.data?.title);
         setFieldValue("category", result?.data?.category);
         setFieldValue("description", result?.data?.description);
@@ -198,6 +201,7 @@ const AddEdit = (props) => {
         setIsLoding(false);
       }
     } else if (data) {
+      setFieldValue("customFields", data?.customFields || {});
       setFieldValue("title", data?.title);
       setFieldValue("category", data?.category);
       setFieldValue("description", data?.description);
@@ -272,11 +276,11 @@ const AddEdit = (props) => {
       {!props.from && <ModalOverlay />}
       <ModalContent overflowY={"auto"} height={"600px"}>
         <ModalHeader justifyContent="space-between" display="flex">
-          {userAction === "add" ? "Create Task" : "Edit Task"}
+          {userAction === "add" ? tr("Create Task") : tr("Edit Task")}
 
           <IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
         </ModalHeader>
-        <ModalBody overflowY={"auto"} height={"700px"}>
+        <ModalBody overflowY={"auto"} height={"700px"}><ManagedFormLayout moduleName="Tasks" formik={formik}>
           {/* Contact Model  */}
           <ContactModel
             isOpen={contactModelOpen}
@@ -308,8 +312,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Title<Text color={"red"}>*</Text>
+                ><LocalizedText text="Title" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -317,7 +320,7 @@ const AddEdit = (props) => {
                   onBlur={handleBlur}
                   value={values?.title}
                   name="title"
-                  placeholder="Title"
+                  placeholder={tr("Title")}
                   fontWeight="500"
                   borderColor={
                     errors?.title && touched?.title ? "red.300" : null
@@ -335,9 +338,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Related
-                </FormLabel>
+                ><LocalizedText text="Related" /></FormLabel>
                 <RadioGroup
                   onChange={(e) => {
                     setFieldValue("category", e);
@@ -348,22 +349,22 @@ const AddEdit = (props) => {
                 >
                   <Stack direction="row">
                     <Stack direction="row">
-                      <Radio value="None">None</Radio>
+                      <Radio value="None"><LocalizedText text="None" /></Radio>
                       {props?.leadContect === "contactView" && (
-                        <Radio value="Contact">Contact</Radio>
+                        <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
                       )}
                       {props?.leadContect === "leadView" && (
-                        <Radio value="Lead">Lead</Radio>
+                        <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                       )}
                       {!props?.leadContect && (
                         <>
                           {(user?.role === "superAdmin" ||
                             contactAccess?.create) && (
-                            <Radio value="Contact">Contact</Radio>
+                            <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
                           )}
                           {(user?.role === "superAdmin" ||
                             leadAccess?.create) && (
-                            <Radio value="Lead">Lead</Radio>
+                            <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                           )}
                         </>
                       )}
@@ -384,16 +385,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Description
-                </FormLabel>
+                ><LocalizedText text="Description" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.description}
                   name="description"
-                  placeholder="Description"
+                  placeholder={tr("Description")}
                   fontWeight="500"
                   borderColor={
                     errors?.description && touched?.description
@@ -417,9 +416,7 @@ const AddEdit = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Assign To Contact
-                    </FormLabel>
+                    ><LocalizedText text="Assign To Contact" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values?.assignTo}
@@ -431,7 +428,7 @@ const AddEdit = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.assignTo && touched?.assignTo
                             ? "red.300"
@@ -472,9 +469,7 @@ const AddEdit = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Assign To Lead
-                    </FormLabel>
+                    ><LocalizedText text="Assign To Lead" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values?.assignToLead}
@@ -486,7 +481,7 @@ const AddEdit = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.assignToLead && touched?.assignToLead
                             ? "red.300"
@@ -529,9 +524,7 @@ const AddEdit = (props) => {
                   //     // setFieldValue('allDay', e.target.checked === true ? 'Yes' : 'No');
                   //     setIsChecked(target);
                   // }}
-                >
-                  All Day Task ?
-                </Checkbox>
+                ><LocalizedText text="All Day Task ?" /></Checkbox>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel
@@ -540,8 +533,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Start Date<Text color={"red"}>*</Text>
+                ><LocalizedText text="Start Date" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   type={values?.allDay ? "date" : "datetime-local"}
@@ -580,9 +572,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  End Date
-                </FormLabel>
+                ><LocalizedText text="End Date" /></FormLabel>
                 <Input
                   type={values?.allDay ? "date" : "datetime-local"}
                   min={values?.start}
@@ -614,9 +604,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Background-Color
-                </FormLabel>
+                ><LocalizedText text="Background-Color" /></FormLabel>
                 <Input
                   type="color"
                   fontSize="sm"
@@ -645,9 +633,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Border-Color
-                </FormLabel>
+                ><LocalizedText text="Border-Color" /></FormLabel>
                 <Input
                   fontSize="sm"
                   type="color"
@@ -655,7 +641,7 @@ const AddEdit = (props) => {
                   onBlur={handleBlur}
                   value={values?.borderColor}
                   name="borderColor"
-                  placeholder="borderColor"
+                  placeholder={tr("borderColor")}
                   fontWeight="500"
                   borderColor={
                     errors?.borderColor && touched?.borderColor
@@ -677,9 +663,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Text-Color
-                </FormLabel>
+                ><LocalizedText text="Text-Color" /></FormLabel>
                 <Input
                   fontSize="sm"
                   type="color"
@@ -687,7 +671,7 @@ const AddEdit = (props) => {
                   onBlur={handleBlur}
                   value={values?.textColor}
                   name="textColor"
-                  placeholder="textColor"
+                  placeholder={tr("textColor")}
                   fontWeight="500"
                   textColor={
                     errors?.textColor && touched?.textColor ? "red.300" : null
@@ -706,16 +690,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Url
-                </FormLabel>
+                ><LocalizedText text="Url" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.url}
                   name="url"
-                  placeholder="Enter url"
+                  placeholder={tr("Enter url")}
                   fontWeight="500"
                   borderColor={errors?.url && touched?.url ? "red.300" : null}
                 />
@@ -731,19 +713,17 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Status
-                </FormLabel>
+                ><LocalizedText text="Status" /></FormLabel>
                 <Select
                   onChange={(e) => setFieldValue("status", e?.target?.value)}
                   value={values?.status}
                   style={{ fontSize: "14px" }}
                 >
-                  <option value="todo">Todo</option>
-                  <option value="onHold">On Hold</option>
-                  <option value="pending">Pending</option>
-                  <option value="inProgress">In Progress</option>
-                  <option value="completed">Completed</option>
+                  <option value="todo"><LocalizedText text="Todo" /></option>
+                  <option value="onHold"><LocalizedText text="On Hold" /></option>
+                  <option value="pending"><LocalizedText text="Pending" /></option>
+                  <option value="inProgress"><LocalizedText text="In Progress" /></option>
+                  <option value="completed"><LocalizedText text="Completed" /></option>
                 </Select>
               </GridItem>
               <GridItem colSpan={{ base: 12 }}>
@@ -753,9 +733,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Notes
-                </FormLabel>
+                ><LocalizedText text="Notes" /></FormLabel>
                 <Textarea
                   resize={"none"}
                   fontSize="sm"
@@ -763,7 +741,7 @@ const AddEdit = (props) => {
                   onBlur={handleBlur}
                   value={values?.notes}
                   name="notes"
-                  placeholder="Notes"
+                  placeholder={tr("Notes")}
                   fontWeight="500"
                   borderColor={
                     errors?.notes && touched?.notes ? "red.300" : null
@@ -776,10 +754,11 @@ const AddEdit = (props) => {
               </GridItem>
             </Grid>
           )}
-        </ModalBody>
+        </ManagedFormLayout>
+</ModalBody>
         <ModalFooter>
           <Button size="sm" variant="brand" onClick={handleSubmit}>
-            {userAction === "add" ? "Save" : "Update"}
+            {userAction === "add" ? tr("Save") : tr("Update")}
           </Button>
           <Button
             type="reset"
@@ -795,13 +774,11 @@ const AddEdit = (props) => {
               onClose(false);
               resetForm();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddEdit;
+export default withLocalization(AddEdit);

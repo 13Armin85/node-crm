@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { AddIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -113,7 +114,7 @@ const RoleModal = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Change Role</ModalHeader>
+        <ModalHeader><LocalizedText text="Change Role" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -267,7 +268,7 @@ const RoleModal = (props) => {
             leftIcon={<AddIcon />}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Add"}
+            {isLoding ? <Spinner /> : tr("Add")}
           </Button>
           <Button
             size="sm"
@@ -278,13 +279,11 @@ const RoleModal = (props) => {
               textTransform: "capitalize",
             }}
             onClick={() => onClose()}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default RoleModal;
+export default withLocalization(RoleModal);

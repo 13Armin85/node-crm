@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -187,7 +188,7 @@ const AddPhoneCall = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Add Call</ModalHeader>
+        <ModalHeader><LocalizedText text="Add Call" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {/* Contact Model  */}
@@ -235,9 +236,7 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Related
-              </FormLabel>
+              ><LocalizedText text="Related" /></FormLabel>
               <RadioGroup
                 onChange={(e) => {
                   setFieldValue("category", e);
@@ -248,8 +247,8 @@ const AddPhoneCall = (props) => {
                 value={values?.category}
               >
                 <Stack direction="row">
-                  <Radio value="Contact">Contact</Radio>
-                  <Radio value="Lead">Lead</Radio>
+                  <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
+                  <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                 </Stack>
               </RadioGroup>
               <Text mb="10px" fontSize="sm" color={"red"}>
@@ -267,9 +266,7 @@ const AddPhoneCall = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Recipient (Contact)
-                    </FormLabel>
+                    ><LocalizedText text="Recipient (Contact)" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values?.createByContact}
@@ -281,7 +278,7 @@ const AddPhoneCall = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.createByContact && touched?.createByContact
                             ? "red.300"
@@ -322,9 +319,7 @@ const AddPhoneCall = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Recipient (Lead)
-                    </FormLabel>
+                    ><LocalizedText text="Recipient (Lead)" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values?.createByLead}
@@ -336,7 +331,7 @@ const AddPhoneCall = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.createByLead && touched?.createByLead
                             ? "red.300"
@@ -379,15 +374,14 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Recipient<Text color={"red"}>*</Text>
+              ><LocalizedText text="Recipient" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
                 disabled
                 value={values?.recipient ? values?.recipient : ""}
                 name="recipient"
-                placeholder="Recipient"
+                placeholder={tr("Recipient")}
                 fontWeight="500"
                 borderColor={
                   errors?.recipient && touched?.recipient ? "red.300" : null
@@ -416,7 +410,7 @@ const AddPhoneCall = (props) => {
                       errors?.property && touched?.property ? undefined : "10px"
                     }
                     fontWeight="500"
-                    placeholder={"Assign To Property"}
+                    placeholder={tr("Assign To Property")}
                     borderColor={
                       errors?.property && touched?.property ? "red.300" : null
                     }
@@ -441,8 +435,7 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Start Date<Text color={"red"}>*</Text>
+              ><LocalizedText text="Start Date" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 type="datetime-local"
@@ -470,8 +463,7 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Call Duration<Text color={"red"}>*</Text>
+              ><LocalizedText text="Call Duration" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -479,7 +471,7 @@ const AddPhoneCall = (props) => {
                 onBlur={handleBlur}
                 value={values?.callDuration}
                 name="callDuration"
-                placeholder="call Duration"
+                placeholder={tr("call Duration")}
                 fontWeight="500"
                 borderColor={
                   errors?.callDuration && touched?.callDuration
@@ -501,8 +493,7 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Assign To Sales Agent <Text color={"red"}>*</Text>
+              ><LocalizedText text="Assign To Sales Agent" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Flex justifyContent={"space-between"}>
                 <Select
@@ -515,7 +506,7 @@ const AddPhoneCall = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Assign To Sales Agent"}
+                  placeholder={tr("Assign To Sales Agent")}
                   borderColor={
                     errors?.salesAgent && touched?.salesAgent ? "red.300" : null
                   }
@@ -550,13 +541,11 @@ const AddPhoneCall = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Call Notes
-              </FormLabel>
+              ><LocalizedText text="Call Notes" /></FormLabel>
               <Textarea
                 resize={"none"}
                 fontSize="sm"
-                placeholder="Enter Call Notes"
+                placeholder={tr("Enter Call Notes")}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={values?.callNotes}
@@ -580,7 +569,7 @@ const AddPhoneCall = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             size="sm"
@@ -594,13 +583,11 @@ const AddPhoneCall = (props) => {
               formik.resetForm();
               onClose();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddPhoneCall;
+export default withLocalization(AddPhoneCall);

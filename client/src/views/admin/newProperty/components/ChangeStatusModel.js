@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
   Modal,
@@ -25,12 +26,8 @@ function ChangeStatusModel(props) {
             type="submit"
             mr={2}
             onClick={clickOnYes}
-          >
-            Yes
-          </Button>
-          <Button variant="outline" colorScheme="red" size="sm" type="submit" onClick={onClose}>
-            No
-          </Button>
+          ><LocalizedText text="Yes" /></Button>
+          <Button variant="outline" colorScheme="red" size="sm" type="submit" onClick={onClose}><LocalizedText text="No" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

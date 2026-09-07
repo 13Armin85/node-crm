@@ -1,3 +1,4 @@
+import { LocalizedText, tr } from 'i18n/runtime';
 // Chakra imports
 import {
   Flex,
@@ -239,13 +240,13 @@ export default function UserReports() {
           <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
             <Card>
               <Flex mb={3} alignItems={"center"} justifyContent={"space-between"}>
-                <Heading size="md">{(emailModule?.isActive && callModule?.isActive) ? "Email and Call" : emailModule?.isActive ? "Email" : callModule?.isActive ? "Call" : ""} Report</Heading>
+                <Heading size="md">{(emailModule?.isActive && callModule?.isActive) ? tr("Email and Call") : emailModule?.isActive ? "Email" : callModule?.isActive ? "Call" : ""}<LocalizedText text="Report" /></Heading>
                 {
                   reportModule?.isActive &&
                   <IconButton
                     color={"green.500"}
                     onClick={() => navigate("/reporting-analytics")}
-                    aria-label="Call Fred"
+                    aria-label={tr("Call Fred")}
                     borderRadius="10px"
                     size="md"
                     icon={<ViewIcon />}
@@ -260,7 +261,7 @@ export default function UserReports() {
         <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
           <Card>
             <Flex mb={5} alignItems={"center"} justifyContent={"space-between"}>
-              <Heading size="md">Module Data Report</Heading>
+              <Heading size="md"><LocalizedText text="Module Data Report" /></Heading>
 
             </Flex>
             <Box mb={3}>
@@ -279,7 +280,7 @@ export default function UserReports() {
           data && data.length > 0 &&
           <Card >
             <Flex alignItems={"center"} justifyContent={"space-between"} pb={3}>
-              <Heading size="md">Statistics</Heading>
+              <Heading size="md"><LocalizedText text="Statistics" /></Heading>
               <Text color={statisticsMutedColor} fontSize="sm" fontWeight={700}>
                 {data.length}
               </Text>
@@ -332,7 +333,7 @@ export default function UserReports() {
         }
 
         {leadView?.view && (leadModule?.isActive) && <Card className="crm-lead-chart">
-          <Heading size="md" pb={2}>Lead Statistics</Heading>
+          <Heading size="md" pb={2}><LocalizedText text="Lead Statistics" /></Heading>
           {(leadView?.view) &&
             <Grid templateColumns="repeat(12, 1fr)" gap={2}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
@@ -342,7 +343,7 @@ export default function UserReports() {
                   cursor={"pointer"}
                   onClick={() => navigate('/lead')}
                   p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={leadStatStyles.total.color}>Total Leads </Heading>
+                  <Heading size="sm" pb={3} color={leadStatStyles.total.color}><LocalizedText text="Total Leads" /></Heading>
                   <Text fontWeight={600} color={leadStatStyles.total.color}><CountUpComponent targetNumber={allData?.leadData?.length || 0} /> </Text>
                 </Box>
               </GridItem>
@@ -353,7 +354,7 @@ export default function UserReports() {
                   cursor={"pointer"}
                   onClick={() => navigate('/lead', { state: 'active' })}
                   p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={leadStatStyles.active.color} >Active Leads </Heading>
+                  <Heading size="sm" pb={3} color={leadStatStyles.active.color} ><LocalizedText text="Active Leads" /></Heading>
                   <Text fontWeight={600} color={leadStatStyles.active.color}><CountUpComponent targetNumber={findLeadStatus("active")} /></Text>
                 </Box>
               </GridItem>
@@ -364,7 +365,7 @@ export default function UserReports() {
                   borderRadius={"10px"}
                   cursor={"pointer"}
                   p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={leadStatStyles.pending.color}>Pending Leads</Heading>
+                  <Heading size="sm" pb={3} color={leadStatStyles.pending.color}><LocalizedText text="Pending Leads" /></Heading>
                   <Text fontWeight={600} color={leadStatStyles.pending.color}><CountUpComponent targetNumber={findLeadStatus("pending")} /></Text>
                 </Box>
               </GridItem>
@@ -376,7 +377,7 @@ export default function UserReports() {
                   cursor={"pointer"}
                   onClick={() => navigate('/lead', { state: 'sold' })}
                   p={2} m={1} textAlign={"center"}>
-                  <Heading size="sm" pb={3} color={leadStatStyles.sold.color}>Sold Leads </Heading>
+                  <Heading size="sm" pb={3} color={leadStatStyles.sold.color}><LocalizedText text="Sold Leads" /></Heading>
                   <Text fontWeight={600} color={leadStatStyles.sold.color}><CountUpComponent targetNumber={findLeadStatus("sold")} /></Text>
                 </Box>
               </GridItem>
@@ -389,7 +390,7 @@ export default function UserReports() {
         </Card>}
 
         {taskView?.view && (tasksModule?.isActive) && <Card >
-          <Heading size="md" pb={3}>Task Statistics</Heading>
+          <Heading size="md" pb={3}><LocalizedText text="Task Statistics" /></Heading>
           <Grid templateColumns="repeat(12, 1fr)" gap={2} mb={2}>
             <GridItem colSpan={{ base: 12 }}>
               <Box
@@ -398,7 +399,7 @@ export default function UserReports() {
                 onClick={() => navigate('/task')}
                 borderRadius={"10px"} cursor={'pointer'}
                 p={2} m={1} textAlign={"center"}>
-                <Heading size="sm" pb={3} color={taskTotalColor}>Total Tasks </Heading>
+                <Heading size="sm" pb={3} color={taskTotalColor}><LocalizedText text="Total Tasks" /></Heading>
                 <Text fontWeight={600} color={taskTotalColor}><CountUpComponent targetNumber={allData?.taskData?.length || 0} /></Text>
               </Box>
             </GridItem>

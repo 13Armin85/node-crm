@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const Invoices = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     title: String,
     description: String,
     quoteNumber: String,
@@ -38,7 +39,7 @@ const Invoices = new mongoose.Schema({
     items: [],
     account: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Accounts",
+        ref: "PartnerCustomers",
     },
     contact: {
         type: mongoose.Schema.Types.ObjectId,

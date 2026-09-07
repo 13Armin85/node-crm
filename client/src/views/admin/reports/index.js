@@ -1,3 +1,4 @@
+import { tr, withLocalization } from 'i18n/runtime';
 import Card from "components/card/Card";
 import { useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
@@ -16,8 +17,8 @@ const Report = () => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const tableColumns = [
-    { Header: "Email Sent", accessor: "emailsent" },
-    { Header: "Outbound Calls", accessor: "outboundcall" },
+    { Header: tr("Email Sent"), accessor: "emailsent" },
+    { Header: tr("Outbound Calls"), accessor: "outboundcall" },
   ];
 
   // const fetchCustomDataFields = async () => {
@@ -33,12 +34,12 @@ const Report = () => {
   if (user?.role === "superAdmin") {
     tableColumns?.unshift(
       {
-        Header: "#",
+        Header: tr("#"),
         accessor: "_id",
         isSortable: false,
         width: 10,
       },
-      { Header: "Name", accessor: "firstName" },
+      { Header: tr("Name"), accessor: "firstName" },
     );
   }
 
@@ -88,4 +89,4 @@ const Report = () => {
   );
 };
 
-export default Report;
+export default withLocalization(Report);

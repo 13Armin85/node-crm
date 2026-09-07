@@ -65,7 +65,7 @@ const index = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'Accounts',
+                    from: "PartnerCustomers",
                     localField: 'accountName',
                     foreignField: '_id',
                     as: 'accountData'
@@ -90,7 +90,7 @@ const index = async (req, res) => {
                         }
                     },
                     modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
-                    accountName2: '$accountData.name'
+                    accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] }
                 }
             },
             {
@@ -143,7 +143,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'Accounts',
+                    from: "PartnerCustomers",
                     localField: 'accountName',
                     foreignField: '_id',
                     as: 'accountData'
@@ -169,7 +169,7 @@ const view = async (req, res) => {
                         }
                     },
                     modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
-                    accountName2: '$accountData.name'
+                    accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] }
                 }
             },
             {

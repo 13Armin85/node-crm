@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
@@ -116,7 +117,7 @@ function UserModal(props) {
         <ModalContent>
           <ModalHeader height={"580px"}>
             <Flex justifyContent={"space-between"}>
-              <Text>Users</Text>
+              <Text><LocalizedText text="Users" /></Text>
               <Button
                 variant="brand"
                 size="sm"
@@ -125,9 +126,7 @@ function UserModal(props) {
                   setOpenUser(false);
                   setUserModal(true);
                 }}
-              >
-                Manage Users
-              </Button>
+              ><LocalizedText text="Manage Users" /></Button>
               <ModalCloseButton mt="2" />
             </Flex>
           </ModalHeader>
@@ -324,9 +323,7 @@ function UserModal(props) {
                 marginLeft: 2,
                 textTransform: "capitalize",
               }}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

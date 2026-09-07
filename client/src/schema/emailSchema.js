@@ -1,19 +1,20 @@
+import { tr } from 'i18n/runtime';
 import * as yup from "yup";
 
 export const emailSchema = yup
   .object({
-    sender: yup.string().required("Sender Is required"),
-    recipient: yup.string().email().required("Recipient Is required"),
+    sender: yup.string().required(tr("Sender Is required")),
+    recipient: yup.string().email().required(tr("Recipient Is required")),
     cc: yup.string().email(),
     bcc: yup.string().email(),
     relatedToContact: yup.string(),
     relatedToLead: yup.string(),
-    subject: yup.string().required("Subject Is required"),
+    subject: yup.string().required(tr("Subject Is required")),
     message: yup.string(),
-    startDate: yup.date().required("Start Date Is required"),
+    startDate: yup.date().required(tr("Start Date Is required")),
     createBy: yup.string(),
     createByLead: yup.string(),
-    salesAgent: yup.string().required("Assign To Sales Agent Is required"),
+    salesAgent: yup.string().required(tr("Assign To Sales Agent Is required")),
   })
   .test(
     "createBy-or-createByLead-required",

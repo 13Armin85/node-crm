@@ -82,6 +82,7 @@ const file = async (req, res) => {
             path: file.path,
             img: `${url}/api/document/images/${file.filename}`,
             createOn: new Date(),
+            customFields: req.body.customFields,
         }));
 
         // Check if the folder exists in the database

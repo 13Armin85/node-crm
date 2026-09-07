@@ -6,7 +6,7 @@ const index = async (req, res) => {
     try {
         const query = req.query;
         query.deleted = false;
-        let result = await customField.find(query);
+        let result = await customField.find({ ...query, moduleName: { $nin: ['Account', 'Accounts', 'Payments'] } });
         result.sort((a, b) => {
             return a.no - b.no;
         });

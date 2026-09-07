@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { AddIcon, CloseIcon } from "@chakra-ui/icons";
 import {
   Box,
@@ -38,11 +39,11 @@ const PaymentSchedule = (props) => {
             <Thead borderBottom="1px solid #c4c9cf">
               <Tr>
                 <Th></Th>
-                <Th>title</Th>
-                <Th>Start Date</Th>
-                <Th>percentage (%)</Th>
-                <Th>Months</Th>
-                <Th>Total</Th>
+                <Th><LocalizedText text="title" /></Th>
+                <Th><LocalizedText text="Start Date" /></Th>
+                <Th><LocalizedText text="percentage (%)" /></Th>
+                <Th><LocalizedText text="Months" /></Th>
+                <Th><LocalizedText text="Total" /></Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -106,7 +107,7 @@ const PaymentSchedule = (props) => {
                       onBlur={handleBlur}
                       value={values?.installments?.[i]?.title}
                       name={`installments.[${i}].title`}
-                      placeholder="Title"
+                      placeholder={tr("Title")}
                       fontWeight="500"
                       max={100}
                       borderColor={
@@ -199,7 +200,7 @@ const PaymentSchedule = (props) => {
                       onBlur={handleBlur}
                       value={values?.installments?.[i]?.total}
                       name={`installments.[${i}].total`}
-                      placeholder="Total"
+                      placeholder={tr("Total")}
                       fontWeight="500"
                       borderColor={
                         errors?.installments?.[i]?.total &&
@@ -276,4 +277,4 @@ const PaymentSchedule = (props) => {
   );
 };
 
-export default PaymentSchedule;
+export default withLocalization(PaymentSchedule);

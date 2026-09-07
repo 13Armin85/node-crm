@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -157,8 +158,7 @@ const Edit = (props) => {
             alignItems={"center"}
             justifyContent="space-between"
             display="flex"
-          >
-            Edit {values?.leadName || "Lead "}
+          ><LocalizedText text="Edit" />{values?.leadName || "Lead "}
             <IconButton onClick={handleClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
@@ -189,16 +189,14 @@ const Edit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Associated Listing
-                </FormLabel>
+                ><LocalizedText text="Associated Listing" /></FormLabel>
                 <Flex justifyContent="space-between">
                   <Select
                     value={values?.associatedListing || ""}
                     name="associatedListing"
                     onChange={handleChange}
                     fontWeight="500"
-                    placeholder="select associated listing"
+                    placeholder={tr("select associated listing")}
                   >
                     {propertyList?.map((item) => {
                       return (
@@ -226,16 +224,14 @@ const Edit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Assign to User
-                </FormLabel>
+                ><LocalizedText text="Assign to User" /></FormLabel>
                 <Flex justifyContent="space-between">
                   <Select
                     value={values?.assignUser}
                     name="assignUser"
                     onChange={handleChange}
                     fontWeight="500"
-                    placeholder="select user"
+                    placeholder={tr("select user")}
                   >
                     {userData?.map((item) => {
                       return (
@@ -282,7 +278,7 @@ const Edit = (props) => {
               disabled={isLoding ? true : false}
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Update"}
+              {isLoding ? <Spinner /> : tr("Update")}
             </Button>
             <Button
               variant="outline"
@@ -293,9 +289,7 @@ const Edit = (props) => {
                 textTransform: "capitalize",
               }}
               onClick={handleClose}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -303,4 +297,4 @@ const Edit = (props) => {
   );
 };
 
-export default Edit;
+export default withLocalization(Edit);

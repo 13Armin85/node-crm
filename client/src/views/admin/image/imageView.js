@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -77,7 +78,7 @@ const ImageView = (props) => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>View Images</ModalHeader>
+          <ModalHeader><LocalizedText text="View Images" /></ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <Grid templateColumns={"repeat(12, 1fr)"} gap={5}>
@@ -87,9 +88,7 @@ const ImageView = (props) => {
                 justifyContent={"center"}
               >
                 <div>
-                  <Text fontWeight={"600"} ps={3}>
-                    Navbar Small Logo Image
-                  </Text>
+                  <Text fontWeight={"600"} ps={3}><LocalizedText text="Navbar Small Logo Image" /></Text>
                   <div className="imageCard" style={{ margin: "10px" }}>
                     <Image
                       src={data?.logoSmImg}
@@ -102,9 +101,7 @@ const ImageView = (props) => {
                         isMultipleAllow={false}
                         onFileSelect={(file) => changeImage(file, logoimg)}
                         content={
-                          <Button size="sm" variant="brand">
-                            Change
-                          </Button>
+                          <Button size="sm" variant="brand"><LocalizedText text="Change" /></Button>
                         }
                       />
                     </div>
@@ -117,9 +114,7 @@ const ImageView = (props) => {
                 justifyContent={"center"}
               >
                 <div>
-                  <Text fontWeight={"600"} ps={3}>
-                    Navbar Large Logo Image
-                  </Text>
+                  <Text fontWeight={"600"} ps={3}><LocalizedText text="Navbar Large Logo Image" /></Text>
                   <div className="imageCard" style={{ margin: "10px" }}>
                     <Image
                       src={data?.logoLgImg}
@@ -132,9 +127,7 @@ const ImageView = (props) => {
                         isMultipleAllow={false}
                         onFileSelect={(file) => changeImage(file, largelogoimg)}
                         content={
-                          <Button size="sm" variant="brand">
-                            Change
-                          </Button>
+                          <Button size="sm" variant="brand"><LocalizedText text="Change" /></Button>
                         }
                       />
                     </div>
@@ -147,9 +140,7 @@ const ImageView = (props) => {
                 justifyContent={"center"}
               >
                 <div>
-                  <Text fontWeight={"600"} ps={3}>
-                    Login page Image
-                  </Text>
+                  <Text fontWeight={"600"} ps={3}><LocalizedText text="Login page Image" /></Text>
                   <div className="imageCard" style={{ margin: "10px" }}>
                     <Image
                       src={data?.authImg}
@@ -162,9 +153,7 @@ const ImageView = (props) => {
                         isMultipleAllow={false}
                         onFileSelect={(file) => changeImage(file, authimg)}
                         content={
-                          <Button size="sm" variant="brand">
-                            Change
-                          </Button>
+                          <Button size="sm" variant="brand"><LocalizedText text="Change" /></Button>
                         }
                       />
                     </div>
@@ -181,7 +170,7 @@ const ImageView = (props) => {
               onClick={() => setImageData(data)}
               disabled={isLoding ? true : false}
             >
-              {isLoding ? <Spinner /> : "Set Image"}
+              {isLoding ? <Spinner /> : tr("Set Image")}
             </Button>
             <Button
               colorScheme="red"
@@ -190,9 +179,7 @@ const ImageView = (props) => {
               onClick={() => {
                 handleDeleteOpen(imageviewData);
               }}
-            >
-              Delete
-            </Button>
+            ><LocalizedText text="Delete" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -200,4 +187,4 @@ const ImageView = (props) => {
   );
 };
 
-export default ImageView;
+export default withLocalization(ImageView);

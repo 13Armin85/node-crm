@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { CloseIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   DrawerFooter,
@@ -60,9 +61,7 @@ const MeetingView = (props) => {
     <Modal isOpen={isOpen} size={"md"} isCentered>
       <ModalOverlay />
       <ModalContent height={"70%"}>
-        <ModalHeader justifyContent="space-between" display="flex">
-          Meeting
-          <IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
+        <ModalHeader justifyContent="space-between" display="flex"><LocalizedText text="Meeting" /><IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
         </ModalHeader>
         {isLoding ? (
           <Flex
@@ -83,8 +82,7 @@ const MeetingView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Agenda{" "}
+                    {" "}<LocalizedText text="Agenda" />{" "}
                   </Text>
                   <Text>{data?.agenda ? data?.agenda : " - "}</Text>
                 </GridItem>
@@ -94,8 +92,7 @@ const MeetingView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Date&Time{" "}
+                    {" "}<LocalizedText text="Date&Time" />{" "}
                   </Text>
                   <Text>
                     {data?.dateTime
@@ -109,8 +106,7 @@ const MeetingView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Created By{" "}
+                    {" "}<LocalizedText text="Created By" />{" "}
                   </Text>
                   <Text>{data?.createdByName ? data?.createdByName : "-"}</Text>
                 </GridItem>
@@ -120,8 +116,7 @@ const MeetingView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Related{" "}
+                    {" "}<LocalizedText text="Related" />{" "}
                   </Text>
                   <Text>{data?.related ? data?.related : "-"}</Text>
                 </GridItem>
@@ -131,8 +126,7 @@ const MeetingView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Location{" "}
+                    {" "}<LocalizedText text="Location" />{" "}
                   </Text>
                   <Text>{data?.location ? data?.location : "-"}</Text>
                 </GridItem>
@@ -142,8 +136,7 @@ const MeetingView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Notes{" "}
+                    {" "}<LocalizedText text="Notes" />{" "}
                   </Text>
                   <Text>{data?.notes ? data?.notes : "-"}</Text>
                 </GridItem>
@@ -153,8 +146,7 @@ const MeetingView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    attendes{" "}
+                    {" "}<LocalizedText text="attendes" />{" "}
                   </Text>
                   {data?.related === "Contact" && contactAccess?.view
                     ? data?.attendes &&

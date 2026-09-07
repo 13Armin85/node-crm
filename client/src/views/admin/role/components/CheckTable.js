@@ -1,3 +1,4 @@
+import { LocalizedText, tr } from 'i18n/runtime';
 import {
   Box,
   Flex,
@@ -55,18 +56,18 @@ export default function CheckTable(props) {
 
   const rowColumns = [
     {
-      Header: "#",
+      Header: tr("#"),
       accessor: "_id",
       isSortable: false,
       width: 10,
       display: false,
     },
 
-    { Header: "title", accessor: "title" },
-    { Header: "create", accessor: "create", width: "20px" },
-    { Header: "view", accessor: "view", width: "20px" },
-    { Header: "update", accessor: "update", width: "20px" },
-    { Header: "delete", accessor: "delete", width: "20px" },
+    { Header: tr("title"), accessor: "title" },
+    { Header: tr("create"), accessor: "create", width: "20px" },
+    { Header: tr("view"), accessor: "view", width: "20px" },
+    { Header: tr("update"), accessor: "update", width: "20px" },
+    { Header: tr("delete"), accessor: "delete", width: "20px" },
   ];
 
   const tableInstance = useTable(
@@ -120,9 +121,7 @@ export default function CheckTable(props) {
                 fontSize="22px"
                 fontWeight="700"
                 lineHeight="100%"
-              >
-                Roles (
-                <CountUpComponent
+              ><LocalizedText text="Roles (" /><CountUpComponent
                   key={data?.length}
                   targetNumber={data?.length}
                 />
@@ -141,18 +140,14 @@ export default function CheckTable(props) {
               variant="brand"
               size="sm"
               leftIcon={<AddIcon />}
-            >
-              Add New
-            </Button>
+            ><LocalizedText text="Add New" /></Button>
             <Button
               onClick={() => navigate("/admin-setting")}
               variant="brand"
               size="sm"
               ml={2}
               leftIcon={<IoIosArrowBack />}
-            >
-              Back
-            </Button>
+            ><LocalizedText text="Back" /></Button>
           </GridItem>
         </Grid>
 

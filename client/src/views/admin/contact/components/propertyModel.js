@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -34,7 +35,7 @@ const PropertyModel = (props) => {
     setPropertyData(result?.payload?.data);
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...result?.payload?.data?.[0]?.fields
         ?.filter((field) => field?.isTableField === true)
         ?.map((field) => ({ Header: field?.label, accessor: field?.name })),
@@ -77,7 +78,7 @@ const PropertyModel = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select Interested Property</ModalHeader>
+        <ModalHeader><LocalizedText text="Select Interested Property" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -86,7 +87,7 @@ const PropertyModel = (props) => {
             </Flex>
           ) : (
             <CommonCheckTable
-              title={"Properties"}
+              title={tr("Properties")}
               isLoding={isLoding}
               columnData={columns ?? []}
               // dataColumn={columns ?? []}
@@ -115,7 +116,7 @@ const PropertyModel = (props) => {
             disabled={isLoding ? true : false}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             size="sm"
@@ -126,13 +127,11 @@ const PropertyModel = (props) => {
             variant="outline"
             colorScheme="red"
             onClick={() => onClose()}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default PropertyModel;
+export default withLocalization(PropertyModel);

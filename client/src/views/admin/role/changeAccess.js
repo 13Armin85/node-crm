@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
@@ -225,7 +226,7 @@ function ChangeAccess(props) {
     >
       <ModalOverlay />
       <ModalContent height={"580px"} maxWidth={"2xl"}>
-        <ModalHeader textTransform={"capitalize"}>{name} Access</ModalHeader>
+        <ModalHeader textTransform={"capitalize"}>{name}<LocalizedText text="Access" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody overflow={"auto"} height={"400px"}>
           <Table>
@@ -393,9 +394,7 @@ function ChangeAccess(props) {
           </Table>
         </ModalBody>
         <ModalFooter>
-          <Button size="sm" variant="brand" onClick={handleSubmit}>
-            Save
-          </Button>
+          <Button size="sm" variant="brand" onClick={handleSubmit}><LocalizedText text="Save" /></Button>
           <Button
             size="sm"
             onClick={() => {
@@ -409,9 +408,7 @@ function ChangeAccess(props) {
               marginLeft: 2,
               textTransform: "capitalize",
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

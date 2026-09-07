@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -56,7 +57,7 @@ const PaginationProperty = (props) => {
     >
       {Math.ceil(dataLength / rangeData) !== 1 && (
         <Flex>
-          <Tooltip label="First Page">
+          <Tooltip label={tr("First Page")}>
             <IconButton
               onClick={() => {
                 setCurrentPage(0);
@@ -66,7 +67,7 @@ const PaginationProperty = (props) => {
               mr={4}
             />
           </Tooltip>
-          <Tooltip label="Previous Page">
+          <Tooltip label={tr("Previous Page")}>
             <IconButton
               onClick={() => {
                 previousPage();
@@ -81,17 +82,15 @@ const PaginationProperty = (props) => {
       <Flex alignItems="center">
         {Math.ceil(dataLength / rangeData) !== 1 && (
           <>
-            <Text flexShrink="0" mr={8}>
-              Page{" "}
+            <Text flexShrink="0" mr={8}><LocalizedText text="Page" />{" "}
               <Text fontWeight="bold" as="span">
                 {currentPage + 1}
-              </Text>{" "}
-              of{" "}
+              </Text>{" "}<LocalizedText text="of" />{" "}
               <Text fontWeight="bold" as="span">
                 {Math?.ceil(dataLength / rangeData)}
               </Text>
             </Text>
-            <Text flexShrink="0">Go to page:</Text>
+            <Text flexShrink="0"><LocalizedText text="Go to page:" /></Text>
             <NumberInput
               ml={2}
               mr={8}
@@ -117,8 +116,7 @@ const PaginationProperty = (props) => {
           }}
         >
           {[5, 10, 20, 30, 40, 50]?.map((size) => (
-            <option key={size} value={size}>
-              Show {size}
+            <option key={size} value={size}><LocalizedText text="Show" />{size}
             </option>
           ))}
         </Select>
@@ -126,7 +124,7 @@ const PaginationProperty = (props) => {
 
       {Math.ceil(dataLength / rangeData) !== 1 && (
         <Flex>
-          <Tooltip label="Next Page">
+          <Tooltip label={tr("Next Page")}>
             <IconButton
               onClick={() => {
                 nextPage();
@@ -135,7 +133,7 @@ const PaginationProperty = (props) => {
               icon={<ChevronRightIcon h={6} w={6} />}
             />
           </Tooltip>
-          <Tooltip label="Last Page">
+          <Tooltip label={tr("Last Page")}>
             <IconButton
               onClick={() => {
                 setCurrentPage(Math?.ceil(dataLength / rangeData) - 1);
@@ -151,4 +149,4 @@ const PaginationProperty = (props) => {
   );
 };
 
-export default PaginationProperty;
+export default withLocalization(PaginationProperty);

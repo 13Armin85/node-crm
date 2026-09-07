@@ -4,13 +4,14 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
+import estate from './estate';
+import legacy, { aliases } from './legacy';
 
 export const LANGUAGES = {
   en: { code: "en", label: "English", nativeLabel: "English", dir: "ltr" },
-  fa: { code: "fa", label: "Persian", nativeLabel: "فارسی", dir: "ltr" },
+  fa: { code: "fa", label: "Persian", nativeLabel: "فارسی", dir: "rtl" },
   tr: { code: "tr", label: "Turkish", nativeLabel: "Türkçe", dir: "ltr" },
 };
 
@@ -87,6 +88,9 @@ const fa = {
   "From": "از",
   "Go to page:": "برو به صفحه:",
   "Help": "راهنما",
+  "Current page": "صفحه فعلی",
+  "What is this page for?": "این صفحه برای چیست؟",
+  "What can the user do here?": "کاربر اینجا چه کاری می‌تواند انجام دهد؟",
   "Hey": "سلام",
   "Home": "خانه",
   "Hot Lead": "لید داغ",
@@ -273,6 +277,9 @@ const tr = {
   "From": "Başlangıç",
   "Go to page:": "Sayfaya git:",
   "Help": "Yardım",
+  "Current page": "Geçerli sayfa",
+  "What is this page for?": "Bu sayfa ne için?",
+  "What can the user do here?": "Kullanıcı burada ne yapabilir?",
   "Hey": "Merhaba",
   "Home": "Ana Sayfa",
   "Hot Lead": "Sıcak Aday",
@@ -387,7 +394,7 @@ const tr = {
   "On Hold": "Beklemede",
 };
 
-const dictionaries = { en: {}, fa, tr };
+const dictionaries = { en: { ...legacy.en, ...estate.en }, fa: { ...fa, ...legacy.fa, ...estate.fa }, tr: { ...tr, ...legacy.tr, ...estate.tr } };
 
 const LanguageContext = createContext({
   language: "en",
@@ -396,104 +403,39 @@ const LanguageContext = createContext({
   t: (value) => value,
 });
 
-const originalText = new WeakMap();
-const translatedText = new WeakMap();
-const originalPlaceholders = new WeakMap();
-const translatedPlaceholders = new WeakMap();
-const excludedTags = new Set([
-  "SCRIPT",
-  "STYLE",
-  "TEXTAREA",
-  "INPUT",
-  "CODE",
-  "PRE",
-  "SVG",
-  "CANVAS",
-]);
-
-const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 export const translate = (value, language = "en") => {
-  if (value === undefined || value === null || language === "en") return value;
-  const text = String(value);
-  const dict = dictionaries[language] || {};
-  if (dict[text]) return dict[text];
-  const trimmed = text.trim();
-  if (!trimmed || /^[\d\s.,:/#$%()+-]+$/.test(trimmed)) return text;
-  if (dict[trimmed]) return text.replace(trimmed, dict[trimmed]);
-
-  let translated = text;
-  Object.keys(dict)
-    .sort((a, b) => b.length - a.length)
-    .forEach((key) => {
-      const pattern = new RegExp(`(^|[^A-Za-z])${escapeRegExp(key)}(?=$|[^A-Za-z])`, "g");
-      translated = translated.replace(pattern, `$1${dict[key]}`);
-    });
-
-  return translated;
-};
-
-const getSourceText = (node) => {
-  const lastTranslated = translatedText.get(node);
-  const current = node.nodeValue;
-  if (originalText.has(node) && current === lastTranslated) {
-    return originalText.get(node);
+  if (value === undefined || value === null) return value;
+  if (typeof value !== 'string') return value;
+  const text = value.replace(/\s+/g, ' ').trim();
+  const canonical = text.replace(/([a-z])([A-Z])/g, '$1 $2');
+  const aliasKey = Object.keys(aliases).find(key => key.toLowerCase() === text.toLowerCase());
+  if (aliasKey && aliases[aliasKey].toLowerCase() !== text.toLowerCase()) return translate(aliases[aliasKey], language);
+  const dict = dictionaries[language] || dictionaries.en;
+  const key = Object.keys(dict).find(key => key.toLowerCase() === text.toLowerCase() || key.toLowerCase() === canonical.toLowerCase());
+  if (key) return dict[key];
+  if (language === 'en') return value;
+  const patterns = [
+    [/^(.+?)\s+is required[.!]?$/i, label => language === 'fa' ? `${label} الزامی است` : `${label} zorunludur`],
+    [/^(.+?)\s+is invalid[.!]?$/i, label => language === 'fa' ? `${label} معتبر نیست` : `${label} geçersiz`],
+    [/^Enter (.+)$/i, label => language === 'fa' ? `${label} را وارد کنید` : `${label} girin`],
+    [/^Select (.+)$/i, label => language === 'fa' ? `انتخاب ${label}` : `${label} seçin`],
+    [/^Add (.+)$/i, label => language === 'fa' ? `افزودن ${label}` : `${label} ekle`],
+    [/^Create (.+)$/i, label => language === 'fa' ? `ایجاد ${label}` : `${label} oluştur`],
+    [/^Edit (.+)$/i, label => language === 'fa' ? `ویرایش ${label}` : `${label} düzenle`],
+    [/^Delete (.+)$/i, label => language === 'fa' ? `حذف ${label}` : `${label} sil`],
+    [/^Import (.+)$/i, label => language === 'fa' ? `درون‌ریزی ${label}` : `${label} içe aktar`],
+    [/^View (.+)$/i, label => language === 'fa' ? `نمایش ${label}` : `${label} görüntüle`],
+    [/^(.+) Details$/i, label => language === 'fa' ? `جزئیات ${label}` : `${label} ayrıntıları`],
+    [/^Are You Sure To Delete selected\s*(.*?)\s*\??$/i, label => language === 'fa' ? `آیا از حذف ${label || 'موارد انتخاب‌شده'} مطمئن هستید؟` : `${label || 'Seçilen kayıtlar'} silinsin mi?`],
+    [/^--\s*(.*?)\s*--$/, label => label],
+    [/^(.+?)\s*[:(]\s*$/, label => `${label}:`],
+    [/^(.+?)([234])$/, label => label],
+  ];
+  for (const [pattern, format] of patterns) {
+    const match = text.match(pattern);
+    if (match) { const translated = translate(match[1], language); if (!match[1] || translated !== match[1]) return format(translated); }
   }
-  originalText.set(node, current);
-  return current;
-};
-
-const getSourcePlaceholder = (node) => {
-  const lastTranslated = translatedPlaceholders.get(node);
-  const current = node.getAttribute("placeholder");
-  if (originalPlaceholders.has(node) && current === lastTranslated) {
-    return originalPlaceholders.get(node);
-  }
-  originalPlaceholders.set(node, current);
-  return current;
-};
-
-const translateTree = (root, language) => {
-  if (!root || typeof document === "undefined") return;
-
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
-      const parent = node.parentElement;
-      if (!parent || excludedTags.has(parent.tagName)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      if (
-        parent.closest(
-          "[data-no-translate], [contenteditable='true'], .apexcharts-canvas",
-        )
-      ) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      return NodeFilter.FILTER_ACCEPT;
-    },
-  });
-
-  const nodes = [];
-  while (walker.nextNode()) nodes.push(walker.currentNode);
-
-  nodes.forEach((node) => {
-    const source = getSourceText(node);
-    const nextValue = translate(source, language);
-    translatedText.set(node, nextValue);
-    if (node.nodeValue !== nextValue) {
-      node.nodeValue = nextValue;
-    }
-  });
-
-  root.querySelectorAll?.("input[placeholder], textarea[placeholder]").forEach(
-    (node) => {
-      const nextPlaceholder = translate(getSourcePlaceholder(node), language);
-      translatedPlaceholders.set(node, nextPlaceholder);
-      if (node.getAttribute("placeholder") !== nextPlaceholder) {
-        node.setAttribute("placeholder", nextPlaceholder);
-      }
-    },
-  );
+  return value;
 };
 
 export function LanguageProvider({ children }) {
@@ -507,7 +449,7 @@ export function LanguageProvider({ children }) {
     setLanguageState(safeLanguage);
   }, []);
 
-  const direction = LANGUAGES[language]?.dir || "ltr";
+  const direction = 'ltr';
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -534,36 +476,7 @@ export function LanguageProvider({ children }) {
   );
 }
 
-export function TranslationBoundary({ children }) {
-  const { language } = useLanguage();
-  const frame = useRef();
-
-  useEffect(() => {
-    const root = document.body;
-    if (!root) return undefined;
-
-    const run = () => {
-      cancelAnimationFrame(frame.current);
-      frame.current = requestAnimationFrame(() => translateTree(root, language));
-    };
-
-    run();
-    const observer = new MutationObserver(run);
-    observer.observe(root, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["placeholder"],
-    });
-
-    return () => {
-      cancelAnimationFrame(frame.current);
-      observer.disconnect();
-    };
-  }, [language]);
-
-  return <>{children}</>;
-}
+export function TranslationBoundary({ children }) { return <>{children}</>; }
 
 export function useLanguage() {
   return useContext(LanguageContext);

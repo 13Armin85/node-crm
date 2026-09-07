@@ -1,3 +1,4 @@
+import { LocalizedText, tr } from 'i18n/runtime';
 import {
   Flex,
   FormLabel,
@@ -109,8 +110,7 @@ export const FirstStepper = (props) => {
             fontSize="sm"
             fontWeight="500"
             mb="8px"
-          >
-            Related <Text color={"red"}>*</Text>
+          ><LocalizedText text="Related" /><Text color={"red"}>*</Text>
           </FormLabel>
           <RadioGroup
             onChange={(e) => {
@@ -123,7 +123,7 @@ export const FirstStepper = (props) => {
             defaultValue="contact"
           >
             <Stack direction="row" defaultValue={"lead"}>
-              <Radio value="contact">Contact</Radio>
+              <Radio value="contact"><LocalizedText text="Contact" /></Radio>
               {/* <Radio value="lead">Lead</Radio> */}
             </Stack>
           </RadioGroup>
@@ -138,7 +138,7 @@ export const FirstStepper = (props) => {
               onChange={handleChange}
               mb={errors?.contact && touched?.contact ? undefined : "10px"}
               fontWeight="500"
-              placeholder={"Assign To Contact"}
+              placeholder={tr("Assign To Contact")}
               borderColor={
                 errors?.contact && touched?.contact ? "red.300" : null
               }
@@ -207,7 +207,7 @@ export const FirstStepper = (props) => {
             handleFileChange={handleFileChange}
             brandColor={brandColor}
             placeHolder="Upload Signature"
-            label="Sales Manager"
+            label={tr("Sales Manager")}
             id="salesManagerSign"
           />
         </GridItem>
@@ -219,7 +219,7 @@ export const FirstStepper = (props) => {
             handleFileChange={handleFileChange}
             brandColor={brandColor}
             placeHolder="Upload Signature"
-            label="Buyer"
+            label={tr("Buyer")}
             id="buyerImage"
           />
         </GridItem>

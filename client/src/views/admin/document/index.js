@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -25,6 +26,7 @@ import { documentSchema } from "schema";
 import { deleteApi, getApi } from "services/api";
 import Upload from "./component/Upload";
 import { postApi } from "services/api";
+import FormExtension from 'components/dynamicForm/FormExtension';
 
 const Index = () => {
   const [data, setData] = useState([]);
@@ -75,9 +77,9 @@ const Index = () => {
       let result = await getApi(`api/document/download/`, data);
       if (result && result?.status === 200) {
         window.open(`${constant?.baseUrl}api/document/download/${data}`);
-        toast.success("File Download successful");
+        toast.success(tr("File Download successful"));
       } else if (result && result?.response?.status === 404) {
-        toast.error("File Not Found");
+        toast.error(tr("File Not Found"));
       }
     }
   };
@@ -97,6 +99,7 @@ const Index = () => {
       formData?.append("folderName", values?.folderName);
       formData?.append("createBy", values?.createBy);
       formData?.append("filename", values?.filename);
+      formData.append('customFields', JSON.stringify(values.customFields || {}));
 
       // Append files to the formData
       values.files.forEach((file) => {
@@ -124,9 +127,7 @@ const Index = () => {
       <Grid templateColumns="repeat(12, 1fr)" mb={3} gap={2}>
         <GridItem colSpan={{ base: 12, md: 7 }}>
           <Card minH={"20em"}>
-            <Heading size="lg" mb={4}>
-              File Explorer
-            </Heading>
+            <Heading size="lg" mb={4}><LocalizedText text="File Explorer" /></Heading>
             <HSeparator />
             <VStack mt={4} alignItems="flex-start">
               {isLoding ? (
@@ -143,9 +144,7 @@ const Index = () => {
                   width="100%"
                   fontSize="sm"
                   fontWeight="700"
-                >
-                  -- No Document Found --
-                </Text>
+                ><LocalizedText text="-- No Document Found --" /></Text>
               ) : (
                 data?.map((item) => (
                   <FolderTreeView name={item?.folderName} item={item}>
@@ -174,8 +173,7 @@ const Index = () => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Folder Name<Text color={"red"}>*</Text>
+              ><LocalizedText text="Folder Name" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 onFocus={onOpen}
@@ -184,7 +182,7 @@ const Index = () => {
                 onBlur={() => setTimeout(onClose, 200)}
                 value={values?.folderName}
                 name="folderName"
-                placeholder="Enter Folder Name"
+                placeholder={tr("Enter Folder Name")}
                 fontWeight="500"
                 borderColor={
                   errors?.folderName && touched?.folderName ? "red.300" : null
@@ -241,16 +239,14 @@ const Index = () => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                File Name
-              </FormLabel>
+              ><LocalizedText text="File Name" /></FormLabel>
               <Input
                 fontSize="sm"
                 onChange={handleChange}
                 onBlur={() => setTimeout(onClose, 200)}
                 value={values?.filename}
                 name="filename"
-                placeholder="Enter File Name"
+                placeholder={tr("Enter File Name")}
                 fontWeight="500"
                 borderColor={
                   errors?.filename && touched?.filename ? "red.300" : null
@@ -261,7 +257,7 @@ const Index = () => {
                 {errors?.filename && touched?.filename && errors?.filename}
               </Text>
             </GridItem>
-            <Upload
+            <FormExtension moduleName="Documents" formik={formik} /><Upload
               count={values?.files?.length}
               onFileSelect={(file) => setFieldValue("files", file)}
             />
@@ -272,7 +268,7 @@ const Index = () => {
               variant="brand"
               fontWeight="500"
             >
-              {isLoding ? <Spinner /> : "Publish now"}
+              {isLoding ? <Spinner /> : tr("Publish now")}
             </Button>
           </Card>
         </GridItem>
@@ -281,4 +277,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

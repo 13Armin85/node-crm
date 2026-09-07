@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import {
   Box,
@@ -63,15 +64,13 @@ const View = (props) => {
                       fontWeight={"bold"}
                       pr={2}
                       textTransform={"capitalize"}
-                    >
-                      require :
-                    </Text>
+                    ><LocalizedText text="require :" /></Text>
                     <Text>
                       {data?.validations &&
                       data?.validations?.length > 0 &&
                       data?.validations[0]?.require === true
-                        ? "True"
-                        : "False"}
+                        ? tr("True")
+                        : tr("False")}
                     </Text>
                   </Flex>
                 </GridItem>
@@ -86,9 +85,7 @@ const View = (props) => {
                           fontSize="sm"
                           fontWeight={"bold"}
                           mb="0"
-                        >
-                          Message :
-                        </Text>
+                        ><LocalizedText text="Message :" /></Text>
                         <Text
                           display="flex"
                           ms="4px"
@@ -112,15 +109,13 @@ const View = (props) => {
                       fontWeight={"bold"}
                       pr={2}
                       textTransform={"capitalize"}
-                    >
-                      Min :
-                    </Text>
+                    ><LocalizedText text="Min :" /></Text>
                     <Text>
                       {data?.validations &&
                       data?.validations?.length > 0 &&
                       data?.validations[1]?.min === true
-                        ? "True"
-                        : "False"}
+                        ? tr("True")
+                        : tr("False")}
                     </Text>
                   </Flex>
                 </GridItem>
@@ -136,9 +131,7 @@ const View = (props) => {
                             fontSize="sm"
                             fontWeight={"bold"}
                             mb="0"
-                          >
-                            Message:
-                          </Text>
+                          ><LocalizedText text="Message:" /></Text>
                           <Text
                             display="flex"
                             ms="4px"
@@ -160,9 +153,7 @@ const View = (props) => {
                             fontSize="sm"
                             fontWeight={"bold"}
                             mb="0"
-                          >
-                            Value :
-                          </Text>
+                          ><LocalizedText text="Value :" /></Text>
                           <Text
                             display="flex"
                             ms="4px"
@@ -188,15 +179,13 @@ const View = (props) => {
                       fontWeight={"bold"}
                       pr={2}
                       textTransform={"capitalize"}
-                    >
-                      Max :
-                    </Text>
+                    ><LocalizedText text="Max :" /></Text>
                     <Text>
                       {data?.validations &&
                       data?.validations?.length > 0 &&
                       data?.validations[2]?.max === true
-                        ? "True"
-                        : "False"}
+                        ? tr("True")
+                        : tr("False")}
                     </Text>
                   </Flex>
                 </GridItem>
@@ -212,9 +201,7 @@ const View = (props) => {
                             fontSize="sm"
                             fontWeight={"bold"}
                             mb="0"
-                          >
-                            Message:
-                          </Text>
+                          ><LocalizedText text="Message:" /></Text>
                           <Text
                             display="flex"
                             ms="4px"
@@ -236,9 +223,7 @@ const View = (props) => {
                             fontSize="sm"
                             fontWeight={"bold"}
                             mb="0"
-                          >
-                            Value :
-                          </Text>
+                          ><LocalizedText text="Value :" /></Text>
                           <Text
                             display="flex"
                             ms="4px"
@@ -263,15 +248,13 @@ const View = (props) => {
                       fontWeight={"bold"}
                       pr={2}
                       textTransform={"capitalize"}
-                    >
-                      Match:
-                    </Text>
+                    ><LocalizedText text="Match:" /></Text>
                     <Text>
                       {data?.validations &&
                       data?.validations?.length > 0 &&
                       data?.validations[3]?.match === true
-                        ? "True"
-                        : "False"}
+                        ? tr("True")
+                        : tr("False")}
                     </Text>
                   </Flex>
                 </GridItem>
@@ -287,9 +270,7 @@ const View = (props) => {
                             fontSize="sm"
                             fontWeight={"bold"}
                             mb="0"
-                          >
-                            Message:
-                          </Text>
+                          ><LocalizedText text="Message:" /></Text>
                           <Text
                             display="flex"
                             ms="4px"
@@ -311,9 +292,7 @@ const View = (props) => {
                             fontSize="sm"
                             fontWeight={"bold"}
                             mb="0"
-                          >
-                            Value :
-                          </Text>
+                          ><LocalizedText text="Value :" /></Text>
                           <Text
                             display="flex"
                             ms="4px"
@@ -339,15 +318,13 @@ const View = (props) => {
                       fontWeight={"bold"}
                       pr={2}
                       textTransform={"capitalize"}
-                    >
-                      FormikType :
-                    </Text>
+                    ><LocalizedText text="FormikType :" /></Text>
                     <Text>
                       {data?.validations &&
                       data?.validations?.length > 0 &&
                       data?.validations[4]?.formikType
-                        ? "True"
-                        : "False"}
+                        ? tr("True")
+                        : tr("False")}
                     </Text>
                   </Flex>
                 </GridItem>
@@ -362,9 +339,7 @@ const View = (props) => {
                           fontSize="sm"
                           fontWeight={"bold"}
                           mb="0"
-                        >
-                          Message :
-                        </Text>
+                        ><LocalizedText text="Message :" /></Text>
                         <Text
                           display="flex"
                           ms="4px"
@@ -396,9 +371,7 @@ const View = (props) => {
                 setEditModal(true);
               }}
               leftIcon={<EditIcon />}
-            >
-              Edit
-            </Button>
+            ><LocalizedText text="Edit" /></Button>
             <Button
               colorScheme="red"
               size="sm"
@@ -406,7 +379,7 @@ const View = (props) => {
               disabled={isLoding ? true : false}
               leftIcon={<DeleteIcon />}
             >
-              {isLoding ? <Spinner /> : "Delete"}
+              {isLoding ? <Spinner /> : tr("Delete")}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -424,4 +397,4 @@ const View = (props) => {
   );
 };
 
-export default View;
+export default withLocalization(View);

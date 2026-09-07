@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -83,17 +84,14 @@ const View = () => {
           alignItem={"center"}
         >
           <GridItem colSpan={{ base: 12, md: 6 }}>
-            <Text fontSize="xl" fontWeight="bold" color={"blackAlpha.900"}>
-              View Template{" "}
+            <Text fontSize="xl" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="View Template" />{" "}
             </Text>
           </GridItem>
 
           <GridItem colSpan={{ base: 12, md: 6 }}>
             <Flex justifyContent={"right"}>
               <Link to="/email-template" style={{ marginLeft: "10px" }}>
-                <Button size="sm" leftIcon={<IoIosArrowBack />} variant="brand">
-                  Back
-                </Button>
+                <Button size="sm" leftIcon={<IoIosArrowBack />} variant="brand"><LocalizedText text="Back" /></Button>
               </Link>
             </Flex>
           </GridItem>
@@ -103,15 +101,13 @@ const View = () => {
           <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
             <GridItem colSpan={{ base: 12, md: 6 }}>
               <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                {" "}
-                Template Name{" "}
+                {" "}<LocalizedText text="Template Name" />{" "}
               </Text>
               <Text>{name ? name : " - "}</Text>
             </GridItem>
             <GridItem colSpan={{ base: 12, md: 6 }}>
               <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                {" "}
-                Description{" "}
+                {" "}<LocalizedText text="Description" />{" "}
               </Text>
               <Text>{description ? description : " - "}</Text>
             </GridItem>

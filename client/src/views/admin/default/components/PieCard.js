@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 // Chakra imports
 import { Box, Flex, Text, Select, useColorModeValue } from "@chakra-ui/react";
 // Custom components
@@ -26,9 +27,7 @@ export default function Conversion(props) {
         w="100%"
         mb="8px"
       >
-        <Text color={textColor} fontSize="md" fontWeight="600" mt="4px">
-          Your Pie Chart
-        </Text>
+        <Text color={textColor} fontSize="md" fontWeight="600" mt="4px"><LocalizedText text="Your Pie Chart" /></Text>
         <Select
           fontSize="sm"
           variant="subtle"
@@ -36,9 +35,9 @@ export default function Conversion(props) {
           width="unset"
           fontWeight="700"
         >
-          <option value="daily">Daily</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
+          <option value="daily"><LocalizedText text="Daily" /></option>
+          <option value="monthly"><LocalizedText text="Monthly" /></option>
+          <option value="yearly"><LocalizedText text="Yearly" /></option>
         </Select>
       </Flex>
 
@@ -66,9 +65,7 @@ export default function Conversion(props) {
               color="secondaryGray.600"
               fontWeight="700"
               mb="5px"
-            >
-              Your files
-            </Text>
+            ><LocalizedText text="Your files" /></Text>
           </Flex>
           <Text fontSize="lg" color={textColor} fontWeight="700">
             63%
@@ -83,9 +80,7 @@ export default function Conversion(props) {
               color="secondaryGray.600"
               fontWeight="700"
               mb="5px"
-            >
-              System
-            </Text>
+            ><LocalizedText text="System" /></Text>
           </Flex>
           <Text fontSize="lg" color={textColor} fontWeight="700">
             25%

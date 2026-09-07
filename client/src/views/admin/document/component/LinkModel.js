@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { LinkIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -128,7 +129,7 @@ const Link = (props) => {
       <Modal onClose={props?.onClose} isOpen={props?.isOpen}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Link With Document</ModalHeader>
+          <ModalHeader><LocalizedText text="Link With Document" /></ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -139,9 +140,7 @@ const Link = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Link With
-                </FormLabel>
+                ><LocalizedText text="Link With" /></FormLabel>
                 <RadioGroup
                   onChange={(e) => {
                     resetForm();
@@ -150,8 +149,8 @@ const Link = (props) => {
                   value={values?.linkWith}
                 >
                   <Stack direction="row">
-                    <Radio value="Contact">Contact</Radio>
-                    <Radio value="lead">Lead</Radio>
+                    <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
+                    <Radio value="lead"><LocalizedText text="Lead" /></Radio>
                   </Stack>
                 </RadioGroup>
                 <Text mb="10px" color={"red"}>
@@ -168,9 +167,7 @@ const Link = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Link Contact
-                  </FormLabel>
+                  ><LocalizedText text="Link Contact" /></FormLabel>
 
                   <Flex>
                     <Select
@@ -183,7 +180,7 @@ const Link = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder="Link Contact"
+                      placeholder={tr("Link Contact")}
                       borderColor={
                         errors?.linkContact && touched?.linkContact
                           ? "red.300"
@@ -221,9 +218,7 @@ const Link = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Link Lead
-                    </FormLabel>
+                    ><LocalizedText text="Link Lead" /></FormLabel>
 
                     <Flex>
                       <Select
@@ -236,7 +231,7 @@ const Link = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder="Link Lead"
+                        placeholder={tr("Link Lead")}
                         borderColor={
                           errors?.linkLead && touched?.linkLead
                             ? "red.300"
@@ -282,9 +277,7 @@ const Link = (props) => {
               rightIcon={<LinkIcon />}
               mr={2}
               onClick={handleClick}
-            >
-              Link
-            </Button>
+            ><LocalizedText text="Link" /></Button>
             <Button
               size="sm"
               variant="outline"
@@ -293,9 +286,7 @@ const Link = (props) => {
                 handleClose();
                 resetForm();
               }}
-            >
-              Cancel
-            </Button>
+            ><LocalizedText text="Cancel" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -318,4 +309,4 @@ const Link = (props) => {
   );
 };
 
-export default Link;
+export default withLocalization(Link);

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const EmailTemp = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     templateName: String,
     description: String,
     design: { type: Object },

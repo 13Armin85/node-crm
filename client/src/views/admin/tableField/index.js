@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -185,7 +186,7 @@ const Index = () => {
         <Flex justifyContent={"space-between"} alignItems={"center"}>
           <Box>
             <Text color={"secondaryGray.900"} fontSize="22px" fontWeight="700">
-              {moduleName ? `${moduleName} Fields` : "Select Module"}
+              {moduleName ? `${tr(moduleName)} — ${tr("Fields")}` : tr("Select Module")}
             </Text>
           </Box>
           <Box>
@@ -198,7 +199,7 @@ const Index = () => {
                     rightIcon={<ChevronDownIcon />}
                     variant="outline"
                   >
-                    {moduleName ? moduleName : "Select Module"}
+                    {moduleName ? tr(moduleName) : tr("Select Module")}
                   </MenuButton>
                   <MenuList minWidth={"10rem"}>
                     <MenuItem
@@ -206,9 +207,7 @@ const Index = () => {
                         setModuleName("");
                         setModuleId("");
                       }}
-                    >
-                      Select Module
-                    </MenuItem>
+                    ><LocalizedText text="Select Module" /></MenuItem>
                     {allModulesData?.map((item, id) => (
                       <MenuItem
                         key={id}
@@ -217,7 +216,7 @@ const Index = () => {
                           setModuleId(item?._id);
                         }}
                       >
-                        {item?.moduleName}
+                        <LocalizedText text={item?.moduleName} />
                       </MenuItem>
                     ))}
                   </MenuList>
@@ -229,9 +228,7 @@ const Index = () => {
                 size="sm"
                 leftIcon={<IoIosArrowBack />}
                 ml={2}
-              >
-                Back
-              </Button>
+              ><LocalizedText text="Back" /></Button>
             </Flex>
           </Box>
         </Flex>
@@ -286,7 +283,7 @@ const Index = () => {
                                 // }
                                 me="10px"
                               />
-                              {item?.label}
+                              <LocalizedText text={item?.label} />
                             </Flex>
                             <div>
                               {item?.isTableField && (
@@ -307,11 +304,9 @@ const Index = () => {
                                             "isView",
                                           )
                                         }
-                                        title="View"
+                                        title={tr("View")}
                                         me="10px"
-                                      />
-                                      Open View
-                                    </Flex>
+                                      /><LocalizedText text="Open View" /></Flex>
                                   </MenuList>
                                 </Menu>
                               )}
@@ -328,9 +323,7 @@ const Index = () => {
                       mr={2}
                       onClick={() => handleUpdateTableFields()}
                       size="sm"
-                    >
-                      Update
-                    </Button>
+                    ><LocalizedText text="Update" /></Button>
                   )}
                 </Flex>
               </>
@@ -342,9 +335,7 @@ const Index = () => {
                 fontSize="sm"
                 my="7"
                 fontWeight="700"
-              >
-                -- Please Select Module --
-              </Text>
+              ><LocalizedText text="-- Please Select Module --" /></Text>
             )}
           </>
         )}
@@ -353,4 +344,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

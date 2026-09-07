@@ -43,6 +43,7 @@ coverage
 # Local browser/test profiles
 .tmp-chrome-profile
 .tmp-edge-profile
+layout-artifacts/
 
 # Package manager/cache files kept out of this repo
 package-lock.json

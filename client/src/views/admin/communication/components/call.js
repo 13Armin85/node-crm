@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   FormLabel,
@@ -53,7 +54,7 @@ const Call = () => {
   } = formik;
 
   if (touched?.recipient && errors?.createBy) {
-    toast.error("Please select an authorized recipient");
+    toast.error(tr("Please select an authorized recipient"));
     formik.resetForm();
   }
 
@@ -99,9 +100,7 @@ const Call = () => {
   return (
     <Grid templateColumns="repeat(12, 1fr)" gap={3}>
       <GridItem colSpan={{ base: 12 }}>
-        <Heading as="h2" size="xl" noOfLines={1}>
-          Call
-        </Heading>
+        <Heading as="h2" size="xl" noOfLines={1}><LocalizedText text="Call" /></Heading>
       </GridItem>
       <GridItem colSpan={{ base: 12 }}>
         <FormLabel
@@ -110,8 +109,7 @@ const Call = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          To<Text color={"red"}>*</Text>
+        ><LocalizedText text="To" /><Text color={"red"}>*</Text>
         </FormLabel>
         <Input
           onFocus={onOpen}
@@ -121,7 +119,7 @@ const Call = () => {
           onBlur={() => setTimeout(onClose, 200)}
           value={values?.recipient}
           name="recipient"
-          placeholder="Recipient"
+          placeholder={tr("Recipient")}
           fontWeight="500"
           borderColor={
             errors?.recipient && touched?.recipient ? "red.300" : null
@@ -178,9 +176,7 @@ const Call = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          Call Notes
-        </FormLabel>
+        ><LocalizedText text="Call Notes" /></FormLabel>
         <Textarea
           fontSize="sm"
           height={"20vh"}
@@ -188,7 +184,7 @@ const Call = () => {
           onChange={handleChange}
           value={values?.callNotes}
           name="callNotes"
-          placeholder="callNotes"
+          placeholder={tr("callNotes")}
           fontWeight="500"
           borderColor={
             errors?.callNotes && touched?.callNotes ? "red.300" : null
@@ -208,14 +204,12 @@ const Call = () => {
           onClick={handleSubmit}
           leftIcon={<BsFillTelephoneFill />}
         >
-          {isLoding ? <Spinner /> : "Call"}
+          {isLoding ? <Spinner /> : tr("Call")}
         </Button>
-        <Button onClick={() => formik.resetForm()} size="sm">
-          Clear
-        </Button>
+        <Button onClick={() => formik.resetForm()} size="sm"><LocalizedText text="Clear" /></Button>
       </GridItem>
     </Grid>
   );
 };
 
-export default Call;
+export default withLocalization(Call);

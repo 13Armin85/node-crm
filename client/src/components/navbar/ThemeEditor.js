@@ -1,3 +1,4 @@
+import { tr } from 'i18n/runtime';
 import React from "react";
 import {
   ThemeEditor as ThemeEditorContainer,
@@ -15,8 +16,8 @@ export function ThemeEditor(props) {
     <ThemeEditorContainer>
       <ThemeEditorButton {...props} />
       <ThemeEditorDrawer hideUpgradeToPro>
-        <ThemeEditorColors icon={CgColorPicker} title="Colors" />
-        <ThemeEditorFontSizes icon={ImFontSize} title="Font Sizes" />
+        <ThemeEditorColors icon={CgColorPicker} title={tr("Colors")} />
+        <ThemeEditorFontSizes icon={ImFontSize} title={tr("Font Sizes")} />
       </ThemeEditorDrawer>
     </ThemeEditorContainer>
   );

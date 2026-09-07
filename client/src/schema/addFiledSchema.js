@@ -1,3 +1,4 @@
+import { tr } from 'i18n/runtime';
 import * as yup from "yup";
 
 // export const addFiledSchema = yup.object({
@@ -11,9 +12,9 @@ const nameValidation = yup
   .min(2)
   .matches(
     /^[A-Za-z0-9_-]+$/,
-    "Name can only contain letters, numbers, underscores, and dashes",
+    tr("Name can only contain letters, numbers, underscores, and dashes"),
   )
-  .required("Name is required");
+  .required(tr("Name is required"));
 
 // Custom validation function for the label field
 const labelValidation = yup
@@ -26,12 +27,12 @@ const labelValidation = yup
       return /^[A-Z]/.test(value);
     },
   )
-  .required("Label is required");
+  .required(tr("Label is required"));
 
 // Define the schema using the custom validations
 export const addFiledSchema = yup.object({
   name: nameValidation,
   label: labelValidation,
-  type: yup.string().required("Type is required"),
+  type: yup.string().required(tr("Type is required")),
   // belongsTo: yup.string().required('Belongs To is required'),
 });

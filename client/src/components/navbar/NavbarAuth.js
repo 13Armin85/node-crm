@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import PropTypes from "prop-types";
 import React from "react";
 import { NavLink } from "react-router-dom";
@@ -268,9 +269,7 @@ export default function AuthNavbar(props) {
         cursor="pointer"
         position="relative"
       >
-        <Text fontSize="sm" color={mainText}>
-          Dashboards
-        </Text>
+        <Text fontSize="sm" color={mainText}><LocalizedText text="Dashboards" /></Text>
         <Box>
           <Icon
             mt="8px"
@@ -308,9 +307,7 @@ export default function AuthNavbar(props) {
         cursor="pointer"
         position="relative"
       >
-        <Text fontSize="sm" color={mainText}>
-          Authentications
-        </Text>
+        <Text fontSize="sm" color={mainText}><LocalizedText text="Authentications" /></Text>
         <Box>
           <Icon
             mt="8px"
@@ -376,9 +373,7 @@ export default function AuthNavbar(props) {
         cursor="pointer"
         position="relative"
       >
-        <Text fontSize="sm" color={mainText}>
-          Main Pages
-        </Text>
+        <Text fontSize="sm" color={mainText}><LocalizedText text="Main Pages" /></Text>
         <Box>
           <Icon
             mt="8px"
@@ -416,9 +411,7 @@ export default function AuthNavbar(props) {
         cursor="pointer"
         position="relative"
       >
-        <Text fontSize="sm" color={mainText}>
-          NFTs
-        </Text>
+        <Text fontSize="sm" color={mainText}><LocalizedText text="NFTs" /></Text>
         <Box>
           <Icon
             mt="8px"
@@ -509,9 +502,7 @@ export default function AuthNavbar(props) {
                 sm: "none",
                 lg: "flex",
               }}
-            >
-              Buy Now
-            </Button>
+            ><LocalizedText text="Buy Now" /></Button>
           </Link>
         </Flex>
       </Flex>

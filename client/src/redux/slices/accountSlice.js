@@ -7,11 +7,9 @@ export const fetchAccountData = createAsyncThunk(
     const user = JSON.parse(localStorage.getItem("user"));
     try {
       const response = await getApi(
-        user.role === "superAdmin"
-          ? "api/account/"
-          : `api/account/?createBy=${user._id}`,
+        "api/estate/Partner%20Customers?limit=100",
       );
-      return response;
+      return { ...response, data: response?.data?.items || [] };
     } catch (error) {
       throw error;
     }

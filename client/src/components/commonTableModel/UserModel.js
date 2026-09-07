@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -34,7 +35,7 @@ const UserModel = (props) => {
   // const [isLoding, setIsLoding] = useState(false);
   const [leadData, setLeadData] = useState([]);
   const [selectedValues, setSelectedValues] = useState([]);
-  const roleHeader = { Header: "role", accessor: "role" };
+  const roleHeader = { Header: tr("role"), accessor: "role" };
 
   const handleSubmit = async () => {
     try {
@@ -48,13 +49,13 @@ const UserModel = (props) => {
     }
   };
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "email Id",
+      Header: tr("email Id"),
       accessor: "username",
     },
-    { Header: "first Name", accessor: "firstName" },
-    { Header: "last Name", accessor: "lastName" },
+    { Header: tr("first Name"), accessor: "firstName" },
+    { Header: tr("last Name"), accessor: "lastName" },
     ...(fieldName !== "salesAgent" ? [roleHeader] : []),
   ];
 
@@ -76,7 +77,7 @@ const UserModel = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select User</ModalHeader>
+        <ModalHeader><LocalizedText text="Select User" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -111,20 +112,18 @@ const UserModel = (props) => {
             onClick={handleSubmit}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Select"}
+            {isLoding ? <Spinner /> : tr("Select")}
           </Button>
           <Button
             variant="outline"
             size="sm"
             colorScheme="red"
             onClick={() => onClose()}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default UserModel;
+export default withLocalization(UserModel);

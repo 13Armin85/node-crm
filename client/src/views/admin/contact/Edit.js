@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -150,8 +151,7 @@ const Edit = (props) => {
             alignItems={"center"}
             justifyContent="space-between"
             display="flex"
-          >
-            Edit {values?.fullName || "Contact"}
+          ><LocalizedText text="Edit" />{values?.fullName || "Contact"}
             <IconButton onClick={handleClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
@@ -185,7 +185,7 @@ const Edit = (props) => {
               disabled={isLoding ? true : false}
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Update"}
+              {isLoding ? <Spinner /> : tr("Update")}
             </Button>
             <Button
               variant="outline"
@@ -196,9 +196,7 @@ const Edit = (props) => {
                 textTransform: "capitalize",
               }}
               onClick={handleClose}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -206,4 +204,4 @@ const Edit = (props) => {
   );
 };
 
-export default Edit;
+export default withLocalization(Edit);

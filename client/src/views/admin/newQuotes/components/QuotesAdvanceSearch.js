@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
@@ -128,7 +129,7 @@ const QuotesAdvanceSearch = (props) => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Advance Search</ModalHeader>
+          <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
               setAdvanceSearch(false);
@@ -146,9 +147,7 @@ const QuotesAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Quote Number
-                </FormLabel>
+                ><LocalizedText text="Quote Number" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -156,7 +155,7 @@ const QuotesAdvanceSearch = (props) => {
                   value={values?.quoteNumber}
                   name="quoteNumber"
                   type="number"
-                  placeholder="Enter Quote Number"
+                  placeholder={tr("Enter Quote Number")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -175,16 +174,14 @@ const QuotesAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Title
-                </FormLabel>
+                ><LocalizedText text="Title" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.title}
                   name="title"
-                  placeholder="Enter Title"
+                  placeholder={tr("Enter Title")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -201,9 +198,7 @@ const QuotesAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Quote Stage
-                </FormLabel>
+                ><LocalizedText text="Quote Stage" /></FormLabel>
                 <Select
                   value={values?.quoteStage}
                   name="quoteStage"
@@ -214,19 +209,19 @@ const QuotesAdvanceSearch = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Quote Stage"}
+                  placeholder={tr("Quote Stage")}
                   borderColor={
                     errors?.quoteStage && touched?.quoteStage ? "red.300" : null
                   }
                 >
-                  <option value="Draft">Draft</option>
-                  <option value="Negotiation">Negotiation</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="On Hold">On Hold</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Closed Accepted">Closed Accepted</option>
-                  <option value="Closed Lost">Closed Lost</option>
-                  <option value="Closed Dead">Closed Dead</option>
+                  <option value="Draft"><LocalizedText text="Draft" /></option>
+                  <option value="Negotiation"><LocalizedText text="Negotiation" /></option>
+                  <option value="Delivered"><LocalizedText text="Delivered" /></option>
+                  <option value="On Hold"><LocalizedText text="On Hold" /></option>
+                  <option value="Confirmed"><LocalizedText text="Confirmed" /></option>
+                  <option value="Closed Accepted"><LocalizedText text="Closed Accepted" /></option>
+                  <option value="Closed Lost"><LocalizedText text="Closed Lost" /></option>
+                  <option value="Closed Dead"><LocalizedText text="Closed Dead" /></option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}
@@ -244,16 +239,14 @@ const QuotesAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Contact
-                </FormLabel>
+                ><LocalizedText text="Contact" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.contactName}
                   name="contactName"
-                  placeholder="Enter Contact Name"
+                  placeholder={tr("Enter Contact Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -272,16 +265,14 @@ const QuotesAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Account
-                </FormLabel>
+                ><LocalizedText text="Account" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.accountName}
                   name="accountName"
-                  placeholder="Enter Account Name"
+                  placeholder={tr("Enter Account Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -300,16 +291,14 @@ const QuotesAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Grand Total
-                </FormLabel>
+                ><LocalizedText text="Grand Total" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.grandTotal}
                   name="grandTotal"
-                  placeholder="Enter Grand Total"
+                  placeholder={tr("Enter Grand Total")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -328,9 +317,7 @@ const QuotesAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Valid Untile
-                </FormLabel>
+                ><LocalizedText text="Valid Untile" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -357,16 +344,14 @@ const QuotesAdvanceSearch = (props) => {
               onClick={handleSubmit}
               disabled={isLoding || !dirty ? true : false}
             >
-              {isLoding ? <Spinner /> : "Search"}
+              {isLoding ? <Spinner /> : tr("Search")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               colorScheme="red"
               onClick={() => resetForm()}
-            >
-              Clear
-            </Button>
+            ><LocalizedText text="Clear" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -374,4 +359,4 @@ const QuotesAdvanceSearch = (props) => {
   );
 };
 
-export default QuotesAdvanceSearch;
+export default withLocalization(QuotesAdvanceSearch);

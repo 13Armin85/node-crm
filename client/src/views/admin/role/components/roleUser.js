@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -123,7 +124,7 @@ const RoleUser = (props) => {
       <ModalContent>
         <ModalHeader>
           <Flex justifyContent={"space-between"}>
-            <Text>Users</Text>
+            <Text><LocalizedText text="Users" /></Text>
             <ModalCloseButton mt="2" />
           </Flex>
         </ModalHeader>
@@ -325,9 +326,7 @@ const RoleUser = (props) => {
               addUser();
               setOpenUser(true);
             }}
-          >
-            Save
-          </Button>
+          ><LocalizedText text="Save" /></Button>
           <Button
             size="sm"
             onClick={() => {
@@ -341,9 +340,7 @@ const RoleUser = (props) => {
               marginLeft: 2,
               textTransform: "capitalize",
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

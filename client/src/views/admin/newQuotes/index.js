@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
@@ -56,7 +57,7 @@ const Index = (props) => {
   ]);
 
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     accessor: "action",
     isSortable: false,
     center: true,
@@ -77,18 +78,16 @@ const Index = (props) => {
               onClick={() => {
                 convertToInvoice(row?.values?._id);
               }}
-            >
-              Download
-            </MenuItem>
+            ><LocalizedText text="Download" /></MenuItem>
           </MenuList>
         </Menu>
       </Text>
     ),
   };
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Property",
+      Header: tr("Property"),
       accessor: "property",
       cell: (cell) => (
         <Text fontSize="sm" fontWeight="700">
@@ -97,7 +96,7 @@ const Index = (props) => {
       ),
     },
     {
-      Header: "Time",
+      Header: tr("Time"),
       accessor: "createdDate",
       cell: (cell) => <div>{moment(cell?.value).format("YYYY-MM-DD")}</div>,
     },
@@ -112,7 +111,7 @@ const Index = (props) => {
   const customFields = [
     {
       name: "quoteNumber",
-      label: "Quote Number",
+      label: tr("Quote Number"),
       type: "number",
       fixed: false,
       isDefault: false,
@@ -167,7 +166,7 @@ const Index = (props) => {
     },
     {
       name: "title",
-      label: "Title",
+      label: tr("Title"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -222,7 +221,7 @@ const Index = (props) => {
     },
     {
       name: "quoteStage",
-      label: "Quote Stage",
+      label: tr("Quote Stage"),
       type: "select",
       fixed: false,
       isDefault: false,
@@ -307,7 +306,7 @@ const Index = (props) => {
     },
     {
       name: "contact",
-      label: "Contact",
+      label: tr("Contact"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -362,7 +361,7 @@ const Index = (props) => {
     },
     {
       name: "account",
-      label: "Account",
+      label: tr("Account"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -417,7 +416,7 @@ const Index = (props) => {
     },
     {
       name: "grandTotal",
-      label: "Grand Total",
+      label: tr("Grand Total"),
       type: "number",
       fixed: false,
       isDefault: false,
@@ -472,7 +471,7 @@ const Index = (props) => {
     },
     {
       name: "validUntil",
-      label: "Valid Until",
+      label: tr("Valid Until"),
       type: "date",
       fixed: false,
       isDefault: false,
@@ -573,7 +572,7 @@ const Index = (props) => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -589,7 +588,7 @@ const Index = (props) => {
   return (
     <div>
       <CommonCheckTable
-        title={"Offer Letter"}
+        title={tr("Offer Letter")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
@@ -661,4 +660,4 @@ const Index = (props) => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

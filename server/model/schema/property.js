@@ -35,6 +35,32 @@ const floorSchema = new mongoose.Schema({
 });
 
 const propertySchema = new mongoose.Schema({
+    title: String,
+    name: String,
+    status: String,
+    description: String,
+    category: { type: String, enum: ['RESIDENTIAL', 'COMMERCIAL'] },
+    subtype: { type: String, enum: ['APARTMENT', 'RESIDENCE', 'VILLA', 'SHOP', 'OFFICE'] },
+    transactionType: { type: String, enum: ['SALE', 'RENT'] },
+    price: { amount: { type: Number, min: 0 }, currency: { type: String, enum: ['TRY', 'USD', 'EUR'], default: 'TRY' } },
+    district: String,
+    neighborhood: String,
+    isInsideResidence: { type: Boolean, default: false },
+    residence: { type: mongoose.Schema.Types.ObjectId, ref: 'Residences', default: null },
+    bedroom: { type: String, enum: [...require('../../services/estateCatalog').bedrooms, null] },
+    buildingAge: { type: String, enum: require('../../services/estateCatalog').ages },
+    occupancyStatus: { type: String, enum: ['EMPTY', 'TENANTED', 'OWNER_OCCUPIED'] },
+    floor: { type: String, enum: require('../../services/estateCatalog').floors },
+    area: { value: { type: Number, min: 0 }, type: { type: String, enum: ['NET', 'GROSS'] }, unit: { type: String, default: 'M2', enum: ['M2'] } },
+    sale: {
+        status: { type: String, enum: ['AVAILABLE', 'SOLD'], default: 'AVAILABLE' },
+        buyerType: { type: String, enum: ['LEAD', 'PARTNER_CUSTOMER', null], default: null },
+        lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Leads', default: null },
+        partnerCustomer: { type: mongoose.Schema.Types.ObjectId, ref: 'PartnerCustomers', default: null },
+        soldAt: { type: Date, default: null },
+    },
+    files: [{ name: String, url: String, mimeType: String, size: Number, uploadedAt: Date, storageName: String }],
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     // //1. basicPropertyInformation:
     // propertyType: String,
     // propertyAddress: String,
@@ -107,9 +133,16 @@ const propertySchema = new mongoose.Schema({
 const initializePropertySchema = async () => {
     const schemaFieldsData = await fetchSchemaFields();
     schemaFieldsData[0]?.fields?.forEach((item) => {
-        propertySchema.add({ [item.name]: item?.backendType });
+        if (!propertySchema.path(item.name) && !propertySchema.nested[item.name]) propertySchema.add({ [item.name]: item?.backendType });
     });
 };
 
+propertySchema.index({ deleted: 1, category: 1, subtype: 1, transactionType: 1 });
+propertySchema.index({ district: 1, neighborhood: 1 });
+propertySchema.index({ 'price.amount': 1 });
+propertySchema.index({ createdDate: -1 });
+propertySchema.index({ 'sale.lead': 1 });
+propertySchema.index({ 'sale.partnerCustomer': 1 });
+propertySchema.index({ residence: 1 });
 const Property = mongoose.model("Properties", propertySchema, "Properties");
 module.exports = { Property, initializePropertySchema };

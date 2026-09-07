@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Modal,
@@ -30,9 +31,9 @@ const CommonDeleteModel = (props) => {
       <Modal onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Delete {`${type}`}</ModalHeader>
+          <ModalHeader><LocalizedText text="Delete" />{`${type}`}</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>Are You Sure To Delete selected {`${type}`} ?</ModalBody>
+          <ModalBody><LocalizedText text="Are You Sure To Delete selected" />{`${type}`} ?</ModalBody>
           <ModalFooter>
             <Button
               colorScheme="red"
@@ -41,11 +42,9 @@ const CommonDeleteModel = (props) => {
               onClick={handleDelete}
               disabled={isLoding ? true : false}
             >
-              {isLoding ? <Spinner /> : "Yes"}
+              {isLoding ? <Spinner /> : tr("Yes")}
             </Button>
-            <Button variant="outline" size="sm" onClick={handleClose}>
-              No
-            </Button>
+            <Button variant="outline" size="sm" onClick={handleClose}><LocalizedText text="No" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -53,4 +52,4 @@ const CommonDeleteModel = (props) => {
   );
 };
 
-export default CommonDeleteModel;
+export default withLocalization(CommonDeleteModel);

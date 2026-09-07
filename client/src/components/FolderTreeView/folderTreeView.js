@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { DeleteIcon, DownloadIcon, LinkIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Collapse,
@@ -103,9 +104,7 @@ const FolderTreeView = ({
                         navigate(`/contactView/${data?.linkContact}`)
                       }
                       icon={<IoIosContact fontSize={15} />}
-                    >
-                      Linked Contact
-                    </MenuItem>
+                    ><LocalizedText text="Linked Contact" /></MenuItem>
                   ) : (
                     !from &&
                     data?.linkLead && (
@@ -114,9 +113,7 @@ const FolderTreeView = ({
                         w={"180px"}
                         onClick={() => navigate(`/leadView/${data?.linkLead}`)}
                         icon={<MdLeaderboard fontSize={15} />}
-                      >
-                        Linked Lead
-                      </MenuItem>
+                      ><LocalizedText text="Linked Lead" /></MenuItem>
                     )
                   )}
                   {!from && (
@@ -126,9 +123,7 @@ const FolderTreeView = ({
                       color={"blue"}
                       onClick={() => handleLinkClick(data?._id)}
                       icon={<LinkIcon fontSize={15} />}
-                    >
-                      Link
-                    </MenuItem>
+                    ><LocalizedText text="Link" /></MenuItem>
                   )}
                   {isImageUrl(data?.img) && (
                     <MenuItem
@@ -137,18 +132,14 @@ const FolderTreeView = ({
                       color={"green"}
                       onClick={() => window.open(data?.img)}
                       icon={<ViewIcon fontSize={15} />}
-                    >
-                      View
-                    </MenuItem>
+                    ><LocalizedText text="View" /></MenuItem>
                   )}
                   <MenuItem
                     pr={10}
                     alignItems={"start"}
                     onClick={() => handleClick(data?._id)}
                     icon={<DownloadIcon fontSize={15} />}
-                  >
-                    Download
-                  </MenuItem>
+                  ><LocalizedText text="Download" /></MenuItem>
                   {!from && (
                     <MenuItem
                       alignItems={"start"}
@@ -156,9 +147,7 @@ const FolderTreeView = ({
                       color={"red"}
                       onClick={() => deletedata(data?._id)}
                       icon={<DeleteIcon fontSize={15} />}
-                    >
-                      Delete
-                    </MenuItem>
+                    ><LocalizedText text="Delete" /></MenuItem>
                   )}
                 </MenuList>
               </Menu>

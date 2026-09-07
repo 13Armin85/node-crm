@@ -22,6 +22,7 @@ import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchRoles } from "../../redux/slices/roleSlice";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
+import PageHelp from "components/help/PageHelp";
 
 const MainDashboard = React.lazy(() => import("views/admin/default"));
 
@@ -182,7 +183,7 @@ export default function Dashboard(props) {
   };
 
   const getActiveRoute = (routes) => {
-    let activeRoute = "Prolink";
+    let activeRoute = "Dashboard";
     for (let i = 0; i < routes?.length; i++) {
       if (routes[i]?.collapse) {
         let collapseActiveRoute = getActiveRoute(routes[i]?.items);
@@ -323,7 +324,7 @@ export default function Dashboard(props) {
 
   const { onOpen } = useDisclosure();
   return (
-    <Box className="crm-shell" dir={direction}>
+    <Box className="crm-shell" dir={direction} data-sidebar-open={openSidebar ? "true" : "false"}>
       <Box>
         <SidebarContext.Provider
           value={{
@@ -341,31 +342,11 @@ export default function Dashboard(props) {
           />
           <Box
             className="crm-main"
-            float="right"
             minHeight="100vh"
             height="100%"
             overflow="auto"
             position="relative"
             maxHeight="100%"
-            // w={{ base: '100%', xl: 'calc( 100% - 290px )' }}
-            w={{
-              base: "100%",
-              xl:
-                openSidebar === true
-                  ? "calc( 100% - 300px )"
-                  : "calc( 100% - 88px )",
-            }}
-            maxWidth={{
-              base: "100%",
-              xl:
-                openSidebar === true
-                  ? "calc( 100% - 300px )"
-                  : "calc( 100% - 88px )",
-            }}
-            transition="all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)"
-            transitionDuration=".2s, .2s, .35s"
-            transitionProperty="top, bottom, width"
-            transitionTimingFunction="linear, linear, ease"
           >
             <Portal>
               <Box className="header">
@@ -385,7 +366,7 @@ export default function Dashboard(props) {
                 />
               </Box>
             </Portal>
-            <Box pt={{ base: "150px", md: "95px", xl: "95px" }}>
+            <Box pt="100px">
               {getRoute() ? (
                 <Box
                   className="crm-content"
@@ -397,6 +378,10 @@ export default function Dashboard(props) {
                     padding: "8px 20px",
                   }}
                 >
+                  <PageHelp
+                    route={under(routes)}
+                    activeRouteName={getActiveRoute(routes)}
+                  />
                   <Suspense
                     fallback={
                       <Flex

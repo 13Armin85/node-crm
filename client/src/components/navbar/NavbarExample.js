@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 // Chakra imports
 import {
   Box,
@@ -181,9 +182,7 @@ export default function AuthNavbar(props) {
               <IconBox bg="blue.500" color="white" h="30px" w="30px">
                 {/* <RocketIcon color='inherit' /> */}
               </IconBox>
-              <Text fontWeight="bold" fontSize="sm" color={textColor}>
-                Extra
-              </Text>
+              <Text fontWeight="bold" fontSize="sm" color={textColor}><LocalizedText text="Extra" /></Text>
             </Stack>
             {createExtraLinks(extraArr)}
           </Stack>
@@ -366,9 +365,7 @@ export default function AuthNavbar(props) {
         cursor="pointer"
         position="relative"
       >
-        <Text fontSize="sm" color={mainText}>
-          Pages
-        </Text>
+        <Text fontSize="sm" color={mainText}><LocalizedText text="Pages" /></Text>
         <Icon
           as={GoChevronDown}
           color={mainText}
@@ -450,9 +447,7 @@ export default function AuthNavbar(props) {
                   color="#fff"
                   maxW="80%"
                   textAlign="center"
-                >
-                  Explore our utilities pages
-                </Text>
+                ><LocalizedText text="Explore our utilities pages" /></Text>
               </Flex>
               <SimpleGrid templateColumns="1fr" width="100%">
                 {createAuthLinks(authObject?.items)}
@@ -472,9 +467,7 @@ export default function AuthNavbar(props) {
         cursor="pointer"
         position="relative"
       >
-        <Text fontSize="sm" color={mainText}>
-          Application
-        </Text>
+        <Text fontSize="sm" color={mainText}><LocalizedText text="Application" /></Text>
         <Icon
           as={GoChevronDown}
           color={mainText}
@@ -509,9 +502,7 @@ export default function AuthNavbar(props) {
         cursor="pointer"
         position="relative"
       >
-        <Text fontSize="sm" color={mainText}>
-          Ecommerce
-        </Text>
+        <Text fontSize="sm" color={mainText}><LocalizedText text="Ecommerce" /></Text>
         <Icon
           as={GoChevronDown}
           color={mainText}
@@ -598,9 +589,7 @@ export default function AuthNavbar(props) {
                 sm: "none",
                 lg: "flex",
               }}
-            >
-              Buy Now
-            </Button>
+            ><LocalizedText text="Buy Now" /></Button>
           </Link>
         </Flex>
       </Flex>

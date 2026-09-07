@@ -1,3 +1,5 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import {
   Button,
   Flex,
@@ -102,7 +104,7 @@ const AddMeeting = (props) => {
           // setAction((pre) => !pre)
         }
       } else {
-        toast.error("Select Related To");
+        toast.error(tr("Select Related To"));
       }
     } catch (e) {
       console.log(e);
@@ -165,9 +167,9 @@ const AddMeeting = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent height={"580px"}>
-        <ModalHeader>Add Meeting </ModalHeader>
+        <ModalHeader><LocalizedText text="Add Meeting" /></ModalHeader>
         <ModalCloseButton />
-        <ModalBody overflowY={"auto"} height={"400px"}>
+        <ModalBody overflowY={"auto"} height={"400px"}><ManagedFormLayout moduleName="Meetings" formik={formik}>
           {/* Contact Model  */}
           <MultiContactModel
             data={contactdata}
@@ -193,8 +195,7 @@ const AddMeeting = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Agenda<Text color={"red"}>*</Text>
+              ><LocalizedText text="Agenda" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -202,7 +203,7 @@ const AddMeeting = (props) => {
                 onBlur={handleBlur}
                 value={values?.agenda}
                 name="agenda"
-                placeholder="Agenda"
+                placeholder={tr("Agenda")}
                 fontWeight="500"
                 borderColor={
                   errors?.agenda && touched?.agenda ? "red.300" : null
@@ -220,8 +221,7 @@ const AddMeeting = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Related To<Text color={"red"}>*</Text>
+              ><LocalizedText text="Related To" /><Text color={"red"}>*</Text>
               </FormLabel>
               <RadioGroup
                 onChange={(e) => setFieldValue("related", e)}
@@ -229,16 +229,16 @@ const AddMeeting = (props) => {
               >
                 <Stack direction="row">
                   {props?.leadContect === "contactView" && (
-                    <Radio value="Contact">Contact</Radio>
+                    <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
                   )}
                   {props?.leadContect === "leadView" && (
-                    <Radio value="Lead">Lead</Radio>
+                    <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                   )}
                   {!props?.leadContect && (
                     <>
                       {" "}
-                      <Radio value="Contact">Contact</Radio>
-                      <Radio value="Lead">Lead</Radio>
+                      <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
+                      <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                     </>
                   )}
                 </Stack>
@@ -257,7 +257,7 @@ const AddMeeting = (props) => {
                     <Text w={"100%"}>
                       <CUIAutoComplete
                         label={`Choose Preferred Attendes ${values?.related === "Contact" ? "Contact" : values?.related === "Lead" && "Lead"}`}
-                        placeholder="Type a Name"
+                        placeholder={tr("Type a Name")}
                         name="attendes"
                         items={countriesWithEmailAsLabel}
                         className="custom-autoComplete"
@@ -303,16 +303,14 @@ const AddMeeting = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Location
-              </FormLabel>
+              ><LocalizedText text="Location" /></FormLabel>
               <Input
                 fontSize="sm"
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={values?.location}
                 name="location"
-                placeholder="Location"
+                placeholder={tr("Location")}
                 fontWeight="500"
                 borderColor={
                   errors?.location && touched?.location ? "red.300" : null
@@ -330,8 +328,7 @@ const AddMeeting = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Date Time<Text color={"red"}>*</Text>
+              ><LocalizedText text="Date Time" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -341,7 +338,7 @@ const AddMeeting = (props) => {
                 min={dayjs(todayTime).format("YYYY-MM-DD HH:mm")}
                 value={values?.dateTime}
                 name="dateTime"
-                placeholder="Date Time"
+                placeholder={tr("Date Time")}
                 fontWeight="500"
                 borderColor={
                   errors?.dateTime && touched?.dateTime ? "red.300" : null
@@ -359,13 +356,11 @@ const AddMeeting = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Notes
-              </FormLabel>
+              ><LocalizedText text="Notes" /></FormLabel>
               <Textarea
                 resize={"none"}
                 fontSize="sm"
-                placeholder="Notes"
+                placeholder={tr("Notes")}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={values?.notes}
@@ -379,7 +374,8 @@ const AddMeeting = (props) => {
               </Text>
             </GridItem>
           </Grid>
-        </ModalBody>
+        </ManagedFormLayout>
+</ModalBody>
         <ModalFooter>
           <Button
             size="sm"
@@ -388,7 +384,7 @@ const AddMeeting = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             sx={{
@@ -401,13 +397,11 @@ const AddMeeting = (props) => {
               formik.resetForm();
               onClose();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddMeeting;
+export default withLocalization(AddMeeting);

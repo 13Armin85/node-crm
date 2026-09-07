@@ -31,7 +31,7 @@ const index = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "Accounts",
+                    from: "PartnerCustomers",
                     localField: "account",
                     foreignField: "_id",
                     as: "accountData",
@@ -79,7 +79,7 @@ const index = async (req, res) => {
                     createdByName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },
                     modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
                     contactName: { $concat: ['$contactData.firstName', ' ', '$contactData.lastName'] },
-                    accountName: '$accountData.name'
+                    accountName: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] }
                 }
             },
             { $project: { users: 0, contactData: 0, accountData: 0, modifiedByUser: 0, assignedToData: 0 } },
@@ -157,7 +157,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "Accounts",
+                    from: "PartnerCustomers",
                     localField: "account",
                     foreignField: "_id",
                     as: "accountData",
@@ -207,7 +207,7 @@ const view = async (req, res) => {
                     createdByName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },
                     modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
                     contactName: { $concat: ['$contactData.firstName', ' ', '$contactData.lastName'] },
-                    accountName: '$accountData.name'
+                    accountName: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] }
                 }
             },
             { $project: { users: 0, contactData: 0, accountData: 0, modifiedByUser: 0, oppotunityData: 0, assignedToData: 0 } },
@@ -224,7 +224,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "Accounts",
+                    from: "PartnerCustomers",
                     localField: "account",
                     foreignField: "_id",
                     as: "accountData",
@@ -235,7 +235,7 @@ const view = async (req, res) => {
             {
                 $addFields: {
                     contactName: { $concat: ['$contactData.firstName', ' ', '$contactData.lastName'] },
-                    accountName: '$accountData.name'
+                    accountName: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] }
                 }
             },
             { $project: { contactData: 0, accountData: 0 } },

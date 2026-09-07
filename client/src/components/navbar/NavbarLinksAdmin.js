@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 // Chakra Imports
 import {
   Avatar,
@@ -15,7 +16,6 @@ import {
 // Custom Components
 import { ItemContent } from "components/menu/ItemContent";
 import { SearchBar } from "components/navbar/searchBar/SearchBar";
-import { SidebarResponsive } from "components/sidebar/Sidebar";
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 // Assets
@@ -31,7 +31,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect";
 import { useLanguage } from "i18n";
 export default function HeaderLinks(props) {
-  const { secondary, setOpenSidebar, openSidebar, routes } = props;
+  const { secondary } = props;
   // Chakra Color Mode
   const navbarIcon = useColorModeValue("gray.400", "white");
   let menuBg = useColorModeValue("white", "navy.800");
@@ -54,7 +54,7 @@ export default function HeaderLinks(props) {
   const userData = useSelector((state) => state?.user?.user);
 
   const data = typeof userData === "string" ? JSON.parse(userData) : userData;
-  const user = data?.firstName + " " + data?.lastName;
+  const user = [data?.firstName, data?.lastName].filter(Boolean).join(" ");
   const userId = JSON.parse(localStorage.getItem("user"))?._id;
   const loginUser = useSelector((state) => state?.user?.user);
 
@@ -109,7 +109,7 @@ export default function HeaderLinks(props) {
       bg={menuBg}
       flexWrap={secondary ? { base: "wrap", md: "nowrap" } : "unset"}
       p="6px"
-      mt={2.5}
+      dir="ltr"
       borderRadius="30px"
       boxShadow={shadow}
       position="relative"
@@ -150,20 +150,12 @@ export default function HeaderLinks(props) {
         >
           1,924
           <Text as="span" display={{ base: "none", md: "unset" }}>
-            {" "}
-            ETH
-          </Text>
+            {" "}<LocalizedText text="ETH" /></Text>
         </Text>
       </Flex>
 
-      <SidebarResponsive
-        routes={routes}
-        setOpenSidebar={setOpenSidebar}
-        openSidebar={openSidebar}
-      />
-
       <Menu>
-        <MenuButton p="0px">
+        <MenuButton p="0px" aria-label={t("Profile Settings")}>
           <Icon
             mt="6px"
             as={MdNotificationsNone}
@@ -235,7 +227,7 @@ export default function HeaderLinks(props) {
           <Avatar
             _hover={{ cursor: "pointer" }}
             color="white"
-            name={user || "Prolink Infotech"}
+            name={user || t('User')}
             bg="#11047A"
             size="sm"
             w="40px"

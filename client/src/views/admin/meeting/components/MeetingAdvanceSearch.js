@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
@@ -47,7 +48,7 @@ const MeetingAdvanceSearch = (props) => {
   };
   const validationSchema = yup.object({
     agenda: yup.string(),
-    createBy: yup.string().email("Invalid email format"),
+    createBy: yup.string().email(tr("Invalid email format")),
   });
   const formik = useFormik({
     initialValues: initialValues,
@@ -129,7 +130,7 @@ const MeetingAdvanceSearch = (props) => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Advance Search</ModalHeader>
+          <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
               setAdvanceSearch(false);
@@ -147,16 +148,14 @@ const MeetingAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Agenda
-                </FormLabel>
+                ><LocalizedText text="Agenda" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.agenda}
                   name="agenda"
-                  placeholder="Enter Lead Name"
+                  placeholder={tr("Enter Lead Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -174,16 +173,14 @@ const MeetingAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Create By
-                </FormLabel>
+                ><LocalizedText text="Create By" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.createBy}
                   name="createBy"
-                  placeholder="Enter Lead Email"
+                  placeholder={tr("Enter Lead Email")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -200,9 +197,7 @@ const MeetingAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Date & time
-                </FormLabel>
+                ><LocalizedText text="Date & time" /></FormLabel>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel
@@ -213,9 +208,7 @@ const MeetingAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  From
-                </FormLabel>
+                ><LocalizedText text="From" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -235,9 +228,7 @@ const MeetingAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  To
-                </FormLabel>
+                ><LocalizedText text="To" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -259,9 +250,7 @@ const MeetingAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Time Stamp
-                </FormLabel>
+                ><LocalizedText text="Time Stamp" /></FormLabel>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel
@@ -272,9 +261,7 @@ const MeetingAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  From
-                </FormLabel>
+                ><LocalizedText text="From" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -294,9 +281,7 @@ const MeetingAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  To
-                </FormLabel>
+                ><LocalizedText text="To" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -318,16 +303,14 @@ const MeetingAdvanceSearch = (props) => {
               onClick={handleSubmit}
               disabled={isLoding || !dirty ? true : false}
             >
-              {isLoding ? <Spinner /> : "Search"}
+              {isLoding ? <Spinner /> : tr("Search")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               colorScheme="red"
               onClick={() => resetForm()}
-            >
-              Clear
-            </Button>
+            ><LocalizedText text="Clear" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -335,4 +318,4 @@ const MeetingAdvanceSearch = (props) => {
   );
 };
 
-export default MeetingAdvanceSearch;
+export default withLocalization(MeetingAdvanceSearch);

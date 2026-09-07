@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { CloseIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   DrawerFooter,
@@ -68,9 +69,7 @@ const EventView = (props) => {
       <Modal isOpen={isOpen} size={"md"} isCentered>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader justifyContent="space-between" display="flex">
-            Task
-            <IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
+          <ModalHeader justifyContent="space-between" display="flex"><LocalizedText text="Task" /><IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
           </ModalHeader>
           {isLoding ? (
             <Flex
@@ -91,8 +90,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task Title{" "}
+                      {" "}<LocalizedText text="Task Title" />{" "}
                     </Text>
                     <Text>{data?.title ? data?.title : " - "}</Text>
                   </GridItem>
@@ -102,8 +100,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task Related To{" "}
+                      {" "}<LocalizedText text="Task Related To" />{" "}
                     </Text>
                     <Text>{data?.category ? data?.category : " - "}</Text>
                   </GridItem>
@@ -113,8 +110,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task start{" "}
+                      {" "}<LocalizedText text="Task start" />{" "}
                     </Text>
                     <Text>
                       {data?.start ? moment(data?.start).format("L LT") : " - "}
@@ -126,8 +122,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task end{" "}
+                      {" "}<LocalizedText text="Task end" />{" "}
                     </Text>
                     <Text>
                       {data?.end
@@ -141,8 +136,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task Link{" "}
+                      {" "}<LocalizedText text="Task Link" />{" "}
                     </Text>
                     {data?.url ? (
                       <a target="_blank" href={data?.url}>
@@ -162,8 +156,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task reminder{" "}
+                      {" "}<LocalizedText text="Task reminder" />{" "}
                     </Text>
                     <Text>{data?.reminder ? data?.reminder : " - "}</Text>
                   </GridItem>
@@ -173,8 +166,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      assignment To{" "}
+                      {" "}<LocalizedText text="assignment To" />{" "}
                     </Text>
                     {data?.assignTo ? (
                       <Link
@@ -233,8 +225,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task createBy{" "}
+                      {" "}<LocalizedText text="Task createBy" />{" "}
                     </Text>
                     <Text>
                       {data?.createByName ? data?.createByName : " - "}
@@ -246,9 +237,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task Description
-                    </Text>
+                      {" "}<LocalizedText text="Task Description" /></Text>
                     <Text>{data?.description ? data?.description : " - "}</Text>
                   </GridItem>
                   <GridItem colSpan={{ base: 12 }}>
@@ -257,8 +246,7 @@ const EventView = (props) => {
                       fontWeight="bold"
                       color={"blackAlpha.900"}
                     >
-                      {" "}
-                      Task notes{" "}
+                      {" "}<LocalizedText text="Task notes" />{" "}
                     </Text>
                     <Text>{data?.notes ? data?.notes : " - "}</Text>
                   </GridItem>

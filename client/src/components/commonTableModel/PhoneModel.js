@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -68,16 +69,16 @@ const PhoneModel = (props) => {
   };
 
   const validationSchema = yup.object({
-    sender: yup.string().required("Sender Is required"),
-    recipient: yup.string().required("Recipient Is required"),
-    callDuration: yup.string().required("Call Duration is required"),
-    property: yup.array().required("property is required"),
+    sender: yup.string().required(tr("Sender Is required")),
+    recipient: yup.string().required(tr("Recipient Is required")),
+    callDuration: yup.string().required(tr("Call Duration is required")),
+    property: yup.array().required(tr("property is required")),
     callNotes: yup.string(),
     createBy: yup.string(),
     createByLead: yup.string(),
     category: yup.string(),
-    startDate: yup.date().required("Start Date Is required"),
-    salesAgent: yup.string().required("Assign To Sales Agent Is required"),
+    startDate: yup.date().required(tr("Start Date Is required")),
+    salesAgent: yup.string().required(tr("Assign To Sales Agent Is required")),
   });
   const formik = useFormik({
     initialValues: initialValues,
@@ -206,7 +207,7 @@ const PhoneModel = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Add Call</ModalHeader>
+        <ModalHeader><LocalizedText text="Add Call" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {/* Contact Model  */}
@@ -256,9 +257,7 @@ const PhoneModel = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Related
-              </FormLabel>
+              ><LocalizedText text="Related" /></FormLabel>
               <RadioGroup
                 onChange={(e) => {
                   setFieldValue("category", e);
@@ -268,8 +267,8 @@ const PhoneModel = (props) => {
                 value={values?.category}
               >
                 <Stack direction="row">
-                  <Radio value="Contact">Contact</Radio>
-                  <Radio value="Lead">Lead</Radio>
+                  <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
+                  <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                 </Stack>
               </RadioGroup>
               <Text mb="10px" fontSize="sm" color={"red"}>
@@ -287,9 +286,7 @@ const PhoneModel = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Recipient (Contact)
-                    </FormLabel>
+                    ><LocalizedText text="Recipient (Contact)" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values?.createByContact}
@@ -301,7 +298,7 @@ const PhoneModel = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.createByContact && touched?.createByContact
                             ? "red.300"
@@ -342,9 +339,7 @@ const PhoneModel = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Recipient (Lead)
-                    </FormLabel>
+                    ><LocalizedText text="Recipient (Lead)" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values?.createByLead}
@@ -356,7 +351,7 @@ const PhoneModel = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.createByLead && touched?.createByLead
                             ? "red.300"
@@ -399,15 +394,14 @@ const PhoneModel = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Recipient<Text color={"red"}>*</Text>
+              ><LocalizedText text="Recipient" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
                 disabled
                 value={values?.recipient ? values?.recipient : ""}
                 name="recipient"
-                placeholder="Recipient"
+                placeholder={tr("Recipient")}
                 fontWeight="500"
                 borderColor={
                   errors?.recipient && touched?.recipient ? "red.300" : null
@@ -435,7 +429,7 @@ const PhoneModel = (props) => {
                       errors?.property && touched?.property ? undefined : "10px"
                     }
                     fontWeight="500"
-                    placeholder={"Assign To Property"}
+                    placeholder={tr("Assign To Property")}
                     borderColor={
                       errors?.property && touched?.property ? "red.300" : null
                     }
@@ -460,8 +454,7 @@ const PhoneModel = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Start Date<Text color={"red"}>*</Text>
+              ><LocalizedText text="Start Date" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 type="datetime-local"
@@ -489,8 +482,7 @@ const PhoneModel = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Call Duration<Text color={"red"}>*</Text>
+              ><LocalizedText text="Call Duration" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -498,7 +490,7 @@ const PhoneModel = (props) => {
                 onBlur={handleBlur}
                 value={values?.callDuration}
                 name="callDuration"
-                placeholder="call Duration"
+                placeholder={tr("call Duration")}
                 fontWeight="500"
                 borderColor={
                   errors?.callDuration && touched?.callDuration
@@ -520,8 +512,7 @@ const PhoneModel = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Assign To Sales Agent <Text color={"red"}>*</Text>
+              ><LocalizedText text="Assign To Sales Agent" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Flex justifyContent={"space-between"}>
                 <Select
@@ -534,7 +525,7 @@ const PhoneModel = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Assign To Sales Agent"}
+                  placeholder={tr("Assign To Sales Agent")}
                   borderColor={
                     errors?.salesAgent && touched?.salesAgent ? "red.300" : null
                   }
@@ -569,13 +560,11 @@ const PhoneModel = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Call Notes
-              </FormLabel>
+              ><LocalizedText text="Call Notes" /></FormLabel>
               <Textarea
                 resize={"none"}
                 fontSize="sm"
-                placeholder="Enter Call Notes"
+                placeholder={tr("Enter Call Notes")}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={values?.callNotes}
@@ -599,7 +588,7 @@ const PhoneModel = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             size="sm"
@@ -613,13 +602,11 @@ const PhoneModel = (props) => {
               formik.resetForm();
               onClose();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default PhoneModel;
+export default withLocalization(PhoneModel);

@@ -14,7 +14,6 @@ const emailRoute = require('./emailHistory/_routes');
 const phoneCallRoute = require('./phoneCall/_routes');
 const TextMsgRoute = require('./textMsg/_routes');
 const meetingRoute = require('./meeting/_routes');
-const paymentRoute = require('./payment/_routes');
 const roleAccessRoute = require('./roleAccess/_routes');
 const imagesRoute = require('./images/_routes');
 const customFieldRoute = require("./customField/_routes");
@@ -26,7 +25,6 @@ const emailTempRoute = require("./emailTemplate/_routes")
 const opportunityRoute = require("./opportunities/_routes")
 const quotesRoute = require("./quotes/_routes")
 const moduleActiveDeactiveRoute = require("./moduleActiveDeactive/_routes")
-const accountRoute = require("./account/_routes")
 const invoicesRoute = require("./invoices/_routes")
 const opportunitiesproject = require("./opportunityproject/_router")
 const bankDetailsRoute = require("./bankDetails/_routes")
@@ -39,7 +37,7 @@ router.use('/task', taskRoute);
 router.use('/document', documentRoute);
 router.use('/reporting', reportingRoute);
 router.use('/user', userRoute);
-router.use('/payment', paymentRoute);
+router.use('/estate', require('./estate/_routes'));
 router.use('/bank-details', bankDetailsRoute);
 
 router.use('/email', emailRoute);
@@ -62,6 +60,5 @@ router.use("/email-temp", emailTempRoute);
 router.use("/opportunity", opportunityRoute);
 router.use("/quotes", quotesRoute);
 router.use("/invoices", invoicesRoute);
-router.use("/account", accountRoute);
 router.use("/opportunityproject",opportunitiesproject)
 module.exports = router;

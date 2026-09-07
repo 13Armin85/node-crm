@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { AddIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -145,9 +146,7 @@ const Index = () => {
               handleDeleteOpen("", "many");
             }}
             size="sm"
-          >
-            Delete
-          </Button>
+          ><LocalizedText text="Delete" /></Button>
         )}
         <Button
           size="sm"
@@ -155,18 +154,14 @@ const Index = () => {
           me={1}
           onClick={() => handleAddOpen()}
           leftIcon={<AddIcon />}
-        >
-          Add New
-        </Button>
+        ><LocalizedText text="Add New" /></Button>
         <Button
           size="sm"
           variant="brand"
           onClick={() => navigate(-1)}
           leftIcon={<IoIosArrowBack />}
         >
-          {" "}
-          Back
-        </Button>
+          {" "}<LocalizedText text="Back" /></Button>
       </Flex>
       {isLoding ? (
         <Flex
@@ -207,7 +202,7 @@ const Index = () => {
                       />
                       <Tooltip
                         hasArrow
-                        label={item?.moduleName}
+                        label={<LocalizedText text={item?.moduleName} />}
                         bg="gray.200"
                         color="gray"
                         textTransform={"capitalize"}
@@ -224,7 +219,7 @@ const Index = () => {
                             textTransform: "capitalize",
                           }}
                         >
-                          {item?.moduleName}
+                          <LocalizedText text={item?.moduleName} />
                         </Heading>
                       </Tooltip>
                     </Flex>

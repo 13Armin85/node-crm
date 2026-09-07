@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
@@ -51,7 +52,7 @@ const Index = (props) => {
   const [permission, accountAccess] = HasAccess(["Opportunities", "Account"]);
 
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     accessor: "action",
     isSortable: false,
     center: true,
@@ -74,9 +75,7 @@ const Index = (props) => {
                   onOpen();
                   setSelectedId(row?.values?._id);
                 }}
-              >
-                Edit
-              </MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>
             )}
             {permission?.view && (
               <MenuItem
@@ -86,9 +85,7 @@ const Index = (props) => {
                 onClick={() => {
                   navigate(`/opportunitiesView/${row?.values?._id}`);
                 }}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             {permission?.delete && (
               <MenuItem
@@ -99,9 +96,7 @@ const Index = (props) => {
                   setDelete(true);
                   setSelectedValues([row?.values?._id]);
                 }}
-              >
-                Delete
-              </MenuItem>
+              ><LocalizedText text="Delete" /></MenuItem>
             )}
           </MenuList>
         </Menu>
@@ -109,9 +104,9 @@ const Index = (props) => {
     ),
   };
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Opportunity Name",
+      Header: tr("Opportunity Name"),
       accessor: "opportunityName",
       cell: (cell) => (
         <div className="selectOpt">
@@ -132,7 +127,7 @@ const Index = (props) => {
       ),
     },
     {
-      Header: "Account Name",
+      Header: tr("Account Name"),
       accessor: "accountName",
       cell: (cell) =>
         user?.role === "superAdmin" || accountAccess?.view ? (
@@ -141,7 +136,7 @@ const Index = (props) => {
               onClick={() =>
                 navigate(
                   cell?.row?.original.accountName !== null &&
-                    `/accountView/${cell?.row?.original.accountName}`,
+                    `/partner-customers/${cell?.row?.original.accountName}`,
                 )
               }
               me="10px"
@@ -167,16 +162,16 @@ const Index = (props) => {
         ),
     },
     {
-      Header: "Opportunity Amount",
+      Header: tr("Opportunity Amount"),
       accessor: "opportunityAmount",
     },
     {
-      Header: "Expected Close Date",
+      Header: tr("Expected Close Date"),
       accessor: "expectedCloseDate",
       cell: (cell) => <div>{moment(cell?.value).format("YYYY-MM-DD")}</div>,
     },
     {
-      Header: "Sales Stage",
+      Header: tr("Sales Stage"),
       accessor: "salesStage",
     },
     ...(permission?.update || permission?.view || permission?.delete
@@ -189,7 +184,7 @@ const Index = (props) => {
   const customFields = [
     {
       name: "opportunityName",
-      label: "Opportunity Name",
+      label: tr("Opportunity Name"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -244,7 +239,7 @@ const Index = (props) => {
     },
     {
       name: "accountName",
-      label: "Account Name",
+      label: tr("Account Name"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -299,7 +294,7 @@ const Index = (props) => {
     },
     {
       name: "opportunityAmount",
-      label: "Opportunity Amount",
+      label: tr("Opportunity Amount"),
       type: "number",
       fixed: false,
       isDefault: false,
@@ -354,7 +349,7 @@ const Index = (props) => {
     },
     {
       name: "expectedCloseDate",
-      label: "Expected Close Date",
+      label: tr("Expected Close Date"),
       type: "date",
       fixed: false,
       isDefault: false,
@@ -409,7 +404,7 @@ const Index = (props) => {
     },
     {
       name: "salesStage",
-      label: "Sales Stage",
+      label: tr("Sales Stage"),
       type: "select",
       fixed: false,
       isDefault: false,
@@ -534,7 +529,7 @@ const Index = (props) => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -582,9 +577,7 @@ const Index = (props) => {
             mt={{ sm: "5px", md: "0" }}
             size="sm"
             onClick={() => setAdvanceSearch(true)}
-          >
-            Advance Search
-          </Button>
+          ><LocalizedText text="Advance Search" /></Button>
         }
         getTagValuesOutSide={getTagValuesOutSide}
         searchboxOutside={searchboxOutside}
@@ -630,4 +623,4 @@ const Index = (props) => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

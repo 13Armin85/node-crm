@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   FormLabel,
@@ -101,7 +102,7 @@ const Edit = (props) => {
       <Modal onClose={onClose} isOpen={isOpen} isCentered size="2xl">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Edit Module Name </ModalHeader>
+          <ModalHeader><LocalizedText text="Edit Module Name" /></ModalHeader>
           <ModalCloseButton />
           <HSeparator />
           <ModalBody>
@@ -116,9 +117,7 @@ const Edit = (props) => {
                         isMultipleAllow={false}
                         onFileSelect={(file) => changeImage(file)}
                         content={
-                          <Button size="sm" variant="brand">
-                            Change
-                          </Button>
+                          <Button size="sm" variant="brand"><LocalizedText text="Change" /></Button>
                         }
                       />
                     </div>
@@ -131,16 +130,14 @@ const Edit = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="2px"
-                  >
-                    Name
-                  </FormLabel>
+                  ><LocalizedText text="Name" /></FormLabel>
                   <Input
                     fontSize="sm"
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values?.moduleName}
                     name="moduleName"
-                    placeholder="Enter Name"
+                    placeholder={tr("Enter Name")}
                     fontWeight="500"
                     borderColor={
                       errors?.moduleName && touched?.moduleName
@@ -166,7 +163,7 @@ const Edit = (props) => {
               disabled={isLoding ? true : false}
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Update"}
+              {isLoding ? <Spinner /> : tr("Update")}
             </Button>
             <Button
               sx={{
@@ -176,9 +173,7 @@ const Edit = (props) => {
               colorScheme="red"
               size="sm"
               onClick={onClose}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -186,4 +181,4 @@ const Edit = (props) => {
   );
 };
 
-export default Edit;
+export default withLocalization(Edit);

@@ -1,3 +1,5 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { CloseIcon, PhoneIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -54,6 +56,7 @@ const AddEditUser = (props) => {
   const dispatch = useDispatch();
 
   const initialValues = {
+    customFields: data?.customFields || {},
     firstName: userAction === "add" ? "" : data?.firstName,
     lastName: userAction === "add" ? "" : data?.lastName,
     username: userAction === "add" ? "" : data?.username,
@@ -159,10 +162,9 @@ const AddEditUser = (props) => {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader justifyContent="space-between" display="flex">
-          {userAction === "add" ? "Add" : "Edit"} User
-          <IconButton onClick={onClose} icon={<CloseIcon />} />
+          {userAction === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="User" /><IconButton onClick={onClose} icon={<CloseIcon />} />
         </ModalHeader>
-        <ModalBody>
+        <ModalBody><ManagedFormLayout moduleName="Users" formik={formik}>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
             <GridItem colSpan={{ base: 12 }}>
               <FormLabel
@@ -171,8 +173,7 @@ const AddEditUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                First Name<Text color={"red"}>*</Text>
+              ><LocalizedText text="First Name" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -180,7 +181,7 @@ const AddEditUser = (props) => {
                 onBlur={handleBlur}
                 value={values?.firstName}
                 name="firstName"
-                placeholder="firstName"
+                placeholder={tr("firstName")}
                 fontWeight="500"
                 borderColor={
                   errors?.firstName && touched?.firstName ? "red.300" : null
@@ -198,16 +199,14 @@ const AddEditUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Last Name
-              </FormLabel>
+              ><LocalizedText text="Last Name" /></FormLabel>
               <Input
                 fontSize="sm"
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={values?.lastName}
                 name="lastName"
-                placeholder="Last Name"
+                placeholder={tr("Last Name")}
                 fontWeight="500"
                 borderColor={
                   errors?.lastName && touched?.lastName ? "red.300" : null
@@ -223,7 +222,7 @@ const AddEditUser = (props) => {
                 <Text w={"100%"}>
                   <CUIAutoComplete
                     label={`Choose Role`}
-                    placeholder="Type a Name"
+                    placeholder={tr("Type a Name")}
                     name="roles"
                     items={roles}
                     mb={errors?.roles && touched?.roles ? undefined : "10px"}
@@ -260,8 +259,7 @@ const AddEditUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Email<Text color={"red"}>*</Text>
+              ><LocalizedText text="Email" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -271,7 +269,7 @@ const AddEditUser = (props) => {
                 value={values?.username}
                 name="username"
                 disabled={userAction === "edit"}
-                placeholder="Email Address"
+                placeholder={tr("Email Address")}
                 fontWeight="500"
                 borderColor={
                   errors?.username && touched?.username ? "red.300" : null
@@ -289,8 +287,7 @@ const AddEditUser = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Phone Number<Text color={"red"}>*</Text>
+              ><LocalizedText text="Phone Number" /><Text color={"red"}>*</Text>
               </FormLabel>
               <InputGroup>
                 <InputLeftElement
@@ -310,7 +307,7 @@ const AddEditUser = (props) => {
                       ? "red.300"
                       : null
                   }
-                  placeholder="Phone number"
+                  placeholder={tr("Phone number")}
                   borderRadius="16px"
                 />
               </InputGroup>
@@ -328,14 +325,12 @@ const AddEditUser = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Password
-                </FormLabel>
+                ><LocalizedText text="Password" /></FormLabel>
                 <InputGroup size="md">
                   <Input
                     isRequired={true}
                     fontSize="sm"
-                    placeholder="Enter Your Password"
+                    placeholder={tr("Enter Your Password")}
                     name="password"
                     size="lg"
                     variant="auth"
@@ -381,7 +376,8 @@ const AddEditUser = (props) => {
             setFieldValue={setFieldValue}
           // columnsData={columns ?? []}
           />
-        </ModalBody>
+        </ManagedFormLayout>
+</ModalBody>
         <ModalFooter>
           <Button
             variant="brand"
@@ -389,7 +385,7 @@ const AddEditUser = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             sx={{
@@ -403,13 +399,11 @@ const AddEditUser = (props) => {
               formik.resetForm();
               onClose();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddEditUser;
+export default withLocalization(AddEditUser);

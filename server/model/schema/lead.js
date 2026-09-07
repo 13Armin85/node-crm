@@ -6,6 +6,7 @@ const fetchSchemaFields = async () => {
 };
 
 const leadSchema = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     // // Lead Information:
     // leadName: String,
     // leadEmail: String,

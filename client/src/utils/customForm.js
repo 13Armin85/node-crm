@@ -1,4 +1,8 @@
-import React from "react";
+import { LocalizedText, tr } from 'i18n/runtime';
+import React, { useEffect, useState } from "react";
+import DynamicFormRenderer from 'components/dynamicForm/DynamicFormRenderer';
+import { getApi } from 'services/api';
+import { useLanguage } from 'i18n';
 import {
   Grid,
   GridItem,
@@ -70,7 +74,7 @@ const CustomForm = ({
                         {values?.leadRating || 0}
                         <Slider
                           ml={2}
-                          aria-label="slider-ex-1"
+                          aria-label={tr("slider-ex-1")}
                           colorScheme="yellow"
                           value={values?.leadRating}
                           min={field?.validation[1]?.value}
@@ -221,7 +225,7 @@ const CustomForm = ({
                       {values?.leadRating || 0}
                       <Slider
                         ml={2}
-                        aria-label="slider-ex-1"
+                        aria-label={tr("slider-ex-1")}
                         colorScheme="yellow"
                         min={field?.validation[1]?.value}
                         max={field?.validation[2]?.value}
@@ -266,7 +270,7 @@ const CustomForm = ({
                           : null
                       }
                     >
-                      <option value="">Select {field.label}</option>
+                      <option value=""><LocalizedText text="Select" />{field.label}</option>
                       {field?.options?.map((option) => (
                         <option key={option?._id} value={option?.value}>
                           {option?.name}
@@ -351,7 +355,7 @@ const CustomForm = ({
                     {values?.leadRating || 0}
                     <Slider
                       ml={2}
-                      aria-label="slider-ex-1"
+                      aria-label={tr("slider-ex-1")}
                       colorScheme="yellow"
                       min={field?.validation[1]?.value}
                       max={field?.validation[2]?.value}
@@ -396,7 +400,7 @@ const CustomForm = ({
                         : null
                     }
                   >
-                    <option value="">Select {field?.label}</option>
+                    <option value=""><LocalizedText text="Select" />{field?.label}</option>
                     {field?.options?.map((option) => (
                       <option key={option?._id} value={option?.value}>
                         {option?.name}
@@ -456,4 +460,21 @@ const CustomForm = ({
   );
 };
 
-export default CustomForm;
+export default function ManagedCustomForm(props) {
+  const { t } = useLanguage();
+  const [definition, setDefinition] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const moduleName = props.moduleData?.moduleName;
+  useEffect(() => {
+    let active = true;
+    if (!moduleName) return undefined;
+    getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`).then(r => {
+      if (active) { if (r.status === 200) setDefinition(r.data); else setFailed(true); }
+    });
+    return () => { active = false; };
+  }, [moduleName]);
+  if (!moduleName) return <CustomForm {...props} />;
+  if (failed) return <Text color="red.500">{t('estate.serverError')}</Text>;
+  if (!definition) return <Text>{t('estate.loading')}</Text>;
+  return <DynamicFormRenderer definition={definition} formik={{ values: props.values, errors: props.errors, touched: props.touched, setFieldValue: props.setFieldValue, handleBlur: props.handleBlur }} />;
+}

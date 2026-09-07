@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 // import React from 'react'
 // import { Grid, GridItem, Box, Heading, Text } from '@chakra-ui/react'
 // import Card from 'components/card/Card'
@@ -552,8 +553,7 @@ const CustomView = ({
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={12}>
                 <Heading as="h1" size="md" mb="10px">
-                  {data?.moduleName} view page
-                </Heading>
+                  {data?.moduleName}<LocalizedText text="view page" /></Heading>
                 <HSeparator />
               </GridItem>
               {data?.fields

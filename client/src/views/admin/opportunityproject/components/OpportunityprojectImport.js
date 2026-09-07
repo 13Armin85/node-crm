@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Papa from "papaparse";
@@ -28,8 +29,8 @@ function OpportunityprojectImport() {
   const [filterContact, setFilterContact] = useState([]);
 
   const columns = [
-    { Header: "Fields In Crm", accessor: "crmFields" },
-    { Header: "Fields In File", accessor: "fileFields" },
+    { Header: tr("Fields In Crm"), accessor: "crmFields" },
+    { Header: tr("Fields In File"), accessor: "fileFields" },
   ];
 
   const initialFieldValues = Object.fromEntries(
@@ -132,7 +133,7 @@ function OpportunityprojectImport() {
           const fileHeadingFields = Object.keys(parsedData[0]);
           setImportedFileFields(fileHeadingFields);
         } else {
-          toast.error("Empty or invalid CSV file");
+          toast.error(tr("Empty or invalid CSV file"));
           navigate("/opportunityproject");
         }
       } else if (extension === "xlsx") {
@@ -159,7 +160,7 @@ function OpportunityprojectImport() {
           const fileHeadingFields = Object.keys(jsonData[0]);
           setImportedFileFields(fileHeadingFields);
         } else {
-          toast.error("Empty or invalid XLSX file");
+          toast.error(tr("Empty or invalid XLSX file"));
           navigate("/opportunityproject");
         }
       }
@@ -202,9 +203,7 @@ function OpportunityprojectImport() {
           fontSize="22px"
           fontWeight="700"
           mb="20px"
-        >
-          Import Opportunity Project
-        </Text>
+        ><LocalizedText text="Import Opportunity Project" /></Text>
         <Grid
           templateColumns="repeat(12, 1fr)"
           mb={3}
@@ -261,7 +260,7 @@ function OpportunityprojectImport() {
                               data,
                           )
                         : "Select Field In File"
-                      : "Select Field In File"}
+                      : tr("Select Field In File")}
                   </option>
                   {importedFileFields?.map((field) => (
                     <option value={field} key={field}>
@@ -275,13 +274,11 @@ function OpportunityprojectImport() {
         </Grid>
 
         <Flex Flex justifyContent={"end"} mt="5">
-          <Button size="sm" onClick={() => handleSubmit()} variant="brand">
-            Save
-          </Button>
+          <Button size="sm" onClick={() => handleSubmit()} variant="brand"><LocalizedText text="Save" /></Button>
         </Flex>
       </Card>
     </>
   );
 }
 
-export default OpportunityprojectImport;
+export default withLocalization(OpportunityprojectImport);

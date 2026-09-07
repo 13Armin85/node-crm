@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
@@ -122,7 +123,7 @@ const OpprtunityAdvanceSearch = (props) => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Advance Search</ModalHeader>
+          <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
               setAdvanceSearch(false);
@@ -140,16 +141,14 @@ const OpprtunityAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Opportunity Name
-                </FormLabel>
+                ><LocalizedText text="Opportunity Name" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.opportunityName}
                   name="opportunityName"
-                  placeholder="Enter Opportunity Name"
+                  placeholder={tr("Enter Opportunity Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -168,16 +167,14 @@ const OpprtunityAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Account Name
-                </FormLabel>
+                ><LocalizedText text="Account Name" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.accountName2}
                   name="accountName2"
-                  placeholder="Enter Account Name"
+                  placeholder={tr("Enter Account Name")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -196,16 +193,14 @@ const OpprtunityAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Opportunity Amount
-                </FormLabel>
+                ><LocalizedText text="Opportunity Amount" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.opportunityAmount}
                   name="opportunityAmount"
-                  placeholder="Enter Opportunity Amount"
+                  placeholder={tr("Enter Opportunity Amount")}
                   fontWeight="500"
                 />
                 <Text mb="10px" color={"red"}>
@@ -224,9 +219,7 @@ const OpprtunityAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Expected Close Date
-                </FormLabel>
+                ><LocalizedText text="Expected Close Date" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
@@ -252,34 +245,24 @@ const OpprtunityAdvanceSearch = (props) => {
                   color={"#000"}
                   mb="0"
                   mt={2}
-                >
-                  Sales Stage
-                </FormLabel>
+                ><LocalizedText text="Sales Stage" /></FormLabel>
                 <Select
                   value={values?.salesStage}
                   name="salesStage"
                   onChange={handleChange}
                   fontWeight="500"
-                  placeholder={"Sales Stage"}
+                  placeholder={tr("Sales Stage")}
                 >
-                  <option value={"Prospecting"}>Prospecting</option>
-                  <option value={"Qualification"}>Qualification</option>
-                  <option value={"Needs Analysis"}>Needs Analysis</option>
-                  <option value={"Value Propositon"}>Value Propositon</option>
-                  <option value={"Identifying Decision Makers"}>
-                    Identifying Decision Makers
-                  </option>
-                  <option value={"Perception Analysis"}>
-                    Perception Analysis
-                  </option>
-                  <option value={"Proposal/Price Quote"}>
-                    Proposal/Price Quote
-                  </option>
-                  <option value={"Negotiation/Review"}>
-                    Negotiation/Review
-                  </option>
-                  <option value={"Closed/Won"}>Closed/Won</option>
-                  <option value={"Closed/Lost"}>Closed/Lost</option>
+                  <option value={"Prospecting"}><LocalizedText text="Prospecting" /></option>
+                  <option value={"Qualification"}><LocalizedText text="Qualification" /></option>
+                  <option value={"Needs Analysis"}><LocalizedText text="Needs Analysis" /></option>
+                  <option value={"Value Propositon"}><LocalizedText text="Value Propositon" /></option>
+                  <option value={"Identifying Decision Makers"}><LocalizedText text="Identifying Decision Makers" /></option>
+                  <option value={"Perception Analysis"}><LocalizedText text="Perception Analysis" /></option>
+                  <option value={"Proposal/Price Quote"}><LocalizedText text="Proposal/Price Quote" /></option>
+                  <option value={"Negotiation/Review"}><LocalizedText text="Negotiation/Review" /></option>
+                  <option value={"Closed/Won"}><LocalizedText text="Closed/Won" /></option>
+                  <option value={"Closed/Lost"}><LocalizedText text="Closed/Lost" /></option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}
@@ -298,16 +281,14 @@ const OpprtunityAdvanceSearch = (props) => {
               onClick={handleSubmit}
               disabled={isLoding || !dirty ? true : false}
             >
-              {isLoding ? <Spinner /> : "Search"}
+              {isLoding ? <Spinner /> : tr("Search")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               colorScheme="red"
               onClick={() => resetForm()}
-            >
-              Clear
-            </Button>
+            ><LocalizedText text="Clear" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -315,4 +296,4 @@ const OpprtunityAdvanceSearch = (props) => {
   );
 };
 
-export default OpprtunityAdvanceSearch;
+export default withLocalization(OpprtunityAdvanceSearch);

@@ -49,7 +49,7 @@ const add = async (req, res) => {
         user.outboundcall = user.outboundcall + 1;
         await user.save();
 
-        const result = new PhoneCall(phoneCall);
+        const result = new PhoneCall({ ...phoneCall, customFields: req.body.customFields });
         await result.save();
         res.status(200).json({ result });
     } catch (err) {

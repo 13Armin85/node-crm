@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useMemo, useState, useEffect } from "react";
 import {
   Box,
@@ -512,9 +513,7 @@ const CommonCheckTable = (props) => {
                       mt={{ sm: "5px", md: "0" }}
                       size="sm"
                       onClick={() => setAdvaceSearch(true)}
-                    >
-                      Advance Search
-                    </Button>
+                    ><LocalizedText text="Advance Search" /></Button>
                   )}
               {searchDisplay || displaySearchData ? (
                 <Button
@@ -523,9 +522,7 @@ const CommonCheckTable = (props) => {
                   size="sm"
                   ms={2}
                   onClick={() => handleClear()}
-                >
-                  Clear
-                </Button>
+                ><LocalizedText text="Clear" /></Button>
               ) : (
                 ""
               )}
@@ -573,13 +570,10 @@ const CommonCheckTable = (props) => {
                     onClick={() => setManageColumns(true)}
                     width={"165px"}
                   >
-                    {" "}
-                    Manage Columns
-                  </MenuItem>
+                    {" "}<LocalizedText text="Manage Columns" /></MenuItem>
                   {typeof setIsImport === "function" && (
                     <MenuItem width={"165px"} onClick={() => setIsImport(true)}>
-                      {" "}
-                      Import {title}
+                      {" "}<LocalizedText text="Import" />{title}
                     </MenuItem>
                   )}
                   {allData && allData?.length > 0 && (
@@ -590,16 +584,16 @@ const CommonCheckTable = (props) => {
                         onClick={() => handleExportLeads("csv")}
                       >
                         {selectedValues && selectedValues?.length > 0
-                          ? "Export Selected Data as CSV"
-                          : "Export as CSV"}
+                          ? tr("Export Selected Data as CSV")
+                          : tr("Export as CSV")}
                       </MenuItem>
                       <MenuItem
                         width={"165px"}
                         onClick={() => handleExportLeads("xlsx")}
                       >
                         {selectedValues && selectedValues?.length > 0
-                          ? "Export Selected Data as Excel"
-                          : "Export as Excel"}
+                          ? tr("Export Selected Data as Excel")
+                          : tr("Export as Excel")}
                       </MenuItem>
                     </>
                   )}
@@ -612,9 +606,7 @@ const CommonCheckTable = (props) => {
                 size="sm"
                 variant="brand"
                 leftIcon={<AddIcon />}
-              >
-                Add New
-              </Button>
+              ><LocalizedText text="Add New" /></Button>
             )}
             {BackButton && BackButton}
           </GridItem>
@@ -836,7 +828,7 @@ const CommonCheckTable = (props) => {
         >
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>Manage Columns</ModalHeader>
+            <ModalHeader><LocalizedText text="Manage Columns" /></ModalHeader>
             <ModalCloseButton
               onClick={() => {
                 setManageColumns(false);
@@ -870,16 +862,14 @@ const CommonCheckTable = (props) => {
                 disabled={isLoding ? true : false}
                 size="sm"
               >
-                {isLoding ? <Spinner /> : "Save"}
+                {isLoding ? <Spinner /> : tr("Save")}
               </Button>
               <Button
                 variant="outline"
                 colorScheme="red"
                 size="sm"
                 onClick={() => handleColumnClear()}
-              >
-                Close
-              </Button>
+              ><LocalizedText text="Close" /></Button>
             </ModalFooter>
           </ModalContent>
         </Modal>
@@ -888,4 +878,4 @@ const CommonCheckTable = (props) => {
   );
 };
 
-export default CommonCheckTable;
+export default withLocalization(CommonCheckTable);

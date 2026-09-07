@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { Box, Flex, Grid, Text, useColorModeValue } from "@chakra-ui/react";
 import Card from "components/card/Card";
 import { useMemo, useState } from "react";
@@ -46,9 +47,7 @@ const DonutChart = () => {
             <text x="60" y="58" textAnchor="middle" fill={textColor} className="crm-donut-chart__value">
               {total}
             </text>
-            <text x="60" y="74" textAnchor="middle" fill={mutedColor} className="crm-donut-chart__label">
-              Total
-            </text>
+            <text x="60" y="74" textAnchor="middle" fill={mutedColor} className="crm-donut-chart__label"><LocalizedText text="Total" /></text>
           </svg>
           <Flex className="crm-chart-legend" justify="center" wrap="wrap" gap="12px">
             {slices.map((slice, index) => (

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
   ChevronDownIcon,
@@ -118,9 +119,9 @@ const View = () => {
   ]);
 
   const columnsDataColumns = [
-    { Header: "sender", accessor: "senderName" },
+    { Header: tr("sender"), accessor: "senderName" },
     {
-      Header: "recipient",
+      Header: tr("recipient"),
       accessor: "createByName",
       cell: (cell) => (
         <Link to={`/Email/${cell?.row?.original?._id}`}>
@@ -139,7 +140,7 @@ const View = () => {
       ),
     },
     {
-      Header: "time stamp",
+      Header: tr("time stamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -150,7 +151,7 @@ const View = () => {
       ),
     },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "createBy",
       cell: (cell) => (
         <div className="selectOpt">
@@ -162,9 +163,9 @@ const View = () => {
     },
   ];
   const callColumns = [
-    { Header: "sender", accessor: "senderName" },
+    { Header: tr("sender"), accessor: "senderName" },
     {
-      Header: "recipient",
+      Header: tr("recipient"),
       accessor: "createByName",
       cell: (cell) => (
         <Link to={`/phone-call/${cell?.row?.original?._id}`}>
@@ -183,7 +184,7 @@ const View = () => {
       ),
     },
     {
-      Header: "time stamp",
+      Header: tr("time stamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -194,7 +195,7 @@ const View = () => {
       ),
     },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "createBy",
       cell: (cell) => (
         <div className="selectOpt">
@@ -207,7 +208,7 @@ const View = () => {
   ];
   const MeetingColumns = [
     {
-      Header: "Agenda",
+      Header: tr("Agenda"),
       accessor: "agenda",
       cell: (cell) => (
         <Link to={`/metting/${cell?.row?.original?._id}`}>
@@ -225,9 +226,9 @@ const View = () => {
         </Link>
       ),
     },
-    { Header: "date Time", accessor: "dateTime" },
+    { Header: tr("date Time"), accessor: "dateTime" },
     {
-      Header: "times tamp",
+      Header: tr("times tamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -237,11 +238,11 @@ const View = () => {
         </div>
       ),
     },
-    { Header: "create By", accessor: "createdByName" },
+    { Header: tr("create By"), accessor: "createdByName" },
   ];
   const taskColumns = [
     {
-      Header: "Title",
+      Header: tr("Title"),
       accessor: "title",
       type: "text",
       formikType: "",
@@ -263,15 +264,15 @@ const View = () => {
         </div>
       ),
     },
-    { Header: "Category", accessor: "category" },
-    { Header: "Assign To", accessor: "assignToName" },
-    { Header: "Start Date", accessor: "start" },
-    { Header: "End Date", accessor: "end" },
+    { Header: tr("Category"), accessor: "category" },
+    { Header: tr("Assign To"), accessor: "assignToName" },
+    { Header: tr("Start Date"), accessor: "start" },
+    { Header: tr("End Date"), accessor: "end" },
   ];
   const tableColumns = [
-    { Header: "Type", accessor: "type" },
+    { Header: tr("Type"), accessor: "type" },
     {
-      Header: "Last Communication", accessor: "lastCommunicationDate", cell: (cell) => (
+      Header: tr("Last Communication"), accessor: "lastCommunicationDate", cell: (cell) => (
         <div className="selectOpt">
           <Text color={textColor} fontSize="sm" fontWeight="700">
             {cell?.row?.values.lastCommunicationDate ? moment(cell?.row?.values.lastCommunicationDate).format("DD-MM-YYYY hh:mm A") : "-"}
@@ -286,7 +287,7 @@ const View = () => {
       ),
     },
     {
-      Header: "Scheduled Communication", accessor: "scheduledCommunicationDate", cell: (cell) => (
+      Header: tr("Scheduled Communication"), accessor: "scheduledCommunicationDate", cell: (cell) => (
         <div className="selectOpt">
           <Text color={textColor} fontSize="sm" fontWeight="700">
             {cell?.row?.values.scheduledCommunicationDate ? moment(cell?.row?.values.scheduledCommunicationDate).format("DD-MM-YYYY hh:mm A") : "-"}
@@ -335,9 +336,9 @@ const View = () => {
       let result = await getApi(`api/document/download/`, data);
       if (result && result?.status === 200) {
         window.open(`${constant?.baseUrl}api/document/download/${data}`);
-        toast.success("file Download successful");
+        toast.success(tr("file Download successful"));
       } else if (result && result?.response?.status === 404) {
-        toast.error("file Not Found");
+        toast.error(tr("file Not Found"));
       }
     }
   };
@@ -458,12 +459,12 @@ const View = () => {
                     },
                   }}
                 >
-                  <Tab>Information</Tab>
+                  <Tab><LocalizedText text="Information" /></Tab>
                   {(emailAccess?.view ||
                     callAccess?.view ||
                     taskAccess?.view ||
-                    meetingAccess?.view) && <Tab> Communication</Tab>}
-                  <Tab>Document</Tab>
+                    meetingAccess?.view) && <Tab><LocalizedText text="Communication" /></Tab>}
+                  <Tab><LocalizedText text="Document" /></Tab>
                 </TabList>
               </GridItem>
               <GridItem
@@ -483,9 +484,7 @@ const View = () => {
                           mr={2.5}
                           as={Button}
                           rightIcon={<ChevronDownIcon />}
-                        >
-                          Actions
-                        </MenuButton>
+                        ><LocalizedText text="Actions" /></MenuButton>
                       )}
                     <MenuDivider />
                     <MenuList minWidth={2}>
@@ -495,9 +494,7 @@ const View = () => {
                           onClick={() => onOpen()}
                           alignItems={"start"}
                           icon={<AddIcon />}
-                        >
-                          Add
-                        </MenuItem>
+                        ><LocalizedText text="Add" /></MenuItem>
                       )}
 
                       {(user?.role === "superAdmin" || permission?.update) && (
@@ -508,9 +505,7 @@ const View = () => {
                           }}
                           alignItems={"start"}
                           icon={<EditIcon />}
-                        >
-                          Edit
-                        </MenuItem>
+                        ><LocalizedText text="Edit" /></MenuItem>
                       )}
                       <MenuItem
                         onClick={generatePDF}
@@ -518,9 +513,7 @@ const View = () => {
                         icon={<FaFilePdf />}
                         display={"flex"}
                         style={{ alignItems: "center" }}
-                      >
-                        Print as PDF
-                      </MenuItem>
+                      ><LocalizedText text="Print as PDF" /></MenuItem>
                       {(user?.role === "superAdmin" || permission?.delete) && (
                         <>
                           <MenuDivider />
@@ -529,9 +522,7 @@ const View = () => {
                             color={"red"}
                             onClick={() => setDelete(true)}
                             icon={<DeleteIcon />}
-                          >
-                            Delete
-                          </MenuItem>
+                          ><LocalizedText text="Delete" /></MenuItem>
                         </>
                       )}
                     </MenuList>
@@ -541,9 +532,7 @@ const View = () => {
                       leftIcon={<IoIosArrowBack />}
                       size="sm"
                       variant="brand"
-                    >
-                      Back
-                    </Button>
+                    ><LocalizedText text="Back" /></Button>
                   </Link>
                 </Flex>
               </GridItem>
@@ -566,9 +555,7 @@ const View = () => {
                         fontSize="sm"
                         fontWeight="bold"
                         color={"blackAlpha.900"}
-                      >
-                        Associated Listing
-                      </Text>
+                      ><LocalizedText text="Associated Listing" /></Text>
                       <Text>
                         {data?.associatedListing?.name
                           ? data.associatedListing.name
@@ -580,9 +567,7 @@ const View = () => {
                         fontSize="sm"
                         fontWeight="bold"
                         color={"blackAlpha.900"}
-                      >
-                        Assign to User
-                      </Text>
+                      ><LocalizedText text="Assign to User" /></Text>
                       <Text>
                         {findUser?.firstName} {findUser?.lastName}
                       </Text>
@@ -591,7 +576,7 @@ const View = () => {
                 </Card>
                 <Card mt={3}>
                   <CommonCheckTable
-                    title={"History"}
+                    title={tr("History")}
                     isLoding={isLoding}
                     columnData={tableColumns ?? []}
                     allData={consolidatedData || []}
@@ -615,7 +600,7 @@ const View = () => {
                         <GridItem colSpan={{ base: 12, md: 6 }}>
                           <Card>
                             <CommonCheckTable
-                              title={"Email"}
+                              title={tr("Email")}
                               isLoding={isLoding}
                               columnData={columnsDataColumns ?? []}
                               // dataColumn={columnsDataColumns ?? []}
@@ -661,7 +646,7 @@ const View = () => {
                                       : setShowEmail(true)
                                   }
                                 >
-                                  {showEmail ? "Show less" : "Show more"}
+                                  {showEmail ? tr("Show less") : tr("Show more")}
                                 </Button>
                               </div>
                             )}
@@ -672,7 +657,7 @@ const View = () => {
                         <GridItem colSpan={{ base: 12, md: 6 }}>
                           <Card>
                             <CommonCheckTable
-                              title={"Call"}
+                              title={tr("Call")}
                               isLoding={isLoding}
                               columnData={callColumns ?? []}
                               // dataColumn={callColumns ?? []}
@@ -718,7 +703,7 @@ const View = () => {
                                       : setShowCall(true)
                                   }
                                 >
-                                  {showCall ? "Show less" : "Show more"}
+                                  {showCall ? tr("Show less") : tr("Show more")}
                                 </Button>
                               </div>
                             )}
@@ -729,7 +714,7 @@ const View = () => {
                         <GridItem colSpan={{ base: 12, md: 6 }}>
                           <Card>
                             <CommonCheckTable
-                              title={"Task"}
+                              title={tr("Task")}
                               isLoding={isLoding}
                               columnData={taskColumns ?? []}
                               // dataColumn={taskColumns ?? []}
@@ -775,7 +760,7 @@ const View = () => {
                                       : setShowTasks(true)
                                   }
                                 >
-                                  {showTasks ? "Show less" : "Show more"}
+                                  {showTasks ? tr("Show less") : tr("Show more")}
                                 </Button>
                               </div>
                             )}
@@ -787,7 +772,7 @@ const View = () => {
                         <GridItem colSpan={{ base: 12, md: 6 }}>
                           <Card overflow={"scroll"}>
                             <CommonCheckTable
-                              title={"Meeting"}
+                              title={tr("Meeting")}
                               isLoding={isLoding}
                               columnData={MeetingColumns ?? []}
                               // dataColumn={MeetingColumns ?? []}
@@ -834,7 +819,7 @@ const View = () => {
                                       : setShowMeetings(true)
                                   }
                                 >
-                                  {showMeetings ? "Show less" : "Show more"}
+                                  {showMeetings ? tr("Show less") : tr("Show more")}
                                 </Button>
                               </div>
                             )}
@@ -853,17 +838,13 @@ const View = () => {
                       justifyContent={"space-between"}
                       mb="2"
                     >
-                      <Heading size="md" mb={3}>
-                        Documents
-                      </Heading>
+                      <Heading size="md" mb={3}><LocalizedText text="Documents" /></Heading>
                       <Button
                         leftIcon={<AddIcon />}
                         size="sm"
                         variant="brand"
                         onClick={() => setAddDocument(true)}
-                      >
-                        Add Document
-                      </Button>
+                      ><LocalizedText text="Add Document" /></Button>
                     </Flex>
                     <HSeparator />
                     <VStack mt={4} alignItems="flex-start">
@@ -913,9 +894,7 @@ const View = () => {
                           mr={2.5}
                           variant="outline"
                           colorScheme="green"
-                        >
-                          Edit
-                        </Button>
+                        ><LocalizedText text="Edit" /></Button>
                       ) : (
                         ""
                       )}
@@ -926,9 +905,7 @@ const View = () => {
                           onClick={() => setDelete(true)}
                           leftIcon={<DeleteIcon />}
                           colorScheme="red"
-                        >
-                          Delete
-                        </Button>
+                        ><LocalizedText text="Delete" /></Button>
                       ) : (
                         ""
                       )}
@@ -1022,4 +999,4 @@ const View = () => {
   );
 };
 
-export default View;
+export default withLocalization(View);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -77,13 +78,13 @@ const View = (props) => {
 
   const invoicesColumns = [
     {
-      Header: "Invoice Number",
+      Header: tr("Invoice Number"),
       accessor: "invoiceNumber",
       isSortable: false,
       width: 10,
     },
     {
-      Header: "Title",
+      Header: tr("Title"),
       accessor: "title",
       cell: (cell) => (
         <div className="selectOpt">
@@ -106,11 +107,11 @@ const View = (props) => {
       ),
     },
     {
-      Header: "Status",
+      Header: tr("Status"),
       accessor: "status",
     },
     {
-      Header: "Contact",
+      Header: tr("Contact"),
       accessor: "contact",
       cell: (cell) =>
         user?.role === "superAdmin" || contactAccess?.view ? (
@@ -145,7 +146,7 @@ const View = (props) => {
         ),
     },
     {
-      Header: "Account",
+      Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
         user?.role === "superAdmin" || accountAccess?.view ? (
@@ -154,7 +155,7 @@ const View = (props) => {
               onClick={() =>
                 navigate(
                   cell?.row?.original?.account !== null &&
-                    `/accountView/${cell?.row?.original?.account}`,
+                    `/partner-customers/${cell?.row?.original?.account}`,
                 )
               }
               me="10px"
@@ -180,7 +181,7 @@ const View = (props) => {
         ),
     },
     {
-      Header: "Grand Total",
+      Header: tr("Grand Total"),
       accessor: "grandTotal",
       cell: (cell) => (
         <div className="selectOpt">
@@ -193,7 +194,7 @@ const View = (props) => {
       ),
     },
     {
-      Header: "Convert Date&Time",
+      Header: tr("Convert Date&Time"),
       accessor: "invoiceConvertDate",
       cell: (cell) => (
         <div className="selectOpt">
@@ -240,7 +241,7 @@ const View = (props) => {
       setLoading(false);
     }
   };
-  const handleDeleteAccount = async (ids) => {
+  const handleDeleteQuote = async (ids) => {
     try {
       let response = await deleteManyApi("api/quotes/deleteMany", ids);
       if (response?.status === 200) {
@@ -337,9 +338,7 @@ const View = (props) => {
               <GridItem colSpan={2}>
                 <Box>
                   <Box display={"flex"} justifyContent={"space-between"}>
-                    <Heading size="md" mb={3}>
-                      Quotes Details
-                    </Heading>
+                    <Heading size="md" mb={3}><LocalizedText text="Quotes Details" /></Heading>
                     <Flex id="hide-btn">
                       <Menu>
                         {(user?.role === "superAdmin" ||
@@ -354,9 +353,7 @@ const View = (props) => {
                             mr={2.5}
                             as={Button}
                             rightIcon={<ChevronDownIcon />}
-                          >
-                            Actions
-                          </MenuButton>
+                          ><LocalizedText text="Actions" /></MenuButton>
                         )}
                         <MenuDivider />
                         <MenuList minWidth={2}>
@@ -371,9 +368,7 @@ const View = (props) => {
                               alignItems={"start"}
                               color={"blue"}
                               icon={<AddIcon />}
-                            >
-                              Add
-                            </MenuItem>
+                            ><LocalizedText text="Add" /></MenuItem>
                           )}
                           {(user?.role === "superAdmin" ||
                             quotesAccess?.update) && (
@@ -384,9 +379,7 @@ const View = (props) => {
                               }}
                               alignItems={"start"}
                               icon={<EditIcon />}
-                            >
-                              Edit
-                            </MenuItem>
+                            ><LocalizedText text="Edit" /></MenuItem>
                           )}
                           <MenuItem
                             onClick={generatePDF}
@@ -394,9 +387,7 @@ const View = (props) => {
                             icon={<FaFilePdf />}
                             display={"flex"}
                             style={{ alignItems: "center" }}
-                          >
-                            Print as PDF
-                          </MenuItem>
+                          ><LocalizedText text="Print as PDF" /></MenuItem>
 
                           {(user?.role === "superAdmin" ||
                             quotesAccess?.delete) && (
@@ -407,9 +398,7 @@ const View = (props) => {
                                 onClick={() => setDeleteManyModel(true)}
                                 color={"red"}
                                 icon={<DeleteIcon />}
-                              >
-                                Delete
-                              </MenuItem>
+                              ><LocalizedText text="Delete" /></MenuItem>
                             </>
                           )}
                         </MenuList>
@@ -419,9 +408,7 @@ const View = (props) => {
                         size="sm"
                         variant="brand"
                         onClick={() => navigate(-1)}
-                      >
-                        Back
-                      </Button>
+                      ><LocalizedText text="Back" /></Button>
                     </Flex>
                   </Box>
                   <HSeparator />
@@ -430,15 +417,13 @@ const View = (props) => {
 
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Quotes Number{" "}
+                  {" "}<LocalizedText text="Quotes Number" />{" "}
                 </Text>
                 <Text>{data?.quoteNumber ? data?.quoteNumber : " - "}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Title{" "}
+                  {" "}<LocalizedText text="Title" />{" "}
                 </Text>
                 {editableField === "title" ? (
                   <>
@@ -475,9 +460,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Opportunity
-                </Text>
+                  {" "}<LocalizedText text="Opportunity" /></Text>
                 {data?.oppotunity ? (
                   <Link
                     to={
@@ -526,8 +509,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Quote Stage{" "}
+                  {" "}<LocalizedText text="Quote Stage" />{" "}
                 </Text>
                 {editableField === "quoteStage" ? (
                   <>
@@ -543,7 +525,7 @@ const View = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Quote Stage"}
+                      placeholder={tr("Quote Stage")}
                       borderColor={
                         formik?.errors?.quoteStage &&
                         formik?.touched?.quoteStage
@@ -551,14 +533,14 @@ const View = (props) => {
                           : null
                       }
                     >
-                      <option value="Draft">Draft</option>
-                      <option value="Negotiation">Negotiation</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="On Hold">On Hold</option>
-                      <option value="Confirmed">Confirmed</option>
-                      <option value="Closed Accepted">Closed Accepted</option>
-                      <option value="Closed Lost">Closed Lost</option>
-                      <option value="Closed Dead">Closed Dead</option>
+                      <option value="Draft"><LocalizedText text="Draft" /></option>
+                      <option value="Negotiation"><LocalizedText text="Negotiation" /></option>
+                      <option value="Delivered"><LocalizedText text="Delivered" /></option>
+                      <option value="On Hold"><LocalizedText text="On Hold" /></option>
+                      <option value="Confirmed"><LocalizedText text="Confirmed" /></option>
+                      <option value="Closed Accepted"><LocalizedText text="Closed Accepted" /></option>
+                      <option value="Closed Lost"><LocalizedText text="Closed Lost" /></option>
+                      <option value="Closed Dead"><LocalizedText text="Closed Dead" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
                       {" "}
@@ -583,8 +565,7 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Invoice Status{" "}
+                  {" "}<LocalizedText text="Invoice Status" />{" "}
                 </Text>
                 {editableField === "invoiceStatus" ? (
                   <>
@@ -600,7 +581,7 @@ const View = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Invoice Status"}
+                      placeholder={tr("Invoice Status")}
                       borderColor={
                         formik?.errors?.invoiceStatus &&
                         formik?.touched?.invoiceStatus
@@ -608,8 +589,8 @@ const View = (props) => {
                           : null
                       }
                     >
-                      <option value="Not Invoiced">Not Invoiced</option>
-                      <option value="Invoiced">Invoiced</option>
+                      <option value="Not Invoiced"><LocalizedText text="Not Invoiced" /></option>
+                      <option value="Invoiced"><LocalizedText text="Invoiced" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
                       {" "}
@@ -634,9 +615,7 @@ const View = (props) => {
               </GridItem>
 
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Valid Until
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Valid Until" /></Text>
                 {editableField === "validUntil" ? (
                   <>
                     <Input
@@ -677,9 +656,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Payment Terms
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Payment Terms" /></Text>
                 {editableField === "paymentTerms" ? (
                   <>
                     <Select
@@ -694,7 +671,7 @@ const View = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Payment Terms"}
+                      placeholder={tr("Payment Terms")}
                       borderColor={
                         formik?.errors?.paymentTerms &&
                         formik?.touched?.paymentTerms
@@ -702,8 +679,8 @@ const View = (props) => {
                           : null
                       }
                     >
-                      <option value="Nett 15">Nett 15</option>
-                      <option value="Nett 30">Nett 30</option>
+                      <option value="Nett 15"><LocalizedText text="Nett 15" /></option>
+                      <option value="Nett 30"><LocalizedText text="Nett 30" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
                       {" "}
@@ -727,9 +704,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Approval Status
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Approval Status" /></Text>
                 {editableField === "approvalStatus" ? (
                   <>
                     <Select
@@ -744,7 +719,7 @@ const View = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Approval Status"}
+                      placeholder={tr("Approval Status")}
                       borderColor={
                         formik?.errors?.approvalStatus &&
                         formik?.touched?.approvalStatus
@@ -752,7 +727,7 @@ const View = (props) => {
                           : null
                       }
                     >
-                      <option value="Approved">Approved</option>
+                      <option value="Approved"><LocalizedText text="Approved" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
                       {" "}
@@ -776,9 +751,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Approval Issues
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Approval Issues" /></Text>
                 {editableField === "approvalIssues" ? (
                   <>
                     <Textarea
@@ -788,7 +761,7 @@ const View = (props) => {
                       resize={"none"}
                       onBlur={handleBlur}
                       onChange={formik?.handleChange}
-                      placeholder="Approval Issues"
+                      placeholder={tr("Approval Issues")}
                       fontWeight="500"
                       borderColor={
                         formik?.errors?.approvalIssues &&
@@ -820,9 +793,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Terms
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Terms" /></Text>
                 {editableField === "terms" ? (
                   <>
                     <Textarea
@@ -832,7 +803,7 @@ const View = (props) => {
                       resize={"none"}
                       onBlur={handleBlur}
                       onChange={formik?.handleChange}
-                      placeholder="Terms"
+                      placeholder={tr("Terms")}
                       fontWeight="500"
                       borderColor={
                         formik?.errors?.terms && formik?.touched?.terms
@@ -859,9 +830,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Description
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Description" /></Text>
                 {editableField === "description" ? (
                   <>
                     <Textarea
@@ -871,7 +840,7 @@ const View = (props) => {
                       resize={"none"}
                       onBlur={handleBlur}
                       onChange={formik?.handleChange}
-                      placeholder="Description"
+                      placeholder={tr("Description")}
                       fontWeight="500"
                       borderColor={
                         formik?.errors?.description &&
@@ -903,12 +872,10 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Account
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Account" /></Text>
                 {data?.account ? (
                   <Link
-                    to={accountAccess?.view && `/accountView/${data?.account}`}
+                    to={accountAccess?.view && `/partner-customers/${data?.account}`}
                   >
                     <Text
                       color={
@@ -948,9 +915,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Contact
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Contact" /></Text>
                 {data?.contact ? (
                   <Link
                     to={contactAccess?.view && `/contactView/${data?.contact}`}
@@ -993,9 +958,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Billing Street
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Billing Street" /></Text>
                 {editableField === "billingStreet" ? (
                   <>
                     <Input
@@ -1033,9 +996,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Shipping Street
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping Street" /></Text>
                 {editableField === "shippingStreet" ? (
                   <>
                     <Input
@@ -1074,9 +1035,7 @@ const View = (props) => {
               </GridItem>
 
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Billing City
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Billing City" /></Text>
                 {editableField === "billingCity" ? (
                   <>
                     <Input
@@ -1114,9 +1073,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Shipping City
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping City" /></Text>
                 {editableField === "shippingCity" ? (
                   <>
                     <Input
@@ -1154,9 +1111,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Billing State
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Billing State" /></Text>
                 {editableField === "billingState" ? (
                   <>
                     <Input
@@ -1194,9 +1149,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Shipping State
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping State" /></Text>
                 {editableField === "shippingState" ? (
                   <>
                     <Input
@@ -1234,9 +1187,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Billing Postal Code
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Billing Postal Code" /></Text>
                 {editableField === "billingPostalCode" ? (
                   <>
                     <Input
@@ -1274,9 +1225,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Shipping Postal Code
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping Postal Code" /></Text>
                 {editableField === "shippingPostalCode" ? (
                   <>
                     <Input
@@ -1316,9 +1265,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Billing Country
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Billing Country" /></Text>
                 {editableField === "billingCountry" ? (
                   <>
                     <Input
@@ -1356,9 +1303,7 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Shipping Country
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping Country" /></Text>
                 {editableField === "shippingCountry" ? (
                   <>
                     <Input
@@ -1398,9 +1343,7 @@ const View = (props) => {
 
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Assigned To
-                </Text>
+                  {" "}<LocalizedText text="Assigned To" /></Text>
                 {data?.assignedTo ? (
                   <Link
                     to={
@@ -1452,45 +1395,31 @@ const View = (props) => {
                 )}
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Total
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Total" /></Text>
                 <Text>{`${data?.currency}${data?.total ? data?.total : "0"}`}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Discount
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Discount" /></Text>
                 <Text>{`${data?.currency}${data?.discount || "0"}`}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Subtotal
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Subtotal" /></Text>
                 <Text>{`${data?.currency}${data?.subtotal ? data?.subtotal : "0"}`}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Shipping
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping" /></Text>
                 <>{`${data?.currency}${data?.shipping ? data?.shipping : "0"}`}</>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Shipping Tax
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping Tax" /></Text>
                 <Text>{`${data?.currency}${data?.shippingTax ? data?.shippingTax : "0"}`}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Tax
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Tax" /></Text>
                 <Text>{`${data?.currency}${data?.tax ? data?.tax : "0"}`}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Grand Total
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Grand Total" /></Text>
                 <Text>{`${data?.currency}${data?.grandTotal ? data?.grandTotal : "0"}`}</Text>
               </GridItem>
             </Grid>
@@ -1501,7 +1430,7 @@ const View = (props) => {
         <GridItem colSpan={{ base: 12 }} mt={5}>
           <Card overflow={"scroll"}>
             <CommonCheckTable
-              title={"Invoices"}
+              title={tr("Invoices")}
               isLoding={isLoding}
               columnData={invoicesColumns ?? []}
               allData={invoiceData ?? []}
@@ -1534,9 +1463,7 @@ const View = (props) => {
                     mr={2.5}
                     variant="outline"
                     colorScheme="green"
-                  >
-                    Edit
-                  </Button>
+                  ><LocalizedText text="Edit" /></Button>
                 )}
                 {(quotesAccess?.delete || user?.role === "superAdmin") && (
                   <Button
@@ -1545,9 +1472,7 @@ const View = (props) => {
                     onClick={() => setDeleteManyModel(true)}
                     leftIcon={<DeleteIcon />}
                     colorScheme="red"
-                  >
-                    Delete
-                  </Button>
+                  ><LocalizedText text="Delete" /></Button>
                 )}
               </Flex>
             </GridItem>
@@ -1565,12 +1490,12 @@ const View = (props) => {
       <CommonDeleteModel
         isOpen={deleteManyModel}
         onClose={() => setDeleteManyModel(false)}
-        type="Account"
-        handleDeleteData={handleDeleteAccount}
+        type={tr("Quote")}
+        handleDeleteData={handleDeleteQuote}
         ids={[id]}
       />
     </div>
   );
 };
 
-export default View;
+export default withLocalization(View);

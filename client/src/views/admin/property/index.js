@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { HasAccess } from "../../../redux/accessUtils";
@@ -53,10 +54,10 @@ const Index = () => {
     if (result?.payload?.status === 200) {
       setPropertyData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     const actionHeader = {
-      Header: "Action",
+      Header: tr("Action"),
       accessor: "action",
       isSortable: false,
       center: true,
@@ -78,9 +79,7 @@ const Index = () => {
                     setEdit(true);
                     setSelectedId(row?.values?._id);
                   }}
-                >
-                  Edit
-                </MenuItem>
+                ><LocalizedText text="Edit" /></MenuItem>
               )}
               {permission?.view && (
                 <MenuItem
@@ -90,9 +89,7 @@ const Index = () => {
                   onClick={() => {
                     navigate(`/propertyView/${row?.values?._id}`);
                   }}
-                >
-                  View
-                </MenuItem>
+                ><LocalizedText text="View" /></MenuItem>
               )}
               {permission?.delete && (
                 <MenuItem
@@ -104,9 +101,7 @@ const Index = () => {
                     setSelectedValues([row?.values?._id]);
                     setSelectedId(row?.values?._id);
                   }}
-                >
-                  Delete
-                </MenuItem>
+                ><LocalizedText text="Delete" /></MenuItem>
               )}
             </MenuList>
           </Menu>
@@ -114,7 +109,7 @@ const Index = () => {
       ),
     };
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(result?.payload?.data && result.payload.data.length > 0
         ? result?.payload?.data[0]?.fields
             ?.filter((field) => field?.isTableField === true && field?.isView)
@@ -188,7 +183,7 @@ const Index = () => {
         {!isLoding && (
           <GridItem colSpan={6}>
             <CommonCheckTable
-              title={"Properties"}
+              title={tr("Properties")}
               isLoding={isLoding}
               columnData={columns ?? []}
               // dataColumn={dataColumn ?? []}
@@ -256,4 +251,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

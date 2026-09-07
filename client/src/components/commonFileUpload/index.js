@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 // Chakra imports
 import {
   Box,
@@ -36,13 +37,10 @@ export default function CommonFileUpload(props) {
             <Box>
               <Icon as={MdUpload} w="80px" h="80px" color={brandColor} />
               <Flex justify="center" mx="auto" mb="12px">
-                <Text fontSize="xl" fontWeight="700" color={brandColor}>
-                  Upload File
-                </Text>
+                <Text fontSize="xl" fontWeight="700" color={brandColor}><LocalizedText text="Upload File" /></Text>
               </Flex>
               {count > 0 && (
-                <Text fontSize="sm" fontWeight="500" color="secondaryGray.500">
-                  Selected Files : {count}
+                <Text fontSize="sm" fontWeight="500" color="secondaryGray.500"><LocalizedText text="Selected Files :" />{count}
                 </Text>
               )}
             </Box>
@@ -57,8 +55,7 @@ export default function CommonFileUpload(props) {
             textAlign="start"
             fontSize="2xl"
             mt={{ base: "20px" }}
-          >
-            Upload {text}
+          ><LocalizedText text="Upload" />{text}
           </Text>
           <Text
             color={textColorSecondary}
@@ -66,9 +63,7 @@ export default function CommonFileUpload(props) {
             my={{ base: "auto" }}
             mx="auto"
             textAlign="start"
-          >
-            Accepted File Type (csv, xlsx file - 15MB max) only 1 file
-          </Text>
+          ><LocalizedText text="Accepted File Type (csv, xlsx file - 15MB max) only 1 file" /></Text>
         </Flex>
       </GridItem>
     </Grid>

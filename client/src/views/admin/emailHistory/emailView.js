@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { CloseIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   DrawerFooter,
@@ -64,9 +65,7 @@ const EmailView = (props) => {
     <Modal isOpen={isOpen} size={"md"} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader justifyContent="space-between" display="flex">
-          Email
-          <IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
+        <ModalHeader justifyContent="space-between" display="flex"><LocalizedText text="Email" /><IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
         </ModalHeader>
         {isLoding ? (
           <Flex
@@ -87,8 +86,7 @@ const EmailView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Recipient{" "}
+                    {" "}<LocalizedText text="Recipient" />{" "}
                   </Text>
                   <Text>{data?.recipient ? data?.recipient : " - "}</Text>
                 </GridItem>
@@ -98,8 +96,7 @@ const EmailView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Sender Email{" "}
+                    {" "}<LocalizedText text="Sender Email" />{" "}
                   </Text>
                   <Text>{data?.senderEmail ? data?.senderEmail : "-"}</Text>
                 </GridItem>
@@ -109,8 +106,7 @@ const EmailView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Start Date{" "}
+                    {" "}<LocalizedText text="Start Date" />{" "}
                   </Text>
                   <Text>
                     {data?.startDate
@@ -124,8 +120,7 @@ const EmailView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    End Date{" "}
+                    {" "}<LocalizedText text="End Date" />{" "}
                   </Text>
                   <Text>
                     {data?.endDate
@@ -139,8 +134,7 @@ const EmailView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Subject{" "}
+                    {" "}<LocalizedText text="Subject" />{" "}
                   </Text>
                   <Text>{data?.subject ? data?.subject : "-"}</Text>
                 </GridItem>
@@ -150,8 +144,7 @@ const EmailView = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Message{" "}
+                    {" "}<LocalizedText text="Message" />{" "}
                   </Text>
                   <Text>{data?.message ? data?.message : "-"}</Text>
                 </GridItem>

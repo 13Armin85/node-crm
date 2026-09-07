@@ -69,7 +69,7 @@ export function SidebarLinks(props) {
         route?.layout?.includes(`/${user?.role}`)
       ) {
         return (
-          <NavLink key={index} to={route?.path}>
+          <NavLink key={index} to={route?.path} aria-label={t(route?.name)} title={t(route?.name)}>
             {route?.separator && (
               <Box position="relative" margin="20px 0">
                 <Divider />
@@ -80,7 +80,7 @@ export function SidebarLinks(props) {
                   padding="0 10px"
                   textAlign={"center"}
                 >
-                  {route?.separator}
+                  {openSidebar && t(route?.separator)}
                 </AbsoluteCenter>
               </Box>
             )}
@@ -89,7 +89,7 @@ export function SidebarLinks(props) {
                 backgroundColor={
                   activeRoute(route?.path?.toLowerCase()) ? sidebarBgColor : ""
                 }
-                ps={openSidebar ? "16px" : "14px"}
+                ps={openSidebar ? "16px" : "10px"}
                 pe="10px"
                 pb={"6px"}
                 pt={"10px"}
@@ -103,9 +103,7 @@ export function SidebarLinks(props) {
                 }}
               >
                 <HStack
-                  spacing={
-                    activeRoute(route?.path?.toLowerCase()) ? "22px" : "26px"
-                  }
+                  spacing="0"
                   py="5px"
                 >
                   {openSidebar === true ? (
@@ -121,7 +119,8 @@ export function SidebarLinks(props) {
                             ? activeIcon
                             : textColor
                         }
-                        me="18px"
+                        me="12px"
+                        flexShrink={0}
                       >
                         {route?.icon}
                       </Box>
@@ -132,7 +131,9 @@ export function SidebarLinks(props) {
                         textTransform={"capitalize"}
                         overflowX="hidden"
                         whiteSpace="nowrap"
-                        width="190px"
+                        flex="1"
+                        minW="0"
+                        fontSize="14px"
                         color={
                           activeRoute(route?.path?.toLowerCase())
                             ? activeColor
@@ -162,7 +163,6 @@ export function SidebarLinks(props) {
                             ? activeIcon
                             : textColor
                         }
-                        me="18px"
                       >
                         {route?.icon}
                       </Box>
@@ -171,6 +171,7 @@ export function SidebarLinks(props) {
                   <Box
                     // h='36px'
                     w="4px"
+                    flexShrink={0}
                     bg={activeRoute(route?.path?.toLowerCase()) ? brandColor : "transparent"}
                     borderRadius="5px"
                   />

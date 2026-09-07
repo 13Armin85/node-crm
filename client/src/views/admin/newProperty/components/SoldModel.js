@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
   Drawer,
@@ -35,9 +36,7 @@ function SoldModel(props) {
           alignItems={"center"}
           justifyContent="space-between"
           display="flex"
-        >
-          Sold
-          <IconButton onClick={onClose} icon={<CloseIcon />} />
+        ><LocalizedText text="Sold" /><IconButton onClick={onClose} icon={<CloseIcon />} />
         </DrawerHeader>
         <DrawerBody>
           <UserDetailsForm formik={formik} />
@@ -52,9 +51,7 @@ function SoldModel(props) {
               textTransform: "capitalize",
             }}
             onClick={onClose}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
           <Button
             variant="brand"
             size="sm"
@@ -63,9 +60,7 @@ function SoldModel(props) {
               textTransform: "capitalize",
             }}
             onClick={handleSubmit}
-          >
-            Submit
-          </Button>
+          ><LocalizedText text="Submit" /></Button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

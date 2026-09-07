@@ -30,7 +30,7 @@ const add = async (req, res) => {
         user.emailsent = user.emailsent + 1;
         await user.save();
 
-        const result = new Email(email);
+        const result = new Email({ ...email, customFields: req.body.customFields });
         await result.save();
         // sendEmail(email.recipient, email.subject, email.message, email.html)
         res.status(200).json({ result });

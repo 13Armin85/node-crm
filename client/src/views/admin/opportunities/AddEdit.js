@@ -1,3 +1,5 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -45,6 +47,7 @@ const AddEdit = (props) => {
   const [accountAccess] = HasAccess(["Account"]);
 
   const initialValues = {
+    customFields: opprtunityDetails?.customFields || {},
     opportunityName: type === "edit" ? opprtunityDetails?.opportunityName : "",
     accountName: type === "edit" ? opprtunityDetails?.accountName : null,
     assignUser: type === "edit" ? opprtunityDetails?.assignUser : null,
@@ -190,10 +193,9 @@ const AddEdit = (props) => {
             justifyContent="space-between"
             display="flex"
           >
-            {type === "add" ? "Add" : "Edit"} Opportunities
-            <IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
+            {type === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="Opportunities" /><IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
           </DrawerHeader>
-          <DrawerBody>
+          <DrawerBody><ManagedFormLayout moduleName="Opportunities" formik={formik}>
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel
@@ -202,8 +204,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Opportunity Name<Text color={"red"}>*</Text>
+                ><LocalizedText text="Opportunity Name" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -211,7 +212,7 @@ const AddEdit = (props) => {
                   name="opportunityName"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  placeholder="Opportunity Name"
+                  placeholder={tr("Opportunity Name")}
                   fontWeight="500"
                   borderColor={
                     errors?.opportunityName && touched?.opportunityName
@@ -234,9 +235,7 @@ const AddEdit = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Account Name
-                  </FormLabel>
+                  ><LocalizedText text="Account Name" /></FormLabel>
                   <Flex justifyContent={"space-between"}>
                     <Select
                       value={values?.accountName}
@@ -249,7 +248,7 @@ const AddEdit = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Account Name"}
+                      placeholder={tr("Account Name")}
                       borderColor={
                         errors?.accountName && touched?.accountName
                           ? "red.300"
@@ -289,9 +288,7 @@ const AddEdit = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Assigned User
-                  </FormLabel>
+                  ><LocalizedText text="Assigned User" /></FormLabel>
                   <Flex justifyContent={"space-between"}>
                     <Select
                       value={values?.assignUser}
@@ -304,7 +301,7 @@ const AddEdit = (props) => {
                           : "10px"
                       }
                       fontWeight="500"
-                      placeholder={"Assign To"}
+                      placeholder={tr("Assign To")}
                       borderColor={
                         errors?.assignUser && touched?.assignUser
                           ? "red.300"
@@ -336,9 +333,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Type
-                </FormLabel>
+                ><LocalizedText text="Type" /></FormLabel>
                 <Select
                   value={values?.type}
                   name="type"
@@ -346,13 +341,11 @@ const AddEdit = (props) => {
                   onChange={handleChange}
                   mb={errors?.type && touched?.type ? undefined : "10px"}
                   fontWeight="500"
-                  placeholder={"Select Type"}
+                  placeholder={tr("Select Type")}
                   borderColor={errors?.type && touched?.type ? "red.300" : null}
                 >
-                  <option value={"Existing Bussiness"}>
-                    Existing Bussiness
-                  </option>
-                  <option value={"New Bussiness"}>New Bussiness</option>
+                  <option value={"Existing Bussiness"}><LocalizedText text="Existing Bussiness" /></option>
+                  <option value={"New Bussiness"}><LocalizedText text="New Bussiness" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -366,9 +359,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Lead Source
-                </FormLabel>
+                ><LocalizedText text="Lead Source" /></FormLabel>
                 <Select
                   value={values?.leadSource}
                   name="leadSource"
@@ -380,24 +371,24 @@ const AddEdit = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Select Lead Source"}
+                  placeholder={tr("Select Lead Source")}
                   borderColor={
                     errors?.leadSource && touched?.leadSource ? "red.300" : null
                   }
                 >
-                  <option value={"Cold Call"}>Cold Call</option>
-                  <option value={"Existing Customer"}>Existing Customer</option>
-                  <option value={"Self Generated"}>Self Generated</option>
-                  <option value={"Employee"}>Employee</option>
-                  <option value={"Partner"}>Partner</option>
-                  <option value={"Public Relation"}>Public Relation</option>
-                  <option value={"Direct Mail"}>Direct Mail</option>
-                  <option value={"Conference"}>Conference</option>
-                  <option value={"Trade Show"}>Trade Show</option>
-                  <option value={"Web Site"}>Web Site</option>
-                  <option value={"Word Of Mouth"}>Word Of Mouth</option>
-                  <option value={"Email"}>Email</option>
-                  <option value={"Other"}>Other</option>
+                  <option value={"Cold Call"}><LocalizedText text="Cold Call" /></option>
+                  <option value={"Existing Customer"}><LocalizedText text="Existing Customer" /></option>
+                  <option value={"Self Generated"}><LocalizedText text="Self Generated" /></option>
+                  <option value={"Employee"}><LocalizedText text="Employee" /></option>
+                  <option value={"Partner"}><LocalizedText text="Partner" /></option>
+                  <option value={"Public Relation"}><LocalizedText text="Public Relation" /></option>
+                  <option value={"Direct Mail"}><LocalizedText text="Direct Mail" /></option>
+                  <option value={"Conference"}><LocalizedText text="Conference" /></option>
+                  <option value={"Trade Show"}><LocalizedText text="Trade Show" /></option>
+                  <option value={"Web Site"}><LocalizedText text="Web Site" /></option>
+                  <option value={"Word Of Mouth"}><LocalizedText text="Word Of Mouth" /></option>
+                  <option value={"Email"}><LocalizedText text="Email" /></option>
+                  <option value={"Other"}><LocalizedText text="Other" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -413,9 +404,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Currency
-                </FormLabel>
+                ><LocalizedText text="Currency" /></FormLabel>
                 <Select
                   value={values?.currency}
                   name="currency"
@@ -425,12 +414,12 @@ const AddEdit = (props) => {
                     errors?.currency && touched?.currency ? undefined : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Select Currency"}
+                  placeholder={tr("Select Currency")}
                   borderColor={
                     errors?.currency && touched?.currency ? "red.300" : null
                   }
                 >
-                  <option value={"$"}>USD</option>
+                  <option value={"$"}><LocalizedText text="USD" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -444,8 +433,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Opportunity Amount<Text color={"red"}>*</Text>
+                ><LocalizedText text="Opportunity Amount" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   fontSize="sm"
@@ -454,7 +442,7 @@ const AddEdit = (props) => {
                   type="number"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  placeholder="Opportunity Amount"
+                  placeholder={tr("Opportunity Amount")}
                   fontWeight="500"
                   borderColor={
                     errors?.opportunityAmount && touched?.opportunityAmount
@@ -477,9 +465,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Amount
-                </FormLabel>
+                ><LocalizedText text="Amount" /></FormLabel>
                 <Input
                   fontSize="sm"
                   value={values?.amount}
@@ -487,7 +473,7 @@ const AddEdit = (props) => {
                   onBlur={handleBlur}
                   onChange={handleChange}
                   type="number"
-                  placeholder="Amount"
+                  placeholder={tr("Amount")}
                   fontWeight="500"
                   borderColor={
                     errors?.amount && touched?.amount ? "red.300" : null
@@ -505,8 +491,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Expected Close Date<Text color={"red"}>*</Text>
+                ><LocalizedText text="Expected Close Date" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Input
                   type="date"
@@ -537,16 +522,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Next Step
-                </FormLabel>
+                ><LocalizedText text="Next Step" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.nextStep}
                   name="nextStep"
-                  placeholder="Next Step"
+                  placeholder={tr("Next Step")}
                   fontWeight="500"
                   borderColor={
                     errors?.nextStep && touched?.nextStep ? "red.300" : null
@@ -564,8 +547,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Sales Stage<Text color={"red"}>*</Text>
+                ><LocalizedText text="Sales Stage" /><Text color={"red"}>*</Text>
                 </FormLabel>
                 <Select
                   value={values?.salesStage}
@@ -578,29 +560,21 @@ const AddEdit = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Select Sales Stage"}
+                  placeholder={tr("Select Sales Stage")}
                   borderColor={
                     errors?.salesStage && touched?.salesStage ? "red.300" : null
                   }
                 >
-                  <option value={"Prospecting"}>Prospecting</option>
-                  <option value={"Qualification"}>Qualification</option>
-                  <option value={"Needs Analysis"}>Needs Analysis</option>
-                  <option value={"Value Propositon"}>Value Propositon</option>
-                  <option value={"Identifying Decision Makers"}>
-                    Identifying Decision Makers
-                  </option>
-                  <option value={"Perception Analysis"}>
-                    Perception Analysis
-                  </option>
-                  <option value={"Proposal/Price Quote"}>
-                    Proposal/Price Quote
-                  </option>
-                  <option value={"Negotiation/Review"}>
-                    Negotiation/Review
-                  </option>
-                  <option value={"Closed/Won"}>Closed/Won</option>
-                  <option value={"Closed/Lost"}>Closed/Lost</option>
+                  <option value={"Prospecting"}><LocalizedText text="Prospecting" /></option>
+                  <option value={"Qualification"}><LocalizedText text="Qualification" /></option>
+                  <option value={"Needs Analysis"}><LocalizedText text="Needs Analysis" /></option>
+                  <option value={"Value Propositon"}><LocalizedText text="Value Propositon" /></option>
+                  <option value={"Identifying Decision Makers"}><LocalizedText text="Identifying Decision Makers" /></option>
+                  <option value={"Perception Analysis"}><LocalizedText text="Perception Analysis" /></option>
+                  <option value={"Proposal/Price Quote"}><LocalizedText text="Proposal/Price Quote" /></option>
+                  <option value={"Negotiation/Review"}><LocalizedText text="Negotiation/Review" /></option>
+                  <option value={"Closed/Won"}><LocalizedText text="Closed/Won" /></option>
+                  <option value={"Closed/Lost"}><LocalizedText text="Closed/Lost" /></option>
                 </Select>
                 <Text fontSize="sm" mb="10px" color={"red"}>
                   {" "}
@@ -616,16 +590,14 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Probability
-                </FormLabel>
+                ><LocalizedText text="Probability" /></FormLabel>
                 <Input
                   fontSize="sm"
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.probability}
                   name="probability"
-                  placeholder="Probability"
+                  placeholder={tr("Probability")}
                   type="number"
                   fontWeight="500"
                   borderColor={
@@ -648,9 +620,7 @@ const AddEdit = (props) => {
                   fontSize="sm"
                   fontWeight="500"
                   mb="8px"
-                >
-                  Description
-                </FormLabel>
+                ><LocalizedText text="Description" /></FormLabel>
                 <Textarea
                   fontSize="sm"
                   value={values?.description}
@@ -658,7 +628,7 @@ const AddEdit = (props) => {
                   resize={"none"}
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  placeholder="Description"
+                  placeholder={tr("Description")}
                   fontWeight="500"
                   borderColor={
                     errors?.description && touched?.description
@@ -674,7 +644,8 @@ const AddEdit = (props) => {
                 </Text>
               </GridItem>
             </Grid>
-          </DrawerBody>
+          </ManagedFormLayout>
+</DrawerBody>
           <DrawerFooter>
             <Button
               sx={{ textTransform: "capitalize" }}
@@ -684,7 +655,7 @@ const AddEdit = (props) => {
               type="submit"
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Save"}
+              {isLoding ? <Spinner /> : tr("Save")}
             </Button>
             <Button
               variant="outline"
@@ -695,9 +666,7 @@ const AddEdit = (props) => {
                 textTransform: "capitalize",
               }}
               onClick={handleCancel}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -705,4 +674,4 @@ const AddEdit = (props) => {
   );
 };
 
-export default AddEdit;
+export default withLocalization(AddEdit);

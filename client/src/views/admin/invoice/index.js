@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { DeleteIcon, EditIcon, SearchIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -56,7 +57,7 @@ const Index = (props) => {
   ]);
 
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     accessor: "action",
     isSortable: false,
     center: true,
@@ -79,9 +80,7 @@ const Index = (props) => {
                   onOpen();
                   setSelectedId(row?.values?._id);
                 }}
-              >
-                Edit
-              </MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>
             )}
             {permission?.view && (
               <MenuItem
@@ -91,9 +90,7 @@ const Index = (props) => {
                 onClick={() => {
                   navigate(`/invoicesView/${row?.values?._id}`);
                 }}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             <MenuItem
               py={2.5}
@@ -103,9 +100,7 @@ const Index = (props) => {
                 setSelectedId(row?.values?._id);
                 setIsOpenPreview(true);
               }}
-            >
-              Invoice
-            </MenuItem>
+            ><LocalizedText text="Invoice" /></MenuItem>
             {permission?.delete && (
               <MenuItem
                 py={2.5}
@@ -115,9 +110,7 @@ const Index = (props) => {
                   setDelete(true);
                   setSelectedValues([row?.values?._id]);
                 }}
-              >
-                Delete
-              </MenuItem>
+              ><LocalizedText text="Delete" /></MenuItem>
             )}
           </MenuList>
         </Menu>
@@ -125,15 +118,15 @@ const Index = (props) => {
     ),
   };
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Invoice Number",
+      Header: tr("Invoice Number"),
       accessor: "invoiceNumber",
       isSortable: false,
       width: 10,
     },
     {
-      Header: "Title",
+      Header: tr("Title"),
       accessor: "title",
       cell: (cell) => (
         <div className="selectOpt">
@@ -154,11 +147,11 @@ const Index = (props) => {
       ),
     },
     {
-      Header: "Status",
+      Header: tr("Status"),
       accessor: "status",
     },
     {
-      Header: "Contact",
+      Header: tr("Contact"),
       accessor: "contact",
       cell: (cell) =>
         user?.role === "superAdmin" || contactAccess?.view ? (
@@ -193,7 +186,7 @@ const Index = (props) => {
         ),
     },
     {
-      Header: "Account",
+      Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
         user?.role === "superAdmin" || accountAccess?.view ? (
@@ -202,7 +195,7 @@ const Index = (props) => {
               onClick={() =>
                 navigate(
                   cell?.row?.original?.account !== null &&
-                    `/accountView/${cell?.row?.original?.account}`,
+                    `/partner-customers/${cell?.row?.original?.account}`,
                 )
               }
               me="10px"
@@ -228,7 +221,7 @@ const Index = (props) => {
         ),
     },
     {
-      Header: "Grand Total",
+      Header: tr("Grand Total"),
       accessor: "grandTotal",
       cell: (cell) => (
         <div className="selectOpt">
@@ -251,7 +244,7 @@ const Index = (props) => {
   const customFields = [
     {
       name: "invoiceNumber",
-      label: "Invoice Number",
+      label: tr("Invoice Number"),
       type: "number",
       fixed: false,
       isDefault: false,
@@ -306,7 +299,7 @@ const Index = (props) => {
     },
     {
       name: "title",
-      label: "Title",
+      label: tr("Title"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -361,7 +354,7 @@ const Index = (props) => {
     },
     {
       name: "status",
-      label: "Status",
+      label: tr("Status"),
       type: "select",
       fixed: false,
       isDefault: false,
@@ -405,7 +398,7 @@ const Index = (props) => {
     },
     {
       name: "contact",
-      label: "Contact",
+      label: tr("Contact"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -460,7 +453,7 @@ const Index = (props) => {
     },
     {
       name: "account",
-      label: "Account",
+      label: tr("Account"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -515,7 +508,7 @@ const Index = (props) => {
     },
     {
       name: "grandTotal",
-      label: "Grand Total",
+      label: tr("Grand Total"),
       type: "number",
       fixed: false,
       isDefault: false,
@@ -600,7 +593,7 @@ const Index = (props) => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -644,7 +637,7 @@ const Index = (props) => {
   return (
     <div>
       <CommonCheckTable
-        title={"Invoices"}
+        title={tr("Invoices")}
         isLoding={isLoding}
         columnData={columns ?? []}
         // dataColumn={dataColumn ?? []}
@@ -676,9 +669,7 @@ const Index = (props) => {
             mt={{ sm: "5px", md: "0" }}
             size="sm"
             onClick={() => setAdvanceSearch(true)}
-          >
-            Advance Search
-          </Button>
+          ><LocalizedText text="Advance Search" /></Button>
         }
         getTagValuesOutSide={getTagValuesOutSide}
         searchboxOutside={searchboxOutside}
@@ -734,4 +725,4 @@ const Index = (props) => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

@@ -1,3 +1,5 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import {
   Button,
   FormLabel,
@@ -97,7 +99,7 @@ const AddEmailHistory = (props) => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -139,9 +141,9 @@ const AddEmailHistory = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Send Email </ModalHeader>
+        <ModalHeader><LocalizedText text="Send Email" /></ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
+        <ModalBody><ManagedFormLayout moduleName="Emails" formik={formik}>
           {/* User Model for sales person */}
           <UserModel
             onClose={() => setSalesPersonsModelOpen(false)}
@@ -161,8 +163,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Recipient<Text color={"red"}>*</Text>
+              ><LocalizedText text="Recipient" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -171,7 +172,7 @@ const AddEmailHistory = (props) => {
                 value={values?.recipient}
                 name="recipient"
                 disabled
-                placeholder="Recipient"
+                placeholder={tr("Recipient")}
                 fontWeight="500"
                 borderColor={
                   errors?.recipient && touched?.recipient ? "red.300" : null
@@ -189,12 +190,11 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Subject<Text color={"red"}>*</Text>
+              ><LocalizedText text="Subject" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
-                placeholder="Enter subject"
+                placeholder={tr("Enter subject")}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={values?.subject}
@@ -216,8 +216,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Start Date<Text color={"red"}>*</Text>
+              ><LocalizedText text="Start Date" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 type="datetime-local"
@@ -244,8 +243,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Assign To Sales Agent<Text color={"red"}>*</Text>
+              ><LocalizedText text="Assign To Sales Agent" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Flex justifyContent={"space-between"}>
                 <Select
@@ -258,7 +256,7 @@ const AddEmailHistory = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Assign To Sales Agent"}
+                  placeholder={tr("Assign To Sales Agent")}
                   borderColor={
                     errors?.salesAgent && touched?.salesAgent ? "red.300" : null
                   }
@@ -293,9 +291,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Message
-              </FormLabel>
+              ><LocalizedText text="Message" /></FormLabel>
               <RadioGroup
                 onChange={(e) => {
                   setFieldValue("type", e);
@@ -303,8 +299,8 @@ const AddEmailHistory = (props) => {
                 value={values?.type}
               >
                 <Stack direction="row">
-                  <Radio value="message">Message</Radio>
-                  <Radio value="template">Template</Radio>
+                  <Radio value="message"><LocalizedText text="Message" /></Radio>
+                  <Radio value="template"><LocalizedText text="Template" /></Radio>
                 </Stack>
               </RadioGroup>
             </GridItem>
@@ -314,7 +310,7 @@ const AddEmailHistory = (props) => {
                   <Textarea
                     resize={"none"}
                     fontSize="sm"
-                    placeholder="Enter Message"
+                    placeholder={tr("Enter Message")}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values?.message}
@@ -337,7 +333,7 @@ const AddEmailHistory = (props) => {
                   onBlur={handleBlur}
                   value={values?.html}
                   fontWeight="500"
-                  placeholder={"Select Template"}
+                  placeholder={tr("Select Template")}
                   // borderColor={errors.assignTo && touched.assignTo ? "red.300" : null}
                 >
                   {data?.map((item) => {
@@ -351,7 +347,8 @@ const AddEmailHistory = (props) => {
               )}
             </GridItem>
           </Grid>
-        </ModalBody>
+        </ManagedFormLayout>
+</ModalBody>
         <ModalFooter>
           <Button
             size="sm"
@@ -359,7 +356,7 @@ const AddEmailHistory = (props) => {
             onClick={handleSubmit}
             disabled={isLoding ? true : false}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             sx={{
@@ -373,13 +370,11 @@ const AddEmailHistory = (props) => {
               formik.resetForm();
               onClose();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddEmailHistory;
+export default withLocalization(AddEmailHistory);

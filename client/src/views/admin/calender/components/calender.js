@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import FullCalendar from "@fullcalendar/react";
 import Card from "components/card/Card";
 import { useEffect, useState } from "react";
@@ -106,18 +107,15 @@ const Calender = (props) => {
         <div style={{ display: "flex", justifyContent: "end" }}>
           {(callAccess?.create || user?.role === "superAdmin") && (
             <Flex alignItems={"center"} fontSize={"14px"} marginRight={"10px"}>
-              <GoDotFill color="green" fontSize={"18px"} /> Calls
-            </Flex>
+              <GoDotFill color="green" fontSize={"18px"} /><LocalizedText text="Calls" /></Flex>
           )}
           {(meetingAccess?.create || user?.role === "superAdmin") && (
             <Flex alignItems={"center"} fontSize={"14px"} marginRight={"10px"}>
-              <GoDotFill color="red" fontSize={"18px"} /> Meetings
-            </Flex>
+              <GoDotFill color="red" fontSize={"18px"} /><LocalizedText text="Meetings" /></Flex>
           )}
           {(emailAccess?.create || user?.role === "superAdmin") && (
             <Flex alignItems={"center"} fontSize={"14px"}>
-              <GoDotFill color="blue" fontSize={"18px"} /> Emails
-            </Flex>
+              <GoDotFill color="blue" fontSize={"18px"} /><LocalizedText text="Emails" /></Flex>
           )}
         </div>
         <FullCalendar

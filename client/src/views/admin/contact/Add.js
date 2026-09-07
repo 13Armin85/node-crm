@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -81,9 +82,7 @@ const Add = (props) => {
             alignItems={"center"}
             justifyContent="space-between"
             display="flex"
-          >
-            Add Contact
-            <IconButton onClick={props?.onClose} icon={<CloseIcon />} />
+          ><LocalizedText text="Add Contact" /><IconButton onClick={props?.onClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
             <CustomForm
@@ -106,7 +105,7 @@ const Add = (props) => {
               size="sm"
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Save"}
+              {isLoding ? <Spinner /> : tr("Save")}
             </Button>
             <Button
               variant="outline"
@@ -117,9 +116,7 @@ const Add = (props) => {
                 textTransform: "capitalize",
               }}
               onClick={handleCancel}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -127,4 +124,4 @@ const Add = (props) => {
   );
 };
 
-export default Add;
+export default withLocalization(Add);

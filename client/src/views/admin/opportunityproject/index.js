@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Grid,
@@ -51,7 +52,7 @@ const Index = () => {
   };
 
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     accessor: "action",
     isSortable: false,
     center: true,
@@ -75,9 +76,7 @@ const Index = () => {
                   setEditData(row?.original);
                   setSelectedId(row?.values?._id);
                 }}
-              >
-                Edit
-              </MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>
             )}
             {permission?.view && (
               <MenuItem
@@ -89,9 +88,7 @@ const Index = () => {
                     state: { OpportunityList: data },
                   });
                 }}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             {permission?.delete && (
               <MenuItem
@@ -102,9 +99,7 @@ const Index = () => {
                   setDeleteMany(true);
                   setSelectedValues([row?.values?._id]);
                 }}
-              >
-                Delete
-              </MenuItem>
+              ><LocalizedText text="Delete" /></MenuItem>
             )}
           </MenuList>
         </Menu>
@@ -112,9 +107,9 @@ const Index = () => {
     ),
   };
   const tempTableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Name",
+      Header: tr("Name"),
       accessor: "name",
       cell: (cell) => (
         <div className="selectOpt">
@@ -138,7 +133,7 @@ const Index = () => {
         </div>
       ),
     },
-    { Header: "Requirement", accessor: "requirement" },
+    { Header: tr("Requirement"), accessor: "requirement" },
     ...(permission?.update || permission?.view || permission?.delete
       ? [actionHeader]
       : []),
@@ -253,4 +248,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

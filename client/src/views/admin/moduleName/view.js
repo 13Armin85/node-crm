@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import {
   Box,
@@ -44,15 +45,13 @@ const View = (props) => {
                       fontWeight={"bold"}
                       pr={2}
                       textTransform={"capitalize"}
-                    >
-                      require :
-                    </Text>
+                    ><LocalizedText text="require :" /></Text>
                     <Text>
                       {data?.validations &&
                       data?.validations?.length > 0 &&
                       data?.validations[0]?.require === true
-                        ? "True"
-                        : "False"}
+                        ? tr("True")
+                        : tr("False")}
                     </Text>
                   </Flex>
                 </GridItem>
@@ -70,9 +69,7 @@ const View = (props) => {
                 setEditModal(true);
               }}
               leftIcon={<EditIcon />}
-            >
-              Edit
-            </Button>
+            ><LocalizedText text="Edit" /></Button>
             <Button
               colorScheme="red"
               size="sm"
@@ -80,7 +77,7 @@ const View = (props) => {
               disabled={isLoding ? true : false}
               leftIcon={<DeleteIcon />}
             >
-              {isLoding ? <Spinner /> : "Delete"}
+              {isLoding ? <Spinner /> : tr("Delete")}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -97,4 +94,4 @@ const View = (props) => {
   );
 };
 
-export default View;
+export default withLocalization(View);

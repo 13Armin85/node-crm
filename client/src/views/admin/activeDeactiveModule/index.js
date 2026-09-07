@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -75,9 +76,7 @@ const Index = () => {
       <Card>
         <Flex justifyContent={"space-between"} alignItems={"center"} mb={5}>
           <Box>
-            <Text color={"secondaryGray.900"} fontSize="22px" fontWeight="700">
-              Active Deactive Module
-            </Text>
+            <Text color={"secondaryGray.900"} fontSize="22px" fontWeight="700"><LocalizedText text="Active Deactive Module" /></Text>
           </Box>
           <Button
             onClick={() => navigate("/admin-setting")}
@@ -85,9 +84,7 @@ const Index = () => {
             size="sm"
             leftIcon={<IoIosArrowBack />}
             ml={2}
-          >
-            Back
-          </Button>
+          ><LocalizedText text="Back" /></Button>
         </Flex>
         <HSeparator />
         <Flex mt={5} alignItems={"center"} fontSize="sm">
@@ -110,7 +107,7 @@ const Index = () => {
                     <GridItem colSpan={6}>
                       <Text fontSize="15px" fontWeight="700">
                         {" "}
-                        {item?.moduleName}{" "}
+                        <LocalizedText text={item?.moduleName} />{" "}
                       </Text>
                     </GridItem>
                     <GridItem colSpan={6}>
@@ -133,9 +130,7 @@ const Index = () => {
                   onClick={handleSubmit}
                   disabled={!dirty}
                   size="sm"
-                >
-                  Update
-                </Button>
+                ><LocalizedText text="Update" /></Button>
               </GridItem>
             </Grid>
           )}

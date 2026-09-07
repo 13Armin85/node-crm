@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   FormLabel,
@@ -31,7 +32,7 @@ const AddEditHeading = (props) => {
   };
 
   const headingSchema = yup.object({
-    heading: yup.string().required("Heading is required"),
+    heading: yup.string().required(tr("Heading is required")),
   });
 
   const initialValues = {
@@ -112,8 +113,7 @@ const AddEditHeading = (props) => {
         <ModalOverlay />
         <ModalContent maxWidth={"2xl"}>
           <ModalHeader>
-            {updateData && updateData?.heading ? "Edit" : "Add"} Heading
-          </ModalHeader>
+            {updateData && updateData?.heading ? tr("Edit") : tr("Add")}<LocalizedText text="Heading" /></ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <>
@@ -125,8 +125,7 @@ const AddEditHeading = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Heading<Text color={"red"}>*</Text>
+                  ><LocalizedText text="Heading" /><Text color={"red"}>*</Text>
                   </FormLabel>
                   <Input
                     fontSize="sm"
@@ -176,9 +175,7 @@ const AddEditHeading = (props) => {
                 handleClose();
                 resetForm();
               }}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -186,4 +183,4 @@ const AddEditHeading = (props) => {
   );
 };
 
-export default AddEditHeading;
+export default withLocalization(AddEditHeading);

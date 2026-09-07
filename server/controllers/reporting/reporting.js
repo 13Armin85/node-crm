@@ -10,7 +10,7 @@ const Task = require('../../model/schema/task')
 const MeetingHistory = require('../../model/schema/meeting');
 // const user = require('../../model/schema/user');
 const customField = require('../../model/schema/customField');
-const Account = require('../../model/schema/account');
+const PartnerCustomer = require('../../model/schema/partnerCustomer');
 const EmailTemp = require('../../model/schema/emailTemplate')
 const Opprtunities = require('../../model/schema/opprtunity')
 const Invoices = require("../../model/schema/invoices.js");
@@ -77,11 +77,11 @@ const lineChart = async (req, res) => {
     }).exec()
     const phoneCallData = phoneCall.filter(item => item?.sender !== null);
 
-    let account = await Account.find(senderQuery).populate({
+    let partnerCustomers = await PartnerCustomer.find(senderQuery).populate({
         path: 'createBy',
         match: { deleted: false }
     }).exec()
-    const AccountData = account.filter(item => item?.createBy !== null);
+    const partnerCustomerData = partnerCustomers.filter(item => item?.createBy !== null);
 
     let emailTemp = await EmailTemp.find(senderQuery).populate({
         path: 'createBy',
@@ -136,7 +136,7 @@ const lineChart = async (req, res) => {
         { name: "Contacts", length: contactData?.length, color: "blue" },
         { name: "Properties", length: propertyData?.length, color: "green" },
         { name: "Opportunities", length: OpprtunitiesData?.length, color: "linkedin" },
-        { name: "Account", length: AccountData?.length, color: "teal" },
+        { name: "Partner Customers", length: partnerCustomerData?.length, color: "teal" },
         { name: "Quotes", length: QuotesData?.length, color: "blackAlpha" },
         { name: "Invoices", length: InvoicesData?.length, color: "linkedin" },
         { name: "Tasks", length: taskData?.length, color: "pink" },
@@ -166,8 +166,8 @@ const lineChart = async (req, res) => {
                 const data = result.filter((val) => val.name !== "Opportunities")
                 result = data
             }
-            if (item.title === "Account" && item.view === false) {
-                const data = result.filter((val) => val.name !== "Account")
+            if (["Account", "Partner Customers"].includes(item.title) && item.view === false) {
+                const data = result.filter((val) => val.name !== "Partner Customers")
                 result = data
             }
             if (item.title === "Quotes" && item.view === false) {
@@ -200,14 +200,15 @@ const lineChart = async (req, res) => {
             }
 
             if (item.view === true) {
-                if (!result.find((i) => i.name === item.title)) {
-                    const ExistingModel = mongoose.model(item.title);
+                const reportName = item.title === 'Account' ? 'Partner Customers' : item.title;
+                if (!['Payments'].includes(reportName) && !result.find((i) => i.name === reportName) && mongoose.models[reportName]) {
+                    const ExistingModel = mongoose.model(reportName);
                     const allData = await ExistingModel.find({ deleted: false });
                     const colorIndex = result.length % colors.length;
                     const color = colors[colorIndex];
 
                     const newObj = {
-                        name: item.title,
+                        name: reportName,
                         length: allData.length,
                         color: color
                     };
@@ -218,8 +219,8 @@ const lineChart = async (req, res) => {
             }
         }
     } else if (userDetails?.role === "superAdmin") {
-        for (const item of fields) {
-            if (!result.find((i) => i.name === item.moduleName)) {
+        for (const item of fields.filter(({ moduleName }) => !['Account', 'Accounts', 'Payments'].includes(moduleName))) {
+            if (!result.find((i) => i.name === item.moduleName) && mongoose.models[item.moduleName]) {
                 const ExistingModel = mongoose.model(item.moduleName);
                 const allData = await ExistingModel.find({ deleted: false });
                 const colorIndex = result.length % colors.length;

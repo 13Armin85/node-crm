@@ -19,6 +19,7 @@ import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { LanguageProvider, TranslationBoundary } from "i18n";
+import { RtlProvider } from 'components/rtlProvider/RtlProvider';
 
 function App() {
   const token =
@@ -52,7 +53,7 @@ ReactDOM.render(
     <PersistGate loading={null} persistor={persistor}>
       <LanguageProvider>
         <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-        <ChakraProvider theme={theme}>
+        <RtlProvider><ChakraProvider theme={theme}>
           <React.StrictMode>
             <ThemeEditorProvider>
               <TranslationBoundary>
@@ -62,7 +63,7 @@ ReactDOM.render(
               </TranslationBoundary>
             </ThemeEditorProvider>
           </React.StrictMode>
-        </ChakraProvider>
+        </ChakraProvider></RtlProvider>
       </LanguageProvider>
     </PersistGate>
   </Provider>,

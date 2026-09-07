@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -164,7 +165,7 @@ const AddEmailHistory = (props) => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -210,7 +211,7 @@ const AddEmailHistory = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent height={"580px"}>
-        <ModalHeader>Add Email</ModalHeader>
+        <ModalHeader><LocalizedText text="Add Email" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody overflowY={"auto"} height={"400px"}>
           {/* Contact Model  */}
@@ -259,9 +260,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Related
-              </FormLabel>
+              ><LocalizedText text="Related" /></FormLabel>
               <RadioGroup
                 onChange={(e) => {
                   setFieldValue("category", e);
@@ -271,8 +270,8 @@ const AddEmailHistory = (props) => {
                 value={values.category}
               >
                 <Stack direction="row">
-                  <Radio value="Contact">Contact</Radio>
-                  <Radio value="Lead">Lead</Radio>
+                  <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
+                  <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                 </Stack>
               </RadioGroup>
             </GridItem>
@@ -286,9 +285,7 @@ const AddEmailHistory = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Recipient (Contact)
-                    </FormLabel>
+                    ><LocalizedText text="Recipient (Contact)" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values.createByContact}
@@ -300,7 +297,7 @@ const AddEmailHistory = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors.createByContact && touched.createByContact
                             ? "red.300"
@@ -335,9 +332,7 @@ const AddEmailHistory = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    >
-                      Recipient (Lead)
-                    </FormLabel>
+                    ><LocalizedText text="Recipient (Lead)" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
                         value={values?.createByLead}
@@ -349,7 +344,7 @@ const AddEmailHistory = (props) => {
                             : "10px"
                         }
                         fontWeight="500"
-                        placeholder={"Assign To"}
+                        placeholder={tr("Assign To")}
                         borderColor={
                           errors?.createByLead && touched?.createByLead
                             ? "red.300"
@@ -386,15 +381,14 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Recipient<Text color={"red"}>*</Text>
+              ><LocalizedText text="Recipient" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
                 disabled
                 value={values?.recipient}
                 name="recipient"
-                placeholder="Recipient"
+                placeholder={tr("Recipient")}
                 fontWeight="500"
                 borderColor={
                   errors?.recipient && touched?.recipient ? "red.300" : null
@@ -427,7 +421,7 @@ const AddEmailHistory = (props) => {
                       errors?.property && touched?.property ? undefined : "10px"
                     }
                     fontWeight="500"
-                    placeholder={"Assign To Property"}
+                    placeholder={tr("Assign To Property")}
                     borderColor={
                       errors?.property && touched?.property ? "red.300" : null
                     }
@@ -452,8 +446,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Start Date<Text color={"red"}>*</Text>
+              ><LocalizedText text="Start Date" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 type="datetime-local"
@@ -480,8 +473,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Assign To Sales Agent <Text color={"red"}>*</Text>
+              ><LocalizedText text="Assign To Sales Agent" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Flex justifyContent={"space-between"}>
                 <Select
@@ -494,7 +486,7 @@ const AddEmailHistory = (props) => {
                       : "10px"
                   }
                   fontWeight="500"
-                  placeholder={"Assign To Sales Agent"}
+                  placeholder={tr("Assign To Sales Agent")}
                   borderColor={
                     errors?.salesAgent && touched?.salesAgent ? "red.300" : null
                   }
@@ -530,8 +522,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Subject<Text color={"red"}>*</Text>
+              ><LocalizedText text="Subject" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -539,7 +530,7 @@ const AddEmailHistory = (props) => {
                 onBlur={handleBlur}
                 value={values?.subject}
                 name="subject"
-                placeholder="subject"
+                placeholder={tr("subject")}
                 fontWeight="500"
                 borderColor={
                   errors?.subject && touched?.subject ? "red.300" : null
@@ -557,9 +548,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Message
-              </FormLabel>
+              ><LocalizedText text="Message" /></FormLabel>
               <RadioGroup
                 onChange={(e) => {
                   setFieldValue("type", e);
@@ -567,8 +556,8 @@ const AddEmailHistory = (props) => {
                 value={values?.type}
               >
                 <Stack direction="row">
-                  <Radio value="message">Message</Radio>
-                  <Radio value="template">Template</Radio>
+                  <Radio value="message"><LocalizedText text="Message" /></Radio>
+                  <Radio value="template"><LocalizedText text="Template" /></Radio>
                 </Stack>
               </RadioGroup>
             </GridItem>
@@ -578,7 +567,7 @@ const AddEmailHistory = (props) => {
                   <Textarea
                     resize={"none"}
                     fontSize="sm"
-                    placeholder="Enter Message"
+                    placeholder={tr("Enter Message")}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values?.message}
@@ -601,7 +590,7 @@ const AddEmailHistory = (props) => {
                   onBlur={handleBlur}
                   value={values.html}
                   fontWeight="500"
-                  placeholder={"Select Template"}
+                  placeholder={tr("Select Template")}
                   // borderColor={errors.assignTo && touched.assignTo ? "red.300" : null}
                 >
                   {data?.map((item) => {
@@ -623,7 +612,7 @@ const AddEmailHistory = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             sx={{
@@ -637,13 +626,11 @@ const AddEmailHistory = (props) => {
               onClose();
             }}
             size="sm"
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddEmailHistory;
+export default withLocalization(AddEmailHistory);

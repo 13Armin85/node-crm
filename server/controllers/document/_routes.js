@@ -1,11 +1,13 @@
 const express = require('express');
 const document = require('./document');
 const auth = require('../../middelwares/auth');
+const { loadUser } = require('../../middelwares/permissions');
+const dynamicValues = require('../../middelwares/dynamicValues')('Documents');
 
 const router = express.Router();
 
 router.get('/', auth, document.index)
-router.post('/add', auth, document.upload.array('files'), document.file)
+router.post('/add', auth, loadUser, document.upload.array('files'), dynamicValues, document.file)
 router.post('/addDocumentContact', auth, document.upload.array('files'), document.addDocumentContact)
 router.post('/addDocumentLead', auth, document.upload.array('files'), document.addDocumentLead)
 

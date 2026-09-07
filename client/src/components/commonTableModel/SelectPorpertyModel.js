@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -42,7 +43,7 @@ const SelectPorpertyModel = (props) => {
     setPropertyData(result?.payload?.data);
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(result?.payload?.data?.[0]?.fields || [])
         .filter((field) => field?.isTableField === true)
         .map((field) => ({ Header: field?.label, accessor: field?.name })),
@@ -59,7 +60,7 @@ const SelectPorpertyModel = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select Property</ModalHeader>
+        <ModalHeader><LocalizedText text="Select Property" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -68,7 +69,7 @@ const SelectPorpertyModel = (props) => {
             </Flex>
           ) : (
             <CommonCheckTable
-              title="Property"
+              title={tr("Property")}
               isLoding={isLoding}
               columnData={columns ?? []}
               allData={data ?? []}
@@ -97,20 +98,18 @@ const SelectPorpertyModel = (props) => {
             disabled={isLoding ? true : false}
             leftIcon={<GiClick />}
           >
-            {isLoding ? <Spinner /> : "Select"}
+            {isLoding ? <Spinner /> : tr("Select")}
           </Button>
           <Button
             variant="outline"
             size="sm"
             colorScheme="red"
             onClick={() => onClose()}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default SelectPorpertyModel;
+export default withLocalization(SelectPorpertyModel);

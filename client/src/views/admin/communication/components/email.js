@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   FormLabel,
@@ -55,7 +56,7 @@ const Email = () => {
   } = formik;
 
   if (touched?.recipient && errors?.createBy) {
-    toast.error("Please select an authorized recipient");
+    toast.error(tr("Please select an authorized recipient"));
     formik.resetForm();
   }
 
@@ -64,7 +65,7 @@ const Email = () => {
       setIsLoding(true);
       let response = await postApi("api/email/add", values);
       if (response?.status === 200) {
-        toast.success("Email Send successfully");
+        toast.success(tr("Email Send successfully"));
         formik.resetForm();
       }
     } catch (e) {
@@ -101,9 +102,7 @@ const Email = () => {
   return (
     <Grid templateColumns="repeat(12, 1fr)" gap={3}>
       <GridItem colSpan={{ base: 12 }}>
-        <Heading as="h2" size="xl" noOfLines={1}>
-          Send Email
-        </Heading>
+        <Heading as="h2" size="xl" noOfLines={1}><LocalizedText text="Send Email" /></Heading>
       </GridItem>
       <GridItem colSpan={{ base: 12 }}>
         <FormLabel
@@ -112,8 +111,7 @@ const Email = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          To<Text color={"red"}>*</Text>
+        ><LocalizedText text="To" /><Text color={"red"}>*</Text>
         </FormLabel>
         <Input
           onFocus={onOpen}
@@ -122,7 +120,7 @@ const Email = () => {
           onBlur={() => setTimeout(onClose, 200)}
           value={values?.recipient}
           name="recipient"
-          placeholder="Recipient"
+          placeholder={tr("Recipient")}
           fontWeight="500"
           borderColor={
             errors?.recipient && touched?.recipient ? "red.300" : null
@@ -170,15 +168,13 @@ const Email = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          Sc
-        </FormLabel>
+        ><LocalizedText text="Sc" /></FormLabel>
         <Input
           fontSize="sm"
           onChange={handleChange}
           value={values?.cc}
           name="cc"
-          placeholder="cc"
+          placeholder={tr("cc")}
           fontWeight="500"
           borderColor={errors?.cc && touched?.cc ? "red.300" : null}
         />
@@ -195,15 +191,13 @@ const Email = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          Bcc
-        </FormLabel>
+        ><LocalizedText text="Bcc" /></FormLabel>
         <Input
           fontSize="sm"
           onChange={handleChange}
           value={values?.bcc}
           name="bcc"
-          placeholder="bcc"
+          placeholder={tr("bcc")}
           fontWeight="500"
           borderColor={errors?.bcc && touched?.bcc ? "red.300" : null}
         />
@@ -219,15 +213,13 @@ const Email = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          Subject
-        </FormLabel>
+        ><LocalizedText text="Subject" /></FormLabel>
         <Input
           fontSize="sm"
           onChange={handleChange}
           value={values?.subject}
           name="subject"
-          placeholder="Subject"
+          placeholder={tr("Subject")}
           fontWeight="500"
           borderColor={errors?.subject && touched?.subject ? "red.300" : null}
         />
@@ -243,8 +235,7 @@ const Email = () => {
           fontSize="sm"
           fontWeight="500"
           mb="8px"
-        >
-          Message<Text color={"red"}>*</Text>
+        ><LocalizedText text="Message" /><Text color={"red"}>*</Text>
         </FormLabel>
         <Textarea
           height={240}
@@ -253,7 +244,7 @@ const Email = () => {
           onChange={handleChange}
           value={values?.message}
           name="message"
-          placeholder="Enter Message Hear"
+          placeholder={tr("Enter Message Hear")}
           fontWeight="500"
           borderColor={errors?.message && touched?.message ? "red.300" : null}
         />
@@ -271,14 +262,12 @@ const Email = () => {
           rightIcon={<BsFillSendFill />}
         >
           {" "}
-          {isLoding ? <Spinner /> : "Send"}
+          {isLoding ? <Spinner /> : tr("Send")}
         </Button>
-        <Button size="sm" onClick={() => formik.resetForm()}>
-          Clear
-        </Button>
+        <Button size="sm" onClick={() => formik.resetForm()}><LocalizedText text="Clear" /></Button>
       </GridItem>
     </Grid>
   );
 };
 
-export default Email;
+export default withLocalization(Email);

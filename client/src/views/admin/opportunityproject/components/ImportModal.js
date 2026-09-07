@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -29,7 +30,7 @@ const ImportModal = (props) => {
   const customFields = [
     {
       name: "name",
-      label: "Name",
+      label: tr("Name"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -77,7 +78,7 @@ const ImportModal = (props) => {
     },
     {
       name: "requirement",
-      label: "Requirement",
+      label: tr("Requirement"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -168,7 +169,7 @@ const ImportModal = (props) => {
       <Modal onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Import Opportunity Project</ModalHeader>
+          <ModalHeader><LocalizedText text="Import Opportunity Project" /></ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -183,7 +184,7 @@ const ImportModal = (props) => {
                 <Text mb="10px" color={"red"}>
                   {" "}
                   {errors?.opportunityproject &&
-                    touched?.opportunityproject && <>Please Select {text}</>}
+                    touched?.opportunityproject && <><LocalizedText text="Please Select" />{text}</>}
                 </Text>
               </GridItem>
             </Grid>
@@ -195,7 +196,7 @@ const ImportModal = (props) => {
               onClick={handleSubmit}
               disabled={isLoding ? true : false}
             >
-              {isLoding ? <Spinner /> : "Save"}
+              {isLoding ? <Spinner /> : tr("Save")}
             </Button>
             <Button
               variant="outline"
@@ -209,9 +210,7 @@ const ImportModal = (props) => {
                 onClose();
                 formik.resetForm();
               }}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -219,4 +218,4 @@ const ImportModal = (props) => {
   );
 };
 
-export default ImportModal;
+export default withLocalization(ImportModal);

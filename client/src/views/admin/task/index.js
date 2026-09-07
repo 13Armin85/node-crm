@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
@@ -63,7 +64,7 @@ const Task = () => {
     setSelectedId(row?.values?._id);
   };
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     isSortable: false,
     center: true,
     cell: ({ row }) => (
@@ -81,9 +82,7 @@ const Task = () => {
                 py={2.5}
                 icon={<EditIcon fontSize={15} mb={1} />}
                 onClick={() => handleEditOpen(row)}
-              >
-                Edit
-              </MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>
             )}
             {permission?.view && (
               <MenuItem
@@ -94,9 +93,7 @@ const Task = () => {
                   setId(row?.original?._id);
                   handleViewOpen(row?.values?._id);
                 }}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             {permission?.delete && (
               <MenuItem
@@ -107,9 +104,7 @@ const Task = () => {
                   setDeleteMany(true);
                   setSelectedValues([row?.values?._id]);
                 }}
-              >
-                Delete
-              </MenuItem>
+              ><LocalizedText text="Delete" /></MenuItem>
             )}
           </MenuList>
         </Menu>
@@ -118,13 +113,13 @@ const Task = () => {
   };
   const tableColumns = [
     {
-      Header: "#",
+      Header: tr("#"),
       accessor: "_id",
       isSortable: false,
       width: 5,
     },
     {
-      Header: "Title",
+      Header: tr("Title"),
       accessor: "title",
       type: "text",
       formikType: "",
@@ -146,9 +141,9 @@ const Task = () => {
         </div>
       ),
     },
-    { Header: "Related", accessor: "category", type: "text", formikType: "" },
+    { Header: tr("Related"), accessor: "category", type: "text", formikType: "" },
     {
-      Header: "Status",
+      Header: tr("Status"),
       accessor: "status",
       type: "select",
       formikType: "",
@@ -162,23 +157,23 @@ const Task = () => {
             value={cell?.value}
             style={{ fontSize: "14px" }}
           >
-            <option value="completed">Completed</option>
-            <option value="todo">Todo</option>
-            <option value="onHold">On Hold</option>
-            <option value="inProgress">In Progress</option>
-            <option value="pending">Pending</option>
+            <option value="completed"><LocalizedText text="Completed" /></option>
+            <option value="todo"><LocalizedText text="Todo" /></option>
+            <option value="onHold"><LocalizedText text="On Hold" /></option>
+            <option value="inProgress"><LocalizedText text="In Progress" /></option>
+            <option value="pending"><LocalizedText text="Pending" /></option>
           </Select>
         </div>
       ),
     },
     {
-      Header: "Assign To",
+      Header: tr("Assign To"),
       accessor: "assignToName",
       type: "text",
       formikType: "",
     },
-    { Header: "Start Date", accessor: "start", type: "date", formikType: "" },
-    { Header: "End Date", accessor: "end", type: "date", formikType: "" },
+    { Header: tr("Start Date"), accessor: "start", type: "date", formikType: "" },
+    { Header: tr("End Date"), accessor: "end", type: "date", formikType: "" },
     ...(permission?.update || permission?.view || permission?.delete
       ? [actionHeader]
       : []),
@@ -190,7 +185,7 @@ const Task = () => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -270,7 +265,7 @@ const Task = () => {
   return (
     <div>
       <CommonCheckTable
-        title={"Tasks"}
+        title={tr("Tasks")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
@@ -296,9 +291,7 @@ const Task = () => {
             mt={{ sm: "5px", md: "0" }}
             size="sm"
             onClick={() => setAdvanceSearch(true)}
-          >
-            Advance Search
-          </Button>
+          ><LocalizedText text="Advance Search" /></Button>
         }
         getTagValuesOutSide={getTagValuesOutSide}
         searchboxOutside={searchboxOutside}
@@ -345,4 +338,4 @@ const Task = () => {
   );
 };
 
-export default Task;
+export default withLocalization(Task);

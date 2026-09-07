@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
   ChevronDownIcon,
@@ -136,11 +137,11 @@ const View = () => {
     swiftCode: bankDataDetails?.swiftCode || "",
   };
   const validationSchema = yup.object({
-    accountName: yup.string().required("AccountName Is required"),
-    accountNumber: yup.number().required("AccountNumber Is required"),
-    bank: yup.string().required("Bank Is required"),
-    branch: yup.string().required("Branch Is required"),
-    swiftCode: yup.number().required("SwiftCode Is required"),
+    accountName: yup.string().required(tr("Bank Account Holder is required")),
+    accountNumber: yup.number().required(tr("AccountNumber Is required")),
+    bank: yup.string().required(tr("Bank Is required")),
+    branch: yup.string().required(tr("Branch Is required")),
+    swiftCode: yup.number().required(tr("SwiftCode Is required")),
   });
   const formik = useFormik({
     initialValues: initialValues,
@@ -233,9 +234,7 @@ const View = () => {
                 <GridItem colSpan={2}>
                   <Box>
                     <Box display={"flex"} justifyContent={"space-between"}>
-                      <Heading size="md" mb={3}>
-                        Bank Details
-                      </Heading>
+                      <Heading size="md" mb={3}><LocalizedText text="Bank Details" /></Heading>
                       <Flex id="hide-btn">
                         <Menu>
                           {(user?.role === "superAdmin" ||
@@ -249,9 +248,7 @@ const View = () => {
                               mr={2.5}
                               as={Button}
                               rightIcon={<ChevronDownIcon />}
-                            >
-                              Actions
-                            </MenuButton>
+                            ><LocalizedText text="Actions" /></MenuButton>
                           )}
                           <MenuDivider />
                           <MenuList minWidth={2}>
@@ -265,8 +262,7 @@ const View = () => {
                                 alignItems={"start"}
                                 icon={<AddIcon />}
                               >
-                                {" "}
-                                Add{" "}
+                                {" "}<LocalizedText text="Add" />{" "}
                               </MenuItem>
                             )}
                             {(user?.role === "superAdmin" ||
@@ -277,9 +273,7 @@ const View = () => {
                                 }}
                                 alignItems={"start"}
                                 icon={<EditIcon />}
-                              >
-                                Edit
-                              </MenuItem>
+                              ><LocalizedText text="Edit" /></MenuItem>
                             )}
                             <MenuItem
                               onClick={generatePDF}
@@ -287,9 +281,7 @@ const View = () => {
                               icon={<FaFilePdf />}
                               display={"flex"}
                               style={{ alignItems: "center" }}
-                            >
-                              Print as PDF
-                            </MenuItem>
+                            ><LocalizedText text="Print as PDF" /></MenuItem>
                             {(user?.role === "superAdmin" ||
                               permission?.delete) && (
                               <>
@@ -299,9 +291,7 @@ const View = () => {
                                   color={"red"}
                                   onClick={() => setDelete(true)}
                                   icon={<DeleteIcon />}
-                                >
-                                  Delete
-                                </MenuItem>
+                                ><LocalizedText text="Delete" /></MenuItem>
                               </>
                             )}
                           </MenuList>
@@ -311,9 +301,7 @@ const View = () => {
                             leftIcon={<IoIosArrowBack />}
                             size="sm"
                             variant="brand"
-                          >
-                            Back
-                          </Button>
+                          ><LocalizedText text="Back" /></Button>
                         </Link>
                       </Flex>
                     </Box>
@@ -328,8 +316,7 @@ const View = () => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Account Name{" "}
+                    {" "}<LocalizedText text="Bank Account Holder" />{" "}
                   </Text>
 
                   {editableField === "accountName" ? (
@@ -378,8 +365,7 @@ const View = () => {
                     fontSize="sm"
                     fontWeight="bold"
                     color={"blackAlpha.900"}
-                  >
-                    Account Number{" "}
+                  ><LocalizedText text="Account Number" />{" "}
                   </Text>
                   {editableField === "accountNumber" ? (
                     <>
@@ -427,8 +413,7 @@ const View = () => {
                     fontSize="sm"
                     fontWeight="bold"
                     color={"blackAlpha.900"}
-                  >
-                    Bank{" "}
+                  ><LocalizedText text="Bank" />{" "}
                   </Text>
 
                   {editableField === "bank" ? (
@@ -471,8 +456,7 @@ const View = () => {
                     fontSize="sm"
                     fontWeight="bold"
                     color={"blackAlpha.900"}
-                  >
-                    Branch{" "}
+                  ><LocalizedText text="Branch" />{" "}
                   </Text>
                   {editableField === "branch" ? (
                     <>
@@ -516,8 +500,7 @@ const View = () => {
                     fontSize="sm"
                     fontWeight="bold"
                     color={"blackAlpha.900"}
-                  >
-                    swiftCode{" "}
+                  ><LocalizedText text="swiftCode" />{" "}
                   </Text>
 
                   {editableField === "swiftCode" ? (
@@ -581,9 +564,7 @@ const View = () => {
                         mr={2.5}
                         variant="outline"
                         colorScheme="green"
-                      >
-                        Edit
-                      </Button>
+                      ><LocalizedText text="Edit" /></Button>
                     ) : (
                       ""
                     )}
@@ -594,9 +575,7 @@ const View = () => {
                         onClick={() => setDelete(true)}
                         leftIcon={<DeleteIcon />}
                         colorScheme="red"
-                      >
-                        Delete
-                      </Button>
+                      ><LocalizedText text="Delete" /></Button>
                     ) : (
                       ""
                     )}
@@ -632,4 +611,4 @@ const View = () => {
   );
 };
 
-export default View;
+export default withLocalization(View);

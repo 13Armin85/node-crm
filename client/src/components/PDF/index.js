@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import React from "react";
 import {
   PDFDownloadLink,
@@ -35,15 +36,9 @@ const MyDocument = () => (
   <Document>
     <Page size="A4" style={styles?.page}>
       <View style={styles?.section}>
-        <Text style={styles?.header}>Hello World</Text>
-        <Text style={styles?.text}>
-          This is an example of a simple PDF document created using
-          @react-pdf/renderer.
-        </Text>
-        <Text style={styles?.text}>
-          You can add more text, images, and other elements to your PDF
-          document.
-        </Text>
+        <Text style={styles?.header}><LocalizedText text="Hello World" /></Text>
+        <Text style={styles?.text}><LocalizedText text="This is an example of a simple PDF document created using @react-pdf/renderer." /></Text>
+        <Text style={styles?.text}><LocalizedText text="You can add more text, images, and other elements to your PDF document." /></Text>
       </View>
     </Page>
   </Document>

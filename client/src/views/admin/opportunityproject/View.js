@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
   ChevronDownIcon,
@@ -114,9 +115,9 @@ const View = (props) => {
   };
 
   const columnsDataColumns = [
-    { Header: "sender", accessor: "senderName" },
+    { Header: tr("sender"), accessor: "senderName" },
     {
-      Header: "recipient",
+      Header: tr("recipient"),
       accessor: "createByName",
       cell: (cell) => (
         <Link to={`/Email/${cell?.row?.original?._id}`}>
@@ -135,7 +136,7 @@ const View = (props) => {
       ),
     },
     {
-      Header: "time stamp",
+      Header: tr("time stamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -146,7 +147,7 @@ const View = (props) => {
       ),
     },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "createBy",
       cell: (cell) => (
         <div className="selectOpt">
@@ -158,9 +159,9 @@ const View = (props) => {
     },
   ];
   const callColumns = [
-    { Header: "sender", accessor: "senderName" },
+    { Header: tr("sender"), accessor: "senderName" },
     {
-      Header: "recipient",
+      Header: tr("recipient"),
       accessor: "createByName",
       cell: (cell) => (
         <Link to={`/phone-call/${cell?.row?.original?._id}`}>
@@ -179,7 +180,7 @@ const View = (props) => {
       ),
     },
     {
-      Header: "time stamp",
+      Header: tr("time stamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -190,7 +191,7 @@ const View = (props) => {
       ),
     },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "createBy",
       cell: (cell) => (
         <div className="selectOpt">
@@ -203,7 +204,7 @@ const View = (props) => {
   ];
   const MeetingColumns = [
     {
-      Header: "Agenda",
+      Header: tr("Agenda"),
       accessor: "agenda",
       cell: (cell) => (
         <Link to={`/metting/${cell?.row?.original?._id}`}>
@@ -221,9 +222,9 @@ const View = (props) => {
         </Link>
       ),
     },
-    { Header: "date Time", accessor: "dateTime" },
+    { Header: tr("date Time"), accessor: "dateTime" },
     {
-      Header: "times tamp",
+      Header: tr("times tamp"),
       accessor: "timestamp",
       cell: (cell) => (
         <div className="selectOpt">
@@ -233,11 +234,11 @@ const View = (props) => {
         </div>
       ),
     },
-    { Header: "create By", accessor: "createdByName" },
+    { Header: tr("create By"), accessor: "createdByName" },
   ];
   const taskColumns = [
     {
-      Header: "Title",
+      Header: tr("Title"),
       accessor: "title",
       type: "text",
       formikType: "",
@@ -259,10 +260,10 @@ const View = (props) => {
         </div>
       ),
     },
-    { Header: "Category", accessor: "category" },
-    { Header: "Assign To", accessor: "assignToName" },
-    { Header: "Start Date", accessor: "start" },
-    { Header: "End Date", accessor: "end" },
+    { Header: tr("Category"), accessor: "category" },
+    { Header: tr("Assign To"), accessor: "assignToName" },
+    { Header: tr("Start Date"), accessor: "start" },
+    { Header: tr("End Date"), accessor: "end" },
   ];
 
   const fetchCustomDataFields = async () => {
@@ -270,7 +271,7 @@ const View = (props) => {
     const result = await dispatch(fetchPropertyCustomFiled());
     setPropertyData(result?.payload?.data);
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(result?.payload?.data?.[0]?.fields || [])
         ?.filter((field) => field?.isTableField === true)
         ?.map((field) => ({ Header: field?.label, accessor: field?.name })),
@@ -324,9 +325,9 @@ const View = (props) => {
       let result = await getApi(`api/document/download/`, data);
       if (result && result?.status === 200) {
         window.open(`${constant?.baseUrl}api/document/download/${data}`);
-        toast.success("file Download successful");
+        toast.success(tr("file Download successful"));
       } else if (result && result?.response?.status === 404) {
-        toast.error("file Not Found");
+        toast.error(tr("file Not Found"));
       }
     }
   };
@@ -362,8 +363,8 @@ const View = (props) => {
     requirement: opportunitydata?.requirement,
   };
   const validationSchema = yup.object({
-    name: yup.string().required("name is required"),
-    requirement: yup.string().required("Requirement is required"),
+    name: yup.string().required(tr("name is required")),
+    requirement: yup.string().required(tr("Requirement is required")),
   });
   const formik = useFormik({
     initialValues: initialValues,
@@ -487,9 +488,7 @@ const View = (props) => {
                 <GridItem colSpan={2}>
                   <Box>
                     <Box display={"flex"} justifyContent={"space-between"}>
-                      <Heading size="md" mb={3}>
-                        Opportunity Project Details
-                      </Heading>
+                      <Heading size="md" mb={3}><LocalizedText text="Opportunity Project Details" /></Heading>
                       <Flex id="hide-btn">
                         <Menu>
                           {(user?.role === "superAdmin" ||
@@ -503,9 +502,7 @@ const View = (props) => {
                               mr={2.5}
                               as={Button}
                               rightIcon={<ChevronDownIcon />}
-                            >
-                              Actions
-                            </MenuButton>
+                            ><LocalizedText text="Actions" /></MenuButton>
                           )}
                           <MenuDivider />
                           <MenuList minWidth={2}>
@@ -520,8 +517,7 @@ const View = (props) => {
                                 alignItems={"start"}
                                 icon={<AddIcon />}
                               >
-                                {" "}
-                                Add{" "}
+                                {" "}<LocalizedText text="Add" />{" "}
                               </MenuItem>
                             )}
                             {(user?.role === "superAdmin" ||
@@ -533,9 +529,7 @@ const View = (props) => {
                                 }}
                                 alignItems={"start"}
                                 icon={<EditIcon />}
-                              >
-                                Edit
-                              </MenuItem>
+                              ><LocalizedText text="Edit" /></MenuItem>
                             )}
                             <MenuItem
                               onClick={generatePDF}
@@ -543,9 +537,7 @@ const View = (props) => {
                               icon={<FaFilePdf />}
                               display={"flex"}
                               style={{ alignItems: "center" }}
-                            >
-                              Print as PDF
-                            </MenuItem>
+                            ><LocalizedText text="Print as PDF" /></MenuItem>
                             {(user?.role === "superAdmin" ||
                               permission?.delete) && (
                               <>
@@ -555,9 +547,7 @@ const View = (props) => {
                                   color={"red"}
                                   onClick={() => setDelete(true)}
                                   icon={<DeleteIcon />}
-                                >
-                                  Delete
-                                </MenuItem>
+                                ><LocalizedText text="Delete" /></MenuItem>
                               </>
                             )}
                           </MenuList>
@@ -567,9 +557,7 @@ const View = (props) => {
                             leftIcon={<IoIosArrowBack />}
                             size="sm"
                             variant="brand"
-                          >
-                            Back
-                          </Button>
+                          ><LocalizedText text="Back" /></Button>
                         </Link>
                       </Flex>
                     </Box>
@@ -584,8 +572,7 @@ const View = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Opportunity Project Name{" "}
+                    {" "}<LocalizedText text="Opportunity Project Name" />{" "}
                   </Text>
                   {editableField === "name" ? (
                     <>
@@ -627,8 +614,7 @@ const View = (props) => {
                     fontSize="sm"
                     fontWeight="bold"
                     color={"blackAlpha.900"}
-                  >
-                    Opportunity Project Requirement{" "}
+                  ><LocalizedText text="Opportunity Project Requirement" />{" "}
                   </Text>
                   {editableField === "requirement" ? (
                     <>
@@ -678,8 +664,7 @@ const View = (props) => {
                     fontWeight="bold"
                     color={"blackAlpha.900"}
                   >
-                    {" "}
-                    Assign To{" "}
+                    {" "}<LocalizedText text="Assign To" />{" "}
                   </Text>
                   <Link
                     to={
@@ -722,7 +707,7 @@ const View = (props) => {
             <Grid templateColumns="repeat(2, 1fr)" gap={1}>
               <GridItem colSpan={{ base: 12 }}>
                 <CommonCheckTable
-                  title={"Property"}
+                  title={tr("Property")}
                   isLoding={isLoding}
                   columnData={columns ?? []}
                   allData={selectedPropertyData ?? []}
@@ -763,9 +748,7 @@ const View = (props) => {
                         mr={2.5}
                         variant="outline"
                         colorScheme="green"
-                      >
-                        Edit
-                      </Button>
+                      ><LocalizedText text="Edit" /></Button>
                     ) : (
                       ""
                     )}
@@ -776,9 +759,7 @@ const View = (props) => {
                         onClick={() => setDelete(true)}
                         leftIcon={<DeleteIcon />}
                         colorScheme="red"
-                      >
-                        Delete
-                      </Button>
+                      ><LocalizedText text="Delete" /></Button>
                     ) : (
                       ""
                     )}
@@ -830,4 +811,4 @@ const View = (props) => {
   );
 };
 
-export default View;
+export default withLocalization(View);

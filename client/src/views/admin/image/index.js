@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
   Button,
@@ -114,18 +115,14 @@ const ChangeImage = () => {
             size="sm"
             onClick={() => setImageModal(true)}
             leftIcon={<AddIcon />}
-          >
-            Add New
-          </Button>
+          ><LocalizedText text="Add New" /></Button>
           <Button
             onClick={() => navigate("/admin-setting")}
             variant="brand"
             size="sm"
             leftIcon={<IoIosArrowBack />}
             ml={2}
-          >
-            Back
-          </Button>
+          ><LocalizedText text="Back" /></Button>
         </Flex>
         {!(load?.status === "succeeded") ? (
           <Flex
@@ -164,9 +161,7 @@ const ChangeImage = () => {
                           display={"flex"}
                           justifyContent={"center"}
                           alignItems={"center"}
-                        >
-                          Active
-                        </Box>
+                        ><LocalizedText text="Active" /></Box>
                       ) : (
                         ""
                       )}
@@ -175,9 +170,7 @@ const ChangeImage = () => {
                           size="sm"
                           variant="brand"
                           onClick={() => setImageData(item)}
-                        >
-                          Set Image
-                        </Button>
+                        ><LocalizedText text="Set Image" /></Button>
                         <Button
                           size="sm"
                           variant="brand"
@@ -186,9 +179,7 @@ const ChangeImage = () => {
                             handleViewOpen(item);
                             setImageViewData(item);
                           }}
-                        >
-                          View
-                        </Button>
+                        ><LocalizedText text="View" /></Button>
                         <Button
                           size="sm"
                           colorScheme="red"
@@ -196,9 +187,7 @@ const ChangeImage = () => {
                           onClick={() => {
                             handleDeleteOpen(item);
                           }}
-                        >
-                          Delete
-                        </Button>
+                        ><LocalizedText text="Delete" /></Button>
                       </div>
                     </div>
                   </GridItem>
@@ -238,9 +227,9 @@ const ChangeImage = () => {
       <Modal onClose={handleDeleteClose} isOpen={deleteOpen} isCentered>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Delete Images</ModalHeader>
+          <ModalHeader><LocalizedText text="Delete Images" /></ModalHeader>
           <ModalCloseButton />
-          <ModalBody>Are You Sure To Delete selected Images ?</ModalBody>
+          <ModalBody><LocalizedText text="Are You Sure To Delete selected Images ?" /></ModalBody>
           <ModalFooter>
             <Button
               colorScheme="red"
@@ -249,11 +238,9 @@ const ChangeImage = () => {
               onClick={handleDelete}
               disabled={isLoding ? true : false}
             >
-              {isLoding ? <Spinner /> : "Yes"}
+              {isLoding ? <Spinner /> : tr("Yes")}
             </Button>
-            <Button variant="outline" size="sm" onClick={handleDeleteClose}>
-              No
-            </Button>
+            <Button variant="outline" size="sm" onClick={handleDeleteClose}><LocalizedText text="No" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -261,4 +248,4 @@ const ChangeImage = () => {
   );
 };
 
-export default ChangeImage;
+export default withLocalization(ChangeImage);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
@@ -58,7 +59,7 @@ const Index = () => {
   };
 
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     isSortable: false,
     center: true,
     cell: ({ row }) => (
@@ -76,9 +77,7 @@ const Index = () => {
                 py={2.5}
                 icon={<EditIcon fontSize={15} mb={1} />}
                 onClick={() => handleEditOpen(row)}
-              >
-                Edit
-              </MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>
             )}
             {permission?.view && (
               <MenuItem
@@ -86,9 +85,7 @@ const Index = () => {
                 color={"green"}
                 icon={<ViewIcon fontSize={15} mb={1} />}
                 onClick={() => navigate(`/email-template/${row?.values?._id}`)}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             {permission?.delete && (
               <MenuItem
@@ -99,9 +96,7 @@ const Index = () => {
                   setDeleteMany(true);
                   setSelectedValues([row?.values?._id]);
                 }}
-              >
-                Delete
-              </MenuItem>
+              ><LocalizedText text="Delete" /></MenuItem>
             )}
           </MenuList>
         </Menu>
@@ -110,13 +105,13 @@ const Index = () => {
   };
   const tableColumns = [
     {
-      Header: "#",
+      Header: tr("#"),
       accessor: "_id",
       isSortable: false,
       width: 5,
     },
     {
-      Header: "Template Name",
+      Header: tr("Template Name"),
       accessor: "templateName",
       cell: (cell) => (
         <div className="selectOpt">
@@ -138,7 +133,7 @@ const Index = () => {
         </div>
       ),
     },
-    { Header: "Description", accessor: "description" },
+    { Header: tr("Description"), accessor: "description" },
     ...(permission?.update || permission?.delete ? [actionHeader] : []),
   ];
 
@@ -148,7 +143,7 @@ const Index = () => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -186,7 +181,7 @@ const Index = () => {
   return (
     <div>
       <CommonCheckTable
-        title={"Email Template"}
+        title={tr("Email Template")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
@@ -222,4 +217,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

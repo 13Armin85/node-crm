@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
@@ -46,15 +47,15 @@ function RoleModal(props) {
 
   const tableColumns = [
     {
-      Header: "#",
+      Header: tr("#"),
       accessor: "_id",
       isSortable: false,
       width: 10,
     },
-    { Header: "email Id", accessor: "username" },
-    { Header: "first Name", accessor: "firstName" },
-    { Header: "last Name", accessor: "lastName" },
-    { Header: "role", accessor: "role" },
+    { Header: tr("email Id"), accessor: "username" },
+    { Header: tr("first Name"), accessor: "firstName" },
+    { Header: tr("last Name"), accessor: "lastName" },
+    { Header: tr("role"), accessor: "role" },
   ];
 
   const textColor = useColorModeValue("secondaryGray.900", "white");
@@ -116,7 +117,7 @@ function RoleModal(props) {
         <ModalContent height={"580px"} maxWidth={"2xl"}>
           <ModalHeader>
             <Flex justifyContent={"space-between"}>
-              <Text textTransform={"capitalize"}>{name} Access</Text>
+              <Text textTransform={"capitalize"}>{name}<LocalizedText text="Access" /></Text>
               <Text
                 style={{
                   marginRight: "25px",
@@ -131,9 +132,7 @@ function RoleModal(props) {
                   setOpenUser(true);
                   setRoleModal(false);
                 }}
-              >
-                View user's in {name} role
-              </Text>
+              ><LocalizedText text="View user's in" />{name}<LocalizedText text="role" /></Text>
               <ModalCloseButton mt="2" />
             </Flex>
           </ModalHeader>
@@ -210,7 +209,7 @@ function RoleModal(props) {
                                 fontSize="sm"
                                 fontWeight="700"
                               >
-                                {cell?.value ? "Yes" : "No"}
+                                {cell?.value ? tr("Yes") : tr("No")}
                               </Text>
                             );
                           } else if (cell?.column?.Header === "view") {
@@ -220,7 +219,7 @@ function RoleModal(props) {
                                 fontSize="sm"
                                 fontWeight="700"
                               >
-                                {cell?.value ? "Yes" : "No"}
+                                {cell?.value ? tr("Yes") : tr("No")}
                               </Text>
                             );
                           } else if (cell?.column?.Header === "update") {
@@ -230,7 +229,7 @@ function RoleModal(props) {
                                 fontSize="sm"
                                 fontWeight="700"
                               >
-                                {cell?.value ? "Yes" : "No"}
+                                {cell?.value ? tr("Yes") : tr("No")}
                               </Text>
                             );
                           } else if (cell?.column?.Header === "delete") {
@@ -240,7 +239,7 @@ function RoleModal(props) {
                                 fontSize="sm"
                                 fontWeight="700"
                               >
-                                {cell?.value ? "Yes" : "No"}
+                                {cell?.value ? tr("Yes") : tr("No")}
                               </Text>
                             );
                           }
@@ -274,9 +273,7 @@ function RoleModal(props) {
                 setEditModal(true);
                 setRoleModal(false);
               }}
-            >
-              Change Access
-            </Button>
+            ><LocalizedText text="Change Access" /></Button>
             <Button
               size="sm"
               onClick={() => setRoleModal(false)}
@@ -286,9 +283,7 @@ function RoleModal(props) {
                 marginLeft: 2,
                 textTransform: "capitalize",
               }}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -321,4 +316,4 @@ function RoleModal(props) {
   );
 }
 
-export default RoleModal;
+export default withLocalization(RoleModal);

@@ -1,3 +1,6 @@
+import { setIn } from 'formik';
+import FormExtension from 'components/dynamicForm/FormExtension';
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -46,6 +49,8 @@ const AddEdit = () => {
   const [permission] = HasAccess(["Email Template"]);
   const emailEditorRef = useRef(null);
   const [preview, setPreview] = useState(false);
+  const [extraValues, setExtraValues] = useState({ customFields: {} });
+  const customFormik = { values: extraValues, errors: {}, setFieldValue: (key, value) => setExtraValues(previous => setIn(previous, key, value)) };
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
@@ -62,6 +67,7 @@ const AddEdit = () => {
   const fetchData = async () => {
     const result = await getApi(`api/email-temp/view/${id}`);
     if (result && result?.status === 200) {
+      setExtraValues({ customFields: result?.data?.customFields || {} });
       setName(result?.data?.templateName);
       setDescription(result?.data?.description);
       emailEditorRef?.current?.editor?.loadDesign(result?.data?.design);
@@ -80,6 +86,7 @@ const AddEdit = () => {
           templateName: name,
           description: description,
           createBy: user?._id,
+          customFields: extraValues.customFields,
         };
         const result = await postApi("api/email-temp/add", data);
         if (result && result?.status === 200) {
@@ -89,7 +96,7 @@ const AddEdit = () => {
         navigate("/email-template");
       });
     } else {
-      toast.error("Template Name is required");
+      toast.error(tr("Template Name is required"));
     }
   };
 
@@ -105,6 +112,7 @@ const AddEdit = () => {
           templateName: name,
           description: description,
           createBy: user?._id,
+          customFields: extraValues.customFields,
         };
         const result = await putApi(`api/email-temp/edit/${id}`, data);
         if (result && result?.status === 200) {
@@ -113,7 +121,7 @@ const AddEdit = () => {
         }
       });
     } else {
-      toast.error("Template Name is required");
+      toast.error(tr("Template Name is required"));
     }
   };
 
@@ -137,27 +145,23 @@ const AddEdit = () => {
         >
           <GridItem colSpan={{ base: 12, md: 6 }}>
             <Text fontSize="xl" fontWeight="bold" color={"blackAlpha.900"}>
-              {type === "add" ? "Create" : "Edit"} Template{" "}
+              {type === "add" ? tr("Create") : tr("Edit")}<LocalizedText text="Template" />{" "}
             </Text>
           </GridItem>
 
           <GridItem colSpan={{ base: 12, md: 6 }}>
             <Flex justifyContent={"right"}>
               <Button size="sm" variant="brand" onClick={togglePreview}>
-                {preview ? "Hide Preview" : "Show Preview"}
+                {preview ? tr("Hide Preview") : tr("Show Preview")}
               </Button>
               <Button
                 size="sm"
                 variant="brand"
                 style={{ marginLeft: "10px" }}
                 onClick={handleSave}
-              >
-                Save
-              </Button>
+              ><LocalizedText text="Save" /></Button>
               <Link to="/email-template" style={{ marginLeft: "10px" }}>
-                <Button size="sm" leftIcon={<IoIosArrowBack />} variant="brand">
-                  Back
-                </Button>
+                <Button size="sm" leftIcon={<IoIosArrowBack />} variant="brand"><LocalizedText text="Back" /></Button>
               </Link>
             </Flex>
           </GridItem>
@@ -169,7 +173,7 @@ const AddEdit = () => {
               <Input
                 fontSize="sm"
                 name="templateName"
-                placeholder="Template Name"
+                placeholder={tr("Template Name")}
                 fontWeight="500"
                 value={name}
                 onChange={(e) => setName(e?.target?.value)}
@@ -179,14 +183,14 @@ const AddEdit = () => {
               <Input
                 fontSize="sm"
                 name="description"
-                placeholder="Description"
+                placeholder={tr("Description")}
                 fontWeight="500"
                 value={description}
                 onChange={(e) => setDescription(e?.target?.value)}
               />
             </GridItem>
             <GridItem colSpan={{ base: 12, md: 12 }} mt={2}>
-              <EmailEditor ref={emailEditorRef} />
+              <FormExtension moduleName="Email Template" formik={customFormik} /><EmailEditor ref={emailEditorRef} />
             </GridItem>
           </Grid>
         </div>
@@ -195,4 +199,4 @@ const AddEdit = () => {
   );
 };
 
-export default AddEdit;
+export default withLocalization(AddEdit);

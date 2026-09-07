@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ViewIcon } from "@chakra-ui/icons";
@@ -46,7 +47,7 @@ const Index = (props) => {
     "Contacts",
   ]);
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     accessor: "action",
     isSortable: false,
     center: true,
@@ -66,9 +67,7 @@ const Index = (props) => {
                 color={"green"}
                 onClick={() => navigate(`/phone-call/${row?.values._id}`)}
                 icon={<ViewIcon mb={"2px"} fontSize={15} />}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             {row?.original?.createByContact && contactAccess?.view ? (
               <MenuItem
@@ -124,9 +123,9 @@ const Index = (props) => {
     ),
   };
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Recipient",
+      Header: tr("Recipient"),
       accessor: "recipient",
       cell: (cell) => (
         <Link to={`/phone-call/${cell?.row?.values._id}`}>
@@ -144,9 +143,9 @@ const Index = (props) => {
         </Link>
       ),
     },
-    { Header: "Sender Name", accessor: "senderName" },
+    { Header: tr("Sender Name"), accessor: "senderName" },
     {
-      Header: "Realeted To",
+      Header: tr("Realeted To"),
       accessor: "realeted",
       cell: ({ row }) => (
         <Text>
@@ -192,9 +191,9 @@ const Index = (props) => {
         </Text>
       ),
     },
-    { Header: "Timestamp", accessor: "timestamp" },
+    { Header: tr("Timestamp"), accessor: "timestamp" },
     {
-      Header: "Created",
+      Header: tr("Created"),
       accessor: "created",
       cell: ({ row }) => (
         <Text fontSize="sm" fontWeight="700">
@@ -213,7 +212,7 @@ const Index = (props) => {
     if (result.payload.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -228,7 +227,7 @@ const Index = (props) => {
   return (
     <div>
       <CommonCheckTable
-        title={"Calls"}
+        title={tr("Calls")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
@@ -259,9 +258,7 @@ const Index = (props) => {
             mt={{ sm: "5px", md: "0" }}
             size="sm"
             onClick={() => setAdvanceSearch(true)}
-          >
-            Advance Search
-          </Button>
+          ><LocalizedText text="Advance Search" /></Button>
         }
         getTagValuesOutSide={getTagValuesOutSide}
         searchboxOutside={searchboxOutside}
@@ -291,4 +288,4 @@ const Index = (props) => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

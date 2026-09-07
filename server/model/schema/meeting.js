@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const meetingHistory = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     agenda: { type: String, required: true },
     attendes: [{
         type: mongoose.Schema.Types.ObjectId,

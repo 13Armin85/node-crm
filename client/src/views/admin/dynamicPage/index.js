@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { HasAccess } from "../../../redux/accessUtils";
@@ -67,7 +68,7 @@ const Index = () => {
     fetchData(singaleData?._id);
 
     const actionHeader = {
-      Header: "Action",
+      Header: tr("Action"),
       isSortable: false,
       center: true,
       cell: ({ row }) => (
@@ -88,9 +89,7 @@ const Index = () => {
                     setEdit(true);
                     setSelectedId(row?.values?._id);
                   }}
-                >
-                  Edit
-                </MenuItem>
+                ><LocalizedText text="Edit" /></MenuItem>
               )}
               {permission?.view && (
                 <MenuItem
@@ -102,9 +101,7 @@ const Index = () => {
                       state: { module: singaleData },
                     });
                   }}
-                >
-                  View
-                </MenuItem>
+                ><LocalizedText text="View" /></MenuItem>
               )}
               {permission?.delete && (
                 <MenuItem
@@ -115,9 +112,7 @@ const Index = () => {
                     setDelete(true);
                     setSelectedValues([row?.values?._id]);
                   }}
-                >
-                  Delete
-                </MenuItem>
+                ><LocalizedText text="Delete" /></MenuItem>
               )}
             </MenuList>
           </Menu>
@@ -126,7 +121,7 @@ const Index = () => {
     };
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(singaleData?.fields
         ?.filter((field) => field?.isTableField === true && field?.isView)
         ?.map((field) => ({
@@ -277,4 +272,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

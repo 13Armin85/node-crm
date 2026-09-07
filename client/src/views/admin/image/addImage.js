@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -99,7 +100,7 @@ const AddImage = (props) => {
     >
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Add Image</ModalHeader>
+        <ModalHeader><LocalizedText text="Add Image" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -146,7 +147,7 @@ const AddImage = (props) => {
             }
             size="sm"
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             variant="outline"
@@ -156,13 +157,11 @@ const AddImage = (props) => {
               setImageModal(false);
               formik.resetForm();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddImage;
+export default withLocalization(AddImage);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { DeleteIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -36,7 +37,7 @@ const Addfield = (props) => {
     props?.onClose(false);
   };
   const initialValues = {
-    label: "",
+    label: tr(""),
     name: "",
     type: "text",
     delete: false,
@@ -215,7 +216,7 @@ const Addfield = (props) => {
       <Modal onClose={props?.onClose} isOpen={props?.isOpen} isCentered>
         <ModalOverlay />
         <ModalContent maxWidth={"2xl"}>
-          <ModalHeader>Add Field</ModalHeader>
+          <ModalHeader><LocalizedText text="Add Field" /></ModalHeader>
           <ModalCloseButton onClick={() => resetForm()} />
           <ModalBody>
             <>
@@ -227,8 +228,7 @@ const Addfield = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Label<Text color={"red"}>*</Text>
+                  ><LocalizedText text="Label" /><Text color={"red"}>*</Text>
                   </FormLabel>
                   <Input
                     fontSize="sm"
@@ -254,8 +254,7 @@ const Addfield = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Name<Text color={"red"}>*</Text>
+                  ><LocalizedText text="Name" /><Text color={"red"}>*</Text>
                   </FormLabel>
                   <Input
                     fontSize="sm"
@@ -276,7 +275,7 @@ const Addfield = (props) => {
                     onBlur={handleBlur}
                     value={values?.name}
                     name="name"
-                    placeholder="Enter Name"
+                    placeholder={tr("Enter Name")}
                     fontWeight="500"
                     borderColor={
                       errors?.name && touched?.name ? "red.300" : null
@@ -294,9 +293,7 @@ const Addfield = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Type
-                  </FormLabel>
+                  ><LocalizedText text="Type" /></FormLabel>
                   <Select
                     value={values?.type}
                     name="type"
@@ -317,17 +314,17 @@ const Addfield = (props) => {
                       errors?.type && touched?.type ? "red.300" : null
                     }
                   >
-                    <option value="text">Text</option>
-                    <option value="number">Number</option>
-                    <option value="radio">Radio</option>
-                    <option value="check">Check</option>
-                    <option value="date">Date</option>
-                    <option value="tel">Tel</option>
-                    <option value="range">Range</option>
-                    <option value="color">Color</option>
-                    <option value="email">Email</option>
-                    <option value="url">Url</option>
-                    <option value="select">Dropdown</option>
+                    <option value="text"><LocalizedText text="Text" /></option>
+                    <option value="number"><LocalizedText text="Number" /></option>
+                    <option value="radio"><LocalizedText text="Radio" /></option>
+                    <option value="check"><LocalizedText text="Check" /></option>
+                    <option value="date"><LocalizedText text="Date" /></option>
+                    <option value="tel"><LocalizedText text="Tel" /></option>
+                    <option value="range"><LocalizedText text="Range" /></option>
+                    <option value="color"><LocalizedText text="Color" /></option>
+                    <option value="email"><LocalizedText text="Email" /></option>
+                    <option value="url"><LocalizedText text="Url" /></option>
+                    <option value="select"><LocalizedText text="Dropdown" /></option>
                   </Select>
                   <Text mb="10px" color={"red"}>
                     {" "}
@@ -341,9 +338,7 @@ const Addfield = (props) => {
                     fontSize="sm"
                     fontWeight="500"
                     mb="8px"
-                  >
-                    Belongs To
-                    {/* Belongs To */}
+                  ><LocalizedText text="Belongs To" />{/* Belongs To */}
                   </FormLabel>
                   <Select
                     value={values?.belongsTo}
@@ -361,7 +356,7 @@ const Addfield = (props) => {
                     }}
                     onBlur={handleBlur}
                     fontWeight="500"
-                    placeholder={"Select Heading"}
+                    placeholder={tr("Select Heading")}
                     borderColor={
                       errors?.belongsTo && touched?.belongsTo ? "red.300" : null
                     }
@@ -382,9 +377,7 @@ const Addfield = (props) => {
                 </GridItem>
                 <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
                   <Flex alignItems="center">
-                    <FormLabel ms="4px" fontSize="sm" fontWeight="500" mb={0}>
-                      Fixed
-                    </FormLabel>
+                    <FormLabel ms="4px" fontSize="sm" fontWeight="500" mb={0}><LocalizedText text="Fixed" /></FormLabel>
                     <Checkbox
                       colorScheme="brandScheme"
                       me="10px"
@@ -405,16 +398,12 @@ const Addfield = (props) => {
                         alignItems={"center"}
                         mb={"8px"}
                       >
-                        <Heading as="h1" size="md">
-                          Option
-                        </Heading>
+                        <Heading as="h1" size="md"><LocalizedText text="Option" /></Heading>
                         <Button
                           size="sm"
                           variant="brand"
                           onClick={() => handleAddOption()}
-                        >
-                          Add
-                        </Button>
+                        ><LocalizedText text="Add" /></Button>
                       </Flex>
                     </GridItem>
                     {values?.options?.map((option, index) => (
@@ -426,16 +415,14 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Name
-                          </FormLabel>
+                          ><LocalizedText text="Name" /></FormLabel>
                           <Input
                             fontSize="sm"
                             onChange={handleChange}
                             onBlur={handleBlur}
                             value={values?.options[index]?.name}
                             name={`options[${index}].name`}
-                            placeholder="Enter Name"
+                            placeholder={tr("Enter Name")}
                             fontWeight="500"
                             borderColor={
                               errors?.options &&
@@ -461,16 +448,14 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Value
-                          </FormLabel>
+                          ><LocalizedText text="Value" /></FormLabel>
                           <Input
                             fontSize="sm"
                             onChange={handleChange}
                             onBlur={handleBlur}
                             value={values?.options[index]?.value}
                             name={`options[${index}].value`}
-                            placeholder="Enter Value"
+                            placeholder={tr("Enter Value")}
                             fontWeight="500"
                             borderColor={
                               errors?.options &&
@@ -523,9 +508,7 @@ const Addfield = (props) => {
                     justifyContent={"space-between"}
                     mb={"8px"}
                   >
-                    <Heading as="h1" size="md">
-                      Validation
-                    </Heading>
+                    <Heading as="h1" size="md"><LocalizedText text="Validation" /></Heading>
                     <Flex>
                       {validations?.length > 0 && (
                         <Select
@@ -576,7 +559,7 @@ const Addfield = (props) => {
                           me="10px"
                           fontWeight="500"
                           size="xs"
-                          placeholder={"Select Validation"}
+                          placeholder={tr("Select Validation")}
                         >
                           {validations?.map((item, index) => (
                             <option key={index} value={item?._id}>
@@ -626,9 +609,7 @@ const Addfield = (props) => {
                           fontSize="sm"
                           fontWeight="500"
                           mb="0"
-                        >
-                          Require
-                        </FormLabel>
+                        ><LocalizedText text="Require" /></FormLabel>
                       </Flex>
                     </GridItem>
                     <GridItem colSpan={{ base: 12, md: 8 }}>
@@ -638,9 +619,7 @@ const Addfield = (props) => {
                         fontSize="sm"
                         fontWeight="500"
                         mb="8px"
-                      >
-                        Message
-                      </FormLabel>
+                      ><LocalizedText text="Message" /></FormLabel>
                       <Input
                         disabled={
                           values?.validation[0]?.require === true ? false : true
@@ -654,7 +633,7 @@ const Addfield = (props) => {
                             : ""
                         }
                         name={`validation[${0}].message`}
-                        placeholder="Enter Require  message"
+                        placeholder={tr("Enter Require  message")}
                         fontWeight="500"
                       />
                     </GridItem>
@@ -703,9 +682,7 @@ const Addfield = (props) => {
                               fontSize="sm"
                               fontWeight="500"
                               mb="0"
-                            >
-                              Min
-                            </FormLabel>
+                            ><LocalizedText text="Min" /></FormLabel>
                           </Flex>
                         </GridItem>
                         <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
@@ -715,9 +692,7 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Value
-                            {values?.validation[1].min === true ||
+                          ><LocalizedText text="Value" />{values?.validation[1].min === true ||
                             values?.type === "range" ? (
                               <Text color={"red"}>*</Text>
                             ) : (
@@ -742,7 +717,7 @@ const Addfield = (props) => {
                                 : ""
                             }
                             name={`validation[${1}].value`}
-                            placeholder="Enter Min Value"
+                            placeholder={tr("Enter Min Value")}
                             fontWeight="500"
                             borderColor={
                               (values?.validation[1]?.min === true ||
@@ -773,9 +748,7 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Message
-                          </FormLabel>
+                          ><LocalizedText text="Message" /></FormLabel>
                           <Input
                             disabled={
                               values?.validation[1]?.min === true ||
@@ -793,7 +766,7 @@ const Addfield = (props) => {
                                 : ""
                             }
                             name={`validation[${1}].message`}
-                            placeholder="Enter Min message"
+                            placeholder={tr("Enter Min message")}
                             fontWeight="500"
                           />
                         </GridItem>
@@ -835,9 +808,7 @@ const Addfield = (props) => {
                               fontSize="sm"
                               fontWeight="500"
                               mb="0"
-                            >
-                              Max
-                            </FormLabel>
+                            ><LocalizedText text="Max" /></FormLabel>
                           </Flex>
                         </GridItem>
                         <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
@@ -847,9 +818,7 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Value
-                            {values?.validation[2].max === true ||
+                          ><LocalizedText text="Value" />{values?.validation[2].max === true ||
                             values?.type === "range" ? (
                               <Text color={"red"}>*</Text>
                             ) : (
@@ -874,7 +843,7 @@ const Addfield = (props) => {
                                 : ""
                             }
                             name={`validation[${2}].value`}
-                            placeholder="Enter Max Value"
+                            placeholder={tr("Enter Max Value")}
                             fontWeight="500"
                             borderColor={
                               (values?.validation[2].max === true ||
@@ -905,9 +874,7 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Message
-                          </FormLabel>
+                          ><LocalizedText text="Message" /></FormLabel>
                           <Input
                             disabled={
                               values?.validation[2]?.max === true ||
@@ -925,7 +892,7 @@ const Addfield = (props) => {
                                 : ""
                             }
                             name={`validation[${2}].message`}
-                            placeholder="Enter Max Message"
+                            placeholder={tr("Enter Max Message")}
                             fontWeight="500"
                             borderColor={
                               errors?.massage && touched?.massage
@@ -966,9 +933,7 @@ const Addfield = (props) => {
                               fontSize="sm"
                               fontWeight="500"
                               mb="0"
-                            >
-                              Match
-                            </FormLabel>
+                            ><LocalizedText text="Match" /></FormLabel>
                           </Flex>
                         </GridItem>
                         <GridItem colSpan={{ base: 12, sm: 6, md: 4 }}>
@@ -978,9 +943,7 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Value
-                            {values?.validation[3]?.match === true ? (
+                          ><LocalizedText text="Value" />{values?.validation[3]?.match === true ? (
                               <Text color={"red"}>*</Text>
                             ) : (
                               ""
@@ -1001,7 +964,7 @@ const Addfield = (props) => {
                                 : ""
                             }
                             name={`validation[${3}].value`}
-                            placeholder="Enter Match Value"
+                            placeholder={tr("Enter Match Value")}
                             fontWeight="500"
                             borderColor={
                               values?.validation[3]?.match === true &&
@@ -1030,9 +993,7 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Message
-                            {values?.validation[3]?.match === true ? (
+                          ><LocalizedText text="Message" />{values?.validation[3]?.match === true ? (
                               <Text color={"red"}>*</Text>
                             ) : (
                               ""
@@ -1053,7 +1014,7 @@ const Addfield = (props) => {
                                 : ""
                             }
                             name={`validation[${3}].message`}
-                            placeholder="Enter Match Message"
+                            placeholder={tr("Enter Match Message")}
                             fontWeight="500"
                             borderColor={
                               values?.validation[3]?.match === true &&
@@ -1109,9 +1070,7 @@ const Addfield = (props) => {
                               fontSize="sm"
                               fontWeight="500"
                               mb="0"
-                            >
-                              Formik Type
-                            </FormLabel>
+                            ><LocalizedText text="Formik Type" /></FormLabel>
                           </Flex>
                         </GridItem>
 
@@ -1122,9 +1081,7 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            FormikType
-                            {values?.validation[4]?.types === true ||
+                          ><LocalizedText text="FormikType" />{values?.validation[4]?.types === true ||
                             values?.validation[4].formikType ? (
                               <Text color={"red"}>*</Text>
                             ) : (
@@ -1149,7 +1106,7 @@ const Addfield = (props) => {
                             name={`validation[${4}].formikType`}
                             onChange={handleChange}
                             fontWeight="500"
-                            placeholder={"Select Type"}
+                            placeholder={tr("Select Type")}
                             borderColor={
                               (values?.validation[4]?.types === true ||
                                 values?.validation[4]?.formikType) &&
@@ -1161,17 +1118,17 @@ const Addfield = (props) => {
                                 : null
                             }
                           >
-                            <option value="string">String </option>
-                            <option value="email">Email </option>
-                            <option value="date">Date </option>
-                            <option value="number">Number </option>
-                            <option value="object">Object </option>
-                            <option value="array">Array </option>
-                            <option value="url">Url </option>
-                            <option value="boolean">Boolean </option>
-                            <option value="positive">Positive </option>
-                            <option value="negative">Negative </option>
-                            <option value="integer">Integer </option>
+                            <option value="string"><LocalizedText text="String" /></option>
+                            <option value="email"><LocalizedText text="Email" /></option>
+                            <option value="date"><LocalizedText text="Date" /></option>
+                            <option value="number"><LocalizedText text="Number" /></option>
+                            <option value="object"><LocalizedText text="Object" /></option>
+                            <option value="array"><LocalizedText text="Array" /></option>
+                            <option value="url"><LocalizedText text="Url" /></option>
+                            <option value="boolean"><LocalizedText text="Boolean" /></option>
+                            <option value="positive"><LocalizedText text="Positive" /></option>
+                            <option value="negative"><LocalizedText text="Negative" /></option>
+                            <option value="integer"><LocalizedText text="Integer" /></option>
                           </Select>
                           {(values?.validation[4]?.types === true ||
                             values?.validation[4]?.formikType) && (
@@ -1191,9 +1148,7 @@ const Addfield = (props) => {
                             fontSize="sm"
                             fontWeight="500"
                             mb="8px"
-                          >
-                            Message
-                          </FormLabel>
+                          ><LocalizedText text="Message" /></FormLabel>
                           <Input
                             disabled={
                               values?.validation[4]?.types === true ||
@@ -1211,7 +1166,7 @@ const Addfield = (props) => {
                                 : ""
                             }
                             name={`validation[${4}].message`}
-                            placeholder="Enter Formik Type Message"
+                            placeholder={tr("Enter Formik Type Message")}
                             fontWeight="500"
                           />
                         </GridItem>
@@ -1233,7 +1188,7 @@ const Addfield = (props) => {
               disabled={isLoding ? true : false}
               onClick={handleSubmit}
             >
-              {isLoding ? <Spinner /> : "Save"}
+              {isLoding ? <Spinner /> : tr("Save")}
             </Button>
             <Button
               variant="outline"
@@ -1247,9 +1202,7 @@ const Addfield = (props) => {
                 resetForm();
                 setValidationType("");
               }}
-            >
-              Close
-            </Button>
+            ><LocalizedText text="Close" /></Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1257,4 +1210,4 @@ const Addfield = (props) => {
   );
 };
 
-export default Addfield;
+export default withLocalization(Addfield);

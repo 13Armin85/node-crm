@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -31,8 +32,8 @@ const AddRole = (props) => {
   };
 
   const validationSchema = yup.object({
-    roleName: yup.string().required("Role Name is required"),
-    description: yup.string().required("Description is required"),
+    roleName: yup.string().required(tr("Role Name is required")),
+    description: yup.string().required(tr("Description is required")),
   });
 
   const formik = useFormik({
@@ -75,9 +76,7 @@ const AddRole = (props) => {
     <Modal isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader justifyContent="space-between" display="flex">
-          Add Role
-          <IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
+        <ModalHeader justifyContent="space-between" display="flex"><LocalizedText text="Add Role" /><IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
         </ModalHeader>
         <ModalBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -88,8 +87,7 @@ const AddRole = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Role Name<Text color={"red"}>*</Text>
+              ><LocalizedText text="Role Name" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -97,7 +95,7 @@ const AddRole = (props) => {
                 onBlur={handleBlur}
                 value={values?.roleName}
                 name="roleName"
-                placeholder="Enter Role Name"
+                placeholder={tr("Enter Role Name")}
                 fontWeight="500"
                 borderColor={
                   errors?.roleName && touched?.roleName ? "red.300" : null
@@ -115,8 +113,7 @@ const AddRole = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Description<Text color={"red"}>*</Text>
+              ><LocalizedText text="Description" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -124,7 +121,7 @@ const AddRole = (props) => {
                 onBlur={handleBlur}
                 value={values?.description}
                 name="description"
-                placeholder="Enter Description"
+                placeholder={tr("Enter Description")}
                 fontWeight="500"
                 borderColor={
                   errors?.description && touched?.description ? "red.300" : null
@@ -147,7 +144,7 @@ const AddRole = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             size="sm"
@@ -158,13 +155,11 @@ const AddRole = (props) => {
               formik.resetForm();
               onClose(false);
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AddRole;
+export default withLocalization(AddRole);

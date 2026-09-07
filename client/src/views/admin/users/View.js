@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
   ChevronDownIcon,
@@ -37,9 +38,9 @@ import AddEditUser from "./AddEditUser";
 
 const View = () => {
   const RoleColumn = [
-    { Header: "#", accessor: "_id", width: 10, display: false },
-    { Header: "Role Name", accessor: "roleName" },
-    { Header: "Description", accessor: "description" },
+    { Header: tr("#"), accessor: "_id", width: 10, display: false },
+    { Header: tr("Role Name"), accessor: "roleName" },
+    { Header: tr("Description"), accessor: "description" },
   ];
   const dispatch = useDispatch();
   const userData = useSelector((state) => state?.user?.user);
@@ -148,9 +149,7 @@ const View = () => {
                 <Heading size="md" mb={3} textTransform={"capitalize"}>
                   {data?.firstName || data?.lastName
                     ? `${data?.firstName} ${data?.lastName}`
-                    : "User"}{" "}
-                  Information
-                </Heading>
+                    : tr("User")}{" "}<LocalizedText text="Information" /></Heading>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <Flex
@@ -166,26 +165,20 @@ const View = () => {
                         mr={2.5}
                         as={Button}
                         rightIcon={<ChevronDownIcon />}
-                      >
-                        Actions
-                      </MenuButton>
+                      ><LocalizedText text="Actions" /></MenuButton>
                       <MenuDivider />
                       <MenuList minWidth={"13rem"}>
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => handleOpen("add")}
                           icon={<AddIcon />}
-                        >
-                          Add
-                        </MenuItem>
+                        ><LocalizedText text="Add" /></MenuItem>
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => handleOpen("edit")}
                           icon={<EditIcon />}
                           color="green"
-                        >
-                          Edit
-                        </MenuItem>
+                        ><LocalizedText text="Edit" /></MenuItem>
                         {data?.role !== "superAdmin" &&
                           JSON.parse(localStorage.getItem("user"))?.role ===
                             "superAdmin" && (
@@ -195,9 +188,7 @@ const View = () => {
                                 alignItems={"start"}
                                 onClick={() => setDelete(true)}
                                 icon={<DeleteIcon />}
-                              >
-                                Delete
-                              </MenuItem>
+                              ><LocalizedText text="Delete" /></MenuItem>
                             </>
                           )}
                       </MenuList>
@@ -208,9 +199,7 @@ const View = () => {
                       leftIcon={<IoIosArrowBack />}
                       variant="brand"
                       size="sm"
-                    >
-                      Back
-                    </Button>
+                    ><LocalizedText text="Back" /></Button>
                   </Link>
                 </Flex>
               </GridItem>
@@ -219,28 +208,23 @@ const View = () => {
             <Grid templateColumns={"repeat(2, 1fr)"} gap={4} mt="5">
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  First Name{" "}
+                  {" "}<LocalizedText text="First Name" />{" "}
                 </Text>
                 <Text>{data?.firstName ? data?.firstName : " - "}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  Last Name{" "}
+                  {" "}<LocalizedText text="Last Name" />{" "}
                 </Text>
                 <Text>{data?.lastName ? data?.lastName : " - "}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  Phone Number
-                </Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Phone Number" /></Text>
                 <Text>{data?.phoneNumber ? data?.phoneNumber : " - "}</Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
-                  {" "}
-                  User Email{" "}
+                  {" "}<LocalizedText text="User Email" />{" "}
                 </Text>
                 <Text>{data?.username ? data?.username : " - "}</Text>
               </GridItem>
@@ -255,7 +239,7 @@ const View = () => {
                 roleModal={roleModal}
                 setRoleModal={setRoleModal}
                 tableData={data?.roles || []}
-                title={"Role"}
+                title={tr("Role")}
               />
             </Card>
           )}
@@ -283,9 +267,7 @@ const View = () => {
                     variant="outline"
                     size="sm"
                     colorScheme="green"
-                  >
-                    Edit
-                  </Button>
+                  ><LocalizedText text="Edit" /></Button>
                   {data?.role !== "superAdmin" &&
                     JSON.parse(localStorage.getItem("user"))?.role ===
                       "superAdmin" && (
@@ -295,9 +277,7 @@ const View = () => {
                         onClick={() => setDelete(true)}
                         leftIcon={<DeleteIcon />}
                         colorScheme="red"
-                      >
-                        Delete
-                      </Button>
+                      ><LocalizedText text="Delete" /></Button>
                     )}
                 </Flex>
               </GridItem>
@@ -309,4 +289,4 @@ const View = () => {
   );
 };
 
-export default View;
+export default withLocalization(View);

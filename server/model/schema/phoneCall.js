@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const phoneCall = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
   sender: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

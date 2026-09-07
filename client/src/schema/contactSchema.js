@@ -1,26 +1,27 @@
+import { tr } from 'i18n/runtime';
 import * as yup from "yup";
 
 export const contactSchema = yup.object({
   // 1. Basic Information
-  firstName: yup.string().min(2).required("First Name is required"),
-  lastName: yup.string().min(2).required("Last Name is required"),
-  title: yup.string().required("Title is required"),
-  email: yup.string().email().required("Email is required"),
+  firstName: yup.string().min(2).required(tr("First Name is required")),
+  lastName: yup.string().min(2).required(tr("Last Name is required")),
+  title: yup.string().required(tr("Title is required")),
+  email: yup.string().email().required(tr("Email is required")),
   phoneNumber: yup
     .number()
-    .min(1000000000, "Phone number is invalid")
-    .max(999999999999, "Phone number is invalid")
-    .required("Phonenumber is Required"),
+    .min(1000000000, tr("Phone number is invalid"))
+    .max(999999999999, tr("Phone number is invalid"))
+    .required(tr("Phonenumber is Required")),
   mobileNumber: yup
     .number()
-    .min(1000000000, "Phone number is invalid")
-    .max(999999999999, "Phone number is invalid")
+    .min(1000000000, tr("Phone number is invalid"))
+    .max(999999999999, tr("Phone number is invalid"))
     .notRequired(),
-  physicalAddress: yup.string().required("Physical address is required"),
+  physicalAddress: yup.string().required(tr("Physical address is required")),
   mailingAddress: yup.string(),
   preferredContactMethod: yup
     .string()
-    .required("Preferred contact method is required"),
+    .required(tr("Preferred contact method is required")),
   // 2.Lead Source Information
   leadSource: yup.string(),
   referralSource: yup.string(),

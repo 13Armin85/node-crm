@@ -1,59 +1,101 @@
-# Welcome to Real Estate CRM: Empowering Real Estate Agents with Modern CRM Tools
+# Real Estate CRM
 
-Real Estate CRM is an innovative Customer Relationship Management (CRM) solution designed exclusively for Real Estate Agents. Streamline your workflow, enhance client interactions, and boost your business with our feature-packed CRM.
+A MERN CRM for multilingual real-estate operations. The application supports English, Persian (RTL), and Turkish, dynamic admin-managed forms, partner customers, residences, properties, leads, activities, documents, quotes, and invoices.
 
-## **Explore our repository to discover**
+## Requirements
 
-1. Intuitive Interface: A user-friendly dashboard tailored to the needs of Real Estate professionals.
-2. MERN Stack Powered: Built on the robust MERN (MongoDB, Express, ReactJS, Node.js) stack for high performance.
-3. Customization: Open-source architecture allows you to tailor the CRM to your unique requirements.
-4. Responsive Design: Access your CRM anytime, anywhere, from any device.
-5. Seamless Communication: Foster better client relationships with integrated communication tools.
+- Node.js 18 or newer
+- npm
+- MongoDB 6 or newer
 
-Ready to revolutionize your Real Estate business? Dive into our documentation below and take the first step towards enhancing your productivity.
+## Setup
 
-## **Demo**
+Install the two applications:
 
-Here are the demo link credentials.
+```powershell
+cd server
+npm install
+Copy-Item .env.example .env
 
-https://real-estate-crm-jet.vercel.app/
+cd ..\client
+npm install
+```
 
-**Admin access:**
-Username: admin@gmail.com
-Password: admin123
+Edit `server/.env` before first startup. `JWT_SECRET` is required in production. Set `CORS_ORIGINS` to a comma-separated list of allowed client origins. If the database has no super administrator, set `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD`; these values are only used to create the first administrator.
 
-**Regular access:**
-Username: user@gmail.com
-Password: user123
+Start the API and client in separate terminals:
 
-## **Installation**
+```powershell
+cd server
+npm start
+```
 
-Getting started with RealEstateCRM is a breeze. Follow our comprehensive installation guide to set up the CRM in your local environment. Whether you're an experienced developer or new to the stack, our step-by-step instructions will have you up and running in no time.
+```powershell
+cd client
+npm start
+```
 
-[Installation Guide](https://github.com/prolinkinfo/RealEstateCRM/discussions/2)
+The API listens on `http://localhost:5001` unless `PORT` is changed. Create React App serves the client on its usual development port.
 
-## **Contributing**
+For a local development database, create/reset the two local login accounts with:
 
-We believe in the power of collaboration! Join us in making RealEstateCRM even better. Whether you're a developer, designer, or Real Estate enthusiast, your contributions are invaluable. Check out our contribution guidelines and dive into our codebase.
+```powershell
+cd server
+npm run seed:local-users
+```
 
-Contribution Guidelines
+This command is disabled when `NODE_ENV=production`. Its defaults are `admin@gmail.com` / `admin123` and `user@gmail.com` / `user123`; override them with `LOCAL_ADMIN_EMAIL`, `LOCAL_ADMIN_PASSWORD`, `LOCAL_USER_EMAIL`, and `LOCAL_USER_PASSWORD` environment variables.
 
-## **Support**
+## Estate data migration
 
-We're here to support your journey with RealEstateCRM. If you have questions, encounter issues, or need assistance, don't hesitate to reach out. Our responsive support team is dedicated to helping you succeed.
+The estate migration is additive and idempotent. It copies legacy Accounts into Partner Customers, maps recognizable legacy property values, creates form definitions, and updates role permissions. It never drops the legacy Accounts or Payments collections.
 
-For support inquiries, email us at: prolinkinfotechh@gmail.com
+Always preview first:
 
-## **License**
+```powershell
+cd server
+npm run migrate:estate
+```
 
-RealEstateCRM is released under the MIT License. Feel free to use, modify, and distribute the software in accordance with the license terms.
+Review every reported unknown property type. Correct those source records or extend the explicit mapping in `server/scripts/migrate-estate.js`, run preview again, then apply:
 
-## **Keeping in Touch**
+```powershell
+npm run migrate:estate -- --apply
+```
 
-We value your feedback and ideas. If you have suggestions for new features or customization options, we'd love to hear from you. Let's work together to shape the future of RealEstateCRM.
+Running `--apply` again is safe: migrated customers use `legacyAccountId`, definitions are upserted, and populated property fields are not overwritten.
 
-Contact us at: prolinkinfotechh@gmail.com
+## Dynamic forms
 
-## **Social Media**
+Super administrators can use **Form Builder** to manage custom fields and translated metadata for each main module. System fields can be reordered, enabled, and configured where allowed, but cannot be deleted or renamed internally. Supported field types include text, textarea, number, currency, select, multiselect, checkbox, radio, date, datetime, email, phone, file, and URL.
 
-Stay connected with us on social media for the latest updates, tips, and community discussions. Join our growing network of Real Estate professionals using RealEstateCRM to elevate their business.
+Property category, subtype, transaction type, currency, residence, and buyer relations use stable stored codes. Labels and option text are translated independently in English, Persian, and Turkish.
+
+## Validation
+
+```powershell
+cd server
+npm run check
+npm test
+
+cd ..\client
+npm run lint
+npm run build
+```
+
+Mongo-backed integration tests use a uniquely named temporary database and are opt-in:
+
+```powershell
+cd server
+$env:ESTATE_INTEGRATION='1'
+npm test
+Remove-Item Env:ESTATE_INTEGRATION
+```
+
+## Security and storage
+
+All estate endpoints require JWT authentication and enforce module/action permissions. Ordinary users are scoped to their own records; super administrators can access all records. Upload metadata is stored in MongoDB while files are written below `server/uploads`, which is excluded from version control. Use persistent protected storage for that directory in production.
+
+## License
+
+MIT

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon, PhoneIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -105,9 +106,7 @@ const Edit = (props) => {
     <Modal isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader justifyContent="space-between" display="flex">
-          Edit User
-          <IconButton onClick={() => setEdit(false)} icon={<CloseIcon />} />
+        <ModalHeader justifyContent="space-between" display="flex"><LocalizedText text="Edit User" /><IconButton onClick={() => setEdit(false)} icon={<CloseIcon />} />
         </ModalHeader>
         <ModalBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -118,8 +117,7 @@ const Edit = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                First Name<Text color={"red"}>*</Text>
+              ><LocalizedText text="First Name" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -127,7 +125,7 @@ const Edit = (props) => {
                 onBlur={handleBlur}
                 value={values?.firstName}
                 name="firstName"
-                placeholder="firstName"
+                placeholder={tr("firstName")}
                 fontWeight="500"
                 borderColor={
                   errors?.firstName && touched?.firstName ? "red.300" : null
@@ -145,16 +143,14 @@ const Edit = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Last Name
-              </FormLabel>
+              ><LocalizedText text="Last Name" /></FormLabel>
               <Input
                 fontSize="sm"
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={values?.lastName}
                 name="lastName"
-                placeholder="Last Name"
+                placeholder={tr("Last Name")}
                 fontWeight="500"
                 borderColor={
                   errors?.lastName && touched?.lastName ? "red.300" : null
@@ -172,8 +168,7 @@ const Edit = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Email<Text color={"red"}>*</Text>
+              ><LocalizedText text="Email" /><Text color={"red"}>*</Text>
               </FormLabel>
               <Input
                 fontSize="sm"
@@ -182,7 +177,7 @@ const Edit = (props) => {
                 onBlur={handleBlur}
                 value={values?.username}
                 name="username"
-                placeholder="Email Address"
+                placeholder={tr("Email Address")}
                 fontWeight="500"
                 borderColor={
                   errors?.username && touched?.username ? "red.300" : null
@@ -200,8 +195,7 @@ const Edit = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              >
-                Phone Number<Text color={"red"}>*</Text>
+              ><LocalizedText text="Phone Number" /><Text color={"red"}>*</Text>
               </FormLabel>
               <InputGroup>
                 <InputLeftElement
@@ -221,7 +215,7 @@ const Edit = (props) => {
                       ? "red.300"
                       : null
                   }
-                  placeholder="Phone number"
+                  placeholder={tr("Phone number")}
                   borderRadius="16px"
                 />
               </InputGroup>
@@ -240,7 +234,7 @@ const Edit = (props) => {
             disabled={isLoding ? true : false}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : "Update"}
+            {isLoding ? <Spinner /> : tr("Update")}
           </Button>
           <Button
             variant="outline"
@@ -251,13 +245,11 @@ const Edit = (props) => {
               textTransform: "capitalize",
             }}
             onClick={() => handleCloseModal()}
-          >
-            close
-          </Button>
+          ><LocalizedText text="close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default Edit;
+export default withLocalization(Edit);

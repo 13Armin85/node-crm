@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -33,7 +34,7 @@ const MultiPropertyModel = (props) => {
     const result = await dispatch(fetchPropertyCustomFiled());
     setContactData(result?.payload?.data);
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       ...(result?.payload?.data?.[0]?.fields || [])
         .filter((field) => field?.isTableField === true)
         .map((field) => ({ Header: field?.label, accessor: field?.name })),
@@ -70,7 +71,7 @@ const MultiPropertyModel = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select Property</ModalHeader>
+        <ModalHeader><LocalizedText text="Select Property" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -79,7 +80,7 @@ const MultiPropertyModel = (props) => {
             </Flex>
           ) : (
             <PropertyTable
-              title={"Property"}
+              title={tr("Property")}
               isLoding={isLoding}
               allData={data}
               tableData={data}
@@ -103,13 +104,13 @@ const MultiPropertyModel = (props) => {
             leftIcon={<GiClick />}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Select"}
+            {isLoding ? <Spinner /> : tr("Select")}
           </Button>
-          <Button onClick={() => onClose()}>Close</Button>
+          <Button onClick={() => onClose()}><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default MultiPropertyModel;
+export default withLocalization(MultiPropertyModel);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -53,16 +54,14 @@ const Preview = (props) => {
           alignItems={"center"}
           justifyContent="space-between"
           display="flex"
-        >
-          Invoice
-          <IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
+        ><LocalizedText text="Invoice" /><IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
         </DrawerHeader>
         <DrawerBody>
           {!isLoding ? (
             <div id={id} style={{ padding: "5px" }}>
               <div className="invoice-container">
                 <div style={{ marginBottom: 10 }}>
-                  <h1 style={{ fontSize: 30, textAlign: "center" }}>Invoice</h1>
+                  <h1 style={{ fontSize: 30, textAlign: "center" }}><LocalizedText text="Invoice" /></h1>
                 </div>
                 <div className="invoice-header">
                   <div>
@@ -78,14 +77,14 @@ const Preview = (props) => {
                   <div className="invoice-details">
                     <table>
                       <tr>
-                        <th style={{ textAlign: "start" }}>Invoice No.</th>
+                        <th style={{ textAlign: "start" }}><LocalizedText text="Invoice No." /></th>
                         <td>:</td>
                         <td style={{ textAlign: "start" }}>
                           {invoiceDetails?.invoiceNumber}
                         </td>
                       </tr>
                       <tr>
-                        <th style={{ textAlign: "start" }}>Invoice Date</th>
+                        <th style={{ textAlign: "start" }}><LocalizedText text="Invoice Date" /></th>
                         <td>:</td>
                         <td style={{ textAlign: "start" }}>
                           {invoiceDetails?.invoiceDate &&
@@ -95,14 +94,14 @@ const Preview = (props) => {
                         </td>
                       </tr>
                       <tr>
-                        <th style={{ textAlign: "start" }}>Name</th>
+                        <th style={{ textAlign: "start" }}><LocalizedText text="Name" /></th>
                         <td>:</td>
                         <td style={{ textAlign: "start" }}>
                           {invoiceDetails?.title}
                         </td>
                       </tr>
                       <tr>
-                        <th style={{ textAlign: "start" }}>Status</th>
+                        <th style={{ textAlign: "start" }}><LocalizedText text="Status" /></th>
                         <td>:</td>
                         <td style={{ textAlign: "start" }}>
                           {invoiceDetails?.status}
@@ -113,7 +112,7 @@ const Preview = (props) => {
                 </div>
                 <div className="address-section">
                   <div className="address">
-                    <strong>Billing Address</strong>
+                    <strong><LocalizedText text="Billing Address" /></strong>
                     <br />
                     <p style={{ width: "250px", wordBreak: "break-all" }}>
                       {invoiceDetails?.billingStreet
@@ -130,7 +129,7 @@ const Preview = (props) => {
                     </p>
                   </div>
                   <div className="address">
-                    <strong>Shipping Address</strong>
+                    <strong><LocalizedText text="Shipping Address" /></strong>
                     <br />
                     <p style={{ width: "250px", wordBreak: "break-all" }}>
                       {invoiceDetails?.shippingStreet
@@ -150,12 +149,12 @@ const Preview = (props) => {
                 <table className="invoice-table">
                   <thead>
                     <tr>
-                      <th style={{ width: "50px" }}>S No</th>
-                      <th style={{ width: "100px" }}>ITEM</th>
-                      <th style={{ width: "50px" }}>QTY</th>
-                      <th style={{ width: "50px" }}>RATE</th>
-                      <th style={{ width: "50px" }}>DISCOUNT</th>
-                      <th style={{ width: "50px" }}>AMOUNT</th>
+                      <th style={{ width: "50px" }}><LocalizedText text="S No" /></th>
+                      <th style={{ width: "100px" }}><LocalizedText text="ITEM" /></th>
+                      <th style={{ width: "50px" }}><LocalizedText text="QTY" /></th>
+                      <th style={{ width: "50px" }}><LocalizedText text="RATE" /></th>
+                      <th style={{ width: "50px" }}><LocalizedText text="DISCOUNT" /></th>
+                      <th style={{ width: "50px" }}><LocalizedText text="AMOUNT" /></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -175,43 +174,42 @@ const Preview = (props) => {
                 <div className="totals">
                   <table>
                     <tr>
-                      <th style={{ textAlign: "start" }}>Total</th>
+                      <th style={{ textAlign: "start" }}><LocalizedText text="Total" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
                       >{`${invoiceDetails?.currency} ${invoiceDetails?.total || 0}`}</td>
                     </tr>
                     <tr>
-                      <th style={{ textAlign: "start" }}>Discount </th>
+                      <th style={{ textAlign: "start" }}><LocalizedText text="Discount" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
                       >{`${invoiceDetails?.currency} ${invoiceDetails?.discount || 0}`}</td>
                     </tr>
                     <tr>
-                      <th style={{ textAlign: "start" }}>Subtotal</th>
+                      <th style={{ textAlign: "start" }}><LocalizedText text="Subtotal" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
                       >{`${invoiceDetails?.currency} ${invoiceDetails?.subtotal || 0}`}</td>
                     </tr>
                     <tr>
-                      <th style={{ textAlign: "start" }}>Shipping </th>
+                      <th style={{ textAlign: "start" }}><LocalizedText text="Shipping" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
                       >{`${invoiceDetails?.currency} ${invoiceDetails?.shipping || 0}`}</td>
                     </tr>
                     <tr>
-                      <th style={{ textAlign: "start" }}>Shipping Tax</th>
+                      <th style={{ textAlign: "start" }}><LocalizedText text="Shipping Tax" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
                       >{`${invoiceDetails?.currency} ${invoiceDetails?.shippingTax || 0}`}</td>
                     </tr>
                     <tr>
-                      <th style={{ textAlign: "start" }}>
-                        Tax ({invoiceDetails?.ptax}%)
+                      <th style={{ textAlign: "start" }}><LocalizedText text="Tax (" />{invoiceDetails?.ptax}%)
                       </th>
                       <td>:</td>
                       <td
@@ -219,7 +217,7 @@ const Preview = (props) => {
                       >{`${invoiceDetails?.currency} ${invoiceDetails?.tax || 0}`}</td>
                     </tr>
                     <tr>
-                      <th style={{ textAlign: "start" }}>Grand Total</th>
+                      <th style={{ textAlign: "start" }}><LocalizedText text="Grand Total" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
@@ -247,7 +245,7 @@ const Preview = (props) => {
             type="submit"
             onClick={generatePDF}
           >
-            {isLoading ? <Spinner /> : "Download"}
+            {isLoading ? <Spinner /> : tr("Download")}
           </Button>
         </DrawerFooter>
       </DrawerContent>
@@ -255,4 +253,4 @@ const Preview = (props) => {
   );
 };
 
-export default Preview;
+export default withLocalization(Preview);

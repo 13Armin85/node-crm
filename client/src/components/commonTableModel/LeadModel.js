@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -46,9 +47,9 @@ const ContactModel = (props) => {
     setLeadData(result?.payload?.data);
 
     const tempTableColumns = [
-      { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+      { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
       {
-        Header: "Status",
+        Header: tr("Status"),
         accessor: "leadStatus",
         isSortable: true,
         center: true,
@@ -78,7 +79,7 @@ const ContactModel = (props) => {
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select Lead</ModalHeader>
+        <ModalHeader><LocalizedText text="Select Lead" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -118,20 +119,18 @@ const ContactModel = (props) => {
             onClick={handleSubmit}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Select"}
+            {isLoding ? <Spinner /> : tr("Select")}
           </Button>
           <Button
             variant="outline"
             size="sm"
             colorScheme="red"
             onClick={() => onClose()}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default ContactModel;
+export default withLocalization(ContactModel);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
@@ -56,7 +57,7 @@ const Index = (props) => {
   ]);
 
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     accessor: "action",
     isSortable: false,
     center: true,
@@ -79,9 +80,7 @@ const Index = (props) => {
                   onOpen();
                   setSelectedId(row?.values?._id);
                 }}
-              >
-                Edit
-              </MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>
             )}
             {permission?.view && (
               <MenuItem
@@ -91,9 +90,7 @@ const Index = (props) => {
                 onClick={() => {
                   navigate(`/quotesView/${row?.values?._id}`);
                 }}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             <MenuItem
               py={2.5}
@@ -102,9 +99,7 @@ const Index = (props) => {
               onClick={() => {
                 convertToInvoice(row?.values?._id);
               }}
-            >
-              Convert To Invoice
-            </MenuItem>
+            ><LocalizedText text="Convert To Invoice" /></MenuItem>
             {permission?.delete && (
               <MenuItem
                 py={2.5}
@@ -114,9 +109,7 @@ const Index = (props) => {
                   setDelete(true);
                   setSelectedValues([row?.values?._id]);
                 }}
-              >
-                Delete
-              </MenuItem>
+              ><LocalizedText text="Delete" /></MenuItem>
             )}
           </MenuList>
         </Menu>
@@ -124,15 +117,15 @@ const Index = (props) => {
     ),
   };
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Quote Number",
+      Header: tr("Quote Number"),
       accessor: "quoteNumber",
       isSortable: false,
       width: 10,
     },
     {
-      Header: "Title",
+      Header: tr("Title"),
       accessor: "title",
       cell: (cell) => (
         <div className="selectOpt">
@@ -152,9 +145,9 @@ const Index = (props) => {
         </div>
       ),
     },
-    { Header: "Quote Stage", accessor: "quoteStage" },
+    { Header: tr("Quote Stage"), accessor: "quoteStage" },
     {
-      Header: "Contact",
+      Header: tr("Contact"),
       accessor: "contact",
       cell: (cell) =>
         user?.role === "superAdmin" || contactAccess?.view ? (
@@ -189,7 +182,7 @@ const Index = (props) => {
         ),
     },
     {
-      Header: "Account",
+      Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
         user?.role === "superAdmin" || accountAccess?.view ? (
@@ -198,7 +191,7 @@ const Index = (props) => {
               onClick={() =>
                 navigate(
                   cell?.row?.original.account !== null &&
-                    `/accountView/${cell?.row?.original?.account}`,
+                    `/partner-customers/${cell?.row?.original?.account}`,
                 )
               }
               me="10px"
@@ -224,7 +217,7 @@ const Index = (props) => {
         ),
     },
     {
-      Header: "Grand Total",
+      Header: tr("Grand Total"),
       accessor: "grandTotal",
       cell: (cell) => (
         <div className="selectOpt">
@@ -236,7 +229,7 @@ const Index = (props) => {
         </div>
       ),
     },
-    { Header: "valid Until", accessor: "validUntil" },
+    { Header: tr("valid Until"), accessor: "validUntil" },
     ...(permission?.update || permission?.view || permission?.delete
       ? [actionHeader]
       : []),
@@ -247,7 +240,7 @@ const Index = (props) => {
   const customFields = [
     {
       name: "quoteNumber",
-      label: "Quote Number",
+      label: tr("Quote Number"),
       type: "number",
       fixed: false,
       isDefault: false,
@@ -302,7 +295,7 @@ const Index = (props) => {
     },
     {
       name: "title",
-      label: "Title",
+      label: tr("Title"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -357,7 +350,7 @@ const Index = (props) => {
     },
     {
       name: "quoteStage",
-      label: "Quote Stage",
+      label: tr("Quote Stage"),
       type: "select",
       fixed: false,
       isDefault: false,
@@ -442,7 +435,7 @@ const Index = (props) => {
     },
     {
       name: "contact",
-      label: "Contact",
+      label: tr("Contact"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -497,7 +490,7 @@ const Index = (props) => {
     },
     {
       name: "account",
-      label: "Account",
+      label: tr("Account"),
       type: "text",
       fixed: false,
       isDefault: false,
@@ -552,7 +545,7 @@ const Index = (props) => {
     },
     {
       name: "grandTotal",
-      label: "Grand Total",
+      label: tr("Grand Total"),
       type: "number",
       fixed: false,
       isDefault: false,
@@ -607,7 +600,7 @@ const Index = (props) => {
     },
     {
       name: "validUntil",
-      label: "Valid Until",
+      label: tr("Valid Until"),
       type: "date",
       fixed: false,
       isDefault: false,
@@ -708,7 +701,7 @@ const Index = (props) => {
     if (result?.payload?.status === 200) {
       setData(result?.payload?.data);
     } else {
-      toast.error("Failed to fetch data", "error");
+      toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
   };
@@ -724,7 +717,7 @@ const Index = (props) => {
   return (
     <div>
       <CommonCheckTable
-        title={"Quotes"}
+        title={tr("Quotes")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
@@ -756,9 +749,7 @@ const Index = (props) => {
             mt={{ sm: "5px", md: "0" }}
             size="sm"
             onClick={() => setAdvanceSearch(true)}
-          >
-            Advance Search
-          </Button>
+          ><LocalizedText text="Advance Search" /></Button>
         }
         getTagValuesOutSide={getTagValuesOutSide}
         searchboxOutside={searchboxOutside}
@@ -804,4 +795,4 @@ const Index = (props) => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

@@ -6,6 +6,7 @@ const fetchSchemaFields = async () => {
 };
 
 const contactSchema = new mongoose.Schema({
+    customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     // 1. Basic Information
     // firstName: String,
     // lastName: String,

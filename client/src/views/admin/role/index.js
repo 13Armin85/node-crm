@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { Button, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { getApi } from "services/api";
@@ -20,14 +21,14 @@ const Index = () => {
 
   const columns = [
     {
-      Header: "#",
+      Header: tr("#"),
       accessor: "_id",
       isSortable: false,
       width: 10,
       display: false,
     },
     {
-      Header: "Role Name",
+      Header: tr("Role Name"),
       accessor: "roleName",
       cell: (cell) => (
         <Text
@@ -53,22 +54,22 @@ const Index = () => {
         </Text>
       ),
     },
-    { Header: "Description", accessor: "description" },
+    { Header: tr("Description"), accessor: "description" },
   ];
   const rowColumns = [
     {
-      Header: "#",
+      Header: tr("#"),
       accessor: "_id",
       isSortable: false,
       width: 10,
       display: false,
     },
 
-    { Header: "title", accessor: "title" },
-    { Header: "create", accessor: "create", width: "20px" },
-    { Header: "view", accessor: "view", width: "20px" },
-    { Header: "update", accessor: "update", width: "20px" },
-    { Header: "delete", accessor: "delete", width: "20px" },
+    { Header: tr("title"), accessor: "title" },
+    { Header: tr("create"), accessor: "create", width: "20px" },
+    { Header: tr("view"), accessor: "view", width: "20px" },
+    { Header: tr("update"), accessor: "update", width: "20px" },
+    { Header: tr("delete"), accessor: "delete", width: "20px" },
   ];
   const [action, setAction] = useState(false);
   const [isLoding, setIsLoding] = useState(false);
@@ -90,7 +91,7 @@ const Index = () => {
   return (
     <div>
       <CommonCheckTable
-        title={"Roles"}
+        title={tr("Roles")}
         isLoding={isLoding}
         columnData={columns ?? []}
         // dataColumn={columns ?? []}
@@ -112,9 +113,7 @@ const Index = () => {
             size="sm"
             leftIcon={<IoIosArrowBack />}
             ml={2}
-          >
-            Back
-          </Button>
+          ><LocalizedText text="Back" /></Button>
         }
         deleteMany={true}
         access={true}
@@ -150,4 +149,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default withLocalization(Index);

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -36,23 +37,23 @@ const MultiRoleModel = (props) => {
   };
   const columns = [
     {
-      Header: "#",
+      Header: tr("#"),
       accessor: "_id",
       isSortable: false,
       width: 10,
       display: false,
     },
     {
-      Header: "Role Name",
+      Header: tr("Role Name"),
       accessor: "roleName",
     },
-    { Header: "Description", accessor: "description" },
+    { Header: tr("Description"), accessor: "description" },
   ];
   return (
     <Modal onClose={onClose} size="full" isOpen={isOpen}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select Role</ModalHeader>
+        <ModalHeader><LocalizedText text="Select Role" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {isLoding ? (
@@ -61,7 +62,7 @@ const MultiRoleModel = (props) => {
             </Flex>
           ) : (
             <RoleTable
-              title={"Role"}
+              title={tr("Role")}
               isLoding={isLoding}
               allData={role}
               tableData={role}
@@ -85,13 +86,13 @@ const MultiRoleModel = (props) => {
             leftIcon={<GiClick />}
           >
             {" "}
-            {isLoding ? <Spinner /> : "Select"}
+            {isLoding ? <Spinner /> : tr("Select")}
           </Button>
-          <Button onClick={() => onClose()}>Close</Button>
+          <Button onClick={() => onClose()}><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default MultiRoleModel;
+export default withLocalization(MultiRoleModel);

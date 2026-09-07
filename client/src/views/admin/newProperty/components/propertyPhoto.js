@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
   Grid,
@@ -89,7 +90,7 @@ const PropertyPhoto = (props) => {
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Select {text} </ModalHeader>
+        <ModalHeader><LocalizedText text="Select" />{text} </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -102,7 +103,7 @@ const PropertyPhoto = (props) => {
               <Text mb="10px" color={"red"}>
                 {" "}
                 {errors?.property && touched?.property && (
-                  <>Please Select {text}</>
+                  <><LocalizedText text="Please Select" />{text}</>
                 )}
               </Text>
             </GridItem>
@@ -116,7 +117,7 @@ const PropertyPhoto = (props) => {
             mr={1}
             disabled={isLoding ? true : false}
           >
-            {isLoding ? <Spinner /> : "Save"}
+            {isLoding ? <Spinner /> : tr("Save")}
           </Button>
           <Button
             size="sm"
@@ -126,13 +127,11 @@ const PropertyPhoto = (props) => {
               onClose();
               formik.resetForm();
             }}
-          >
-            Close
-          </Button>
+          ><LocalizedText text="Close" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default PropertyPhoto;
+export default withLocalization(PropertyPhoto);

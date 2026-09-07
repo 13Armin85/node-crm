@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -32,26 +33,26 @@ function BookedModel(props) {
 
   const validationSchemas = [
     yup.object({
-      category: yup.string().required("Category is required"),
+      category: yup.string().required(tr("Category is required")),
       lead: yup.string(),
       contact: yup.string(),
     }),
     yup.object({
-      currency: yup.string().required("Currency is required"),
+      currency: yup.string().required(tr("Currency is required")),
       amount: yup
         .number()
         .typeError("Amount must be a number")
-        .required("Amount is required"),
-      accountName: yup.string().required("Account name is required"),
-      bank: yup.string().required("Bank is required"),
-      branch: yup.string().required("Branch is required"),
+        .required(tr("Amount is required")),
+      accountName: yup.string().required(tr("Account name is required")),
+      bank: yup.string().required(tr("Bank is required")),
+      branch: yup.string().required(tr("Branch is required")),
       accountNumber: yup
         .number()
-        .required("Account Number is required")
+        .required(tr("Account Number is required"))
         .typeError("Account Number must be a number"),
       swiftCode: yup
         .number()
-        .required("Swift code is required")
+        .required(tr("Swift code is required"))
         .typeError("Swift code must be a number"),
     }),
     yup.object({
@@ -60,17 +61,17 @@ function BookedModel(props) {
         .of(
           yup.object({
             no: yup.number().required(),
-            startDate: yup.date().required("Start date is required"),
-            title: yup.string().required("Title is required"),
+            startDate: yup.date().required(tr("Start date is required")),
+            title: yup.string().required(tr("Title is required")),
             per: yup
               .number()
-              .max(100, "Percentage must not exceed 100")
-              .required("Percentage is required"),
+              .max(100, tr("Percentage must not exceed 100"))
+              .required(tr("Percentage is required")),
             // months: yup.number().required("Months are required"),
-            total: yup.number().required("Total is required"),
+            total: yup.number().required(tr("Total is required")),
           })
         )
-        .min(1, "At least one installment is required"),
+        .min(1, tr("At least one installment is required")),
     }),
   ];
 
@@ -213,9 +214,7 @@ function BookedModel(props) {
             alignItems={"center"}
             justifyContent="space-between"
             display="flex"
-          >
-            Booked
-            <IconButton onClick={handleClose} icon={<CloseIcon />} />
+          ><LocalizedText text="Booked" /><IconButton onClick={handleClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
             <div className="stepper">
@@ -258,9 +257,7 @@ function BookedModel(props) {
                 textTransform: "capitalize",
               }}
               onClick={handlePrevious}
-            >
-              Previous
-            </Button>
+            ><LocalizedText text="Previous" /></Button>
             <Button
               variant="brand"
               size="sm"
@@ -272,7 +269,7 @@ function BookedModel(props) {
                 steps?.length === currentStep ? handleSubmit : handleNext
               }
             >
-              {steps?.length === currentStep ? "Submit" : "Next"}
+              {steps?.length === currentStep ? tr("Submit") : tr("Next")}
             </Button>
           </DrawerFooter>
         </DrawerContent>
@@ -280,4 +277,4 @@ function BookedModel(props) {
     </>
   );
 }
-export default BookedModel;
+export default withLocalization(BookedModel);

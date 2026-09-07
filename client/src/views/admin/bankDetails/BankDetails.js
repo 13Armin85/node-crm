@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useEffect, useState } from "react";
 import CommonCheckTable from "components/reactTable/checktable";
 import { HasAccess } from "../../../redux/accessUtils";
@@ -59,7 +60,7 @@ const BankDetails = () => {
   };
 
   const actionHeader = {
-    Header: "Action",
+    Header: tr("Action"),
     accessor: "action",
     isSortable: false,
     center: true,
@@ -81,9 +82,7 @@ const BankDetails = () => {
                   setEdit(true);
                   setSelectedId(row?.values?._id);
                 }}
-              >
-                Edit
-              </MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>
             )}
             {permission?.view && (
               <MenuItem
@@ -95,9 +94,7 @@ const BankDetails = () => {
                     state: { BankList: bankAllData },
                   });
                 }}
-              >
-                View
-              </MenuItem>
+              ><LocalizedText text="View" /></MenuItem>
             )}
             {permission?.delete && (
               <MenuItem
@@ -108,9 +105,7 @@ const BankDetails = () => {
                   setDelete(true);
                   setSelectedValues([row?.values?._id]);
                 }}
-              >
-                Delete
-              </MenuItem>
+              ><LocalizedText text="Delete" /></MenuItem>
             )}
           </MenuList>
         </Menu>
@@ -119,15 +114,15 @@ const BankDetails = () => {
   };
 
   const tableColumns = [
-    { Header: "#", accessor: "_id", isSortable: false, width: 10 },
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
-      Header: "Account Name",
+      Header: tr("Bank Account Holder"),
       accessor: "accountName",
     },
-    { Header: "Account Number", accessor: "accountNumber" },
-    { Header: "Bank", accessor: "bank" },
-    { Header: "Branch", accessor: "branch" },
-    { Header: "Swift Code", accessor: "swiftCode" },
+    { Header: tr("Account Number"), accessor: "accountNumber" },
+    { Header: tr("Bank"), accessor: "bank" },
+    { Header: tr("Branch"), accessor: "branch" },
+    { Header: tr("Swift Code"), accessor: "swiftCode" },
     ...(permission?.update || permission?.view || permission?.delete
       ? [actionHeader]
       : []),
@@ -136,7 +131,7 @@ const BankDetails = () => {
   return (
     <>
       <CommonCheckTable
-        title={"Bank Details"}
+        title={tr("Bank Details")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         allData={bankAllData || []}
@@ -181,4 +176,4 @@ const BankDetails = () => {
   );
 };
 
-export default BankDetails;
+export default withLocalization(BankDetails);

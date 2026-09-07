@@ -1,14 +1,15 @@
+import { tr } from 'i18n/runtime';
 import * as yup from "yup";
 
 export const TaskSchema = yup.object({
-  title: yup.string().required("Title Is required"),
+  title: yup.string().required(tr("Title Is required")),
   category: yup.string(),
   description: yup.string(),
   notes: yup.string(),
   // assignTo: yup.string(),
   // assignToLead: yup.string(),
   reminder: yup.string(),
-  start: yup.string().required("Start Date Is required"),
+  start: yup.string().required(tr("Start Date Is required")),
   end: yup.string(),
   backgroundColor: yup.string(),
   borderColor: yup.string(),

@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Box,
   Flex,
@@ -84,8 +85,7 @@ export default function CheckTable(props) {
           fontSize="22px"
           fontWeight="700"
           lineHeight="100%"
-        >
-          Reports ({data?.length})
+        ><LocalizedText text="Reports (" />{data?.length})
         </Text>
         {/* <Menu /> */}
         {selectedValues?.length > 0 && (

@@ -1,3 +1,4 @@
+import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
 import moment from "moment";
 import { useFormik } from "formik";
@@ -159,7 +160,7 @@ const AdvanceSearch = ({
     >
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Advance Search</ModalHeader>
+        <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
         <ModalCloseButton
           onClick={() => {
             setAdvaceSearch(false);
@@ -196,7 +197,7 @@ const AdvanceSearch = ({
                     fontWeight="500"
                     // borderColor={errors?.[field?.name] && touched?.[field?.name] ? "red.300" : null}
                   >
-                    <option value="">Select {field?.label}</option>
+                    <option value=""><LocalizedText text="Select" />{field?.label}</option>
                     {field.options?.map((option) => (
                       <option key={option?._id} value={option?.value}>
                         {option?.name}
@@ -214,9 +215,7 @@ const AdvanceSearch = ({
                           fontWeight="600"
                           color={"#000"}
                           mb="0"
-                        >
-                          From
-                        </FormLabel>
+                        ><LocalizedText text="From" /></FormLabel>
                         <Input
                           fontSize="sm"
                           onChange={handleChange}
@@ -235,9 +234,7 @@ const AdvanceSearch = ({
                           fontWeight="600"
                           color={"#000"}
                           mb="0"
-                        >
-                          To
-                        </FormLabel>
+                        ><LocalizedText text="To" /></FormLabel>
                         <Input
                           fontSize="sm"
                           onChange={handleChange}
@@ -285,15 +282,13 @@ const AdvanceSearch = ({
             onClick={handleSubmit}
             disabled={isLoding ? true : false}
           >
-            {isLoding ? <Spinner /> : "Search"}
+            {isLoding ? <Spinner /> : tr("Search")}
           </Button>
-          <Button colorScheme="red" size="sm" onClick={() => resetForm()}>
-            Clear
-          </Button>
+          <Button colorScheme="red" size="sm" onClick={() => resetForm()}><LocalizedText text="Clear" /></Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
 };
 
-export default AdvanceSearch;
+export default withLocalization(AdvanceSearch);

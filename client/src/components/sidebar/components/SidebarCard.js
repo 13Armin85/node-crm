@@ -1,3 +1,4 @@
+import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
   Flex,
@@ -55,9 +56,7 @@ export default function SidebarDocs() {
           px="10px"
           mt="10px"
           mb="6px"
-        >
-          Upgrade to PRO
-        </Text>
+        ><LocalizedText text="Upgrade to PRO" /></Text>
         <Text
           fontSize="14px"
           color={"white"}
@@ -65,10 +64,7 @@ export default function SidebarDocs() {
           px="10px"
           mb="6px"
           textAlign="center"
-        >
-          Improve your development process and start doing more with Horizon UI
-          PRO!
-        </Text>
+        ><LocalizedText text="Improve your development process and start doing more with Horizon UI PRO!" /></Text>
       </Flex>
       <Link href="https://horizon-ui.com/pro?ref=horizon-chakra-free">
         <Button
@@ -81,9 +77,7 @@ export default function SidebarDocs() {
           fontSize="sm"
           minW="185px"
           mx="auto"
-        >
-          Upgrade to PRO
-        </Button>
+        ><LocalizedText text="Upgrade to PRO" /></Button>
       </Link>
     </Flex>
   );

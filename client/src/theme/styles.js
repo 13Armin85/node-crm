@@ -111,10 +111,6 @@ export const globalStyles = {
         fontFamily:
           'Inter, "Plus Jakarta Sans", "Vazirmatn", "Segoe UI", sans-serif',
       },
-      "html[dir='rtl'] body": {
-        fontFamily:
-          '"Vazirmatn", "IRANSans", Inter, "Segoe UI", sans-serif',
-      },
       "*": {
         scrollbarWidth: "thin",
         scrollbarColor: mode(

@@ -116,7 +116,7 @@ export default function LeadTable(props) {
           fontWeight="700"
           lineHeight="100%"
         >
-          {title} (
+          <LocalizedText text={title} /> (
           <CountUpComponent key={data?.length} targetNumber={data?.length} />)
         </Text>
       </Flex>

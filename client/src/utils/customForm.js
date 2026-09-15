@@ -25,6 +25,8 @@ import {
 } from "@chakra-ui/react"; // Assuming you are using Chakra UI
 import { HSeparator } from "components/separator/Separator";
 import { EmailIcon, PhoneIcon, StarIcon } from "@chakra-ui/icons";
+import CalendarDateInput from 'components/date/CalendarDateInput';
+import { optionText } from 'components/search/searchFields';
 
 const CustomForm = ({
   moduleData,
@@ -44,7 +46,7 @@ const CustomForm = ({
               <GridItem colSpan={{ base: 12 }} key={ind}>
                 {ind !== 0 && <HSeparator />}
                 <Heading as="h1" size="md" mt="10px">
-                  {ind + 1}. {item?.heading}
+                  {ind + 1}. <LocalizedText text={item?.heading} />
                 </Heading>
               </GridItem>
               {moduleData?.fields
@@ -62,7 +64,7 @@ const CustomForm = ({
                         mb="8px"
                         htmlFor={field?.name}
                       >
-                        {field?.label}{" "}
+                        <LocalizedText text={field?.label} />{" "}
                         {field?.validation &&
                           field?.validation?.find(
                             (validation) => validation?.require,
@@ -102,7 +104,7 @@ const CustomForm = ({
                         <HStack spacing="24px">
                           {field?.options?.map((option) => (
                             <Radio key={option?._id} value={option?.value}>
-                              {option?.name}
+                              {tr(optionText(option))}
                             </Radio>
                           ))}
                         </HStack>
@@ -124,7 +126,7 @@ const CustomForm = ({
                       >
                         {field?.options?.map((option) => (
                           <option key={option?._id} value={option?.value}>
-                            {option?.name}
+                            {tr(optionText(option))}
                           </option>
                         ))}
                       </Select>
@@ -135,7 +137,7 @@ const CustomForm = ({
                           setFieldValue(field?.name, !values[field?.name])
                         }
                       >
-                        {field?.label}
+                        <LocalizedText text={field?.label} />
                       </Checkbox>
                     ) : (
                       <>
@@ -163,22 +165,35 @@ const CustomForm = ({
                               />
                             )
                           )}
-                          <Input
-                            fontSize="sm"
-                            type={field?.type}
-                            id={field?.name}
-                            name={field?.name}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values[field?.name]}
-                            fontWeight="500"
-                            placeholder={`Enter ${field?.label}`}
-                            borderColor={
-                              errors?.[field?.name] && touched?.[field?.name]
-                                ? "red.300"
-                                : null
-                            }
-                          />
+                          {["date", "datetime"].includes(field?.type) ? (
+                            <CalendarDateInput
+                              fontSize="sm"
+                              type={field?.type === "datetime" ? "datetime-local" : "date"}
+                              id={field?.name}
+                              name={field?.name}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              value={values[field?.name] || ""}
+                              fontWeight="500"
+                            />
+                          ) : (
+                            <Input
+                              fontSize="sm"
+                              type={field?.type}
+                              id={field?.name}
+                              name={field?.name}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              value={values[field?.name]}
+                              fontWeight="500"
+                              placeholder={tr(field?.label)}
+                              borderColor={
+                                errors?.[field?.name] && touched?.[field?.name]
+                                  ? "red.300"
+                                  : null
+                              }
+                            />
+                          )}
                         </InputGroup>
                       </>
                     )}
@@ -213,7 +228,7 @@ const CustomForm = ({
                       mb="8px"
                       htmlFor={field?.name}
                     >
-                      {field?.label}{" "}
+                      <LocalizedText text={field?.label} />{" "}
                       {field?.validation &&
                         field?.validation?.find(
                           (validation) => validation?.require,
@@ -250,7 +265,7 @@ const CustomForm = ({
                       <HStack spacing="24px">
                         {field?.options?.map((option) => (
                           <Radio key={option?._id} value={option?.value}>
-                            {option?.name}
+                            {tr(optionText(option))}
                           </Radio>
                         ))}
                       </HStack>
@@ -270,10 +285,10 @@ const CustomForm = ({
                           : null
                       }
                     >
-                      <option value=""><LocalizedText text="Select" />{field.label}</option>
+                      <option value=""><LocalizedText text="Select" /> — <LocalizedText text={field?.label} /></option>
                       {field?.options?.map((option) => (
                         <option key={option?._id} value={option?.value}>
-                          {option?.name}
+                          {tr(optionText(option))}
                         </option>
                       ))}
                     </Select>
@@ -284,7 +299,7 @@ const CustomForm = ({
                         setFieldValue(field?.name, !values[field?.name])
                       }
                     >
-                      {field?.label}
+                      <LocalizedText text={field?.label} />
                     </Checkbox>
                   ) : (
                     <>
@@ -297,22 +312,35 @@ const CustomForm = ({
                             }
                           />
                         )}
-                        <Input
-                          fontSize="sm"
-                          type={field?.type}
-                          id={field?.name}
-                          name={field?.name}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          value={values[field?.name]}
-                          fontWeight="500"
-                          placeholder={`Enter ${field?.label}`}
-                          borderColor={
-                            errors?.[field?.name] && touched?.[field?.name]
-                              ? "red.300"
-                              : null
-                          }
-                        />
+                        {["date", "datetime"].includes(field?.type) ? (
+                          <CalendarDateInput
+                            fontSize="sm"
+                            type={field?.type === "datetime" ? "datetime-local" : "date"}
+                            id={field?.name}
+                            name={field?.name}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            value={values[field?.name] || ""}
+                            fontWeight="500"
+                          />
+                        ) : (
+                          <Input
+                            fontSize="sm"
+                            type={field?.type}
+                            id={field?.name}
+                            name={field?.name}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            value={values[field?.name]}
+                            fontWeight="500"
+                            placeholder={tr(field?.label)}
+                            borderColor={
+                              errors?.[field?.name] && touched?.[field?.name]
+                                ? "red.300"
+                                : null
+                            }
+                          />
+                        )}
                       </InputGroup>
                     </>
                   )}
@@ -343,7 +371,7 @@ const CustomForm = ({
                     mb="8px"
                     htmlFor={field?.name}
                   >
-                    {field?.label}{" "}
+                    <LocalizedText text={field?.label} />{" "}
                     {field?.validation &&
                       field?.validation?.find(
                         (validation) => validation?.require,
@@ -380,7 +408,7 @@ const CustomForm = ({
                     <HStack spacing="24px">
                       {field?.options?.map((option) => (
                         <Radio key={option?._id} value={option?.value}>
-                          {option?.name}
+                          {tr(optionText(option))}
                         </Radio>
                       ))}
                     </HStack>
@@ -400,10 +428,10 @@ const CustomForm = ({
                         : null
                     }
                   >
-                    <option value=""><LocalizedText text="Select" />{field?.label}</option>
+                    <option value=""><LocalizedText text="Select" /> — <LocalizedText text={field?.label} /></option>
                     {field?.options?.map((option) => (
                       <option key={option?._id} value={option?.value}>
-                        {option?.name}
+                        {tr(optionText(option))}
                       </option>
                     ))}
                   </Select>
@@ -414,7 +442,7 @@ const CustomForm = ({
                       setFieldValue(field?.name, !values[field?.name])
                     }
                   >
-                    {field?.label}
+                    <LocalizedText text={field?.label} />
                   </Checkbox>
                 ) : (
                   <>
@@ -427,22 +455,35 @@ const CustomForm = ({
                           }
                         />
                       )}
-                      <Input
-                        fontSize="sm"
-                        type={field?.type}
-                        id={field?.name}
-                        name={field?.name}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        value={values[field?.name]}
-                        fontWeight="500"
-                        placeholder={`Enter ${field?.label}`}
-                        borderColor={
-                          errors?.[field?.name] && touched?.[field?.name]
-                            ? "red.300"
-                            : null
-                        }
-                      />
+                      {["date", "datetime"].includes(field?.type) ? (
+                        <CalendarDateInput
+                          fontSize="sm"
+                          type={field?.type === "datetime" ? "datetime-local" : "date"}
+                          id={field?.name}
+                          name={field?.name}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values[field?.name] || ""}
+                          fontWeight="500"
+                        />
+                      ) : (
+                        <Input
+                          fontSize="sm"
+                          type={field?.type}
+                          id={field?.name}
+                          name={field?.name}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values[field?.name]}
+                          fontWeight="500"
+                          placeholder={tr(field?.label)}
+                          borderColor={
+                            errors?.[field?.name] && touched?.[field?.name]
+                              ? "red.300"
+                              : null
+                          }
+                        />
+                      )}
                     </InputGroup>
                   </>
                 )}
@@ -476,5 +517,7 @@ export default function ManagedCustomForm(props) {
   if (!moduleName) return <CustomForm {...props} />;
   if (failed) return <Text color="red.500">{t('estate.serverError')}</Text>;
   if (!definition) return <Text>{t('estate.loading')}</Text>;
-  return <DynamicFormRenderer definition={definition} formik={{ values: props.values, errors: props.errors, touched: props.touched, setFieldValue: props.setFieldValue, handleBlur: props.handleBlur }} />;
+  return <>
+    <DynamicFormRenderer definition={definition} formik={{ values: props.values, errors: props.errors, touched: props.touched, setFieldValue: props.setFieldValue, handleBlur: props.handleBlur }} />
+  </>;
 }

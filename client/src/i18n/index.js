@@ -11,9 +11,51 @@ import legacy, { aliases } from './legacy';
 
 export const LANGUAGES = {
   en: { code: "en", label: "English", nativeLabel: "English", dir: "ltr" },
-  fa: { code: "fa", label: "Persian", nativeLabel: "فارسی", dir: "rtl" },
+  fa: { code: "fa", label: "Persian", nativeLabel: "فارسی", dir: "ltr" },
   tr: { code: "tr", label: "Turkish", nativeLabel: "Türkçe", dir: "ltr" },
 };
+
+const localizedValue = (value, language) => {
+  if (value === undefined || value === null) return value;
+  if (typeof value !== "object" || React.isValidElement(value)) return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => localizedValue(item, language))
+      .filter((item) => item !== undefined && item !== null && item !== "")
+      .join(", ");
+  }
+
+  const hasLocalizedKeys = ["en", "fa", "tr"].some((key) =>
+    Object.prototype.hasOwnProperty.call(value, key),
+  );
+  if (hasLocalizedKeys && language !== "en") {
+    const selected = localizedValue(value[language], language);
+    return typeof selected === "string" && selected.trim()
+      ? selected
+      : language === "fa" ? "بدون عنوان" : "Adsız";
+  }
+
+  const candidates = [
+    value[language],
+    value.label,
+    value.title,
+    value.name,
+    value.text,
+    value.value,
+    value.en,
+    value.fa,
+    value.tr,
+  ];
+  for (const candidate of candidates) {
+    if (candidate === undefined || candidate === null || candidate === value) continue;
+    const resolved = localizedValue(candidate, language);
+    if (["string", "number", "boolean"].includes(typeof resolved)) return resolved;
+  }
+  return language === "fa" ? "بدون عنوان" : language === "tr" ? "Adsız" : "Untitled";
+};
+
+export const resolveLocalizedValue = (value, language = "en") =>
+  localizedValue(value, LANGUAGES[language] ? language : "en");
 
 const fa = {
   "#": "#",
@@ -405,6 +447,7 @@ const LanguageContext = createContext({
 
 export const translate = (value, language = "en") => {
   if (value === undefined || value === null) return value;
+  value = resolveLocalizedValue(value, language);
   if (typeof value !== 'string') return value;
   const text = value.replace(/\s+/g, ' ').trim();
   const canonical = text.replace(/([a-z])([A-Z])/g, '$1 $2');
@@ -449,14 +492,13 @@ export function LanguageProvider({ children }) {
     setLanguageState(safeLanguage);
   }, []);
 
-  const direction = 'ltr';
+  const direction = "ltr";
 
   useEffect(() => {
     document.documentElement.lang = language;
     document.documentElement.dir = direction;
     document.body?.setAttribute("dir", direction);
-    document.body?.classList.toggle("crm-rtl", direction === "rtl");
-    document.body?.classList.toggle("crm-ltr", direction !== "rtl");
+    document.body?.classList.add("crm-ltr");
   }, [language, direction]);
 
   const value = useMemo(

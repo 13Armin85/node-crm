@@ -343,6 +343,78 @@ option {
   box-shadow: 0 0 0 3px rgba(23, 125, 220, 0.14) !important;
 }
 
+.crm-record-dates {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--crm-border);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(23, 125, 220, 0.06), rgba(16, 169, 135, 0.035));
+}
+
+.crm-record-dates input {
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-sales-performance {
+  position: relative;
+}
+
+.crm-finance-kpi {
+  position: relative;
+  min-height: 180px;
+  padding: 20px;
+  overflow: hidden;
+  border: 1px solid var(--crm-border);
+  border-radius: 18px;
+}
+
+.crm-finance-kpi::after {
+  content: "";
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  inset-inline-end: -45px;
+  bottom: -55px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: .08;
+}
+
+.crm-finance-kpi--success { color: var(--crm-accent); background: linear-gradient(145deg, rgba(16, 169, 135, .12), rgba(16, 169, 135, .025)); }
+.crm-finance-kpi--warning { color: var(--crm-warning); background: linear-gradient(145deg, rgba(229, 164, 0, .12), rgba(229, 164, 0, .025)); }
+.crm-finance-kpi--info { color: var(--crm-primary); background: linear-gradient(145deg, rgba(23, 125, 220, .12), rgba(23, 125, 220, .025)); }
+
+.crm-finance-kpi__icon {
+  width: 28px !important;
+  height: 28px !important;
+  margin-bottom: 16px;
+}
+
+.crm-finance-kpi__label,
+.crm-finance-kpi__meta {
+  color: var(--crm-muted) !important;
+  font-weight: 700;
+}
+
+.crm-finance-kpi__value,
+.crm-finance-kpi__count {
+  color: var(--crm-text);
+  margin: 8px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-finance-kpi__count {
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.crm-team-sales-table {
+  padding: 16px;
+  border: 1px solid var(--crm-border);
+  border-radius: 16px;
+  background: var(--crm-panel-solid);
+}
+
 .chakra-badge,
 .chakra-tag {
   border-radius: 999px !important;
@@ -1027,4 +1099,67 @@ option {
   margin-top: 20px;
   text-align: center;
   font-style: italic;
+}
+
+/* Consistent, production-ready treatment for legacy and configurable forms. */
+.table-container,
+.table-container-property,
+.table-fix-container,
+.small-table-fix-container,
+.importTable {
+  border: 1px solid var(--crm-border);
+  border-radius: 16px;
+  background: var(--crm-panel-solid);
+  box-shadow: 0 10px 28px rgba(15, 42, 75, 0.05);
+}
+
+.table-container thead,
+.table-container-property thead,
+.table-fix-container thead,
+.small-table-fix-container thead,
+.importTable thead {
+  z-index: 2;
+  background: var(--crm-panel-solid) !important;
+}
+
+.chakra-form__label {
+  margin-bottom: 7px !important;
+  color: var(--crm-text) !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+}
+
+.chakra-input,
+.chakra-select,
+.chakra-textarea,
+.chakra-numberinput__field {
+  border-radius: 12px !important;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.chakra-button {
+  border-radius: 11px !important;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.chakra-button:not([disabled]):hover {
+  transform: translateY(-1px);
+}
+
+.crm-calendar-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset-inline-end: 0;
+  width: 42px;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chakra-ui-dark .table-container,
+.chakra-ui-dark .table-container-property,
+.chakra-ui-dark .table-fix-container,
+.chakra-ui-dark .small-table-fix-container,
+.chakra-ui-dark .importTable {
+  box-shadow: 0 16px 38px rgba(0, 0, 0, .28);
 }

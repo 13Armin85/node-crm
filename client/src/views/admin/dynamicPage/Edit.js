@@ -107,7 +107,7 @@ const Edit = (props) => {
             alignItems={"center"}
             justifyContent="space-between"
             display="flex"
-          ><LocalizedText text="Edit" />{props.title}
+          ><LocalizedText text="Edit" /> <LocalizedText text={props.title} />
             <IconButton onClick={handleClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>

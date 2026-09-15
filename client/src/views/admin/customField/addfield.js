@@ -364,7 +364,7 @@ const Addfield = (props) => {
                   >
                     {headingsData?.map((item) => (
                       <option value={item?._id} key={item?._id}>
-                        {item?.heading}
+                        <LocalizedText text={item?.heading} />
                       </option>
                     ))}
                   </Select>

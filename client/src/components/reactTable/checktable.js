@@ -56,6 +56,7 @@ import {
   setSearchValue,
 } from "../../redux/slices/advanceSearchSlice";
 import { commonUtils } from "utils/utils";
+import { normalizeSearchFields, optionText } from "components/search/searchFields";
 
 const CommonCheckTable = (props) => {
   const {
@@ -128,6 +129,10 @@ const CommonCheckTable = (props) => {
       allData,
     ]
   );
+  const searchFields = useMemo(
+    () => normalizeSearchFields(tableCustomFields, allData),
+    [tableCustomFields, allData]
+  );
 
   const [manageColumnsModel, setManageColumnsModel] = useState(false);
   const [csvColumns, setCsvColumns] = useState([]);
@@ -191,7 +196,7 @@ const CommonCheckTable = (props) => {
           getSearchData({ values: values, allData: allData, type: title })
         )
       : allData?.filter((item) => {
-          return tableCustomFields?.every((field) => {
+          return searchFields?.every((field) => {
             const fieldValue = values[field?.name];
             const itemValue = item[field?.name];
 
@@ -228,7 +233,7 @@ const CommonCheckTable = (props) => {
           });
         });
 
-    const getValue = tableCustomFields?.reduce((result, field) => {
+    const getValue = searchFields?.reduce((result, field) => {
       if (field?.type === "date") {
         const fromDate = values[`from${field?.name}`];
         const toDate = values[`to${field?.name}`];
@@ -236,13 +241,15 @@ const CommonCheckTable = (props) => {
         if (fromDate || toDate) {
           result?.push({
             name: [`from${field?.name}`, `to${field?.name}`],
-            value: `From: ${fromDate} To: ${toDate}`,
+            value: `${tr("From")}: ${fromDate || "—"} ${tr("To")}: ${toDate || "—"}`,
           });
         }
       } else if (values[field?.name]) {
         result?.push({
           name: [field?.name],
-          value: values[field?.name],
+          value: field?.type === "select"
+            ? optionText(field?.options?.find(option => String(option?.value) === String(values[field?.name]))) || values[field?.name]
+            : values[field?.name],
         });
       }
 
@@ -462,11 +469,12 @@ const CommonCheckTable = (props) => {
                   fontWeight="700"
                   lineHeight="100%"
                   textTransform={"capitalize"}
+                  me={3}
                 >
-                  {title} (
+                  <LocalizedText text={title} /> (
                   <CountUpComponent
                     key={data?.length}
-                    targetNumber={dataLength || data?.length}
+                    targetNumber={dataLength ?? data?.length ?? 0}
                   />
                   )
                 </Text>
@@ -535,7 +543,7 @@ const CommonCheckTable = (props) => {
             setDisplaySearchData={setDisplaySearchData}
             setSearchedData={setSearchedData}
             advaceSearch={advaceSearch}
-            tableCustomFields={tableCustomFields}
+            tableCustomFields={searchFields}
             setSearchbox={setSearchbox}
             handleAdvanceSearch={handleAdvanceSearch}
           />
@@ -563,7 +571,7 @@ const CommonCheckTable = (props) => {
                     {" "}<LocalizedText text="Manage Columns" /></MenuItem>
                   {typeof setIsImport === "function" && (
                     <MenuItem width={"165px"} onClick={() => setIsImport(true)}>
-                      {" "}<LocalizedText text="Import" />{title}
+                      {" "}<LocalizedText text="Import" /> <LocalizedText text={title} />
                     </MenuItem>
                   )}
                   {exportColumn !== false && allData && allData?.length > 0 && (
@@ -610,7 +618,7 @@ const CommonCheckTable = (props) => {
                 variant="solid"
                 colorScheme="gray"
               >
-                <TagLabel>{item?.value}</TagLabel>
+                <TagLabel><LocalizedText text={item?.value} /></TagLabel>
                 <TagCloseButton onClick={() => handleRemoveFromTag(item)} />
               </Tag>
             ))}
@@ -651,7 +659,7 @@ const CommonCheckTable = (props) => {
                             marginRight: "8px",
                           }}
                         >
-                          {column?.render("Header")}
+                          {tr(column?.Header)}
                         </span>
                         {column?.isSortable !== false && (
                           <span>

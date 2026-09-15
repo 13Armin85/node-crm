@@ -1,4 +1,4 @@
-import { LocalizedText, tr } from 'i18n/runtime';
+import { LocalizedText } from 'i18n/runtime';
 // Chakra imports
 import {
   Flex,
@@ -12,6 +12,12 @@ import {
   Progress,
   Box,
   Text,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
 } from "@chakra-ui/react";
 // Assets
 // Custom components
@@ -19,10 +25,9 @@ import { ViewIcon } from "@chakra-ui/icons";
 import Card from "components/card/Card";
 import MiniStatistics from "components/card/MiniStatistics";
 import IconBox from "components/icons/IconBox";
-import { HSeparator } from "components/separator/Separator";
 import { useEffect, useState } from "react";
 import { LuBuilding2 } from "react-icons/lu";
-import { MdAddTask, MdContacts, MdLeaderboard } from "react-icons/md";
+import { MdAddTask, MdAttachMoney, MdContacts, MdInsights, MdLeaderboard, MdOutlineAssessment, MdOutlineInventory2, MdPeopleAlt, MdPieChart, MdShowChart, MdTaskAlt } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { getApi } from "services/api";
 import ReportChart from "../reports/components/reportChart";
@@ -32,8 +37,88 @@ import PieChart from "components/charts/PieChart";
 import CountUpComponent from "../../../../src/components/countUpComponent/countUpComponent";
 import Spinner from 'components/spinner/Spinner';
 import { useSelector } from "react-redux";
+import { useLanguage } from "i18n";
+
+const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, meta, action, mb = 4 }) => {
+  const background = useColorModeValue(
+    "linear-gradient(135deg, #f8faff 0%, #f1f5ff 100%)",
+    "linear-gradient(135deg, rgba(117, 81, 255, .18) 0%, rgba(17, 28, 68, .55) 100%)",
+  );
+  const borderColor = useColorModeValue("#e8edff", "whiteAlpha.200");
+  const titleColor = useColorModeValue("secondaryGray.900", "white");
+  const mutedColor = useColorModeValue("secondaryGray.600", "secondaryGray.300");
+  const metaBg = useColorModeValue("white", "whiteAlpha.100");
+
+  return (
+    <Flex
+      className="crm-dashboard-card-header"
+      align={{ base: "flex-start", sm: "center" }}
+      justify="space-between"
+      direction={{ base: "column", sm: "row" }}
+      gap={3}
+      mb={mb}
+      p={3}
+      border="1px solid"
+      borderColor={borderColor}
+      borderRadius="16px"
+      bg={background}
+      position="relative"
+      overflow="hidden"
+    >
+      <Box
+        position="absolute"
+        insetInlineStart="0"
+        top="10px"
+        bottom="10px"
+        w="4px"
+        borderRadius="full"
+        bg="linear-gradient(180deg, #7551ff 0%, #39b8ff 100%)"
+      />
+      <Flex align="center" minW={0} ps={2}>
+        <Flex
+          w="42px"
+          h="42px"
+          flexShrink={0}
+          align="center"
+          justify="center"
+          me={3}
+          color="white"
+          borderRadius="13px"
+          bg="linear-gradient(135deg, #7551ff 0%, #4318ff 100%)"
+          boxShadow="0 8px 18px rgba(67, 24, 255, .24)"
+        >
+          <Icon as={HeaderIcon} w="22px" h="22px" />
+        </Flex>
+        <Box minW={0}>
+          <Heading color={titleColor} size="md" lineHeight="1.25">{title}</Heading>
+          {subtitle && <Text mt={1} color={mutedColor} fontSize="sm">{subtitle}</Text>}
+        </Box>
+      </Flex>
+      <Flex align="center" gap={2} ps={{ base: 2, sm: 0 }}>
+        {meta !== undefined && (
+          <Text
+            minW="34px"
+            px={2.5}
+            py={1}
+            textAlign="center"
+            color="brand.500"
+            bg={metaBg}
+            borderRadius="full"
+            fontSize="sm"
+            fontWeight="800"
+            boxShadow="0 4px 12px rgba(15, 23, 42, .06)"
+          >
+            {meta}
+          </Text>
+        )}
+        {action}
+      </Flex>
+    </Flex>
+  );
+};
 
 export default function UserReports() {
+  const { t, language, direction } = useLanguage();
   // Chakra Color Mode
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
@@ -75,6 +160,8 @@ export default function UserReports() {
 
   const [allData, setAllData] = useState([]);
   const [data, setData] = useState([]);
+  const [salesSummary, setSalesSummary] = useState(null);
+  const [salesLoading, setSalesLoading] = useState(true);
   const navigate = useNavigate();
   const modules = useSelector((state) => state?.modules?.data)
   const [contactsView, taskView, leadView, proprtyView] = HasAccess(["Contacts", "Tasks", "Leads", "Properties"]);
@@ -93,8 +180,15 @@ export default function UserReports() {
     }
     setIsLoding(false);
   }
+  const fetchSalesSummary = async () => {
+    setSalesLoading(true);
+    const result = await getApi('api/estate/dashboard/sales-summary');
+    if (result?.status === 200) setSalesSummary(result.data);
+    setSalesLoading(false);
+  };
   useEffect(() => {
     fetchProgressChart()
+    fetchSalesSummary()
   }, [])
 
 
@@ -162,6 +256,13 @@ export default function UserReports() {
     Property: '/properties',
   };
   const maxStatisticLength = Math.max(...(data || []).map((item) => item?.length || 0), 1);
+  const formatMoney = ({ amount = 0, currency = 'TRY' }) => new Intl.NumberFormat(
+    language === 'fa' ? 'fa-IR' : language === 'tr' ? 'tr-TR' : 'en-US',
+    { style: 'currency', currency, maximumFractionDigits: 0 },
+  ).format(amount);
+  const moneyValues = values => values?.length
+    ? values.map(value => <Text key={value.currency} fontSize={{ base: 'lg', md: 'xl' }} fontWeight="900" lineHeight="1.3" data-no-translate>{formatMoney(value)}</Text>)
+    : <Text fontSize="xl" fontWeight="900">{formatMoney({ amount: 0, currency: 'TRY' })}</Text>;
 
   useEffect(() => {
     fetchData();
@@ -234,39 +335,83 @@ export default function UserReports() {
           />}
       </SimpleGrid>
 
+      {(proprtyView?.view || user?.role === 'superAdmin') && propertiesModule?.isActive && (
+        <Card className="crm-sales-performance" mb="20px" overflow="hidden">
+          <DashboardCardHeader
+            title={t('dashboard.salesPerformance')}
+            subtitle={t('dashboard.salesPerformanceHint')}
+            icon={MdAttachMoney}
+          />
+          {salesLoading ? <Flex minH="180px" align="center" justify="center"><Spinner /></Flex> : <>
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4" mb="6">
+              <Box className="crm-finance-kpi crm-finance-kpi--success">
+                <Icon as={MdAttachMoney} className="crm-finance-kpi__icon" />
+                <Text className="crm-finance-kpi__label">{t('dashboard.realizedSales')}</Text>
+                <Box className="crm-finance-kpi__value">{moneyValues(salesSummary?.sold?.values)}</Box>
+                <Text className="crm-finance-kpi__meta">{salesSummary?.sold?.count || 0} {t('dashboard.soldProperties')}</Text>
+              </Box>
+              <Box className="crm-finance-kpi crm-finance-kpi--warning">
+                <Icon as={MdOutlineInventory2} className="crm-finance-kpi__icon" />
+                <Text className="crm-finance-kpi__label">{t('dashboard.unsoldOpportunity')}</Text>
+                <Box className="crm-finance-kpi__value">{moneyValues(salesSummary?.available?.values)}</Box>
+                <Text className="crm-finance-kpi__meta">{salesSummary?.available?.count || 0} {t('dashboard.availableProperties')}</Text>
+              </Box>
+              <Box className="crm-finance-kpi crm-finance-kpi--info">
+                <Icon as={MdPeopleAlt} className="crm-finance-kpi__icon" />
+                <Text className="crm-finance-kpi__label">{t('dashboard.teamSales')}</Text>
+                <Text className="crm-finance-kpi__count">{salesSummary?.bySeller?.length || 0}</Text>
+                <Text className="crm-finance-kpi__meta">{t('dashboard.teamMember')}</Text>
+              </Box>
+            </SimpleGrid>
+            <Box className="crm-team-sales-table" overflowX="auto" dir={direction}>
+              <DashboardCardHeader
+                title={t('dashboard.teamSales')}
+                icon={MdPeopleAlt}
+                meta={salesSummary?.bySeller?.length || 0}
+                mb={3}
+              />
+              {salesSummary?.bySeller?.length ? <Table size="sm">
+                <Thead><Tr><Th>{t('dashboard.teamMember')}</Th><Th isNumeric>{t('dashboard.soldCount')}</Th><Th>{t('dashboard.salesAmount')}</Th></Tr></Thead>
+                <Tbody>{salesSummary.bySeller.map(person => <Tr key={person.userId}>
+                  <Td fontWeight="800" data-no-translate>{person.name || person.userId}</Td>
+                  <Td isNumeric fontWeight="800">{person.soldCount}</Td>
+                  <Td>{moneyValues(person.values)}</Td>
+                </Tr>)}</Tbody>
+              </Table> : <Text py="8" textAlign="center" color={statisticsMutedColor}>{t('dashboard.noSales')}</Text>}
+            </Box>
+          </>}
+        </Card>
+      )}
+
       <Grid Grid templateColumns="repeat(12, 1fr)" gap={3} >
         {
           (emailModule?.isActive || callModule?.isActive) &&
           <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
             <Card>
-              <Flex mb={3} alignItems={"center"} justifyContent={"space-between"}>
-                <Heading size="md">{(emailModule?.isActive && callModule?.isActive) ? tr("Email and Call") : emailModule?.isActive ? "Email" : callModule?.isActive ? "Call" : ""}<LocalizedText text="Report" /></Heading>
-                {
-                  reportModule?.isActive &&
+              <DashboardCardHeader
+                title={`${t((emailModule?.isActive && callModule?.isActive) ? "Email and Call" : emailModule?.isActive ? "Email" : callModule?.isActive ? "Call" : "")} ${t("Report")}`}
+                icon={MdShowChart}
+                action={reportModule?.isActive ?
                   <IconButton
                     color={"green.500"}
                     onClick={() => navigate("/reporting-analytics")}
-                    aria-label={tr("Call Fred")}
+                    aria-label={t("View")}
                     borderRadius="10px"
                     size="md"
                     icon={<ViewIcon />}
                   />
-                }
-              </Flex>
-              <HSeparator />
+                : null}
+              />
               <ReportChart dashboard={"dashboard"} />
             </Card>
           </GridItem>
         }
         <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
           <Card>
-            <Flex mb={5} alignItems={"center"} justifyContent={"space-between"}>
-              <Heading size="md"><LocalizedText text="Module Data Report" /></Heading>
-
-            </Flex>
-            <Box mb={3}>
-              <HSeparator />
-            </Box>
+            <DashboardCardHeader
+              title={<LocalizedText text="Module Data Report" />}
+              icon={MdOutlineAssessment}
+            />
             <Chart dashboard={"dashboard"} data={data} />
           </Card>
         </GridItem>
@@ -279,12 +424,11 @@ export default function UserReports() {
         {
           data && data.length > 0 &&
           <Card >
-            <Flex alignItems={"center"} justifyContent={"space-between"} pb={3}>
-              <Heading size="md"><LocalizedText text="Statistics" /></Heading>
-              <Text color={statisticsMutedColor} fontSize="sm" fontWeight={700}>
-                {data.length}
-              </Text>
-            </Flex>
+            <DashboardCardHeader
+              title={<LocalizedText text="Statistics" />}
+              icon={MdInsights}
+              meta={data.length}
+            />
             {
               !isLoding ?
                 data && data.length > 0 && data?.map((item, i) => (
@@ -311,7 +455,7 @@ export default function UserReports() {
                           me={3}
                           flexShrink={0}
                         />
-                        <Text color={statisticsTextColor} fontSize="sm" fontWeight={700} noOfLines={1}>{item?.name}</Text>
+                        <Text color={statisticsTextColor} fontSize="sm" fontWeight={700} noOfLines={1}>{t(item?.name)}</Text>
                       </Flex>
                       <Text color={statisticsTextColor} fontSize="md" fontWeight={800}>
                         <CountUpComponent targetNumber={item?.length} />
@@ -333,7 +477,10 @@ export default function UserReports() {
         }
 
         {leadView?.view && (leadModule?.isActive) && <Card className="crm-lead-chart">
-          <Heading size="md" pb={2}><LocalizedText text="Lead Statistics" /></Heading>
+          <DashboardCardHeader
+            title={<LocalizedText text="Lead Statistics" />}
+            icon={MdPieChart}
+          />
           {(leadView?.view) &&
             <Grid templateColumns="repeat(12, 1fr)" gap={2}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
@@ -390,7 +537,10 @@ export default function UserReports() {
         </Card>}
 
         {taskView?.view && (tasksModule?.isActive) && <Card >
-          <Heading size="md" pb={3}><LocalizedText text="Task Statistics" /></Heading>
+          <DashboardCardHeader
+            title={<LocalizedText text="Task Statistics" />}
+            icon={MdTaskAlt}
+          />
           <Grid templateColumns="repeat(12, 1fr)" gap={2} mb={2}>
             <GridItem colSpan={{ base: 12 }}>
               <Box
@@ -421,7 +571,7 @@ export default function UserReports() {
                     <Box backgroundColor={`${item.color}`} height={"10px"} width={"10px"} borderRadius={"50%"}></Box>
                   </Box>
 
-                  <Text ps={2} fontWeight={"bold"} color={`${item.color}`}>{item.name}</Text>
+                  <Text ps={2} fontWeight={"bold"} color={`${item.color}`}>{t(item.name)}</Text>
 
                 </Flex>
                 <Box fontWeight={"bold"} color={`${item.color}`}><CountUpComponent targetNumber={item?.length} /></Box>

@@ -1,7 +1,8 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React from "react";
-import moment from "moment";
 import { useFormik } from "formik";
+import CalendarDateInput from "components/date/CalendarDateInput";
+import { optionText } from "./searchFields";
 import {
   Box,
   Button,
@@ -184,7 +185,7 @@ const AdvanceSearch = ({
                   mt={2}
                   htmlFor={field?.name}
                 >
-                  {field?.label}
+                  <LocalizedText text={field?.label} />
                 </FormLabel>
                 {field?.type === "select" ? (
                   <Select
@@ -197,10 +198,13 @@ const AdvanceSearch = ({
                     fontWeight="500"
                     // borderColor={errors?.[field?.name] && touched?.[field?.name] ? "red.300" : null}
                   >
-                    <option value=""><LocalizedText text="Select" />{field?.label}</option>
+                    <option value="">{tr("Select")} — {tr(field?.label)}</option>
                     {field.options?.map((option) => (
-                      <option key={option?._id} value={option?.value}>
-                        {option?.name}
+                      <option
+                        key={option?._id || option?.value}
+                        value={option?.value}
+                      >
+                        {tr(optionText(option))}
                       </option>
                     ))}
                   </Select>
@@ -216,14 +220,14 @@ const AdvanceSearch = ({
                           color={"#000"}
                           mb="0"
                         ><LocalizedText text="From" /></FormLabel>
-                        <Input
+                        <CalendarDateInput
                           fontSize="sm"
                           onChange={handleChange}
                           onBlur={handleBlur}
                           value={values[`from${field?.name}`]}
-                          type="date"
                           name={`from${field?.name}`}
                           fontWeight="500"
+                          aria-label={`${tr("From")} ${tr(field?.label)}`}
                         />
                       </Box>
                       <Box w="49%">
@@ -235,15 +239,15 @@ const AdvanceSearch = ({
                           color={"#000"}
                           mb="0"
                         ><LocalizedText text="To" /></FormLabel>
-                        <Input
+                        <CalendarDateInput
                           fontSize="sm"
                           onChange={handleChange}
                           onBlur={handleBlur}
                           value={values[`to${field?.name}`]}
-                          type="date"
                           min={values[`from${field?.name}`]}
                           name={`to${field?.name}`}
                           fontWeight="500"
+                          aria-label={`${tr("To")} ${tr(field?.label)}`}
                         />
                       </Box>
                     </Flex>
@@ -264,7 +268,7 @@ const AdvanceSearch = ({
                       onBlur={handleBlur}
                       value={values[field?.name]}
                       fontWeight="500"
-                      placeholder={`Enter ${field?.label}`}
+                      placeholder={tr(field?.label)}
                       // borderColor={errors?.[field?.name] && touched?.[field?.name] ? "red.300" : null}
                     />
                   </InputGroup>

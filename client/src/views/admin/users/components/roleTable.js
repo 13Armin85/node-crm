@@ -88,7 +88,7 @@ export default function RoleTable(props) {
           fontWeight="700"
           lineHeight="100%"
         >
-          {title} (
+          <LocalizedText text={title} /> (
           <CountUpComponent key={data?.length} targetNumber={data?.length} />)
         </Text>
         {user?.role === "superAdmin" && (

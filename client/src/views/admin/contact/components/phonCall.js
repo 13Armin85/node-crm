@@ -85,7 +85,7 @@ export default function PhoneCall(props) {
     >
       <Flex justify="space-between" mb="10px" align="center">
         <Heading size="md" mb={3}>
-          {title} (
+          <LocalizedText text={title} /> (
           <CountUpComponent key={data?.length} targetNumber={data?.length} />)
         </Heading>
         {/* <Menu /> */}

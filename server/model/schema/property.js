@@ -58,6 +58,7 @@ const propertySchema = new mongoose.Schema({
         lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Leads', default: null },
         partnerCustomer: { type: mongoose.Schema.Types.ObjectId, ref: 'PartnerCustomers', default: null },
         soldAt: { type: Date, default: null },
+        soldBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     },
     files: [{ name: String, url: String, mimeType: String, size: Number, uploadedAt: Date, storageName: String }],
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
@@ -143,6 +144,7 @@ propertySchema.index({ 'price.amount': 1 });
 propertySchema.index({ createdDate: -1 });
 propertySchema.index({ 'sale.lead': 1 });
 propertySchema.index({ 'sale.partnerCustomer': 1 });
+propertySchema.index({ 'sale.soldBy': 1 });
 propertySchema.index({ residence: 1 });
 const Property = mongoose.model("Properties", propertySchema, "Properties");
 module.exports = { Property, initializePropertySchema };

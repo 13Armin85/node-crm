@@ -5,6 +5,7 @@ import { useLanguage, translate } from 'i18n';
 import { getApi, postApi } from 'services/api';
 import axios from 'axios';
 import { constant } from 'constant';
+import CalendarDateInput from 'components/date/CalendarDateInput';
 
 export const fieldPath = field => field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
 export const isVisible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => getIn(values, key) === expected);
@@ -72,7 +73,7 @@ export function AsyncRelationSelect({ moduleName, value, onChange, id, disabled 
   </Stack>;
 }
 export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false }) {
-  const { language, direction, t } = useLanguage();
+  const { language, t } = useLanguage();
   if (!definition) return null;
   const change = (field, value) => {
     formik.setFieldValue(fieldPath(field), value);
@@ -84,7 +85,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
     };
     Object.entries(resets[field.name] || {}).forEach(([key, v]) => formik.setFieldValue(key, v));
   };
-  return <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={5} dir={direction}>
+  return <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={5} dir="ltr">
     {[...definition.fields].sort((a, b) => a.order - b.order).filter(field => (!customOnly || field.kind === 'CUSTOM_FIELD') && isVisible(field, formik.values)).map(field => {
       const path = fieldPath(field); const value = getIn(formik.values, path); const error = getIn(formik.errors, path);
       const label = localized(field.label, language); const id = `field-${path}`;
@@ -99,10 +100,19 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       else if (field.type === 'radio') control = <RadioGroup id={id} value={value || ''} onChange={v => change(field, v)}><Stack direction="row" flexWrap="wrap">{options.map(o => <Radio isDisabled={readOnly} key={o.value} value={o.value}>{localized(o.label, language)}</Radio>)}</Stack></RadioGroup>;
       else if (field.type === 'multiselect') control = <Stack>{options.map(o => <Checkbox key={o.value} isDisabled={readOnly} isChecked={(value || []).includes(o.value)} onChange={e => change(field, e.target.checked ? [...(value || []), o.value] : value.filter(v => v !== o.value))}>{localized(o.label, language)}</Checkbox>)}</Stack>;
       else if (field.type === 'select') control = <Select {...common} isDisabled={readOnly}><option value="">{t('Select')}</option>{options.map(o => <option key={o.value} value={o.value}>{localized(o.label, language)}</option>)}</Select>;
+      else if (['date', 'datetime'].includes(field.type)) control = <CalendarDateInput
+        {...common}
+        type={field.type === 'datetime' ? 'datetime-local' : 'date'}
+        isDisabled={readOnly}
+        min={field.min}
+        max={field.max}
+        value={value ? String(value).slice(0, field.type === 'date' ? 10 : 16) : ''}
+        onChange={e => change(field, e.target.value)}
+      />;
       else {
         const type = ({ currency: 'number', phone: 'tel', datetime: 'datetime-local' })[field.type] || field.type;
         control = <Input {...common} type={type} min={field.min} max={field.max} step={type === 'number' ? 'any' : undefined}
-          value={['date', 'datetime'].includes(field.type) && value ? String(value).slice(0, field.type === 'date' ? 10 : 16) : value ?? ''}
+          value={value ?? ''}
           onChange={e => change(field, type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)} />;
       }
       return <FormControl key={path} isRequired={field.required} isInvalid={Boolean(error)}>

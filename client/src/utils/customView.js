@@ -1,4 +1,4 @@
-import { LocalizedText } from 'i18n/runtime';
+import { LocalizedText, tr } from 'i18n/runtime';
 // import React from 'react'
 // import { Grid, GridItem, Box, Heading, Text } from '@chakra-ui/react'
 // import Card from 'components/card/Card'
@@ -361,7 +361,7 @@ const CustomView = ({
                 <Grid templateColumns="repeat(12, 1fr)" gap={3}>
                   <GridItem colSpan={12}>
                     <Heading as="h1" size="md" mb="10px">
-                      {ind + 1}. {item?.heading}
+                      {ind + 1}. <LocalizedText text={item?.heading} />
                     </Heading>
                     <HSeparator />
                   </GridItem>
@@ -382,7 +382,7 @@ const CustomView = ({
                             fontSize="sm"
                             fontWeight="bold"
                           >
-                            {field?.label}
+                            <LocalizedText text={field?.label} />
                           </Text>
                           {editableField === field?.name ||
                           formik.errors[field?.name] ? (
@@ -408,7 +408,7 @@ const CustomView = ({
                                     key={option?._id}
                                     value={option?.value}
                                   >
-                                    {option?.name}
+                                    <LocalizedText text={option?.name} />
                                   </option>
                                 ))}
                               </Select>
@@ -525,7 +525,7 @@ const CustomView = ({
                                     (fieldData[field?.name] !== undefined
                                       ? fieldData[field?.name]
                                       : "N/A"),
-                                  field?.label
+                                  tr(field?.label)
                                 )
                               }
                             >
@@ -553,7 +553,7 @@ const CustomView = ({
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={12}>
                 <Heading as="h1" size="md" mb="10px">
-                  {data?.moduleName}<LocalizedText text="view page" /></Heading>
+                  <LocalizedText text={data?.moduleName} /> <LocalizedText text="view page" /></Heading>
                 <HSeparator />
               </GridItem>
               {data?.fields
@@ -571,7 +571,7 @@ const CustomView = ({
                         fontSize="sm"
                         fontWeight="bold"
                       >
-                        {field?.label}
+                        <LocalizedText text={field?.label} />
                       </Text>
                       {editableField === field?.name ||
                       formik.errors[field?.name] ? (
@@ -593,7 +593,7 @@ const CustomView = ({
                           >
                             {field?.options?.map((option) => (
                               <option key={option?._id} value={option?.value}>
-                                {option?.name}
+                                <LocalizedText text={option?.name} />
                               </option>
                             ))}
                           </Select>
@@ -710,7 +710,7 @@ const CustomView = ({
                                 (fieldData[field?.name] !== undefined
                                   ? fieldData[field?.name]
                                   : "N/A"),
-                              field?.label
+                              tr(field?.label)
                             )
                           }
                         >

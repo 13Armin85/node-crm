@@ -83,7 +83,7 @@ const Add = (props) => {
             alignItems={"center"}
             justifyContent="space-between"
             display="flex"
-          ><LocalizedText text="Add" />{props.title}
+          ><LocalizedText text="Add" /> <LocalizedText text={props.title} />
             <IconButton onClick={props.onClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>

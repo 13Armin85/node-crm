@@ -4,10 +4,10 @@ import AdminNavbarLinks from './NavbarLinksAdmin';
 import { useLanguage } from 'i18n';
 
 export default function AdminNavbar({ brandText, openSidebar, setOpenSidebar, ...props }) {
-  const { t } = useLanguage();
+  const { t, direction } = useLanguage();
   const background = useColorModeValue('rgba(255,255,255,0.96)', 'rgba(13,24,42,0.96)');
   return (
-    <Flex as="header" className="crm-header" dir="ltr" bg={background}>
+    <Flex as="header" className="crm-header" dir={direction} bg={background}>
       <Flex align="center" gap="12px" minW="0">
         <IconButton
           className="crm-sidebar-toggle"

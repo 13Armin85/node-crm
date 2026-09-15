@@ -77,6 +77,51 @@ router.get('/files/:id', asyncRoute(async (req, res) => {
   res.set('X-Content-Type-Options', 'nosniff');
   res.download(path.join(uploadRoot, file.storageName), file.name);
 }));
+router.get('/dashboard/sales-summary', asyncRoute(async (req, res) => {
+  if (!can(req.actor, 'Properties', 'view')) return res.status(403).json({ code: 'forbidden' });
+  const match = { deleted: false, transactionType: 'SALE', ...scope(req) };
+  const [summary] = await Property.aggregate([
+    { $match: match },
+    { $project: {
+      amount: { $ifNull: ['$price.amount', 0] },
+      currency: { $ifNull: ['$price.currency', 'TRY'] },
+      status: { $ifNull: ['$sale.status', 'AVAILABLE'] },
+      seller: { $ifNull: ['$sale.soldBy', '$createBy'] },
+    } },
+    { $facet: {
+      totals: [
+        { $group: { _id: { status: '$status', currency: '$currency' }, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
+        { $sort: { '_id.currency': 1 } },
+      ],
+      sellers: [
+        { $match: { status: 'SOLD' } },
+        { $group: { _id: { seller: '$seller', currency: '$currency' }, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
+        { $group: { _id: '$_id.seller', soldCount: { $sum: '$count' }, values: { $push: { currency: '$_id.currency', amount: '$amount' } } } },
+        { $lookup: { from: 'User', localField: '_id', foreignField: '_id', as: 'user' } },
+        { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+        { $project: {
+          _id: 0,
+          userId: { $toString: '$_id' },
+          name: { $let: {
+            vars: { fullName: { $trim: { input: { $concat: [{ $ifNull: ['$user.firstName', ''] }, ' ', { $ifNull: ['$user.lastName', ''] }] } } } },
+            in: { $cond: [{ $ne: ['$$fullName', ''] }, '$$fullName', { $ifNull: ['$user.username', ''] }] },
+          } },
+          soldCount: 1,
+          values: 1,
+        } },
+        { $sort: { soldCount: -1, name: 1 } },
+      ],
+    } },
+  ]);
+  const bucket = status => {
+    const rows = (summary?.totals || []).filter(item => item._id.status === status);
+    return {
+      count: rows.reduce((total, item) => total + item.count, 0),
+      values: rows.map(item => ({ currency: item._id.currency, amount: item.amount })),
+    };
+  };
+  res.json({ sold: bucket('SOLD'), available: bucket('AVAILABLE'), bySeller: summary?.sellers || [] });
+}));
 router.param('module', (req, res, next, moduleName) => {
   req.estateModule = modules[moduleName]; next();
 });
@@ -155,6 +200,7 @@ async function payload(req, previous = {}) {
 }
 router.post('/:module', moduleRequired, permission('create'), asyncRoute(async (req, res) => {
   const values = await payload(req);
+  if (req.params.module === 'Properties') values.sale.soldBy = values.sale.status === 'SOLD' ? req.actor._id : null;
   const record = await req.estateModule.model.create({ ...values, createBy: req.actor._id, createdDate: new Date(), updatedDate: new Date() });
   res.status(201).json(record);
 }));
@@ -164,6 +210,11 @@ router.put('/:module/:id', moduleRequired, permission('update'), asyncRoute(asyn
   if (!record) return res.status(404).json({ code: 'notFound' });
   const previous = JSON.parse(JSON.stringify(record));
   const values = await payload(req, previous);
+  if (req.params.module === 'Properties') {
+    values.sale.soldBy = values.sale.status === 'SOLD'
+      ? (previous.sale?.status === 'SOLD' && previous.sale?.soldBy ? previous.sale.soldBy : req.actor._id)
+      : null;
+  }
   record.set({ ...values, updatedDate: new Date() });
   await record.save(); res.json(record);
 }));

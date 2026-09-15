@@ -18,8 +18,8 @@ export default function FixedPlugin(props) {
       bg={bgButton}
       position="fixed"
       variant="no-effects"
-      left={document.documentElement.dir === "rtl" ? "35px" : ""}
-      right={document.documentElement.dir === "rtl" ? "" : "35px"}
+      left=""
+      right="35px"
       bottom="30px"
       border="1px solid"
       borderColor="#6A53FF"

@@ -76,6 +76,10 @@ const Index = () => {
   const [phoneRec, setPhoneRec] = useState({});
 
   const data = useSelector((state) => state?.leadData?.data);
+  const leadStatusValue = (status) =>
+    status && typeof status === "object"
+      ? status.value || status.key || status.code || ""
+      : status || "";
 
   const searchedDataOut = useSelector(
     (state) => state?.advanceSearchData?.searchResult
@@ -120,7 +124,7 @@ const Index = () => {
   };
 
   const changeStatus = (cell) => {
-    switch (cell?.original?.leadStatus) {
+    switch (leadStatusValue(cell?.original?.leadStatus)) {
       case "pending":
         return "pending";
       case "active":
@@ -235,12 +239,12 @@ const Index = () => {
                 onChange={(e) => setStatusData(row, e)}
                 height={7}
                 width={130}
-                value={row?.original?.leadStatus}
+                value={leadStatusValue(row?.original?.leadStatus)}
                 style={{ fontSize: "14px" }}
               >
-                <option value="active"><LocalizedText text="Active" /></option>
-                <option value="sold"><LocalizedText text="Sold" /></option>
-                <option value="pending"><LocalizedText text="Pending" /></option>
+                <option value="active">{tr("Active")}</option>
+                <option value="sold">{tr("Sold")}</option>
+                <option value="pending">{tr("Pending")}</option>
               </Select>
             </div>
           ),

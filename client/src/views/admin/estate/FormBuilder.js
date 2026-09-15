@@ -130,7 +130,7 @@ export default function FormBuilder() {
         {languages.map(lang => (
           <FormControl key={lang}>
             <FormLabel color={muted} fontSize="xs" mb="6px">{t(`estate.language.${lang}`)}</FormLabel>
-            <Input dir={lang === 'fa' ? 'rtl' : 'ltr'} value={field[key]?.[lang] || ''} onChange={event => update({ [key]: { ...emptyLocalized(), ...field[key], [lang]: event.target.value } })} borderRadius="12px" bg={panelBg} />
+            <Input dir="ltr" value={field[key]?.[lang] || ''} onChange={event => update({ [key]: { ...emptyLocalized(), ...field[key], [lang]: event.target.value } })} borderRadius="12px" bg={panelBg} />
           </FormControl>
         ))}
       </SimpleGrid>
@@ -234,7 +234,7 @@ export default function FormBuilder() {
                             <Box border="1px solid" borderColor={border} borderRadius="15px" p="14px" key={`${option.value}-${optionIndex}`} bg={panelBg}>
                               <Flex align="center" justify="space-between" mb="12px"><Text fontWeight="800" fontSize="sm">{t('estate.option')} {optionIndex + 1}</Text>{field.kind === 'CUSTOM_FIELD' && <IconButton size="sm" aria-label={t('Delete')} icon={<MdDeleteOutline />} colorScheme="red" variant="ghost" onClick={() => update({ options: field.options.filter((_, index) => index !== optionIndex) })} />}</Flex>
                               <FormControl mb="12px"><FormLabel color={muted} fontSize="xs">{t('estate.optionValue')}</FormLabel><Input value={option.value} isDisabled={field.kind === 'SYSTEM_FIELD'} onChange={event => updateOption(optionIndex, { value: event.target.value })} borderRadius="12px" /></FormControl>
-                              <SimpleGrid columns={{ base: 1, md: 3 }} spacing="10px">{languages.map(lang => <FormControl key={lang}><FormLabel color={muted} fontSize="xs">{t(`estate.language.${lang}`)}</FormLabel><Input dir={lang === 'fa' ? 'rtl' : 'ltr'} value={option.label?.[lang] || ''} onChange={event => updateOption(optionIndex, { label: { ...option.label, [lang]: event.target.value } })} borderRadius="12px" /></FormControl>)}</SimpleGrid>
+                              <SimpleGrid columns={{ base: 1, md: 3 }} spacing="10px">{languages.map(lang => <FormControl key={lang}><FormLabel color={muted} fontSize="xs">{t(`estate.language.${lang}`)}</FormLabel><Input dir="ltr" value={option.label?.[lang] || ''} onChange={event => updateOption(optionIndex, { label: { ...option.label, [lang]: event.target.value } })} borderRadius="12px" /></FormControl>)}</SimpleGrid>
                             </Box>
                           ))}
                           {field.kind === 'CUSTOM_FIELD' && <Button leftIcon={<MdAdd />} onClick={() => update({ options: [...(field.options || []), { value: '', label: emptyLocalized() }] })} variant="outline" borderStyle="dashed" borderRadius="13px" minH="46px">{t('estate.addOption')}</Button>}

@@ -164,7 +164,7 @@ const TaskView = (props) => {
                     <Heading size="md" mb={3}><LocalizedText text="Task Details" /></Heading>
                     <Flex id="hide-btn">
                       <Menu>
-                        {(user?.role === "superAdmin" ||
+                        {(user?.role === "admin" ||
                           permission?.create ||
                           permission?.update ||
                           permission?.delete) && (
@@ -180,7 +180,7 @@ const TaskView = (props) => {
                         )}
                         <MenuDivider />
                         <MenuList minWidth={2}>
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             permission?.create) && (
                             <MenuItem
                               onClick={() => handleClick()}
@@ -189,7 +189,7 @@ const TaskView = (props) => {
                               icon={<AddIcon />}
                             ><LocalizedText text="Add" /></MenuItem>
                           )}
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             permission?.update) && (
                             <MenuItem
                               onClick={() => setEdit(true)}
@@ -205,7 +205,7 @@ const TaskView = (props) => {
                             style={{ alignItems: "center" }}
                           ><LocalizedText text="Print as PDF" /></MenuItem>
 
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             permission?.delete) && (
                             <>
                               <MenuDivider />
@@ -403,10 +403,10 @@ const TaskView = (props) => {
                   <Text
                     color={
                       data?.category === "contact" &&
-                      (contactAccess?.view || user?.role === "superAdmin")
+                      (contactAccess?.view || user?.role === "admin")
                         ? "brand.600"
                         : leadAccess?.view ||
-                            (user?.role === "superAdmin" &&
+                            (user?.role === "admin" &&
                               data?.category === "lead")
                           ? "brand.600"
                           : "blackAlpha.900"
@@ -508,12 +508,12 @@ const TaskView = (props) => {
       </Grid>
       {(permission?.update ||
         permission?.delete ||
-        user?.role === "superAdmin") && (
+        user?.role === "admin") && (
         <Card mt={3}>
           <Grid templateColumns="repeat(6, 1fr)" gap={1}>
             <GridItem colStart={6}>
               <Flex justifyContent={"right"}>
-                {(permission?.update || user?.role === "superAdmin") && (
+                {(permission?.update || user?.role === "admin") && (
                   <Button
                     size="sm"
                     onClick={() => setEdit(true)}
@@ -523,7 +523,7 @@ const TaskView = (props) => {
                     colorScheme="green"
                   ><LocalizedText text="Edit" /></Button>
                 )}
-                {(permission?.delete || user?.role === "superAdmin") && (
+                {(permission?.delete || user?.role === "admin") && (
                   <Button
                     size="sm"
                     style={{ background: "red.800" }}

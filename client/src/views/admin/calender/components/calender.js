@@ -71,7 +71,7 @@ const Calender = (props) => {
   return (
     <div>
       <Card>
-        {(taskAccess?.view || user?.role === "superAdmin") && (
+        {(taskAccess?.view || user?.role === "admin") && (
           <AddEdit
             isOpen={taskModel}
             onClose={setTaskModel}
@@ -105,15 +105,15 @@ const Calender = (props) => {
         />
 
         <div style={{ display: "flex", justifyContent: "end" }}>
-          {(callAccess?.create || user?.role === "superAdmin") && (
+          {(callAccess?.create || user?.role === "admin") && (
             <Flex alignItems={"center"} fontSize={"14px"} marginRight={"10px"}>
               <GoDotFill color="green" fontSize={"18px"} /><LocalizedText text="Calls" /></Flex>
           )}
-          {(meetingAccess?.create || user?.role === "superAdmin") && (
+          {(meetingAccess?.create || user?.role === "admin") && (
             <Flex alignItems={"center"} fontSize={"14px"} marginRight={"10px"}>
               <GoDotFill color="red" fontSize={"18px"} /><LocalizedText text="Meetings" /></Flex>
           )}
-          {(emailAccess?.create || user?.role === "superAdmin") && (
+          {(emailAccess?.create || user?.role === "admin") && (
             <Flex alignItems={"center"} fontSize={"14px"}>
               <GoDotFill color="blue" fontSize={"18px"} /><LocalizedText text="Emails" /></Flex>
           )}

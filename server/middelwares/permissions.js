@@ -1,11 +1,10 @@
 const User = require('../model/schema/user');
-require('../model/schema/roleAccess');
-const isAdmin = user => user?.role === 'superAdmin';
-const can = (user, title, action) => isAdmin(user) || user?.roles?.some(role => role.access?.some(access =>
-  (access.title === title || (title === 'Partner Customers' && access.title === 'Account')) && access[action] === true));
+const isAdmin = user => user?.role === 'admin';
+const ADMIN_ONLY_MODULES = new Set(['Users', 'Roles', 'Custom Fields', 'Active Deactive Module']);
+const can = (user, title) => isAdmin(user) || (user?.role === 'user' && !ADMIN_ONLY_MODULES.has(title));
 const loadUser = async (req, res, next) => {
   try {
-    req.actor = await User.findOne({ _id: req.user.userId, deleted: false }).select('-password').populate('roles');
+    req.actor = await User.findOne({ _id: req.user.userId, deleted: false }).select('-password');
     if (!req.actor) return res.status(401).json({ code: 'unauthorized' });
     next();
   } catch (error) { next(error); }

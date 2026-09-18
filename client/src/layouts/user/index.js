@@ -44,7 +44,6 @@ export default function User(props) {
   const [route, setRoute] = useState();
   const [openSidebar, setOpenSidebar] = useState(true);
   const { direction, t } = useLanguage();
-  const user = JSON.parse(localStorage.getItem("user"));
   const modules = useSelector((state) => state?.modules?.data);
   // functions for changing the states from components
   const getRoute = () => {
@@ -63,40 +62,6 @@ export default function User(props) {
   useEffect(() => {
     fetchRoute();
   }, []);
-
-  const layoutName = user?.roles?.map((item) => `/${item.roleName}`);
-
-  const filterAccess = (rolesData) => {
-    return rolesData?.map((role) => {
-      role.access = role?.access?.filter((access) => access.view);
-      return role;
-    });
-  };
-
-  // Example usage:
-  const updatedRolesData = filterAccess(user?.roles);
-  let access = [];
-  updatedRolesData?.map((item) => {
-    item?.access?.map((data) => access.push(data));
-  });
-
-  let mergedPermissions = {};
-
-  access.forEach((permission) => {
-    const { title: oldTitle, ...rest } = permission;
-    const title = oldTitle === 'Account' ? 'Partner Customers' : oldTitle;
-
-    if (!mergedPermissions[title]) {
-      mergedPermissions[title] = { ...rest };
-    } else {
-      // Merge with priority to true values
-      Object.keys(rest).forEach((key) => {
-        if (mergedPermissions[title][key] !== true) {
-          mergedPermissions[title][key] = rest[key];
-        }
-      });
-    }
-  });
 
   let routes = [
     {
@@ -124,7 +89,7 @@ export default function User(props) {
     },
     {
       name: "User View",
-      layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+      layout: [ROLE_PATH.admin, ROLE_PATH.user],
       parentName: "Email",
       under: "user",
       path: "/userView/:id",
@@ -151,11 +116,7 @@ export default function User(props) {
     }
   });
   const accessRoute = newRoute?.filter((item) =>
-    Object.keys(mergedPermissions)?.find(
-      (data) =>
-        data?.toLowerCase() === item?.name?.toLowerCase() ||
-        data?.toLowerCase() === item.parentName?.toLowerCase(),
-    ),
+    Array.isArray(item?.layout) && item.layout.includes(ROLE_PATH.user),
   );
 
   // routes.push(...accessRoute)
@@ -305,7 +266,7 @@ export default function User(props) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Dispatch the fetchRoles action on component mount
+    // Load branding images and available modules on component mount.
     dispatch(fetchImage());
     dispatch(fetchModules());
   }, [dispatch]);

@@ -31,6 +31,7 @@ import SelectPorpertyModel from "components/commonTableModel/SelectPorpertyModel
 // import { fetchLeadData } from "redux/slices/leadSlice";
 import { fetchLeadData } from "../../../redux/slices/leadSlice";
 import { useDispatch } from "react-redux";
+import RelationFields from "components/relations/RelationFields";
 
 const Edit = (props) => {
   const { data } = props;
@@ -92,7 +93,7 @@ const Edit = (props) => {
 
   const getPropertyList = async () => {
     let result = await getApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/property"
         : `api/property/?createBy=${user?._id}`
     );
@@ -145,8 +146,8 @@ const Edit = (props) => {
   }, []);
 
   const fetchUserDetails = async () => {
-    let result = await getApi("api/user/");
-    setUserData(result?.data?.user);
+    let result = await getApi("api/task/assignees");
+    setUserData(result?.data);
   };
 
   return (
@@ -181,6 +182,7 @@ const Edit = (props) => {
                 touched={touched}
               />
             )}
+            <RelationFields values={values} setFieldValue={setFieldValue} contact partner />
             <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
               <GridItem colSpan={{ base: 12 }}>
                 <FormLabel

@@ -3,7 +3,6 @@ import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { CloseIcon, PhoneIcon } from "@chakra-ui/icons";
 import {
   Button,
-  Flex,
   FormLabel,
   Grid,
   GridItem,
@@ -19,20 +18,18 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Select,
   Text,
 } from "@chakra-ui/react";
-import { CUIAutoComplete } from "chakra-ui-autocomplete";
-import MultiRoleModel from "components/commonTableModel/MultiRoleModel";
 import Spinner from "components/spinner/Spinner";
 import { useFormik } from "formik";
-import React, { useEffect, useState } from "react";
-import { LiaMousePointerSolid } from "react-icons/lia";
+import React, { useState } from "react";
 import { MdOutlineRemoveRedEye } from "react-icons/md";
 import { RiEyeCloseLine } from "react-icons/ri";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { userSchema } from "schema";
-import { getApi, postApi, putApi } from "services/api";
+import { postApi, putApi } from "services/api";
 import { setUser } from "../../../redux/slices/localSlice";
 
 const AddEditUser = (props) => {
@@ -42,16 +39,12 @@ const AddEditUser = (props) => {
     setAction,
     data,
     userAction,
-    userData,
     selectedId,
     fetchData,
     setUserAction,
   } = props;
   const [isLoding, setIsLoding] = useState(false);
   const [show, setShow] = React.useState(false);
-  const [roles, setRoles] = React.useState([]);
-  const [roleModelOpen, setRoleModelOpen] = useState(false);
-  const [assignToRoleData, setAssignToRoleData] = useState([]);
   const showPass = () => setShow(!show);
   const dispatch = useDispatch();
 
@@ -62,7 +55,7 @@ const AddEditUser = (props) => {
     username: userAction === "add" ? "" : data?.username,
     phoneNumber: userAction === "add" ? "" : data?.phoneNumber,
     password: userAction === "add" ? "" : data?.password,
-    roles: userAction === "add" ? [] : data?.roles?.map((item) => item?._id),
+    role: userAction === "add" ? "user" : data?.role || "user",
   };
   const user = JSON.parse(window.localStorage.getItem("user"));
 
@@ -81,7 +74,6 @@ const AddEditUser = (props) => {
     handleBlur,
     handleChange,
     handleSubmit,
-    setFieldValue,
     resetForm,
   } = formik;
 
@@ -138,25 +130,6 @@ const AddEditUser = (props) => {
       }
     }
   };
-  const extractLabels = (selectedItems) => {
-    return selectedItems?.map((item) => item?._id);
-  };
-  const fetchRoleData = async () => {
-    setIsLoding(true);
-    let result = await getApi("api/role-access");
-    setRoles(
-      result.data?.map((item) => ({
-        ...item,
-        value: item?._id,
-        label: item?.roleName,
-      }))
-    );
-    setIsLoding(false);
-  };
-
-  useEffect(() => {
-    fetchRoleData();
-  }, []);
   return (
     <Modal isOpen={isOpen} isCentered>
       <ModalOverlay />
@@ -218,39 +191,19 @@ const AddEditUser = (props) => {
               </Text>
             </GridItem>
             <GridItem colSpan={{ base: 12 }}>
-              <Flex alignItems={"end"} justifyContent={"space-between"}>
-                <Text w={"100%"}>
-                  <CUIAutoComplete
-                    label={`Choose Role`}
-                    placeholder={tr("Type a Name")}
-                    name="roles"
-                    items={roles}
-                    mb={errors?.roles && touched?.roles ? undefined : "10px"}
-                    className="custom-autoComplete"
-                    selectedItems={roles?.filter((item) =>
-                      values?.roles?.includes(item?._id)
-                    )}
-                    onSelectedItemsChange={(changes) => {
-                      const selectedLabels = extractLabels(
-                        changes?.selectedItems
-                      );
-                      setFieldValue("roles", selectedLabels);
-                    }}
-                    borderColor={
-                      errors?.roles && touched?.roles ? "red.300" : null
-                    }
-                  />
-                </Text>
-                <IconButton
-                  mb={6}
-                  onClick={() => setRoleModelOpen(true)}
-                  fontSize="25px"
-                  icon={<LiaMousePointerSolid />}
-                />
-              </Flex>
-              <Text color={"red"}>
-                {errors?.roles && touched?.roles && errors?.roles}
-              </Text>
+              <FormLabel ms="4px" fontSize="sm" fontWeight="500" mb="8px"><LocalizedText text="Role" /><Text as="span" color="red">*</Text></FormLabel>
+              <Select
+                name="role"
+                value={values.role}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                isDisabled={userAction === "edit" && user?._id === selectedId}
+                borderColor={errors.role && touched.role ? "red.300" : undefined}
+              >
+                <option value="user">{tr("User")}</option>
+                <option value="admin">{tr("Admin")}</option>
+              </Select>
+              <Text mb="10px" color="red">{errors.role && touched.role && errors.role}</Text>
             </GridItem>
             <GridItem colSpan={{ base: 12 }}>
               <FormLabel
@@ -365,17 +318,6 @@ const AddEditUser = (props) => {
               </GridItem>
             )}
           </Grid>
-          <MultiRoleModel
-            isOpen={roleModelOpen}
-            data={assignToRoleData}
-            role={roles}
-            onClose={() => setRoleModelOpen(false)}
-            isLoding={isLoding}
-            setIsLoding={setIsLoding}
-            fieldName="roles"
-            setFieldValue={setFieldValue}
-          // columnsData={columns ?? []}
-          />
         </ManagedFormLayout>
 </ModalBody>
         <ModalFooter>

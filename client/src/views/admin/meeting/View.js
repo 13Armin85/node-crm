@@ -288,14 +288,14 @@ const View = () => {
               </Card>
             </GridItem>
           </Grid>
-          {(user?.role === "superAdmin" ||
+          {(user?.role === "admin" ||
             permission?.update ||
             permission?.delete) && (
             <Card mt={3}>
               <Grid templateColumns="repeat(6, 1fr)" gap={1}>
                 <GridItem colStart={6}>
                   <Flex justifyContent={"right"}>
-                    {user?.role === "superAdmin" || permission?.delete ? (
+                    {user?.role === "admin" || permission?.delete ? (
                       <Button
                         size="sm"
                         style={{ background: "red.800" }}

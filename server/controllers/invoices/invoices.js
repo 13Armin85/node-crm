@@ -14,7 +14,7 @@ const index = async (req, res) => {
     query = req.query;
     query.deleted = false;
     const user = await User.findById(req.user.userId)
-    if (user?.role !== "superAdmin") {
+    if (user?.role !== "admin") {
         delete query.createBy
         query.$or = [{ createBy: new mongoose.Types.ObjectId(req.user.userId) }, { assignUser: new mongoose.Types.ObjectId(req.user.userId) }];
     }

@@ -7,7 +7,7 @@ export const fetchPhoneCallData = createAsyncThunk(
     const user = JSON.parse(localStorage.getItem("user"));
     try {
       const response = await getApi(
-        user.role === "superAdmin"
+        user.role === "admin"
           ? "api/phoneCall"
           : `api/phoneCall?sender=${user._id}`,
       );

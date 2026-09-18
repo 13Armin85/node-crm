@@ -2,6 +2,7 @@ import { tr } from 'i18n/runtime';
 import * as yup from "yup";
 
 export const userSchema = yup.object({
+  role: yup.string().oneOf(["admin", "user"]).required(tr("Role Is required")),
   firstName: yup.string().required(tr("First Name Is required")),
   lastName: yup.string(),
   // phoneNumber: yup.string().required("Phone Number Is required").matches(/^\d{10}$/, "Phone Number must be exactly 10 digits"),

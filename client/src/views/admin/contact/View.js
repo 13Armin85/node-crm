@@ -32,7 +32,6 @@ import FolderTreeView from "components/FolderTreeView/folderTreeView";
 import Card from "components/card/Card";
 import { HSeparator } from "components/separator/Separator";
 import Spinner from "components/spinner/Spinner";
-import { constant } from "constant";
 import { useEffect, useState } from "react";
 import { BiLink, BiLogoLinkedin } from "react-icons/bi";
 import { BsTwitter } from "react-icons/bs";
@@ -41,7 +40,7 @@ import { IoIosArrowBack } from "react-icons/io";
 import { LuBuilding2 } from "react-icons/lu";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getApi } from "services/api";
+import { downloadApiFile, getApi } from "services/api";
 import AddEmailHistory from "../emailHistory/components/AddEmail";
 import AddMeeting from "../meeting/components/Addmeeting";
 import AddPhoneCall from "../phoneCall/components/AddPhoneCall";
@@ -315,7 +314,7 @@ const View = () => {
       Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
-        user?.role === "superAdmin" || accountAccess?.view ? (
+        user?.role === "admin" || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -410,7 +409,7 @@ const View = () => {
       Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
-        user?.role === "superAdmin" || accountAccess?.view ? (
+        user?.role === "admin" || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -514,9 +513,8 @@ const View = () => {
 
   const download = async (data) => {
     if (data) {
-      let result = await getApi(`api/document/download/`, data);
+      let result = await downloadApiFile(`api/document/download/${data}`);
       if (result && result?.status === 200) {
-        window?.open(`${constant?.baseUrl}api/document/download/${data}`);
         toast.success(tr("file Download successful"));
       } else if (result && result?.response?.status === 404) {
         toast.error(tr("file Not Found"));
@@ -618,7 +616,7 @@ const View = () => {
               >
                 <Flex justifyContent={"right"}>
                   <Menu>
-                    {(user?.role === "superAdmin" ||
+                    {(user?.role === "admin" ||
                       permission?.create ||
                       permission?.update ||
                       permission?.delete) && (
@@ -634,7 +632,7 @@ const View = () => {
                     )}
                     <MenuDivider />
                     <MenuList minWidth={2} zIndex={"99"}>
-                      {(user?.role === "superAdmin" || permission?.create) && (
+                      {(user?.role === "admin" || permission?.create) && (
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => onOpen()}
@@ -642,7 +640,7 @@ const View = () => {
                           icon={<AddIcon />}
                         ><LocalizedText text="Add" /></MenuItem>
                       )}
-                      {(user?.role === "superAdmin" || permission?.update) && (
+                      {(user?.role === "admin" || permission?.update) && (
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => setEdit(true)}
@@ -657,7 +655,7 @@ const View = () => {
                         style={{ alignItems: "center" }}
                       ><LocalizedText text="Print as PDF" /></MenuItem>
 
-                      {(user?.role === "superAdmin" || permission?.delete) && (
+                      {(user?.role === "admin" || permission?.delete) && (
                         <>
                           <MenuDivider />
                           <MenuItem
@@ -1298,7 +1296,7 @@ const View = () => {
             </TabPanels>
           </Tabs>
 
-          {(user?.role === "superAdmin" ||
+          {(user?.role === "admin" ||
             permission?.update ||
             permission?.delete) && (
             <Card mt={3}>

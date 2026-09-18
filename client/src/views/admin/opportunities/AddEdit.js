@@ -34,6 +34,7 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import AccountModel from "../../../components/commonTableModel/AccountModel";
 import { HasAccess } from "../../../redux/accessUtils";
+import RelationFields from "components/relations/RelationFields";
 
 const AddEdit = (props) => {
   const { isOpen, size, onClose, type, setAction, selectedId } = props;
@@ -63,6 +64,9 @@ const AddEdit = (props) => {
     salesStage: type === "edit" ? opprtunityDetails?.salesStage : "",
     probability: type === "edit" ? opprtunityDetails?.probability : "",
     description: type === "edit" ? opprtunityDetails?.description : "",
+    contact: type === "edit" ? opprtunityDetails?.contact : "",
+    lead: type === "edit" ? opprtunityDetails?.lead : "",
+    properties: type === "edit" ? (opprtunityDetails?.properties || []) : [],
     createBy: JSON.parse(localStorage.getItem("user"))._id,
     modifiedBy: JSON.parse(localStorage.getItem("user"))._id,
   };
@@ -133,8 +137,8 @@ const AddEdit = (props) => {
   console.log(errors);
   const fetchData = async () => {
     setIsLoding(true);
-    let result = await getApi("api/user/");
-    setUserData(result?.data?.user);
+    let result = await getApi("api/task/assignees");
+    setUserData(result?.data);
     setIsLoding(false);
   };
 
@@ -155,7 +159,7 @@ const AddEdit = (props) => {
   };
 
   useEffect(() => {
-    if (user?.role === "superAdmin") fetchData();
+    if (user?.role === "admin") fetchData();
   }, []);
 
   useEffect(() => {
@@ -196,6 +200,7 @@ const AddEdit = (props) => {
             {type === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="Opportunities" /><IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody><ManagedFormLayout moduleName="Opportunities" formik={formik}>
+            <RelationFields values={values} setFieldValue={setFieldValue} contact lead properties />
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel
@@ -227,7 +232,7 @@ const AddEdit = (props) => {
                     errors?.opportunityName}
                 </Text>
               </GridItem>
-              {(user?.role === "superAdmin" || accountAccess?.view) && (
+              {(user?.role === "admin" || accountAccess?.view) && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
                     display="flex"
@@ -280,7 +285,7 @@ const AddEdit = (props) => {
                   </Text>
                 </GridItem>
               )}
-              {user.role === "superAdmin" && (
+              {user.role === "admin" && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
                     display="flex"

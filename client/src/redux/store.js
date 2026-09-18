@@ -1,7 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
-import roleReducer from "./slices/roleSlice";
 import imageReducer from "./slices/imageSlice";
 import userReducer from "./slices/localSlice";
 import routeReducer from "./slices/routeSlice";
@@ -30,10 +29,6 @@ const middleware = (getDefaultMiddleware) => {
   });
 };
 
-const userPersistConfig = {
-  key: "userDetails",
-  storage,
-};
 const routePersistConfig = {
   key: "route",
   storage,
@@ -53,7 +48,6 @@ const contactPersistConfig = {
 
 export const store = configureStore({
   reducer: {
-    roles: persistReducer(userPersistConfig, roleReducer),
     modules: moduleSlice,
     images: persistReducer(imagesPersistConfig, imageReducer),
     user: userReducer,

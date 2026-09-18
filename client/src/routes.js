@@ -15,7 +15,6 @@ import { AiFillFolderOpen, AiOutlineMail } from "react-icons/ai";
 import { FaCalendarAlt, FaRupeeSign, FaTasks, FaWpforms , FaPiggyBank} from "react-icons/fa";
 import { LuBuilding2 } from "react-icons/lu";
 import { PiPhoneCallBold } from "react-icons/pi";
-import { FaCreativeCommonsBy } from "react-icons/fa";
 import { SiGooglemeet } from "react-icons/si";
 import { ROLE_PATH } from "./roles";
 import ChangeImage from "views/admin/image";
@@ -81,7 +80,6 @@ const TaskView = React.lazy(
   () => import("views/admin/task/components/taskView")
 );
 const Calender = React.lazy(() => import("views/admin/calender"));
-const Role = React.lazy(() => import("views/admin/role"));
 
 const Document = React.lazy(() => import("views/admin/document"));
 
@@ -133,7 +131,7 @@ const routes = [
   // ========================== Dashboard ==========================
   {
     name: "Dashboard",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/default",
     icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
     component: MainDashboard,
@@ -142,7 +140,7 @@ const routes = [
   // ------------- lead Routes ------------------------
   {
     name: "Leads",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/lead",
     icon: (
       <Icon as={MdLeaderboard} width="20px" height="20px" color="inherit" />
@@ -151,7 +149,7 @@ const routes = [
   },
   {
     name: "Leads",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "lead",
     parentName: "Leads",
     path: "/leadView/:id",
@@ -159,7 +157,7 @@ const routes = [
   },
   {
     name: "Lead Import",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "lead",
     parentName: "Leads",
     path: "/leadImport",
@@ -168,14 +166,14 @@ const routes = [
   // --------------- contact Routes --------------------
   {
     name: "Contacts",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/contacts",
     icon: <Icon as={MdContacts} width="20px" height="20px" color="inherit" />,
     component: Contact,
   },
   {
     name: "Contacts",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "contacts",
     parentName: "Contacts",
     path: "/contactView/:id",
@@ -183,7 +181,7 @@ const routes = [
   },
   {
     name: "Contact Import",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     both: true,
     under: "contacts",
     parentName: "Contacts",
@@ -194,14 +192,14 @@ const routes = [
   // ------------- Property Routes ------------------------
   {
     name: "Properties",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/properties",
     icon: <Icon as={LuBuilding2} width="20px" height="20px" color="inherit" />,
     component: Property,
   },
   {
     name: "Properties",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     parentName: "Properties",
     under: "properties",
     path: "/propertyView/:id",
@@ -209,7 +207,7 @@ const routes = [
   },
   {
     name: "Property Import",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     both: true,
     under: "properties",
     parentName: "Properties",
@@ -220,14 +218,14 @@ const routes = [
   // -----------------------------Opportunities-------------------------------------
   {
     name: "Opportunities",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/opportunities",
     icon: <Icon as={TbBulb} width="20px" height="20px" color="inherit" />,
     component: Opportunities,
   },
   {
     name: "Opportunities",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/opportunitiesView/:id",
     under: "opportunities",
     parentName: "Opportunities",
@@ -236,7 +234,7 @@ const routes = [
   },
   {
     name: "Opportunities",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/opprotunitiesImport",
     under: "opportunities",
     parentName: "Opportunities",
@@ -246,7 +244,7 @@ const routes = [
   //------------------------------Opportunity project-------------------------
   // {
   //   name: "Opportunity Project",
-  //   layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+  //   layout: [ROLE_PATH.admin, ROLE_PATH.user],
   //   path: "/opportunityproject",
   //   icon: (
   //     <Icon as={FaDiagramProject} width="20px" height="20px" color="inherit" />
@@ -255,7 +253,7 @@ const routes = [
   // },
   // {
   //   name: "Opportunity Project",
-  //   layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+  //   layout: [ROLE_PATH.admin, ROLE_PATH.user],
   //   under: "opportunityproject",
   //   parentName: "Opportunity Project",
   //   path: "/opportunityprojectView/:id",
@@ -263,7 +261,7 @@ const routes = [
   // },
   // {
   //   name: "Opportunity Project Import",
-  //   layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+  //   layout: [ROLE_PATH.admin, ROLE_PATH.user],
   //   under: "opportunityproject",
   //   parentName: "Opportunity Project",
   //   path: "/opportunityProjectImport",
@@ -272,7 +270,7 @@ const routes = [
   // ------------------------ Partner Customers ------------------------------
   {
     name: "Partner Customers",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/partner-customers",
     icon: (
       <Icon
@@ -286,7 +284,7 @@ const routes = [
   },
   {
     name: "Partner Customers",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/partner-customers/:id",
     under: "partner-customers",
     parentName: "Partner Customers",
@@ -302,7 +300,7 @@ const routes = [
   },
   {
     name: "Residences",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/residences",
     icon: (
       <Icon
@@ -317,7 +315,7 @@ const routes = [
   // --------------- Quotes Routes --------------------
   // {
   //   name: "Offer Letter",
-  //   layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+  //   layout: [ROLE_PATH.admin, ROLE_PATH.user],
   //   path: "/offerletter",
   //   icon: (
   //     <Icon as={BsBlockquoteRight} width="20px" height="20px" color="inherit" />
@@ -326,7 +324,7 @@ const routes = [
   // },
   // {
   //   name: "Offer Letter",
-  //   layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+  //   layout: [ROLE_PATH.admin, ROLE_PATH.user],
   //   under: "Offer Letter",
   //   parentName: "Offer Letter",
   //   path: "/quotesView/:id",
@@ -334,7 +332,7 @@ const routes = [
   // },
   // {
   //   name: "Quotes Import",
-  //   layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+  //   layout: [ROLE_PATH.admin, ROLE_PATH.user],
   //   both: true,
   //   under: "quotes",
   //   parentName: "Quotes",
@@ -344,7 +342,7 @@ const routes = [
   // --------------- Invoices Routes --------------------
   {
     name: "Invoices",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/invoices",
     icon: (
       <Icon as={TbFileInvoice} width="20px" height="20px" color="inherit" />
@@ -353,7 +351,7 @@ const routes = [
   },
   {
     name: "Invoices",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "invoices",
     parentName: "Invoices",
     path: "/invoicesView/:id",
@@ -361,7 +359,7 @@ const routes = [
   },
   {
     name: "Invoices Import",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     both: true,
     under: "invoices",
     parentName: "Invoices",
@@ -381,14 +379,14 @@ const routes = [
     //---------------Bank Details Route----------------------
     // {
     //   name: "Bank Details",
-    //   layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    //   layout: [ROLE_PATH.admin, ROLE_PATH.user],
     //   path: "/bank-details",
     //   icon: <Icon as={FaPiggyBank} width="20px" height="20px" color="inherit" />,
     //   component: BankDetails,
     // },
     // {
     //   name: "Bank Details",
-    //   layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    //   layout: [ROLE_PATH.admin, ROLE_PATH.user],
     //   under: "bankDetails",
     //   parentName: "Bank Details",
     //   path: "/bankDetailsview/:id",
@@ -397,14 +395,14 @@ const routes = [
   // ------------- Task Routes ------------------------
   {
     name: "Tasks",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/task",
     icon: <Icon as={FaTasks} width="20px" height="20px" color="inherit" />,
     component: Task,
   },
   {
     name: "Tasks",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "task",
     parentName: "Tasks",
     path: "/view/:id",
@@ -413,14 +411,14 @@ const routes = [
   // ------------- Meeting Routes ------------------------
   {
     name: "Meetings",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/metting",
     icon: <Icon as={SiGooglemeet} width="20px" height="20px" color="inherit" />,
     component: Meeting,
   },
   {
     name: "Meetings ",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "Meetings",
     parentName: "Meetings",
     path: "/metting/:id",
@@ -429,7 +427,7 @@ const routes = [
   // ------------- Phone Routes ------------------------
   {
     name: "Calls",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/phone-call",
     icon: (
       <Icon as={PiPhoneCallBold} width="20px" height="20px" color="inherit" />
@@ -438,7 +436,7 @@ const routes = [
   },
   {
     name: "Calls",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "phone-call",
     parentName: "Calls",
     path: "/phone-call/:id",
@@ -448,7 +446,7 @@ const routes = [
   {
     // separator: 'History',
     name: "Emails",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/email",
     icon: (
       <Icon as={AiOutlineMail} width="20px" height="20px" color="inherit" />
@@ -457,7 +455,7 @@ const routes = [
   },
   {
     name: "Emails ",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "Emails",
     parentName: "Emails",
     path: "/Email/:id",
@@ -466,14 +464,14 @@ const routes = [
   // -----------------------------Email Template-------------------------------------
   {
     name: "Email Template",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/email-template",
     icon: <Icon as={HiTemplate} width="20px" height="20px" color="inherit" />,
     component: EmailTemplate,
   },
   {
     name: "Add Email Template",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "email-template",
     parentName: "Email Template",
     path: "/email-template/email-template-addEdit",
@@ -482,7 +480,7 @@ const routes = [
   },
   {
     name: "Email Template",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     under: "email-template",
     parentName: "Email Template",
     path: "/email-template/:id",
@@ -492,7 +490,7 @@ const routes = [
   // ------------- Calender Routes ------------------------
   {
     name: "Calender",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/calender",
     icon: (
       <Icon as={FaCalendarAlt} width="20px" height="20px" color="inherit" />
@@ -501,7 +499,7 @@ const routes = [
   },
   {
     name: "estate.formBuilder",
-    layout: [ROLE_PATH.superAdmin],
+    layout: [ROLE_PATH.admin],
     path: "/form-builder",
     icon: <Icon as={FaWpforms} width="20px" height="20px" color="inherit" />,
     component: FormBuilder,
@@ -510,30 +508,15 @@ const routes = [
   // -----------------------------Admin setting-------------------------------------
   {
     name: "Admin Setting",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin],
     // parentName: "admin",
     under: "admin",
     path: "/admin-setting",
     component: AdminSetting,
   },
   {
-    name: "Roles",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
-    path: "/role",
-    under: "role",
-    icon: (
-      <Icon
-        as={FaCreativeCommonsBy}
-        width="20px"
-        height="20px"
-        color="inherit"
-      />
-    ),
-    component: Role,
-  },
-  {
     name: "Custom Fields",
-    layout: [ROLE_PATH.superAdmin],
+    layout: [ROLE_PATH.admin],
     path: "/custom-Fields",
     under: "customField",
     icon: <Icon as={FaWpforms} width="20px" height="20px" color="inherit" />,
@@ -541,7 +524,7 @@ const routes = [
   },
   {
     name: "Change Images",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin],
     path: "/change-images",
     under: "image",
     icon: <Icon as={TbExchange} width="20px" height="20px" color="inherit" />,
@@ -549,7 +532,7 @@ const routes = [
   },
   {
     name: "Validation",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin],
     path: "/validations",
     under: "Validation",
     icon: <Icon as={GrValidate} width="20px" height="20px" color="inherit" />,
@@ -557,7 +540,7 @@ const routes = [
   },
   {
     name: "Table Fields",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin],
     path: "/table-field",
     under: "tableField",
     icon: (
@@ -567,7 +550,7 @@ const routes = [
   },
   {
     name: "Active Deactive Module",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin],
     path: "/active-deactive-module",
     under: "activeDeactiveModule",
     icon: (
@@ -577,7 +560,7 @@ const routes = [
   },
   {
     name: "Module",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin],
     path: "/module",
     under: "module",
     icon: (
@@ -605,7 +588,7 @@ const routes = [
   // ------------- Document Routes ------------------------
   {
     name: "Documents",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/documents",
     icon: (
       <Icon as={AiFillFolderOpen} width="20px" height="20px" color="inherit" />
@@ -615,7 +598,7 @@ const routes = [
   // ----------------- Reporting Layout -----------------
   {
     name: "Reporting and Analytics",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/reporting-analytics",
     icon: (
       <Icon
@@ -630,7 +613,7 @@ const routes = [
   // ------------- user Routes ------------------------
   {
     name: "Users",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin],
     path: "/user",
     under: "user",
     icon: <Icon as={HiUsers} width="20px" height="20px" color="inherit" />,
@@ -638,7 +621,7 @@ const routes = [
   },
   {
     name: "User View",
-    layout: [ROLE_PATH.superAdmin, ROLE_PATH.user],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     parentName: "Email",
     under: "user",
     path: "/userView/:id",

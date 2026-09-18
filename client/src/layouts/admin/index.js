@@ -8,7 +8,7 @@ import Spinner from "components/spinner/Spinner";
 import { SidebarContext } from "contexts/SidebarContext";
 import React, { Suspense, useEffect } from "react";
 import { useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ROLE_PATH } from "../../roles";
 import newRoutes from "routes.js";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,7 +19,6 @@ import DynamicPage from "views/admin/dynamicPage";
 import DynamicPageview from "views/admin/dynamicPage/DynamicPageview";
 import { fetchRouteData } from "../../redux/slices/routeSlice";
 import { LuChevronRightCircle } from "react-icons/lu";
-import { fetchRoles } from "../../redux/slices/roleSlice";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
 import PageHelp from "components/help/PageHelp";
@@ -34,8 +33,8 @@ export default function Dashboard(props) {
   const [toggleSidebar, setToggleSidebar] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
   const { direction, t } = useLanguage();
+  const location = useLocation();
   // const user = JSON.parse(localStorage.getItem("user"))
-  const userId = JSON.parse(localStorage.getItem("user"))?._id;
 
   // let routes = newRoutes;
   const [routes, setRoutes] = useState(newRoutes);
@@ -48,7 +47,7 @@ export default function Dashboard(props) {
   };
 
   const getRoute = () => {
-    return window?.location?.pathname !== "/admin/full-screen-maps";
+    return location.pathname !== "/admin/full-screen-maps";
   };
 
   const dynamicRoute = () => {
@@ -62,7 +61,7 @@ export default function Dashboard(props) {
           const newRoute = [
             {
               name: item?.moduleName,
-              layout: [ROLE_PATH?.superAdmin],
+              layout: [ROLE_PATH?.admin],
               path: pathName(item?.moduleName),
               icon: item?.icon ? (
                 <img src={item?.icon} width="20px" height="20px" alt="icon" />
@@ -78,7 +77,7 @@ export default function Dashboard(props) {
             },
             {
               name: item?.moduleName,
-              layout: [ROLE_PATH?.superAdmin],
+              layout: [ROLE_PATH?.admin],
               under: item?.moduleName,
               parentName: item?.moduleName,
               path: `${pathName(item?.moduleName)}/:id`,
@@ -123,7 +122,7 @@ export default function Dashboard(props) {
             const newRoute = [
               {
                 name: item?.moduleName,
-                layout: [ROLE_PATH?.superAdmin],
+                layout: [ROLE_PATH?.admin],
                 path: pathName(item?.moduleName),
                 icon: item?.icon ? (
                   <img src={item?.icon} width="20px" height="20px" alt="icon" />
@@ -139,7 +138,7 @@ export default function Dashboard(props) {
               },
               {
                 name: item?.moduleName,
-                layout: [ROLE_PATH.superAdmin],
+                layout: [ROLE_PATH.admin],
                 under: item?.moduleName,
                 parentName: item?.moduleName,
                 path: `${pathName(item.moduleName)}/:id`,
@@ -197,7 +196,7 @@ export default function Dashboard(props) {
         }
       } else {
         if (
-          window?.location?.href?.indexOf(
+          location.pathname?.indexOf(
             routes[i]?.path?.replace("/:id", ""),
           ) !== -1
         ) {
@@ -212,13 +211,11 @@ export default function Dashboard(props) {
     dynamicRoute();
   }, [route, modules]);
 
-  useEffect(async () => {
-    if (window.location.pathname === "/default") {
-      await dispatch(fetchRouteData());
-      await dispatch(fetchImage());
-    }
-    await dispatch(fetchModules());
-  }, []);
+  useEffect(() => {
+    dispatch(fetchRouteData());
+    dispatch(fetchImage());
+    dispatch(fetchModules());
+  }, [dispatch]);
 
   const largeLogo = useSelector((state) =>
     state?.images?.images?.filter((item) => item?.isActive === true),
@@ -239,7 +236,7 @@ export default function Dashboard(props) {
         }
       } else {
         if (
-          window?.location?.href?.indexOf(
+          location.pathname?.indexOf(
             routes[i]?.path?.replace("/:id", ""),
           ) !== -1
         ) {
@@ -264,7 +261,7 @@ export default function Dashboard(props) {
           return categoryActiveNavbar;
         }
       } else {
-        if (window?.location?.href?.indexOf(routes[i]?.path) !== -1) {
+        if (location.pathname?.indexOf(routes[i]?.path) !== -1) {
           return routes[i]?.secondary;
         }
       }
@@ -285,7 +282,7 @@ export default function Dashboard(props) {
           return categoryActiveNavbar;
         }
       } else {
-        if (window?.location?.href?.indexOf(routes[i]?.path) !== -1) {
+        if (location.pathname?.indexOf(routes[i]?.path) !== -1) {
           return routes[i]?.messageNavbar;
         }
       }
@@ -295,8 +292,8 @@ export default function Dashboard(props) {
 
   const getRoutes = (routes) => {
     return routes?.map((prop, key) => {
-      // if (!prop.under && prop.layout === '/superAdmin') {
-      if (!prop?.under && prop?.layout?.includes(ROLE_PATH?.superAdmin)) {
+      // if (!prop.under && prop.layout === '/admin') {
+      if (!prop?.under && prop?.layout?.includes(ROLE_PATH?.admin)) {
         return (
           <Route path={prop?.path} element={<prop.component />} key={key} />
         );
@@ -315,12 +312,6 @@ export default function Dashboard(props) {
       }
     });
   };
-
-  useEffect(() => {
-    if (window?.location?.pathname === "/default") {
-      dispatch(fetchRoles(userId));
-    }
-  }, [userId]);
 
   const { onOpen } = useDisclosure();
   return (

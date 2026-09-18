@@ -91,7 +91,7 @@ const Index = () => {
   const fetchData = async () => {
     setIsLoding(true);
     let result = await getApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/lead/"
         : `api/lead/?createBy=${user?._id}`
     );

@@ -1,280 +1,261 @@
-import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
-  Button,
-  Flex,
-  FormLabel,
-  Grid,
-  GridItem,
-  Heading,
-  Input,
-  List,
-  ListItem,
-  Text,
-  VStack,
-  useDisclosure,
+  Badge, Box, Breadcrumb, BreadcrumbItem, BreadcrumbLink, Button, Flex, FormLabel,
+  Grid, GridItem, Heading, Icon, IconButton, Input, Modal, ModalBody, ModalCloseButton,
+  ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, SimpleGrid, Text,
+  useColorModeValue, useDisclosure,
 } from "@chakra-ui/react";
-import FolderTreeView from "components/FolderTreeView/folderTreeView";
 import Card from "components/card/Card";
-import { HSeparator } from "components/separator/Separator";
 import Spinner from "components/spinner/Spinner";
-import { constant } from "constant";
-import { useFormik } from "formik";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { documentSchema } from "schema";
-import { deleteApi, getApi } from "services/api";
+import { deleteApi, getApi, getApiBlob, postApi } from "services/api";
 import Upload from "./component/Upload";
-import { postApi } from "services/api";
-import FormExtension from 'components/dynamicForm/FormExtension';
+import {
+  FiChevronLeft, FiDownload, FiFile, FiFolder, FiFolderPlus, FiImage,
+  FiPlus, FiTrash2,
+} from "react-icons/fi";
 
-const Index = () => {
-  const [data, setData] = useState([]);
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const user = JSON.parse(localStorage.getItem("user"));
-  const [isLoding, setIsLoding] = useState(false);
-  const [linkDocument, setLinkDocument] = useState(false);
+const entityTypes = [
+  { value: "", label: "بدون ارتباط" },
+  { value: "Property", label: "ملک" },
+  { value: "Lead", label: "لید" },
+  { value: "Opportunity", label: "فرصت" },
+  { value: "PartnerCustomer", label: "مشتری همکار" },
+  { value: "Contact", label: "مخاطب" },
+];
 
-  const fetchData = async () => {
-    setIsLoding(true);
-    let result = await getApi(
-      user?.role === "superAdmin"
-        ? "api/document"
-        : `api/document?createBy=${user?._id}`,
-    );
-    setData(result?.data);
-    setIsLoding(false);
-  };
+const optionLabel = (item, type) => {
+  if (type === "Property") return item.title || item.name || item.propertyAddress;
+  if (type === "Lead") return item.leadName || item.leadEmail;
+  if (type === "Opportunity") return item.opportunityName;
+  if (type === "PartnerCustomer") return item.companyName || item.fullName;
+  return [item.firstName, item.lastName].filter(Boolean).join(" ") || item.email;
+};
 
-  const initialValues = {
-    folderName: "",
-    files: "",
-    filename: "",
-    createBy: user?._id,
-  };
+const entityEndpoint = (type) => ({
+  Property: "api/property",
+  Lead: "api/lead",
+  Opportunity: "api/opportunity",
+  PartnerCustomer: "api/estate/Partner%20Customers?limit=100",
+  Contact: "api/contact",
+}[type]);
 
-  const formik = useFormik({
-    initialValues: initialValues,
-    validationSchema: documentSchema,
-    onSubmit: (values, { resetForm }) => {
-      AddData();
-    },
-  });
-  const {
-    errors,
-    touched,
-    values,
-    handleBlur,
-    handleChange,
-    handleSubmit,
-    setFieldValue,
-    resetForm,
-  } = formik;
-  const navigate = useNavigate();
+const DocumentPage = () => {
+  const [folders, setFolders] = useState([]);
+  const [currentFolder, setCurrentFolder] = useState(null);
+  const [folderName, setFolderName] = useState("");
+  const [files, setFiles] = useState([]);
+  const [fileName, setFileName] = useState("");
+  const [entityType, setEntityType] = useState("");
+  const [entityId, setEntityId] = useState("");
+  const [entityOptions, setEntityOptions] = useState([]);
+  const [filterType, setFilterType] = useState("");
+  const [loading, setLoading] = useState(false);
+  const uploadModal = useDisclosure();
+  const folderModal = useDisclosure();
+  const surface = useColorModeValue("white", "navy.700");
+  const subtle = useColorModeValue("gray.50", "navy.800");
+  const border = useColorModeValue("gray.200", "whiteAlpha.200");
 
-  const download = async (data) => {
-    if (data) {
-      let result = await getApi(`api/document/download/`, data);
-      if (result && result?.status === 200) {
-        window.open(`${constant?.baseUrl}api/document/download/${data}`);
-        toast.success(tr("File Download successful"));
-      } else if (result && result?.response?.status === 404) {
-        toast.error(tr("File Not Found"));
+  const fetchFolders = async () => {
+    setLoading(true);
+    const result = await getApi("api/document");
+    if (result?.status === 200) {
+      setFolders(result.data || []);
+      if (currentFolder) {
+        const refreshed = result.data.find((item) => item._id === currentFolder._id);
+        if (refreshed) setCurrentFolder(refreshed);
       }
-    }
-  };
-  const deleteFile = async (data) => {
-    if (data) {
-      let result = await deleteApi(`api/document/delete/`, data);
-      if (result && result?.status === 200) {
-        fetchData();
-      }
-    }
+    } else toast.error("دریافت اسناد ناموفق بود");
+    setLoading(false);
   };
 
-  const AddData = async () => {
-    try {
-      setIsLoding(true);
-      const formData = new FormData();
-      formData?.append("folderName", values?.folderName);
-      formData?.append("createBy", values?.createBy);
-      formData?.append("filename", values?.filename);
-      formData.append('customFields', JSON.stringify(values.customFields || {}));
-
-      // Append files to the formData
-      values.files.forEach((file) => {
-        formData?.append("files", file);
-      });
-
-      let response = await postApi("api/document/add", formData);
-      if (response && response?.status === 200) {
-        fetchData();
-        formik.resetForm();
-      }
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoding(false);
-    }
-  };
+  useEffect(() => { fetchFolders(); }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [linkDocument, handleSubmit]);
+    setEntityId("");
+    setEntityOptions([]);
+    if (!entityType) return;
+    getApi(entityEndpoint(entityType)).then((result) => {
+      const data = entityType === "PartnerCustomer" ? result?.data?.items : result?.data;
+      if (result?.status === 200) setEntityOptions(data || []);
+    });
+  }, [entityType]);
+
+  const children = useMemo(() => folders.filter((folder) =>
+    String(folder.parentFolder || "") === String(currentFolder?._id || "")
+  ), [folders, currentFolder]);
+
+  const visibleFiles = useMemo(() => (currentFolder?.files || []).filter((file) =>
+    !filterType || file.entityType === filterType
+  ), [currentFolder, filterType]);
+
+  const parentFolder = currentFolder?.parentFolder
+    ? folders.find((item) => item._id === currentFolder.parentFolder)
+    : null;
+
+  const createFolder = async () => {
+    if (!folderName.trim()) return;
+    setLoading(true);
+    const result = await postApi("api/document/folder", { folderName, parentFolder: currentFolder?._id || null });
+    setLoading(false);
+    if (result?.status === 200 || result?.status === 201) {
+      setFolderName("");
+      folderModal.onClose();
+      fetchFolders();
+    } else toast.error(result?.data?.message || "ساخت پوشه ناموفق بود");
+  };
+
+  const uploadFiles = async () => {
+    if (!currentFolder || !files.length) return toast.error("ابتدا پوشه و فایل را انتخاب کنید");
+    const body = new FormData();
+    body.append("folderId", currentFolder._id);
+    body.append("filename", fileName);
+    if (entityType && entityId) {
+      body.append("entityType", entityType);
+      body.append("entityId", entityId);
+    }
+    files.forEach((file) => body.append("files", file));
+    setLoading(true);
+    const result = await postApi("api/document/add", body);
+    setLoading(false);
+    if (result?.status === 200) {
+      setFiles([]); setFileName(""); setEntityType(""); setEntityId("");
+      uploadModal.onClose();
+      await fetchFolders();
+      toast.success("فایل‌ها با موفقیت بارگذاری شدند");
+    } else toast.error(result?.data?.message || "بارگذاری فایل ناموفق بود");
+  };
+
+  const download = async (file) => {
+    const result = await getApiBlob(`api/document/download/${file._id}`);
+    if (result?.status !== 200) return toast.error("فایل پیدا نشد");
+    const url = URL.createObjectURL(result.data);
+    const anchor = window.document.createElement("a");
+    anchor.href = url; anchor.download = file.fileName; anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const removeFile = async (file) => {
+    if (!window.confirm(`فایل «${file.fileName}» حذف شود؟`)) return;
+    const result = await deleteApi("api/document/delete/", file._id);
+    if (result?.status === 200) fetchFolders();
+    else toast.error("حذف فایل ناموفق بود");
+  };
 
   return (
-    <div>
-      <Grid templateColumns="repeat(12, 1fr)" mb={3} gap={2}>
-        <GridItem colSpan={{ base: 12, md: 7 }}>
-          <Card minH={"20em"}>
-            <Heading size="lg" mb={4}><LocalizedText text="File Explorer" /></Heading>
-            <HSeparator />
-            <VStack mt={4} alignItems="flex-start">
-              {isLoding ? (
-                <Flex
-                  justifyContent={"center"}
-                  alignItems={"center"}
-                  width="100%"
-                >
-                  <Spinner />
-                </Flex>
-              ) : data?.length === 0 ? (
-                <Text
-                  textAlign={"center"}
-                  width="100%"
-                  fontSize="sm"
-                  fontWeight="700"
-                ><LocalizedText text="-- No Document Found --" /></Text>
-              ) : (
-                data?.map((item) => (
-                  <FolderTreeView name={item?.folderName} item={item}>
-                    {item?.files?.map((file) => (
-                      <FolderTreeView
-                        download={download}
-                        setLinkDocument={setLinkDocument}
-                        deleteFile={deleteFile}
-                        data={file}
-                        name={file.fileName}
-                        isFile
-                      />
-                    ))}
-                  </FolderTreeView>
-                ))
-              )}
-            </VStack>
+    <Box>
+      <Flex justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={3} mb={5}>
+        <Box>
+          <Heading size="lg">مرکز اسناد</Heading>
+          <Text color="gray.500" mt={1}>فایل‌های هر ملک، لید، فرصت، مخاطب یا مشتری همکار را یک‌جا مدیریت کنید.</Text>
+        </Box>
+        <Flex gap={2}>
+          <Button leftIcon={<FiFolderPlus />} variant="outline" onClick={folderModal.onOpen}>پوشه جدید</Button>
+          <Button leftIcon={<FiPlus />} variant="brand" onClick={uploadModal.onOpen} isDisabled={!currentFolder}>بارگذاری سند</Button>
+        </Flex>
+      </Flex>
+
+      <Grid templateColumns="repeat(12, 1fr)" gap={4}>
+        <GridItem colSpan={{ base: 12, lg: 3 }}>
+          <Card minH="620px" p={4}>
+            <Text fontWeight="800" mb={3}>پوشه‌ها</Text>
+            <Button variant="ghost" justifyContent="flex-start" w="100%" leftIcon={<FiFolder />} onClick={() => setCurrentFolder(null)} colorScheme={!currentFolder ? "brand" : "gray"}>همه اسناد</Button>
+            {folders.filter((item) => !item.parentFolder).map((folder) => (
+              <Button key={folder._id} variant={currentFolder?._id === folder._id ? "solid" : "ghost"} colorScheme={currentFolder?._id === folder._id ? "brand" : "gray"} justifyContent="flex-start" w="100%" leftIcon={<FiFolder />} onClick={() => setCurrentFolder(folder)} mt={1}>
+                <Text noOfLines={1}>{folder.folderName}</Text>
+              </Button>
+            ))}
           </Card>
         </GridItem>
-        <GridItem colSpan={{ base: 12, md: 5 }} colStart={{ base: 1, md: 8 }}>
-          <Card>
-            <GridItem colSpan={{ base: 12 }}>
-              <FormLabel
-                display="flex"
-                ms="4px"
-                fontSize="sm"
-                fontWeight="500"
-                mb="8px"
-              ><LocalizedText text="Folder Name" /><Text color={"red"}>*</Text>
-              </FormLabel>
-              <Input
-                onFocus={onOpen}
-                fontSize="sm"
-                onChange={handleChange}
-                onBlur={() => setTimeout(onClose, 200)}
-                value={values?.folderName}
-                name="folderName"
-                placeholder={tr("Enter Folder Name")}
-                fontWeight="500"
-                borderColor={
-                  errors?.folderName && touched?.folderName ? "red.300" : null
-                }
-              />
-              {isOpen &&
-                values?.folderName &&
-                data?.filter((option) =>
-                  option?.folderName
-                    ?.toLowerCase()
-                    ?.includes(values?.folderName?.toLowerCase()),
-                )?.length > 0 && (
-                  <List
-                    position={"relative"}
-                    border={"1px solid"}
-                    bg={"gray.100"}
-                    width={"100%"}
-                    borderRadius={"0px 0px 20px 20px"}
-                    lineHeight={1}
-                  >
-                    {data
-                      ?.filter((option) =>
-                        option?.folderName
-                          ?.toLowerCase()
-                          ?.includes(values?.folderName?.toLowerCase()),
-                      )
-                      ?.map((option, index) => (
-                        <ListItem
-                          p={3}
-                          borderBottom={"2px solid #efefef"}
-                          sx={{ "&:last-child": { borderBottom: "none" } }}
-                          key={option?._id}
-                          cursor={"pointer"}
-                          onClick={() => {
-                            setFieldValue("folderName", option?.folderName);
-                          }}
-                        >
-                          {option?.folderName}
-                        </ListItem>
-                      ))}
-                  </List>
+
+        <GridItem colSpan={{ base: 12, lg: 9 }}>
+          <Card minH="620px" p={5}>
+            <Flex justify="space-between" align="center" mb={5} gap={3} wrap="wrap">
+              <Breadcrumb separator={<FiChevronLeft />}>
+                <BreadcrumbItem><BreadcrumbLink onClick={() => setCurrentFolder(null)}>اسناد</BreadcrumbLink></BreadcrumbItem>
+                {parentFolder && <BreadcrumbItem><BreadcrumbLink onClick={() => setCurrentFolder(parentFolder)}>{parentFolder.folderName}</BreadcrumbLink></BreadcrumbItem>}
+                {currentFolder && <BreadcrumbItem isCurrentPage><BreadcrumbLink>{currentFolder.folderName}</BreadcrumbLink></BreadcrumbItem>}
+              </Breadcrumb>
+              <Select size="sm" w="190px" value={filterType} onChange={(event) => setFilterType(event.target.value)}>
+                <option value="">همه ارتباط‌ها</option>
+                {entityTypes.slice(1).map((item) => <option value={item.value} key={item.value}>{item.label}</option>)}
+              </Select>
+            </Flex>
+
+            {loading ? <Flex minH="350px" align="center" justify="center"><Spinner /></Flex> : (
+              <>
+                <SimpleGrid columns={{ base: 2, md: 3, xl: 4 }} spacing={3} mb={6}>
+                  {children.map((folder) => (
+                    <Box key={folder._id} p={4} bg={subtle} border="1px solid" borderColor={border} borderRadius="16px" cursor="pointer" onClick={() => setCurrentFolder(folder)} _hover={{ transform: "translateY(-2px)", boxShadow: "md" }} transition="all .2s">
+                      <Icon as={FiFolder} color="brand.500" boxSize={7} />
+                      <Text mt={2} fontWeight="800" noOfLines={1}>{folder.folderName}</Text>
+                      <Text fontSize="xs" color="gray.500">{folder.files?.length || 0} فایل</Text>
+                    </Box>
+                  ))}
+                </SimpleGrid>
+
+                {!currentFolder ? (
+                  <Flex minH="300px" direction="column" align="center" justify="center" bg={subtle} borderRadius="20px" border="1px dashed" borderColor={border}>
+                    <Icon as={FiFolder} boxSize={14} color="brand.300" />
+                    <Text fontWeight="800" mt={3}>یک پوشه را انتخاب کنید</Text>
+                    <Text color="gray.500" fontSize="sm">یا برای شروع یک پوشه جدید بسازید.</Text>
+                  </Flex>
+                ) : visibleFiles.length === 0 && children.length === 0 ? (
+                  <Flex minH="300px" direction="column" align="center" justify="center" bg={subtle} borderRadius="20px">
+                    <Icon as={FiFile} boxSize={12} color="gray.300" />
+                    <Text fontWeight="800" mt={3}>این پوشه هنوز خالی است</Text>
+                    <Button size="sm" variant="brand" mt={3} onClick={uploadModal.onOpen}>اولین سند را بارگذاری کنید</Button>
+                  </Flex>
+                ) : (
+                  <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={3}>
+                    {visibleFiles.map((file) => {
+                      const linked = entityTypes.find((item) => item.value === file.entityType)?.label;
+                      return (
+                        <Box key={file._id} bg={surface} border="1px solid" borderColor={border} borderRadius="16px" p={4}>
+                          <Flex justify="space-between" align="start">
+                            <Flex gap={3} minW={0}>
+                              <Flex w="42px" h="42px" borderRadius="12px" bg={file.mimeType?.startsWith("image/") ? "purple.50" : "blue.50"} align="center" justify="center" flexShrink={0}>
+                                <Icon as={file.mimeType?.startsWith("image/") ? FiImage : FiFile} color={file.mimeType?.startsWith("image/") ? "purple.500" : "blue.500"} boxSize={5} />
+                              </Flex>
+                              <Box minW={0}><Text fontWeight="800" noOfLines={1}>{file.fileName}</Text><Text fontSize="xs" color="gray.500">{file.size ? `${Math.ceil(file.size / 1024)} KB` : "فایل"}</Text></Box>
+                            </Flex>
+                          </Flex>
+                          {linked && <Badge mt={3} colorScheme="brand" borderRadius="full">{linked}</Badge>}
+                          <Flex mt={4} gap={2} justify="flex-end">
+                            <IconButton aria-label="Download" icon={<FiDownload />} size="sm" variant="ghost" onClick={() => download(file)} />
+                            <IconButton aria-label="Delete" icon={<FiTrash2 />} size="sm" variant="ghost" colorScheme="red" onClick={() => removeFile(file)} />
+                          </Flex>
+                        </Box>
+                      );
+                    })}
+                  </SimpleGrid>
                 )}
-              <Text mb="10px" color={"red"}>
-                {" "}
-                {errors?.folderName &&
-                  touched?.folderName &&
-                  errors?.folderName}
-              </Text>
-            </GridItem>
-            <GridItem colSpan={{ base: 12 }}>
-              <FormLabel
-                display="flex"
-                ms="4px"
-                fontSize="sm"
-                fontWeight="500"
-                mb="8px"
-              ><LocalizedText text="File Name" /></FormLabel>
-              <Input
-                fontSize="sm"
-                onChange={handleChange}
-                onBlur={() => setTimeout(onClose, 200)}
-                value={values?.filename}
-                name="filename"
-                placeholder={tr("Enter File Name")}
-                fontWeight="500"
-                borderColor={
-                  errors?.filename && touched?.filename ? "red.300" : null
-                }
-              />
-              <Text mb="10px" color={"red"}>
-                {" "}
-                {errors?.filename && touched?.filename && errors?.filename}
-              </Text>
-            </GridItem>
-            <FormExtension moduleName="Documents" formik={formik} /><Upload
-              count={values?.files?.length}
-              onFileSelect={(file) => setFieldValue("files", file)}
-            />
-            <Button
-              size="sm"
-              disabled={isLoding ? true : false}
-              onClick={handleSubmit}
-              variant="brand"
-              fontWeight="500"
-            >
-              {isLoding ? <Spinner /> : tr("Publish now")}
-            </Button>
+              </>
+            )}
           </Card>
         </GridItem>
       </Grid>
-    </div>
+
+      <Modal isOpen={folderModal.isOpen} onClose={folderModal.onClose} isCentered>
+        <ModalOverlay /><ModalContent><ModalHeader>پوشه جدید</ModalHeader><ModalCloseButton /><ModalBody>
+          <FormLabel>نام پوشه</FormLabel><Input value={folderName} onChange={(event) => setFolderName(event.target.value)} autoFocus />
+          {currentFolder && <Text fontSize="xs" color="gray.500" mt={2}>این پوشه داخل «{currentFolder.folderName}» ساخته می‌شود.</Text>}
+        </ModalBody><ModalFooter><Button variant="brand" onClick={createFolder} isLoading={loading}>ساخت پوشه</Button></ModalFooter></ModalContent>
+      </Modal>
+
+      <Modal isOpen={uploadModal.isOpen} onClose={uploadModal.onClose} size="xl" isCentered>
+        <ModalOverlay /><ModalContent><ModalHeader>بارگذاری سند در {currentFolder?.folderName}</ModalHeader><ModalCloseButton /><ModalBody>
+          <Upload count={files.length} onFileSelect={setFiles} />
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+            <Box><FormLabel fontSize="sm">نام نمایشی فایل (اختیاری)</FormLabel><Input value={fileName} onChange={(event) => setFileName(event.target.value)} /></Box>
+            <Box><FormLabel fontSize="sm">نوع ارتباط</FormLabel><Select value={entityType} onChange={(event) => setEntityType(event.target.value)}>{entityTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</Select></Box>
+            {entityType && <Box gridColumn={{ md: "span 2" }}><FormLabel fontSize="sm">انتخاب رکورد</FormLabel><Select value={entityId} onChange={(event) => setEntityId(event.target.value)} placeholder="انتخاب کنید">{entityOptions.map((item) => <option key={item._id} value={item._id}>{optionLabel(item, entityType)}</option>)}</Select></Box>}
+          </SimpleGrid>
+        </ModalBody><ModalFooter><Button variant="brand" onClick={uploadFiles} isLoading={loading} isDisabled={!files.length || (entityType && !entityId)}>بارگذاری</Button></ModalFooter></ModalContent>
+      </Modal>
+    </Box>
   );
 };
 
-export default withLocalization(Index);
+export default DocumentPage;

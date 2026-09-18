@@ -4,6 +4,7 @@ const PhoneCall = require("../../model/schema/phoneCall");
 const Task = require("../../model/schema/task");
 const MeetingHistory = require("../../model/schema/meeting");
 const DocumentSchema = require("../../model/schema/document");
+const { unlinkLead } = require('../../services/relationshipSync');
 
 const index = async (req, res) => {
   const query = req.query;
@@ -84,9 +85,11 @@ const edit = async (req, res) => {
 };
 
 const view = async (req, res) => {
-  let lead = await Lead.findOne({ _id: req.params.id }).populate(
-    "associatedListing"
-  );
+  let lead = await Lead.findOne({ _id: req.params.id })
+    .populate("associatedListing")
+    .populate("contact", "firstName lastName email phoneNumber")
+    .populate("partnerCustomer", "fullName companyName phone email")
+    .populate("relatedOpportunities", "opportunityName salesStage amount expectedCloseDate");
 
   if (!lead) return res.status(404).json({ message: "no Data Found." });
 
@@ -287,6 +290,7 @@ const view = async (req, res) => {
 const deleteData = async (req, res) => {
   try {
     const lead = await Lead.findByIdAndUpdate(req.params.id, { deleted: true });
+    if (lead) await unlinkLead(lead._id);
     res.status(200).json({ message: "done", lead });
   } catch (err) {
     res.status(404).json({ message: "error", err });
@@ -299,6 +303,7 @@ const deleteMany = async (req, res) => {
       { _id: { $in: req.body } },
       { $set: { deleted: true } }
     );
+    await Promise.all((req.body || []).map(unlinkLead));
     res.status(200).json({ message: "done", lead });
   } catch (err) {
     res.status(404).json({ message: "error", err });

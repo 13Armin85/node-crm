@@ -1,5 +1,6 @@
 import { tr, withLocalization } from 'i18n/runtime';
 import Card from "components/card/Card";
+import { SimpleGrid, Stat, StatLabel, StatNumber } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { getApi } from "services/api";
@@ -11,6 +12,7 @@ const Report = () => {
   const [data, setData] = useState([]);
   const [isLoding, setIsLoding] = useState(false);
   const [selectedValues, setSelectedValues] = useState([]);
+  const [summary, setSummary] = useState([]);
   // const [selectedColumns, setSelectedColumns] = useState([]);
   // const [columns, setColumns] = useState([]);
 
@@ -19,6 +21,9 @@ const Report = () => {
   const tableColumns = [
     { Header: tr("Email Sent"), accessor: "emailsent" },
     { Header: tr("Outbound Calls"), accessor: "outboundcall" },
+    { Header: tr("Text messages"), accessor: "textsent" },
+    { Header: tr("Tasks"), accessor: "tasks" },
+    { Header: tr("Completed Tasks"), accessor: "completedTasks" },
   ];
 
   // const fetchCustomDataFields = async () => {
@@ -31,7 +36,7 @@ const Report = () => {
   //     // setSelectedColumns(JSON.parse(JSON.stringify(tempTableColumns)));
   // }
 
-  if (user?.role === "superAdmin") {
+  if (user?.role === "admin") {
     tableColumns?.unshift(
       {
         Header: tr("#"),
@@ -46,13 +51,15 @@ const Report = () => {
   const fetchData = async () => {
     setIsLoding(true);
     let result = await getApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/reporting"
         : `api/reporting?_id=${user?._id}`,
     );
     if (result && result?.status === 200) {
       setData(result?.data);
     }
+    const summaryResult = await getApi("api/reporting/line-chart");
+    if (summaryResult?.status === 200) setSummary(summaryResult.data || []);
     setIsLoding(false);
   };
 
@@ -66,6 +73,16 @@ const Report = () => {
 
   return (
     <div>
+      <SimpleGrid columns={{ base: 2, md: 4, xl: 7 }} spacing={3} mb={4}>
+        {summary.map((item) => (
+          <Card key={item.name} py={4}>
+            <Stat>
+              <StatLabel color="gray.500" fontSize="xs">{tr(item.name)}</StatLabel>
+              <StatNumber fontSize="2xl">{item.length}</StatNumber>
+            </Stat>
+          </Card>
+        ))}
+      </SimpleGrid>
       <ReportChart />
       <Card mt={4}>
         <CommonCheckTable

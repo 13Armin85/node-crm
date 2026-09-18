@@ -75,7 +75,11 @@ const edit = async (req, res) => {
 
 const view = async (req, res) => {
     try {
-        let contact = await Contact.findOne({ _id: req.params.id });
+        let contact = await Contact.findOne({ _id: req.params.id })
+            .populate('relatedLeads', 'leadName leadStatus leadEmail')
+            .populate('relatedOpportunities', 'opportunityName salesStage amount')
+            .populate('relatedProperties', 'title name status price')
+            .populate('partnerCustomer', 'fullName companyName phone email');
         let interestProperty = await Contact.findOne({ _id: req.params.id }).populate("interestProperty")
 
         if (!contact) return res.status(404).json({ message: 'No data found.' })

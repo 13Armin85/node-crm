@@ -213,8 +213,8 @@ const AddEdit = (props) => {
 
   const fetchData = async () => {
     setIsLoding(true);
-    let result = await getApi("api/user/");
-    setUserData(result?.data?.user);
+    let result = await getApi("api/task/assignees");
+    setUserData(result?.data);
     setIsLoding(false);
   };
 
@@ -316,7 +316,7 @@ const AddEdit = (props) => {
 
   useEffect(() => {
     if (type === "edit") fetchInvoiceDetails();
-    if (user.role === "superAdmin") fetchData();
+    if (user.role === "admin") fetchData();
   }, [type, selectedId, action]);
 
   useEffect(() => {
@@ -529,7 +529,7 @@ const AddEdit = (props) => {
                       errors?.invoiceDate}
                   </Text>
                 </GridItem>
-                {user?.role === "superAdmin" && (
+                {user?.role === "admin" && (
                   <GridItem colSpan={{ base: 12, md: 6 }}>
                     <FormLabel
                       display="flex"
@@ -637,7 +637,7 @@ const AddEdit = (props) => {
                 <GridItem colSpan={{ base: 12 }}>
                   <Heading as="h1" size="md" mt="10px"><LocalizedText text="Address Information" /></Heading>
                 </GridItem>
-                {(user?.role === "superAdmin" || accountAccess?.view) && (
+                {(user?.role === "admin" || accountAccess?.view) && (
                   <GridItem colSpan={{ base: 12, md: 6 }}>
                     <FormLabel
                       display="flex"
@@ -686,7 +686,7 @@ const AddEdit = (props) => {
                     </Text>
                   </GridItem>
                 )}
-                {(user?.role === "superAdmin" || contactAccess?.view) && (
+                {(user?.role === "admin" || contactAccess?.view) && (
                   <GridItem colSpan={{ base: 12, md: 6 }}>
                     <FormLabel
                       display="flex"

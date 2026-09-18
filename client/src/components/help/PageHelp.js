@@ -327,7 +327,7 @@ const helpContent = {
       purpose:
         "Admin settings contains configuration tools for controlling how the CRM works.",
       actions:
-        "Use this area to reach setup pages such as roles, custom fields, module settings, validations, images, and table fields.",
+        "Use this area to reach setup pages such as custom fields, module settings, validations, images, and table fields.",
     },
     fa: {
       title: "راهنمای تنظیمات مدیریت",
@@ -350,7 +350,7 @@ const helpContent = {
       purpose:
         "Roles controls what each user group can view, create, update, or delete.",
       actions:
-        "Create roles, edit permissions, assign users, and review access before giving people CRM permissions.",
+        "Access is managed from the Users page with the fixed admin and user roles.",
     },
     fa: {
       title: "راهنمای نقش‌ها",
@@ -557,7 +557,7 @@ const helpContent = {
       purpose:
         "Users is where admins manage people who can sign in and work inside the CRM.",
       actions:
-        "Create users, edit profile information, assign roles, review user details, and keep access organized.",
+        "Create users, edit profile information, choose admin or user access, review user details, and keep access organized.",
     },
     fa: {
       title: "راهنمای کاربران",

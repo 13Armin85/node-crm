@@ -1,11 +1,13 @@
 const Opprtunities = require('../../model/schema/opprtunity')
 const User = require('../../model/schema/user')
 const mongoose = require('mongoose');
+const { syncOpportunity, unlinkOpportunity } = require('../../services/relationshipSync');
 
 const add = async (req, res) => {
     try {
         const result = new Opprtunities(req.body);
         await result.save();
+        await syncOpportunity(result);
         res.status(200).json(result);
     } catch (err) {
         console.error('Failed to create :', err);
@@ -32,7 +34,7 @@ const index = async (req, res) => {
         query.deleted = false;
 
         const user = await User.findById(req.user.userId)
-        if (user?.role !== "superAdmin") {
+        if (user?.role !== "admin") {
             delete query.createBy
             query.$or = [{ createBy: new mongoose.Types.ObjectId(req.user.userId) }, { assignUser: new mongoose.Types.ObjectId(req.user.userId) }];
         }
@@ -71,10 +73,15 @@ const index = async (req, res) => {
                     as: 'accountData'
                 }
             },
+            { $lookup: { from: 'Contacts', localField: 'contact', foreignField: '_id', as: 'contactData' } },
+            { $lookup: { from: 'Leads', localField: 'lead', foreignField: '_id', as: 'leadData' } },
+            { $lookup: { from: 'Properties', localField: 'properties', foreignField: '_id', as: 'propertyData' } },
             { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$assignUsers', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$accountData', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: '$contactData', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: '$leadData', preserveNullAndEmptyArrays: true } },
             { $match: { 'users.deleted': false } },
             // { $match: { 'assignUsers.deleted': false } },
             { $match: { 'modifiedByUser.deleted': false } },
@@ -90,7 +97,10 @@ const index = async (req, res) => {
                         }
                     },
                     modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
-                    accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] }
+                    accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] },
+                    contactName: { $trim: { input: { $concat: [{ $ifNull: ['$contactData.firstName', ''] }, ' ', { $ifNull: ['$contactData.lastName', ''] }] } } },
+                    leadName: '$leadData.leadName',
+                    propertyNames: '$propertyData.title'
                 }
             },
             {
@@ -99,6 +109,9 @@ const index = async (req, res) => {
                     assignUsers: 0,
                     modifiedByUser: 0,
                     accountData: 0,
+                    contactData: 0,
+                    leadData: 0,
+                    propertyData: 0,
                 }
             },
         ]);
@@ -149,10 +162,15 @@ const view = async (req, res) => {
                     as: 'accountData'
                 }
             },
+            { $lookup: { from: 'Contacts', localField: 'contact', foreignField: '_id', as: 'contactData' } },
+            { $lookup: { from: 'Leads', localField: 'lead', foreignField: '_id', as: 'leadData' } },
+            { $lookup: { from: 'Properties', localField: 'properties', foreignField: '_id', as: 'propertyData' } },
             { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$assignUsers', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$accountData', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: '$contactData', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: '$leadData', preserveNullAndEmptyArrays: true } },
 
             { $match: { 'users.deleted': false } },
             // { $match: { 'assignUsers.deleted': false } },
@@ -169,7 +187,10 @@ const view = async (req, res) => {
                         }
                     },
                     modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
-                    accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] }
+                    accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] },
+                    contactName: { $trim: { input: { $concat: [{ $ifNull: ['$contactData.firstName', ''] }, ' ', { $ifNull: ['$contactData.lastName', ''] }] } } },
+                    leadName: '$leadData.leadName',
+                    propertyNames: '$propertyData.title'
                 }
             },
             {
@@ -178,6 +199,9 @@ const view = async (req, res) => {
                     assignUsers: 0,
                     modifiedByUser: 0,
                     accountData: 0,
+                    contactData: 0,
+                    leadData: 0,
+                    propertyData: 0,
                 }
             },
         ])
@@ -196,6 +220,7 @@ const edit = async (req, res) => {
             { $set: req.body },
             { new: true }
         );
+        if (result) await syncOpportunity(result);
 
         res.status(200).json(result);
     } catch (err) {
@@ -206,6 +231,7 @@ const edit = async (req, res) => {
 const deleteData = async (req, res) => {
     try {
         const result = await Opprtunities.findByIdAndUpdate(req.params.id, { deleted: true });
+        if (result) await unlinkOpportunity(result._id);
         res.status(200).json({ message: "done", result: result })
     } catch (err) {
         res.status(404).json({ message: "error", err })
@@ -215,6 +241,7 @@ const deleteData = async (req, res) => {
 const deleteMany = async (req, res) => {
     try {
         const result = await Opprtunities.updateMany({ _id: { $in: req.body } }, { $set: { deleted: true } });
+        await Promise.all((req.body || []).map(unlinkOpportunity));
         res.status(200).json({ message: "done", result })
     } catch (err) {
         res.status(404).json({ message: "error", err })

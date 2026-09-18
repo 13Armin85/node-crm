@@ -29,7 +29,9 @@ module.exports = async (req, res, next) => {
       const values = validateFields(definition, req.body, previous || {});
       // Existing relationship widgets use fields outside the form metadata.
       const extras = {};
-      for (const key of ['assignUser', 'associatedListing']) if (req.body[key] !== undefined) extras[key] = req.body[key];
+      for (const key of ['assignUser', 'associatedListing', 'contact', 'partnerCustomer', 'relatedOpportunities']) {
+        if (req.body[key] !== undefined) extras[key] = req.body[key];
+      }
       req.body = { ...values, ...extras, moduleId, ...(action === 'create' ? { createBy: req.actor._id } : {}) };
     }
     if (Array.isArray(req.body?.ids) && model) {

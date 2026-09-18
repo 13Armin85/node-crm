@@ -253,7 +253,7 @@ const EventView = (props) => {
                 </Grid>
               </ModalBody>
               <DrawerFooter>
-                {(access?.view || user?.role === "superAdmin") && (
+                {(access?.view || user?.role === "admin") && (
                   <IconButton
                     variant="outline"
                     colorScheme={"green"}
@@ -263,7 +263,7 @@ const EventView = (props) => {
                     icon={<ViewIcon />}
                   />
                 )}
-                {(access?.update || user?.role === "superAdmin") && (
+                {(access?.update || user?.role === "admin") && (
                   <IconButton
                     variant="outline"
                     onClick={() => setEdit(true)}
@@ -273,7 +273,7 @@ const EventView = (props) => {
                     icon={<EditIcon />}
                   />
                 )}
-                {(access?.delete || user?.role === "superAdmin") && (
+                {(access?.delete || user?.role === "admin") && (
                   <IconButton
                     colorScheme="red"
                     onClick={() => setDelete(true)}

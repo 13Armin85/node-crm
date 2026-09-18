@@ -154,7 +154,7 @@ const Index = (props) => {
       Header: tr("Contact"),
       accessor: "contact",
       cell: (cell) =>
-        user?.role === "superAdmin" || contactAccess?.view ? (
+        user?.role === "admin" || contactAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -189,7 +189,7 @@ const Index = (props) => {
       Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
-        user?.role === "superAdmin" || accountAccess?.view ? (
+        user?.role === "admin" || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>

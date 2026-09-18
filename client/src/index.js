@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import ReactDOM from "react-dom";
 import "assets/css/App.css";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useNavigate,
 } from "react-router-dom";
 import AuthLayout from "./layouts/auth";
 import AdminLayout from "layouts/admin";
@@ -21,24 +20,44 @@ import { PersistGate } from "redux-persist/integration/react";
 import { LanguageProvider, TranslationBoundary } from "i18n";
 import { RtlProvider } from 'components/rtlProvider/RtlProvider';
 
+const getStoredUser = () => {
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser || storedUser === "undefined" || storedUser === "null") return null;
+
+    const user = JSON.parse(storedUser);
+    if (user?.role === "superAdmin") {
+      const migratedUser = { ...user, role: "admin" };
+      localStorage.setItem("user", JSON.stringify(migratedUser));
+      return migratedUser;
+    }
+    if (!["admin", "user"].includes(user?.role)) return null;
+    return user;
+  } catch (error) {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+    return null;
+  }
+};
+
 function App() {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
 
-  const user = JSON.parse(localStorage.getItem("user"));
-  useNavigate();
+  const user = getStoredUser();
 
   return (
     <>
       <ToastContainer />
       <Routes>
         {token && user?.role ? (
-          user?.role === "user" ? (
+          user.role === "user" ? (
             <Route path="/*" element={<UserLayout />} />
-          ) : user?.role === "superAdmin" ? (
+          ) : user.role === "admin" ? (
             <Route path="/*" element={<AdminLayout />} />
           ) : (
-            ""
+            <Route path="/*" element={<AuthLayout />} />
           )
         ) : (
           <Route path="/*" element={<AuthLayout />} />

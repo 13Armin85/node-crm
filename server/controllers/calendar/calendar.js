@@ -2,13 +2,10 @@ const Email = require('../../model/schema/email');
 const PhoneCall = require('../../model/schema/phoneCall');
 const Task = require('../../model/schema/task');
 const MeetingHistory = require('../../model/schema/meeting');
-const User = require('../../model/schema/user');
 
 const index = async (req, res) => {
     try {
         const query = { ...req.query, deleted: false };
-        const userDetails = await User.findOne({ _id: req.user.userId }).populate({ path: 'roles' });
-
         const callData = await PhoneCall.find(query);
         const emailData = await Email.find(query);
         const meetingData = await MeetingHistory.find(query);
@@ -19,23 +16,7 @@ const index = async (req, res) => {
         let meetingDetails = [];
         let emailDetails = [];
 
-        const mergedRoles = userDetails?.roles?.reduce((acc, current) => {
-            current?.access?.forEach(permission => {
-                const existingPermissionIndex = acc.findIndex(item => item.title === permission.title);
-                if (existingPermissionIndex !== -1) {
-                    const updatedPermission = { ...acc[existingPermissionIndex] };
-                    Object.keys(permission).forEach(key => {
-                        if (permission[key] === true) {
-                            updatedPermission[key] = true;
-                        }
-                    });
-                    acc[existingPermissionIndex] = updatedPermission;
-                } else {
-                    acc.push(permission);
-                }
-            });
-            return acc;
-        }, []);
+        const mergedRoles = [];
 
         if (mergedRoles && mergedRoles.length > 0) {
             for (const item of mergedRoles) {

@@ -5,7 +5,6 @@ const { initializeLeadSchema } = require("../model/schema/lead");
 const { initializeContactSchema } = require("../model/schema/contact");
 const { initializePropertySchema } = require("../model/schema/property");
 const { createNewModule } = require("../controllers/customField/customField.js");
-const { add: createNewRole } = require("../controllers/roleAccess/roleAccess.js");
 const customField = require('../model/schema/customField.js');
 const { contactFields } = require('./contactFields.js');
 const { leadFields } = require('./leadFields.js');
@@ -51,6 +50,20 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
         mongoose.set("strictQuery", false);
         await mongoose.connect(DATABASE_URL, DB_OPTIONS);
 
+        // Migrate legacy role records to the simplified admin/user model.
+        await User.collection.updateMany(
+            { role: 'superAdmin' },
+            { $set: { role: 'admin' }, $unset: { roles: '' } },
+        );
+        await User.collection.updateMany(
+            { role: { $nin: ['admin', 'user'] } },
+            { $set: { role: 'user' }, $unset: { roles: '' } },
+        );
+        await User.collection.updateMany(
+            { roles: { $exists: true } },
+            { $unset: { roles: '' } },
+        );
+
         await initializedSchemas();
 
         /* this was temporary  */
@@ -68,15 +81,12 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
         await createNewModule({ body: { moduleName: 'Contacts', fields: contactFields, headings: [], isDefault: true } }, mockRes);
         await createNewModule({ body: { moduleName: 'Properties', fields: propertiesFields, headings: [], isDefault: true } }, mockRes);
 
-        // Create default role
-        // await createNewRole({ body: defaultRole }, mockRes);
-
         /*  */
         await initializedSchemas();
 
         const initialAdminUsername = process.env.INITIAL_ADMIN_EMAIL;
         const initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD;
-        let adminExisting = await User.find({ role: 'superAdmin' });
+        let adminExisting = await User.find({ role: 'admin' });
         const validInitialAdmin = initialAdminUsername && initialAdminPassword && initialAdminPassword !== 'replace-with-a-strong-password';
         if (adminExisting.length <= 0 && validInitialAdmin) {
             const phoneNumber = process.env.INITIAL_ADMIN_PHONE || undefined;
@@ -87,12 +97,12 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
             // Hash the password
             const hashedPassword = await bcrypt.hash(password, 10);
             // Create a new user
-            const user = new User({ username, password: hashedPassword, firstName, lastName, phoneNumber, role: 'superAdmin' });
+            const user = new User({ username, password: hashedPassword, firstName, lastName, phoneNumber, role: 'admin' });
             // Save the user to the database
             await user.save();
             console.log("Admin created successfully..");
         } else if (adminExisting.length <= 0) {
-            console.warn('No super administrator exists. Set INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD for the first startup.');
+            console.warn('No administrator exists. Set INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD for the first startup.');
         }
 
         console.log("Database Connected Successfully..");

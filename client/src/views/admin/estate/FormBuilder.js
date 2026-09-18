@@ -50,7 +50,7 @@ export default function FormBuilder() {
   const [selected, setSelected] = useState(0);
   const [savedNames, setSavedNames] = useState([]);
   const [changed, setChanged] = useState(false);
-  const admin = JSON.parse(localStorage.getItem('user') || '{}').role === 'superAdmin';
+  const admin = JSON.parse(localStorage.getItem('user') || '{}').role === 'admin';
   const panelBg = useColorModeValue('white', 'navy.800');
   const subtleBg = useColorModeValue('gray.50', 'whiteAlpha.50');
   const border = useColorModeValue('gray.200', 'whiteAlpha.200');

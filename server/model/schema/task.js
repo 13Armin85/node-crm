@@ -15,6 +15,15 @@ const Task = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Lead",
     },
+    assignedToUser: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        index: true,
+    },
+    delegatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    },
     reminder: String,
     start: String,
     end: String,
@@ -35,6 +44,7 @@ const Task = new mongoose.Schema({
     },
     status: {
         type: String,
+        enum: ['todo', 'inProgress', 'pending', 'onHold', 'completed'],
         default: "todo"
     },
     createdDate: {
@@ -45,5 +55,8 @@ const Task = new mongoose.Schema({
         default: false,
     },
 })
+
+Task.index({ assignedToUser: 1, deleted: 1, status: 1 });
+Task.index({ createBy: 1, deleted: 1 });
 
 module.exports = mongoose.model('Tasks', Task, 'Tasks');

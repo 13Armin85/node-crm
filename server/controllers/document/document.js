@@ -1,290 +1,185 @@
 const multer = require('multer');
-const DocumentSchema = require('../../model/schema/document')
+const Document = require('../../model/schema/document');
+const User = require('../../model/schema/user');
 const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 
+const uploadRoot = path.resolve(__dirname, '../../uploads/document');
+const storage = multer.diskStorage({
+    destination(req, file, cb) { fs.mkdir(uploadRoot, { recursive: true }, (error) => cb(error, uploadRoot)); },
+    filename(req, file, cb) { cb(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`); },
+});
+const upload = multer({ storage, limits: { fileSize: 15 * 1024 * 1024, files: 20 } });
+const validId = (value) => mongoose.Types.ObjectId.isValid(value);
+
+const actorScope = async (req) => {
+    const actor = await User.findOne({ _id: req.user.userId, deleted: false });
+    if (!actor) return null;
+    return { actor, query: actor.role === 'admin' ? {} : { createBy: actor._id } };
+};
 
 const index = async (req, res) => {
     try {
-        const query = req.query
-        if (query.createBy) {
-            query.createBy = new mongoose.Types.ObjectId(query.createBy);
-        }
-
-
-        const result = await DocumentSchema.aggregate([
-            { $unwind: '$file' },
-            { $match: { 'file.deleted': false } },
-            { $match: query },
-            {
-                $lookup: {
-                    from: 'User', // Replace 'users' with the actual name of your users collection
-                    localField: 'createBy',
-                    foreignField: '_id', // Assuming the 'createBy' field in DocumentSchema corresponds to '_id' in the 'users' collection
-                    as: 'creatorInfo'
-                }
-            },
-            { $unwind: { path: '$creatorInfo', preserveNullAndEmptyArrays: true } },
-            { $match: { 'creatorInfo.deleted': false } },
-            {
-                $group: {
-                    _id: '$_id',  // Group by the document _id (folder's _id)
-                    folderName: { $first: '$folderName' }, // Get the folderName (assuming it's the same for all files in the folder)
-                    createByName: { $first: { $concat: ['$creatorInfo.firstName', ' ', '$creatorInfo.lastName'] } },
-                    files: { $push: '$file' }, // Push the matching files back into an array
-                }
-            },
-            { $project: { creatorInfo: 0 } },
-        ]);
-
-        res.send(result);
+        const access = await actorScope(req);
+        if (!access) return res.status(401).json({ message: 'Authentication failed' });
+        const query = { ...access.query, deleted: false };
+        if (req.query.parentFolder === 'root') query.parentFolder = null;
+        else if (req.query.parentFolder && validId(req.query.parentFolder)) query.parentFolder = req.query.parentFolder;
+        const folders = await Document.find(query).populate('createBy', 'firstName lastName username').sort({ folderName: 1 }).lean();
+        const entityType = req.query.entityType;
+        const entityId = req.query.entityId;
+        const result = folders.map((folder) => {
+            let files = (folder.file || []).filter((item) => !item.deleted).map((item) => {
+                if (item.entityType) return item;
+                if (item.linkContact) return { ...item, entityType: 'Contact', entityId: item.linkContact };
+                if (item.linkLead) return { ...item, entityType: 'Lead', entityId: item.linkLead };
+                return item;
+            });
+            if (entityType) files = files.filter((item) => item.entityType === entityType);
+            if (entityId) files = files.filter((item) => String(item.entityId) === String(entityId));
+            return {
+                ...folder,
+                createByName: [folder.createBy?.firstName, folder.createBy?.lastName].filter(Boolean).join(' ') || folder.createBy?.username,
+                files,
+            };
+        }).filter((folder) => !entityType || folder.files.length);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to load documents', error: error.message });
     }
-    catch (err) {
-        console.error(err);
+};
+
+const createFolder = async (req, res) => {
+    try {
+        const access = await actorScope(req);
+        const folderName = String(req.body.folderName || '').trim();
+        if (!access) return res.status(401).json({ message: 'Authentication failed' });
+        if (!folderName) return res.status(400).json({ message: 'Folder name is required' });
+        const parentFolder = req.body.parentFolder && validId(req.body.parentFolder) ? req.body.parentFolder : null;
+        const existing = await Document.findOne({ createBy: access.actor._id, parentFolder, folderName, deleted: false });
+        if (existing) return res.status(200).json(existing);
+        const folder = await Document.create({ folderName, parentFolder, createBy: access.actor._id, file: [] });
+        res.status(201).json(folder);
+    } catch (error) {
+        res.status(400).json({ message: 'Failed to create folder', error: error.message });
     }
-}
+};
 
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const folderPath = 'uploads/document/';
-        fs.mkdirSync(folderPath, { recursive: true }); // Create the directory if it doesn't exist
-        cb(null, folderPath);
-    },
-    filename: function (req, file, cb) {
-        const uploadDir = 'uploads/document/';
-        const filePath = uploadDir + file.originalname;
-
-        if (fs.existsSync(filePath)) {
-            // File with the same name already exists, generate a new filename
-            const timestamp = Date.now() + Math.floor(Math.random() * 90);
-            cb(null, file.originalname.split('.')[0] + '-' + timestamp + '.' + file.originalname.split('.')[1]);
-        } else {
-            // File doesn't exist, use the original filename
-            cb(null, file.originalname);
-        }
-        // cb(null, file.originalname);
-    },
-});
-
-
-
-const upload = multer({ storage: storage });
+const entityFields = (body) => {
+    const aliases = {
+        Contact: body.linkContact,
+        Lead: body.linkLead,
+        Property: body.linkProperty,
+        Opportunity: body.linkOpportunity,
+        PartnerCustomer: body.linkPartnerCustomer,
+    };
+    let entityType = body.entityType || Object.keys(aliases).find((key) => aliases[key]);
+    let entityId = body.entityId || aliases[entityType];
+    if (!['Contact', 'Lead', 'Property', 'Opportunity', 'PartnerCustomer'].includes(entityType) || !validId(entityId)) {
+        entityType = null;
+        entityId = null;
+    }
+    const result = { entityType, entityId };
+    if (entityType === 'Contact') result.linkContact = entityId;
+    if (entityType === 'Lead') result.linkLead = entityId;
+    if (entityType === 'Property') result.linkProperty = entityId;
+    if (entityType === 'Opportunity') result.linkOpportunity = entityId;
+    if (entityType === 'PartnerCustomer') result.linkPartnerCustomer = entityId;
+    return result;
+};
 
 const file = async (req, res) => {
     try {
-        const { filename, folderName, createBy } = req.body;
-
-        const url = req.protocol + '://' + req.get('host');
-
-        const files = req.files.map((file) => ({
-            fileName: filename || file.filename,
-            path: file.path,
-            img: `${url}/api/document/images/${file.filename}`,
-            createOn: new Date(),
-            customFields: req.body.customFields,
-        }));
-
-        // Check if the folder exists in the database
-        let folder = await DocumentSchema.findOne({ folderName });
-
-        if (!folder) {
-            // DocumentSchema does not exist, create a new folder and add the file
-            folder = new DocumentSchema({
-                folderName,
-                file: files, // Directly assign the files array
-                createBy
-            });
+        const access = await actorScope(req);
+        if (!access) return res.status(401).json({ message: 'Authentication failed' });
+        if (!req.files?.length) return res.status(400).json({ message: 'Select at least one file' });
+        let folder;
+        if (req.body.folderId && validId(req.body.folderId)) {
+            folder = await Document.findOne({ _id: req.body.folderId, ...access.query, deleted: false });
         } else {
-            folder.file.push(...files); // Use spread operator to add elements of the files array
+            const folderName = String(req.body.folderName || 'عمومی').trim();
+            folder = await Document.findOne({ folderName, createBy: access.actor._id, parentFolder: null, deleted: false });
+            if (!folder) folder = new Document({ folderName, createBy: access.actor._id, parentFolder: null, file: [] });
         }
-
-        // Save the folder in the database
-        await folder.save();
-
-        res.json({ message: 'Folder and files added successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ err, error: req });
-    }
-}
-
-const addDocumentContact = async (req, res) => {
-    try {
-        const { filename, folderName, linkContact, createBy } = req.body;
-
-        if (!linkContact) {
-            return res.status(404).json({ message: 'Select valid contact ' });
-        }
-
-        const url = req.protocol + '://' + req.get('host');
-
-        const files = req.files.map((file) => ({
-            fileName: filename || file.filename,
-            path: file.path,
-            linkContact: linkContact,
-            linkLead: null,
-            img: `${url}/api/document/images/${file.filename}`,
+        if (!folder) return res.status(404).json({ message: 'Folder not found or access denied' });
+        const relation = entityFields(req.body);
+        const customFields = (() => { try { return JSON.parse(req.body.customFields || '{}'); } catch { return {}; } })();
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const files = req.files.map((item) => ({
+            fileName: req.body.filename || path.basename(item.originalname),
+            path: item.path,
+            img: `${baseUrl}/api/document/images/${item.filename}`,
+            mimeType: item.mimetype,
+            size: item.size,
             createOn: new Date(),
+            customFields,
+            ...relation,
         }));
-
-        // Check if the folder exists in the database
-        let folder = await DocumentSchema.findOne({ folderName });
-
-        if (!folder) {
-            // DocumentSchema does not exist, create a new folder and add the file
-            folder = new DocumentSchema({
-                folderName,
-                file: files, // Directly assign the files array
-                createBy
-            });
-        } else {
-            folder.file.push(...files); // Use spread operator to add elements of the files array
-        }
-
-        // Save the folder in the database
+        folder.file.push(...files);
+        folder.updatedDate = new Date();
         await folder.save();
-
-        res.json({ message: 'Folder and files added successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ err, error: req });
+        res.status(200).json({ message: 'Files uploaded successfully', folder });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to upload files', error: error.message });
     }
-}
+};
 
-const addDocumentLead = async (req, res) => {
-    try {
-        const { filename, folderName, linkLead, createBy } = req.body;
+const compatibilityUpload = (entityType) => async (req, res) => {
+    req.body.entityType = entityType;
+    req.body.entityId = entityType === 'Contact' ? req.body.linkContact : req.body.linkLead;
+    return file(req, res);
+};
 
-        if (!linkLead) {
-            return res.status(404).json({ message: 'Select valid contact ' });
-        }
-
-        const url = req.protocol + '://' + req.get('host');
-
-        const files = req.files.map((file) => ({
-            fileName: filename || file.filename,
-            path: file.path,
-            linkContact: null,
-            linkLead: linkLead,
-            img: `${url}/api/document/images/${file.filename}`,
-            createOn: new Date(),
-        }));
-
-        // Check if the folder exists in the database
-        let folder = await DocumentSchema.findOne({ folderName });
-
-        if (!folder) {
-            // DocumentSchema does not exist, create a new folder and add the file
-            folder = new DocumentSchema({
-                folderName,
-                file: files, // Directly assign the files array
-                createBy
-            });
-        } else {
-            folder.file.push(...files); // Use spread operator to add elements of the files array
-        }
-
-        // Save the folder in the database
-        await folder.save();
-
-        res.json({ message: 'Folder and files added successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ err, error: req });
-    }
-}
+const findFile = async (req, id) => {
+    if (!validId(id)) return null;
+    const access = await actorScope(req);
+    if (!access) return null;
+    const folder = await Document.findOne({ 'file._id': id, ...access.query, deleted: false });
+    const found = folder?.file.id(id);
+    return found ? { folder, found } : null;
+};
 
 const downloadFile = async (req, res) => {
     try {
-        const { id } = req.params;
-
-        // Check if the folder exists in the database
-        const folder = await DocumentSchema.findOne({ 'file._id': id });
-
-        if (!folder) {
-            return res.status(404).json({ message: 'File not found' });
-        }
-
-        // Find the file with the specified fileName within the folder
-        const file = folder.file.find((f) => f._id.toString() === id);
-
-
-        if (!file) {
-            return res.status(404).json({ message: 'File not found' });
-        }
-
-        res.download(file.path, file.name);
-
+        const result = await findFile(req, req.params.id);
+        if (!result || result.found.deleted) return res.status(404).json({ message: 'File not found' });
+        res.download(path.resolve(result.found.path), result.found.fileName);
     } catch (error) {
-        console.error(error.message);
-        res.status(500).json({ msg: error.message });
+        res.status(500).json({ message: 'Failed to download file', error: error.message });
     }
-}
+};
 
 const deleteFile = async (req, res) => {
     try {
-        const { id } = req.params;
-
-        // Check if the folder exists in the database
-        const folder = await DocumentSchema.findOne({ 'file._id': id });
-        if (!folder) {
-            return res.status(404).json({ message: 'File not found' });
-        }
-        // Find the file with the specified fileName within the folder
-        const file = folder.file.find((f) => f._id.toString() === id);
-        if (!file) {
-            return res.status(404).json({ message: 'File not found' });
-        }
-
-        // Set the 'deleted' flag to true for the file to soft delete it
-        file.deleted = true;
-
-        // Save the updated document
-        await folder.save();
-        res.status(200).json({ message: "File deleted successfully.", document: folder });
-
-    } catch (err) {
-        res.status(500).json({ message: "Error deleting file.", error: err });
+        const result = await findFile(req, req.params.id);
+        if (!result) return res.status(404).json({ message: 'File not found' });
+        result.found.deleted = true;
+        result.folder.updatedDate = new Date();
+        await result.folder.save();
+        res.status(200).json({ message: 'File deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete file', error: error.message });
     }
 };
 
-const LinkDocument = async (req, res) => {
+const linkDocument = async (req, res) => {
     try {
-        const { id } = req.params;
-        let { linkContact, linkLead } = req.body
-
-        if (!linkContact && !linkLead) {
-            return res.status(404).json({ message: 'Select valid contact or lead ' });
-        }
-
-        // Check if the folder exists in the database
-        const folder = await DocumentSchema.findOne({ 'file._id': id });
-        if (!folder) {
-            return res.status(404).json({ message: 'File not found' });
-        }
-
-        const file = folder.file.find((f) => f._id.toString() === id);
-        if (!file) {
-            return res.status(404).json({ message: 'File not found' });
-        }
-
-        if (linkContact) {
-            file.linkContact = linkContact;
-            file.linkLead = null;
-        }
-        if (linkLead) {
-            file.linkLead = linkLead;
-            file.linkContact = null;
-        }
-
-        // Save the updated document
-        const savedFolder = await folder.save();
-
-        res.status(200).json({ message: "File link successfully.", document: savedFolder });
-    } catch (err) {
-        res.status(500).json({ message: "Error Link file.", error: err });
+        const result = await findFile(req, req.params.id);
+        if (!result) return res.status(404).json({ message: 'File not found' });
+        const relation = entityFields(req.body);
+        if (!relation.entityId) return res.status(400).json({ message: 'Select a valid record' });
+        ['linkContact', 'linkLead', 'linkProperty', 'linkOpportunity', 'linkPartnerCustomer'].forEach((key) => { result.found[key] = null; });
+        Object.assign(result.found, relation);
+        await result.folder.save();
+        res.status(200).json({ message: 'Document linked successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to link document', error: error.message });
     }
 };
 
-module.exports = { file, upload, index, downloadFile, addDocumentContact, addDocumentLead, deleteFile, LinkDocument }
+module.exports = {
+    upload, index, createFolder, file, downloadFile, deleteFile, LinkDocument: linkDocument,
+    addDocumentContact: compatibilityUpload('Contact'), addDocumentLead: compatibilityUpload('Lead'),
+};

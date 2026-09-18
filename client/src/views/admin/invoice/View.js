@@ -103,7 +103,7 @@ const View = (props) => {
       Header: tr("Contact"),
       accessor: "contact",
       cell: (cell) =>
-        user?.role === "superAdmin" || contactAccess?.view ? (
+        user?.role === "admin" || contactAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -138,7 +138,7 @@ const View = (props) => {
       Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
-        user?.role === "superAdmin" || accountAccess?.view ? (
+        user?.role === "admin" || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -316,7 +316,7 @@ const View = (props) => {
                     <Heading size="md" mb={3}><LocalizedText text="Invoice Details" /></Heading>
                     <Flex id="hide-btn">
                       <Menu>
-                        {(user?.role === "superAdmin" ||
+                        {(user?.role === "admin" ||
                           invoiceAccess?.create ||
                           invoiceAccess?.update ||
                           invoiceAccess?.delete) && (
@@ -332,7 +332,7 @@ const View = (props) => {
                         )}
                         <MenuDivider />
                         <MenuList minWidth={2}>
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             invoiceAccess?.create) && (
                             <MenuItem
                               onClick={() => {
@@ -345,7 +345,7 @@ const View = (props) => {
                               icon={<AddIcon />}
                             ><LocalizedText text="Add" /></MenuItem>
                           )}
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             invoiceAccess?.update) && (
                             <MenuItem
                               onClick={() => {
@@ -364,7 +364,7 @@ const View = (props) => {
                             style={{ alignItems: "center" }}
                           ><LocalizedText text="Print as PDF" /></MenuItem>
 
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             invoiceAccess?.delete) && (
                             <>
                               <MenuDivider />
@@ -749,24 +749,24 @@ const View = (props) => {
                 {data?.assignedTo ? (
                   <Link
                     to={
-                      user?.role === "superAdmin" &&
+                      user?.role === "admin" &&
                       `/userView/${data?.assignedTo}`
                     }
                   >
                     <Text
                       color={
-                        user?.role === "superAdmin"
+                        user?.role === "admin"
                           ? "blue.500"
                           : "blackAlpha.900"
                       }
                       sx={{
                         "&:hover": {
                           color:
-                            user.role === "superAdmin"
+                            user.role === "admin"
                               ? "blue.500"
                               : "blackAlpha.900",
                           textDecoration:
-                            user.role === "superAdmin" ? "underline" : "none",
+                            user.role === "admin" ? "underline" : "none",
                         },
                       }}
                       style={{ cursor: "pointer" }}
@@ -777,18 +777,18 @@ const View = (props) => {
                 ) : (
                   <Text
                     color={
-                      user?.role === "superAdmin"
+                      user?.role === "admin"
                         ? "blue.500"
                         : "blackAlpha.900"
                     }
                     sx={{
                       "&:hover": {
                         color:
-                          user.role === "superAdmin"
+                          user.role === "admin"
                             ? "blue.500"
                             : "blackAlpha.900",
                         textDecoration:
-                          user.role === "superAdmin" ? "underline" : "none",
+                          user.role === "admin" ? "underline" : "none",
                       },
                     }}
                   >
@@ -1232,12 +1232,12 @@ const View = (props) => {
       )}
       {(invoiceAccess?.update ||
         invoiceAccess?.delete ||
-        user?.role === "superAdmin") && (
+        user?.role === "admin") && (
         <Card mt={3}>
           <Grid templateColumns="repeat(6, 1fr)" gap={1}>
             <GridItem colStart={6}>
               <Flex justifyContent={"right"}>
-                {(invoiceAccess?.update || user?.role === "superAdmin") && (
+                {(invoiceAccess?.update || user?.role === "admin") && (
                   <Button
                     size="sm"
                     onClick={() => {
@@ -1250,7 +1250,7 @@ const View = (props) => {
                     colorScheme="green"
                   ><LocalizedText text="Edit" /></Button>
                 )}
-                {(invoiceAccess?.delete || user?.role === "superAdmin") && (
+                {(invoiceAccess?.delete || user?.role === "admin") && (
                   <Button
                     size="sm"
                     style={{ background: "red.800" }}

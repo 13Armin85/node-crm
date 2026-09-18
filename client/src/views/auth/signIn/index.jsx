@@ -66,7 +66,7 @@ function SignIn() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Dispatch the fetchRoles action on component mount
+    // Load active branding images on component mount.
     dispatch(fetchImage("?isActive=true"));
   }, [dispatch]);
 

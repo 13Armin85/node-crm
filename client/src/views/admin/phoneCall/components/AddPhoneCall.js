@@ -126,12 +126,10 @@ const AddPhoneCall = (props) => {
   const fetchUsersData = async () => {
     setIsLoding(true);
     try {
-      let result = await getApi("api/user/");
+      let result = await getApi("api/task/assignees");
 
       let salesPersons =
-        result?.data?.user?.filter((userData) =>
-          userData?.roles?.some((role) => role?.roleName === "Sales")
-        ) || [];
+        result?.data?.filter((userData) => userData?.role === "user") || [];
       setAssignToSalesData(salesPersons);
     } catch (error) {
       console.error("Failed to fetch users data:", error);

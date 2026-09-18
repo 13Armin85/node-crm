@@ -160,7 +160,7 @@ export default function PropertyTable(props) {
                       data = (
                         <Link
                           to={
-                            user?.role !== "superAdmin"
+                            user?.role !== "admin"
                               ? `/propertyView/${cell?.row?.original?._id}`
                               : `/propertyView/${cell?.row?.original?._id}`
                           }

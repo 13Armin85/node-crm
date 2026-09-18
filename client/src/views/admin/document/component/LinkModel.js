@@ -91,7 +91,7 @@ const Link = (props) => {
   const fetchData = async () => {
     if (values?.linkWith === "Contact") {
       let result = await getApi(
-        user?.role === "superAdmin"
+        user?.role === "admin"
           ? "api/contact/"
           : `api/contact/?createBy=${user._id}`,
       );
@@ -105,7 +105,7 @@ const Link = (props) => {
       ]);
     } else if (values?.linkWith === "lead") {
       let result = await getApi(
-        user.role === "superAdmin"
+        user.role === "admin"
           ? "api/lead/"
           : `api/lead/?createBy=${user._id}`,
       );

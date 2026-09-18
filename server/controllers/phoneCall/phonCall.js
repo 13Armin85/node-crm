@@ -67,7 +67,7 @@ const index = async (req, res) => {
 
         const user = await User.findById(req.user.userId);
 
-        if (user?.role !== "superAdmin") {
+        if (user?.role !== "admin") {
             delete query.sender;
             query.deleted = false;
             query.$or = [

@@ -58,12 +58,6 @@ async function migrate() {
   }
   if (apply) {
     for (const [moduleName, fields] of Object.entries(defaults)) await FormDefinition.updateOne({ moduleName }, { $setOnInsert: { moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, order })) } }, { upsert: true });
-    for await (const role of db.collection('RoleAccess').find({})) {
-      const access = (role.access || []).filter(a => a.title !== 'Payments');
-      for (const item of access) if (item.title === 'Account') item.title = 'Partner Customers';
-      for (const title of ['Partner Customers', 'Residences']) if (!access.some(a => a.title === title)) access.push({ title, create: false, update: false, delete: false, view: false });
-      await db.collection('RoleAccess').updateOne({ _id: role._id }, { $set: { access } });
-    }
   }
   console.log(JSON.stringify({ mode: apply ? 'apply' : 'preview', accounts, properties, unknownPropertyTypes: unknown }));
   await mongoose.disconnect();

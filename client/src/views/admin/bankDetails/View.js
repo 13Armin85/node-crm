@@ -237,7 +237,7 @@ const View = () => {
                       <Heading size="md" mb={3}><LocalizedText text="Bank Details" /></Heading>
                       <Flex id="hide-btn">
                         <Menu>
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             permission?.create ||
                             permission?.update ||
                             permission?.delete) && (
@@ -252,7 +252,7 @@ const View = () => {
                           )}
                           <MenuDivider />
                           <MenuList minWidth={2}>
-                            {(user?.role === "superAdmin" ||
+                            {(user?.role === "admin" ||
                               permission?.create) && (
                               <MenuItem
                                 color={"blue"}
@@ -265,7 +265,7 @@ const View = () => {
                                 {" "}<LocalizedText text="Add" />{" "}
                               </MenuItem>
                             )}
-                            {(user?.role === "superAdmin" ||
+                            {(user?.role === "admin" ||
                               permission?.update) && (
                               <MenuItem
                                 onClick={() => {
@@ -282,7 +282,7 @@ const View = () => {
                               display={"flex"}
                               style={{ alignItems: "center" }}
                             ><LocalizedText text="Print as PDF" /></MenuItem>
-                            {(user?.role === "superAdmin" ||
+                            {(user?.role === "admin" ||
                               permission?.delete) && (
                               <>
                                 <MenuDivider />
@@ -547,14 +547,14 @@ const View = () => {
             </Grid>
           </Tabs>
 
-          {(user?.role === "superAdmin" ||
+          {(user?.role === "admin" ||
             permission?.update ||
             permission?.delete) && (
             <Card mt={3}>
               <Grid templateColumns="repeat(2, 1fr)" gap={1}>
                 <GridItem colStart={6}>
                   <Flex justifyContent={"right"}>
-                    {user?.role === "superAdmin" || permission?.update ? (
+                    {user?.role === "admin" || permission?.update ? (
                       <Button
                         size="sm"
                         onClick={() => {
@@ -568,7 +568,7 @@ const View = () => {
                     ) : (
                       ""
                     )}
-                    {user?.role === "superAdmin" || permission?.delete ? (
+                    {user?.role === "admin" || permission?.delete ? (
                       <Button
                         size="sm"
                         style={{ background: "red.800" }}

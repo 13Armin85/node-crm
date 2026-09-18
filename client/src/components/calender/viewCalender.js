@@ -130,7 +130,7 @@ const ViewCalender = (props) => {
               </ModalBody>
               <DrawerFooter>
                 {access?.view ||
-                  (user?.role === "superAdmin" && (
+                  (user?.role === "admin" && (
                     <IconButton
                       variant="outline"
                       colorScheme={"green"}
@@ -141,7 +141,7 @@ const ViewCalender = (props) => {
                     />
                   ))}
                 {access?.update ||
-                  (user?.role === "superAdmin" && (
+                  (user?.role === "admin" && (
                     <IconButton
                       variant="outline"
                       onClick={() => setEdit(true)}
@@ -152,7 +152,7 @@ const ViewCalender = (props) => {
                     />
                   ))}
                 {access?.delete ||
-                  (user?.role === "superAdmin" && (
+                  (user?.role === "admin" && (
                     <IconButton
                       colorScheme="red"
                       onClick={() => setDelete(true)}

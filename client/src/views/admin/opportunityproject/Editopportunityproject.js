@@ -112,7 +112,7 @@ const Editopportunityproject = (props) => {
           assignToContactData?.length <= 0
         ) {
           result = await getApi(
-            user?.role === "superAdmin"
+            user?.role === "admin"
               ? "api/contact/"
               : `api/contact/?createBy=${user._id}`,
           );
@@ -122,7 +122,7 @@ const Editopportunityproject = (props) => {
           assignToLeadData?.length <= 0
         ) {
           result = await getApi(
-            user?.role === "superAdmin"
+            user?.role === "admin"
               ? "api/lead/"
               : `api/lead/?createBy=${user?._id}`,
           );
@@ -136,7 +136,7 @@ const Editopportunityproject = (props) => {
 
   const propertyApiGet = async () => {
     const propertyOptionData = await getApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/property"
         : `api/property/?createBy=${user?._id}`,
     );
@@ -338,10 +338,10 @@ const Editopportunityproject = (props) => {
                 <Stack direction="row">
                   <Radio value="None"><LocalizedText text="None" /></Radio>
                   <>
-                    {(user?.role === "superAdmin" || contactAccess?.create) && (
+                    {(user?.role === "admin" || contactAccess?.create) && (
                       <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
                     )}
-                    {(user?.role === "superAdmin" || leadAccess?.create) && (
+                    {(user?.role === "admin" || leadAccess?.create) && (
                       <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                     )}
                   </>

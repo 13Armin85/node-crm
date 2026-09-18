@@ -121,21 +121,21 @@ const PhoneModel = (props) => {
       let result;
       if (values?.category === "Contact" && assignToContactData?.length <= 0) {
         result = await getApi(
-          user?.role === "superAdmin"
+          user?.role === "admin"
             ? "api/contact/"
             : `api/contact/?createBy=${user?._id}`,
         );
         setAssignToContactData(result?.data);
       } else if (values?.category === "Lead" && assignToLeadData?.length <= 0) {
         result = await getApi(
-          user?.role === "superAdmin"
+          user?.role === "admin"
             ? "api/lead/"
             : `api/lead/?createBy=${user?._id}`,
         );
         setAssignToLeadData(result?.data);
       }
       const propertyOptionData = await getApi(
-        user?.role === "superAdmin"
+        user?.role === "admin"
           ? "api/property"
           : `api/property/?createBy=${user?._id}`,
       );
@@ -171,12 +171,10 @@ const PhoneModel = (props) => {
   const fetchUsersData = async () => {
     setIsLoding(true);
     try {
-      let result = await getApi("api/user/");
+      let result = await getApi("api/task/assignees");
 
       let salesPersons =
-        result?.data?.user?.filter((userData) =>
-          userData?.roles?.some((role) => role?.roleName === "Sales"),
-        ) || [];
+        result?.data?.filter((userData) => userData?.role === "user") || [];
       setAssignToSalesData(salesPersons);
     } catch (error) {
       console.error("Failed to fetch users data:", error);

@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
+  ButtonGroup,
+  Flex,
+  Box,
   Menu,
   MenuButton,
   MenuItem,
@@ -28,6 +31,8 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { fetchTaskData } from "../../../redux/slices/taskSlice";
 import { toast } from "react-toastify";
+import { FiColumns, FiList, FiPlus } from "react-icons/fi";
+import TaskKanban from "./components/TaskKanban";
 
 const Task = () => {
   const [action, setAction] = useState(false);
@@ -48,6 +53,9 @@ const Task = () => {
   const [displaySearchData, setDisplaySearchData] = useState(false);
   const [searchedData, setSearchedData] = useState([]);
   const [userAction, setUserAction] = useState("");
+  const [viewMode, setViewMode] = useState("kanban");
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
+  const [assignees, setAssignees] = useState([]);
   const [permission, leadAccess, contactAccess] = HasAccess([
     "Tasks",
     "Leads",
@@ -77,7 +85,7 @@ const Task = () => {
             minW={"fit-content"}
             transform={"translate(1520px, 173px);"}
           >
-            {permission?.update && (
+            {(permission?.update || user?.role !== "admin") && (
               <MenuItem
                 py={2.5}
                 icon={<EditIcon fontSize={15} mb={1} />}
@@ -168,13 +176,14 @@ const Task = () => {
     },
     {
       Header: tr("Assign To"),
-      accessor: "assignToName",
+      accessor: "assignedToUserName",
       type: "text",
       formikType: "",
     },
+    { Header: tr("Related"), accessor: "assignToName", type: "text", formikType: "" },
     { Header: tr("Start Date"), accessor: "start", type: "date", formikType: "" },
     { Header: tr("End Date"), accessor: "end", type: "date", formikType: "" },
-    ...(permission?.update || permission?.view || permission?.delete
+    ...(permission?.update || user?.role !== "admin" || permission?.view || permission?.delete
       ? [actionHeader]
       : []),
   ];
@@ -204,6 +213,22 @@ const Task = () => {
     } finally {
       setIsLoding(false);
     }
+  };
+  const updateKanbanStatus = async (taskId, status) => {
+    const previous = data;
+    setData((items) => items.map((item) => item._id === taskId ? { ...item, status } : item));
+    const response = await putApi(`api/task/changeStatus/${taskId}`, { status });
+    if (response?.status !== 200) {
+      setData(previous);
+      toast.error(tr("Failed to update task"));
+    }
+  };
+  const delegateTask = async (taskId, assignedToUser) => {
+    const response = await putApi(`api/task/edit/${taskId}`, { assignedToUser });
+    if (response?.status === 200) {
+      toast.success(tr("Task delegated successfully"));
+      fetchData();
+    } else toast.error(tr("Failed to delegate task"));
   };
   const changeStatus = (cell) => {
     switch (cell?.value) {
@@ -262,14 +287,45 @@ const Task = () => {
     fetchData();
   }, [action]);
 
+  useEffect(() => {
+    getApi("api/task/assignees").then((result) => {
+      if (result?.status === 200) setAssignees(result.data || []);
+    });
+  }, []);
+
+  const visibleData = assigneeFilter === "all"
+    ? data
+    : data.filter((item) => String(item.assignedToUser || item.createBy) === assigneeFilter);
+
   return (
     <div>
-      <CommonCheckTable
+      <Flex mb={4} justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={3}>
+        <Box>
+          <Text fontSize="2xl" fontWeight="900">مدیریت وظایف</Text>
+          <Text color="gray.500" fontSize="sm">وظایف را بین کاربران واگذار کنید و وضعیت کار را با درگ‌ و دراپ تغییر دهید.</Text>
+        </Box>
+        <Flex gap={2} wrap="wrap">
+          {user?.role === "admin" && (
+            <Select size="sm" w="190px" value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)}>
+              <option value="all">همه کاربران</option>
+              {assignees.map((item) => <option key={item._id} value={item._id}>{[item.firstName, item.lastName].filter(Boolean).join(" ") || item.username}</option>)}
+            </Select>
+          )}
+          <ButtonGroup size="sm" isAttached variant="outline">
+            <Button leftIcon={<FiColumns />} colorScheme={viewMode === "kanban" ? "brand" : "gray"} onClick={() => setViewMode("kanban")}>کانبان</Button>
+            <Button leftIcon={<FiList />} colorScheme={viewMode === "list" ? "brand" : "gray"} onClick={() => setViewMode("list")}>لیست</Button>
+          </ButtonGroup>
+          {permission?.create && <Button size="sm" variant="brand" leftIcon={<FiPlus />} onClick={addBtn}>وظیفه جدید</Button>}
+        </Flex>
+      </Flex>
+      {viewMode === "kanban" ? (
+        <TaskKanban tasks={visibleData} assignees={assignees} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
+      ) : <CommonCheckTable
         title={tr("Tasks")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
-        allData={data ?? []}
+        allData={visibleData ?? []}
         searchDisplay={displaySearchData}
         setSearchDisplay={setDisplaySearchData}
         searchedDataOut={searchedData}
@@ -298,7 +354,7 @@ const Task = () => {
         setGetTagValuesOutside={setGetTagValuesOutside}
         setSearchboxOutside={setSearchboxOutside}
         handleSearchType="TasksSearch"
-      />
+      />}
 
       <TaskAdvanceSearch
         advanceSearch={advanceSearch}

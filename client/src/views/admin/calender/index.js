@@ -8,7 +8,7 @@ const Index = () => {
 
   const fetchData = async () => {
     let result = await getApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/calendar/"
         : `api/calendar/?createBy=${user?._id}`,
     );

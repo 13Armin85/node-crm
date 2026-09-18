@@ -167,14 +167,14 @@ export default function UserReports() {
   const [contactsView, taskView, leadView, proprtyView] = HasAccess(["Contacts", "Tasks", "Leads", "Properties"]);
 
   const fetchData = async () => {
-    let responseData = await getApi(user?.role === 'superAdmin' ? `api/status/` : `api/status/?createBy=${user?._id}`);
+    let responseData = await getApi(user?.role === 'admin' ? `api/status/` : `api/status/?createBy=${user?._id}`);
     setAllData(responseData?.data?.data);
   };
 
 
   const fetchProgressChart = async () => {
     setIsLoding(true);
-    let result = await getApi(user?.role === 'superAdmin' ? 'api/reporting/line-chart' : `api/reporting/line-chart?createBy=${user?._id}`);
+    let result = await getApi(user?.role === 'admin' ? 'api/reporting/line-chart' : `api/reporting/line-chart?createBy=${user?._id}`);
     if (result && result?.status === 200) {
       setData(result?.data)
     }
@@ -335,7 +335,7 @@ export default function UserReports() {
           />}
       </SimpleGrid>
 
-      {(proprtyView?.view || user?.role === 'superAdmin') && propertiesModule?.isActive && (
+      {(proprtyView?.view || user?.role === 'admin') && propertiesModule?.isActive && (
         <Card className="crm-sales-performance" mb="20px" overflow="hidden">
           <DashboardCardHeader
             title={t('dashboard.salesPerformance')}

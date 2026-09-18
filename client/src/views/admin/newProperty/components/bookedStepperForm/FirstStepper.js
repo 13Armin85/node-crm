@@ -50,14 +50,14 @@ export const FirstStepper = (props) => {
       let result;
       if (values?.category === "contact" && assignToContactData?.length <= 0) {
         result = await getApi(
-          user?.role === "superAdmin"
+          user?.role === "admin"
             ? "api/contact/"
             : `api/contact/?createBy=${user?._id}`
         );
         setAssignToContactData(result?.data);
       } else if (values?.category === "lead" && assignToLeadData <= 0) {
         result = await getApi(
-          user?.role === "superAdmin"
+          user?.role === "admin"
             ? "api/lead/"
             : `api/lead/?createBy=${user?._id}`
         );

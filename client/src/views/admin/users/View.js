@@ -17,7 +17,6 @@ import {
   MenuItem,
   MenuList,
   Text,
-  useDisclosure,
 } from "@chakra-ui/react";
 import Card from "components/card/Card";
 import { HSeparator } from "components/separator/Separator";
@@ -26,10 +25,6 @@ import { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getApi } from "services/api";
-import Add from "./Add";
-import Edit from "./Edit";
-import RoleTable from "./components/roleTable";
-import RoleModal from "./components/roleModal";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../../../redux/slices/localSlice";
 import CommonDeleteModel from "components/commonDeleteModel";
@@ -37,11 +32,6 @@ import { deleteApi } from "services/api";
 import AddEditUser from "./AddEditUser";
 
 const View = () => {
-  const RoleColumn = [
-    { Header: tr("#"), accessor: "_id", width: 10, display: false },
-    { Header: tr("Role Name"), accessor: "roleName" },
-    { Header: tr("Description"), accessor: "description" },
-  ];
   const dispatch = useDispatch();
   const userData = useSelector((state) => state?.user?.user);
 
@@ -56,11 +46,9 @@ const View = () => {
   };
 
   const [data, setData] = useState();
-  const [roleData, setRoleData] = useState([]);
   // const { isOpen, onOpen, onClose } = useDisclosure()
   const [edit, setEdit] = useState(false);
   const [deleteModel, setDelete] = useState(false);
-  const [roleModal, setRoleModal] = useState(false);
   const [isLoding, setIsLoding] = useState(false);
   const [action, setAction] = useState(false);
   const [userAction, setUserAction] = useState("");
@@ -88,13 +76,6 @@ const View = () => {
       fetchData();
     }
   }, [action]);
-
-  useEffect(async () => {
-    setIsLoding(true);
-    let result = await getApi("api/role-access");
-    setRoleData(result?.data);
-    setIsLoding(false);
-  }, []);
 
   const handleDeleteClick = async () => {
     try {
@@ -155,7 +136,7 @@ const View = () => {
                 <Flex
                   justifyContent={{ base: "start", sm: "start", md: "end" }}
                 >
-                  {data?.role === "superAdmin" && (
+                  {data?.role === "admin" && (
                     <Menu>
                       <MenuButton
                         variant="outline"
@@ -179,9 +160,9 @@ const View = () => {
                           icon={<EditIcon />}
                           color="green"
                         ><LocalizedText text="Edit" /></MenuItem>
-                        {data?.role !== "superAdmin" &&
+                        {data?.role !== "admin" &&
                           JSON.parse(localStorage.getItem("user"))?.role ===
-                            "superAdmin" && (
+                            "admin" && (
                             <>
                               <MenuDivider />
                               <MenuItem
@@ -228,30 +209,12 @@ const View = () => {
                 </Text>
                 <Text>{data?.username ? data?.username : " - "}</Text>
               </GridItem>
+              <GridItem colSpan={{ base: 2, md: 1 }}>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Role" /></Text>
+                <Text textTransform="capitalize">{data?.role ? tr(data.role === 'admin' ? 'Admin' : 'User') : ' - '}</Text>
+              </GridItem>
             </Grid>
           </Card>
-
-          {data?.role !== "superAdmin" && (
-            <Card mt={3}>
-              <RoleTable
-                fetchData={fetchData}
-                columnsData={RoleColumn ?? []}
-                roleModal={roleModal}
-                setRoleModal={setRoleModal}
-                tableData={data?.roles || []}
-                title={tr("Role")}
-              />
-            </Card>
-          )}
-          <RoleModal
-            fetchData={fetchData}
-            isOpen={roleModal}
-            onClose={setRoleModal}
-            columnsData={RoleColumn ?? []}
-            id={param.id}
-            tableData={roleData ?? []}
-            interestRoles={data?.roles?.map((item) => item?._id)}
-          />
 
           <Card mt={3}>
             <Grid templateColumns="repeat(6, 1fr)" gap={1}>
@@ -268,9 +231,9 @@ const View = () => {
                     size="sm"
                     colorScheme="green"
                   ><LocalizedText text="Edit" /></Button>
-                  {data?.role !== "superAdmin" &&
+                  {data?.role !== "admin" &&
                     JSON.parse(localStorage.getItem("user"))?.role ===
-                      "superAdmin" && (
+                      "admin" && (
                       <Button
                         size="sm"
                         style={{ background: "red.800" }}

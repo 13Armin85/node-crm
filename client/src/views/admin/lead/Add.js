@@ -28,6 +28,7 @@ import { generateValidationSchema } from "utils";
 import CustomForm from "utils/customForm";
 import * as yup from "yup";
 import Edit from "./Edit";
+import RelationFields from "components/relations/RelationFields";
 
 const Add = (props) => {
   const [isLoding, setIsLoding] = useState(false);
@@ -45,6 +46,8 @@ const Add = (props) => {
     ...initialFieldValues,
     associatedListing: "",
     assignUser: "",
+    contact: "",
+    partnerCustomer: "",
     createBy: JSON.parse(localStorage.getItem("user"))?._id,
   };
 
@@ -70,8 +73,8 @@ const Add = (props) => {
 
   const fetchData = async () => {
     setIsLoding(true);
-    let result = await getApi("api/user/");
-    setData(result?.data?.user);
+    let result = await getApi("api/task/assignees");
+    setData(result?.data);
     setIsLoding(false);
   };
 
@@ -105,7 +108,7 @@ const Add = (props) => {
 
   const getPropertyList = async () => {
     let result = await getApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/property"
         : `api/property/?createBy=${user?._id}`
     );
@@ -138,6 +141,7 @@ const Add = (props) => {
               errors={errors}
               touched={touched}
             />
+            <RelationFields values={values} setFieldValue={setFieldValue} contact partner />
             <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
               <GridItem colSpan={{ base: 12 }}>
                 <FormLabel

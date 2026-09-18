@@ -25,7 +25,9 @@ module.exports = moduleName => async (req, res, next) => {
     req.body.customFields = values.customFields;
     if (action === 'create') req.body.createBy = req.actor._id;
     else delete req.body.createBy;
-    delete req.body.deleted; if (moduleName !== 'Users') delete req.body.roles; delete req.body.role;
+    delete req.body.deleted;
+    delete req.body.roles;
+    if (moduleName !== 'Users' || req.actor.role !== 'admin') delete req.body.role;
     next();
   } catch (error) { res.status(400).json({ code: error.code || 'invalid', field: error.field }); }
 };

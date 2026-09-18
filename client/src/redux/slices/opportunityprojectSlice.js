@@ -7,7 +7,7 @@ export const fetchOpportunityProjectData = createAsyncThunk(
     const user = JSON.parse(localStorage.getItem("user"));
     try {
       const response = await getApi(
-        user.role === "superAdmin"
+        user.role === "admin"
           ? "api/opportunityproject"
           : `api/opportunityproject/?createBy=${user._id}`,
       );

@@ -7,6 +7,9 @@ const Opportunity = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'PartnerCustomers',
     },
+    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'Contacts', default: null },
+    lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Leads', default: null },
+    properties: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Properties' }],
     assignUser: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -43,5 +46,9 @@ const Opportunity = new mongoose.Schema({
         default: false,
     },
 })
+
+Opportunity.index({ contact: 1, deleted: 1 });
+Opportunity.index({ lead: 1, deleted: 1 });
+Opportunity.index({ accountName: 1, deleted: 1 });
 
 module.exports = mongoose.model('Opportunities', Opportunity, 'Opportunities');

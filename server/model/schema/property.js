@@ -62,6 +62,10 @@ const propertySchema = new mongoose.Schema({
     },
     files: [{ name: String, url: String, mimeType: String, size: Number, uploadedAt: Date, storageName: String }],
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
+    relatedContacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contacts' }],
+    relatedLeads: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Leads' }],
+    relatedOpportunities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Opportunities' }],
+    partnerCustomers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'PartnerCustomers' }],
     // //1. basicPropertyInformation:
     // propertyType: String,
     // propertyAddress: String,

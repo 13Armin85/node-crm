@@ -16,7 +16,7 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     server = await new Promise(resolve => { const instance = app.listen(0, '127.0.0.1', () => resolve(instance)); });
     const base = `http://127.0.0.1:${server.address().port}/api`;
     const User = require('../model/schema/user');
-    const admin = await User.create({ username: 'integration-admin', password: 'unused-test-hash', role: 'superAdmin' });
+    const admin = await User.create({ username: 'integration-admin', password: 'unused-test-hash', role: 'admin' });
     const user = await User.create({ username: 'integration-user', password: 'unused-test-hash', role: 'user' });
     const token = actor => jwt.sign({ userId: actor._id }, jwtSecret);
     const api = async (method, route, body, actor = admin) => {

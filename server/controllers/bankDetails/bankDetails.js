@@ -8,7 +8,7 @@ const index = async (req, res) => {
         query.deleted = false;
 
         const user = await User.findById(req.user.userId);
-        if (user?.role !== "superAdmin") {
+        if (user?.role !== "admin") {
             query.createBy = new mongoose.Types.ObjectId(req.user.userId)
         }
 

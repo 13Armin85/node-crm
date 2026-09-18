@@ -5,7 +5,7 @@ export const fetchLeadData = createAsyncThunk("fetchLeadData", async () => {
   const user = JSON.parse(localStorage.getItem("user"));
   try {
     const response = await getApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/lead/"
         : `api/lead/?createBy=${user?._id}`,
     );

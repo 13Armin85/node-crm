@@ -7,6 +7,10 @@ const fetchSchemaFields = async () => {
 
 const leadSchema = new mongoose.Schema({
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
+    contact: { type: mongoose.Schema.Types.ObjectId, ref: 'Contacts', default: null },
+    partnerCustomer: { type: mongoose.Schema.Types.ObjectId, ref: 'PartnerCustomers', default: null },
+    associatedListing: { type: mongoose.Schema.Types.ObjectId, ref: 'Properties', default: null },
+    relatedOpportunities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Opportunities' }],
     // // Lead Information:
     // leadName: String,
     // leadEmail: String,

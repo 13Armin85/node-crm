@@ -7,7 +7,7 @@ export const fetchContactData = createAsyncThunk(
     const user = JSON.parse(localStorage.getItem("user"));
     try {
       const response = await getApi(
-        user.role === "superAdmin"
+        user.role === "admin"
           ? "api/contact/"
           : `api/contact/?createBy=${user._id}`,
       );

@@ -1,210 +1,220 @@
-const Task = require('../../model/schema/task')
+const Task = require('../../model/schema/task');
+const User = require('../../model/schema/user');
 const mongoose = require('mongoose');
+const { sendEmail } = require('../../middelwares/mail');
+
+const TASK_STATUSES = ['todo', 'inProgress', 'pending', 'onHold', 'completed'];
+const currentUser = (req) => User.findOne({ _id: req.user.userId, deleted: false });
+const isValidId = (value) => !value || mongoose.Types.ObjectId.isValid(value);
+const escapeHtml = (value = '') => String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+const sendTaskAssignmentEmail = async (task, actor) => {
+    try {
+        if (!task?.assignedToUser) return;
+        const assignee = await User.findOne({ _id: task.assignedToUser, deleted: false }).select('username firstName lastName');
+        if (!assignee?.username) return;
+        const assigneeName = [assignee.firstName, assignee.lastName].filter(Boolean).join(' ') || 'User';
+        const assignerName = [actor?.firstName, actor?.lastName].filter(Boolean).join(' ') || actor?.username || 'an administrator';
+        const title = task.title || 'Untitled task';
+        const subject = 'New task received';
+        const text = `Hello ${assigneeName},\n\nYou have received a new task from ${assignerName}.\nTask: ${title}${task.end ? `\nDue date: ${task.end}` : ''}\n\nPlease sign in to the CRM to view the task details.`;
+        const html = `<p>Hello ${escapeHtml(assigneeName)},</p><p>You have received a new task from <strong>${escapeHtml(assignerName)}</strong>.</p><p><strong>Task:</strong> ${escapeHtml(title)}${task.end ? `<br><strong>Due date:</strong> ${escapeHtml(task.end)}` : ''}</p><p>Please sign in to the CRM to view the task details.</p>`;
+        await sendEmail(assignee.username, subject, text, html);
+    } catch (error) {
+        console.error('Task assignment email failed:', error.message);
+    }
+};
+
+const accessFilter = (user, extra = {}) => {
+    if (user.role === 'admin') return { ...extra };
+    return {
+        ...extra,
+        $or: [
+            { assignedToUser: user._id },
+            { assignedToUser: { $exists: false }, createBy: user._id },
+            { assignedToUser: null, createBy: user._id },
+        ],
+    };
+};
+
+const normalizeTask = (body, actor, existing) => {
+    const allowed = [
+        'title', 'category', 'description', 'notes', 'reminder', 'start', 'end',
+        'backgroundColor', 'borderColor', 'textColor', 'display', 'url', 'allDay',
+        'assignTo', 'assignToLead', 'assignedToUser', 'status', 'customFields',
+    ];
+    const result = {};
+    allowed.forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(body, key)) {
+            result[key] = body[key] === '' ? null : body[key];
+        }
+    });
+    result.updatedDate = new Date();
+    if (!result.assignedToUser && !existing?.assignedToUser) result.assignedToUser = actor._id;
+    if (result.assignedToUser && String(result.assignedToUser) !== String(existing?.assignedToUser || actor._id)) {
+        result.delegatedBy = actor._id;
+    }
+    if (result.status && !TASK_STATUSES.includes(result.status)) delete result.status;
+    return result;
+};
+
+const validateReferences = async (data) => {
+    for (const key of ['assignTo', 'assignToLead', 'assignedToUser']) {
+        if (!isValidId(data[key])) return `Invalid ${key} value`;
+    }
+    if (data.assignedToUser) {
+        const exists = await User.exists({ _id: data.assignedToUser, deleted: false });
+        if (!exists) return 'Assigned user was not found';
+    }
+    return null;
+};
+
+const taskPipeline = (match) => [
+    { $match: match },
+    { $lookup: { from: 'Contacts', localField: 'assignTo', foreignField: '_id', as: 'contact' } },
+    { $lookup: { from: 'Leads', localField: 'assignToLead', foreignField: '_id', as: 'lead' } },
+    { $lookup: { from: 'User', localField: 'createBy', foreignField: '_id', as: 'creator' } },
+    { $lookup: { from: 'User', localField: 'assignedToUser', foreignField: '_id', as: 'assignee' } },
+    { $unwind: { path: '$contact', preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$lead', preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$creator', preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$assignee', preserveNullAndEmptyArrays: true } },
+    { $addFields: {
+        assignToName: { $cond: [
+            { $ne: ['$contact._id', null] },
+            { $trim: { input: { $concat: [{ $ifNull: ['$contact.firstName', ''] }, ' ', { $ifNull: ['$contact.lastName', ''] }] } } },
+            { $ifNull: ['$lead.leadName', ''] },
+        ] },
+        createByName: { $let: {
+            vars: { fullName: { $trim: { input: { $concat: [{ $ifNull: ['$creator.firstName', ''] }, ' ', { $ifNull: ['$creator.lastName', ''] }] } } } },
+            in: { $cond: [{ $ne: ['$$fullName', ''] }, '$$fullName', { $ifNull: ['$creator.username', ''] }] },
+        } },
+        assignedToUserName: { $let: {
+            vars: { fullName: { $trim: { input: { $concat: [{ $ifNull: ['$assignee.firstName', ''] }, ' ', { $ifNull: ['$assignee.lastName', ''] }] } } } },
+            in: { $cond: [{ $ne: ['$$fullName', ''] }, '$$fullName', { $ifNull: ['$assignee.username', ''] }] },
+        } },
+    } },
+    { $project: { contact: 0, lead: 0, creator: 0, assignee: 0 } },
+    { $sort: { createdDate: -1, _id: -1 } },
+];
 
 const index = async (req, res) => {
-    query = req.query;
-    query.deleted = false;
-    if (query.createBy) {
-        query.createBy = new mongoose.Types.ObjectId(query.createBy);
-    }
-
     try {
-        let result = await Task.aggregate([
-            { $match: query },
-            {
-                $lookup: {
-                    from: 'Contacts',
-                    localField: 'assignTo',
-                    foreignField: '_id',
-                    as: 'contact'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'Leads', // Assuming this is the collection name for 'leads'
-                    localField: 'assignToLead',
-                    foreignField: '_id',
-                    as: 'Lead'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'User',
-                    localField: 'createBy',
-                    foreignField: '_id',
-                    as: 'users'
-                }
-            },
-            { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$contact', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$Lead', preserveNullAndEmptyArrays: true } },
-            { $match: { 'users.deleted': false } },
-            {
-                $addFields: {
-                    assignToName: {
-                        $cond: {
-                            if: '$contact',
-                            then: { $concat: ['$contact.title', ' ', '$contact.firstName', ' ', '$contact.lastName'] },
-                            else: { $concat: ['$Lead.leadName'] }
-                        }
-                    },
-                }
-            },
-            { $project: { users: 0, contact: 0, Lead: 0 } },
-        ]);
-        res.send(result);
+        const user = await currentUser(req);
+        if (!user) return res.status(401).json({ message: 'Authentication failed' });
+        const query = { deleted: false };
+        if (req.query.status && TASK_STATUSES.includes(req.query.status)) query.status = req.query.status;
+        if (req.query.assignedToUser && user.role === 'admin' && isValidId(req.query.assignedToUser)) {
+            query.assignedToUser = new mongoose.Types.ObjectId(req.query.assignedToUser);
+        }
+        const result = await Task.aggregate(taskPipeline(accessFilter(user, query)));
+        res.status(200).json(result);
     } catch (error) {
-        console.error("Error:", error);
-        res.status(500).send("Internal Server Error");
+        res.status(500).json({ message: 'Failed to load tasks', error: error.message });
     }
-}
+};
+
+const assignees = async (req, res) => {
+    try {
+        const users = await User.find({ deleted: false }).select('_id firstName lastName username role').sort({ firstName: 1, lastName: 1 });
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to load users', error: error.message });
+    }
+};
 
 const add = async (req, res) => {
     try {
-        const { title, category, description, notes, reminder, start, end, backgroundColor, borderColor, textColor, display, url, allDay, createBy, assignTo, assignToLead } = req.body;
-        // Check if assignTo is a valid ObjectId if provided and not empty
-        if (assignTo && !mongoose.Types.ObjectId.isValid(assignTo)) {
-            res.status(400).json({ error: 'Invalid assignTo value' });
-        }
-        if (assignToLead && !mongoose.Types.ObjectId.isValid(assignToLead)) {
-            res.status(400).json({ error: 'Invalid assignToLead value' });
-        }
-        const taskData = { title, category, description, notes, reminder, start, end, backgroundColor, borderColor, textColor, display, url, createBy, allDay, createdDate: new Date() };
-
-        if (assignTo) {
-            taskData.assignTo = assignTo;
-        }
-        if (assignToLead) {
-            taskData.assignToLead = assignToLead;
-        }
-        const result = new Task(taskData);
-        await result.save();
+        const user = await currentUser(req);
+        if (!user) return res.status(401).json({ message: 'Authentication failed' });
+        const taskData = normalizeTask(req.body, user);
+        const validationError = await validateReferences(taskData);
+        if (validationError) return res.status(400).json({ message: validationError });
+        taskData.createBy = user._id;
+        taskData.createdDate = new Date();
+        const result = await Task.create(taskData);
+        await sendTaskAssignmentEmail(result, user);
         res.status(200).json(result);
-    } catch (err) {
-        console.error('Failed to create task:', err);
-        res.status(400).json({ error: 'Failed to create task : ', err });
+    } catch (error) {
+        res.status(400).json({ message: 'Failed to create task', error: error.message });
     }
-}
+};
+
+const findAccessible = async (req, id) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const user = await currentUser(req);
+    if (!user) return null;
+    return { user, task: await Task.findOne(accessFilter(user, { _id: id, deleted: false })) };
+};
 
 const edit = async (req, res) => {
     try {
-        const { title, category, description, notes, reminder, start, end, backgroundColor, borderColor, assignToLead, textColor, display, url, createBy, assignTo, status, allDay } = req.body;
-
-        if (assignTo && !mongoose.Types.ObjectId.isValid(assignTo)) {
-            res.status(400).json({ error: 'Invalid Assign To value' });
-        }
-        if (assignToLead && !mongoose.Types.ObjectId.isValid(assignToLead)) {
-            res.status(400).json({ error: 'Invalid Assign To Lead value' });
-        }
-        const taskData = { title, assignTo, assignToLead, category, description, notes, reminder, start, end, backgroundColor, borderColor, textColor, display, url, createBy, status, allDay };
-
-        let result = await Task.findOneAndUpdate(
-            { _id: req.params.id },
-            { $set: taskData },
-            { new: true }
-        );
-
+        const access = await findAccessible(req, req.params.id);
+        if (!access?.task) return res.status(404).json({ message: 'Task not found or access denied' });
+        const taskData = normalizeTask(req.body, access.user, access.task);
+        const validationError = await validateReferences(taskData);
+        if (validationError) return res.status(400).json({ message: validationError });
+        const assigneeChanged = taskData.assignedToUser && String(taskData.assignedToUser) !== String(access.task.assignedToUser || '');
+        const result = await Task.findByIdAndUpdate(req.params.id, { $set: taskData }, { new: true, runValidators: true });
+        if (assigneeChanged) await sendTaskAssignmentEmail(result, access.user);
         res.status(200).json(result);
-    } catch (err) {
-        console.error('Failed to create task:', err);
-        res.status(400).json({ error: 'Failed to create task : ', err });
+    } catch (error) {
+        res.status(400).json({ message: 'Failed to update task', error: error.message });
     }
-}
+};
+
 const changeStatus = async (req, res) => {
     try {
-        const { status } = req.body;
-
-        await Task.updateOne(
-            { _id: req.params.id },
-            { $set: { status: status } }
-        );
-
-        let response = await Task.findOne({ _id: req.params.id })
-        res.status(200).json(response);
-    } catch (err) {
-        console.error('Failed to change status:', err);
-        res.status(400).json({ error: 'Failed to change status : ', err });
+        if (!TASK_STATUSES.includes(req.body.status)) return res.status(400).json({ message: 'Invalid task status' });
+        const access = await findAccessible(req, req.params.id);
+        if (!access?.task) return res.status(404).json({ message: 'Task not found or access denied' });
+        access.task.status = req.body.status;
+        access.task.updatedDate = new Date();
+        await access.task.save();
+        res.status(200).json(access.task);
+    } catch (error) {
+        res.status(400).json({ message: 'Failed to change status', error: error.message });
     }
-}
+};
 
 const view = async (req, res) => {
     try {
-        let response = await Task.findOne({ _id: req.params.id })
-        if (!response) return res.status(404).json({ message: "no Data Found." })
-        let result = await Task.aggregate([
-            { $match: { _id: response._id } },
-            {
-                $lookup: {
-                    from: 'Contacts',
-                    localField: 'assignTo',
-                    foreignField: '_id',
-                    as: 'contact'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'Leads', // Assuming this is the collection name for 'leads'
-                    localField: 'assignToLead',
-                    foreignField: '_id',
-                    as: 'Lead'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'User',
-                    localField: 'createBy',
-                    foreignField: '_id',
-                    as: 'users'
-                }
-            },
-            { $unwind: { path: '$contact', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
-            { $unwind: { path: '$Lead', preserveNullAndEmptyArrays: true } },
-            {
-                $addFields: {
-                    assignToName: {
-                        $cond: {
-                            if: '$contact',
-                            then: { $concat: ['$contact.title', ' ', '$contact.firstName', ' ', '$contact.lastName'] },
-                            else: { $concat: ['$Lead.leadName'] }
-                        }
-                    },
-                    createByName: '$users.username',
-                }
-            },
-            { $project: { contact: 0, users: 0, Lead: 0 } },
-        ])
-        res.status(200).json(result[0]);
-
-    } catch (err) {
-        console.log('Error:', err);
-        res.status(400).json({ Error: err });
+        const access = await findAccessible(req, req.params.id);
+        if (!access?.task) return res.status(404).json({ message: 'Task not found or access denied' });
+        const [result] = await Task.aggregate(taskPipeline({ _id: access.task._id }));
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(400).json({ message: 'Failed to load task', error: error.message });
     }
-}
+};
 
 const deleteData = async (req, res) => {
     try {
-        const result = await Task.findByIdAndUpdate(req.params.id, { deleted: true });
-        res.status(200).json({ message: "done", result })
-    } catch (err) {
-        res.status(404).json({ message: "error", err })
+        const access = await findAccessible(req, req.params.id);
+        if (!access?.task) return res.status(404).json({ message: 'Task not found or access denied' });
+        access.task.deleted = true;
+        await access.task.save();
+        res.status(200).json({ message: 'Task removed successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to remove task', error: error.message });
     }
-}
+};
 
 const deleteMany = async (req, res) => {
     try {
-        const result = await Task.updateMany({ _id: { $in: req.body } }, { $set: { deleted: true } });
-
-        if (result?.matchedCount > 0 && result?.modifiedCount > 0) {
-            return res.status(200).json({ message: "Tasks Removed successfully", result });
-        }
-        else {
-            return res.status(404).json({ success: false, message: "Failed to remove tasks" })
-        }
-
-    } catch (err) {
-        return res.status(404).json({ success: false, message: "error", err });
+        const user = await currentUser(req);
+        if (!user) return res.status(401).json({ message: 'Authentication failed' });
+        const ids = Array.isArray(req.body) ? req.body.filter(mongoose.Types.ObjectId.isValid) : [];
+        const result = await Task.updateMany(accessFilter(user, { _id: { $in: ids }, deleted: false }), { $set: { deleted: true, updatedDate: new Date() } });
+        res.status(200).json({ message: 'Tasks removed successfully', result });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to remove tasks', error: error.message });
     }
-}
+};
 
-module.exports = { index, add, edit, view, deleteData, changeStatus, deleteMany }
+module.exports = { index, assignees, add, edit, view, deleteData, changeStatus, deleteMany, sendTaskAssignmentEmail };

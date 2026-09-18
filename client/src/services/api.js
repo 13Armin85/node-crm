@@ -14,7 +14,8 @@ const getRequestConfig = (config = {}) => ({
 
 const normalizeResponse = (result) => {
   const language = localStorage.getItem('crm-language') || 'en';
-  if (result?.data && !Array.isArray(result.data) && typeof result.data === 'object') {
+  const isBlob = typeof Blob !== 'undefined' && result?.data instanceof Blob;
+  if (result?.data && !isBlob && !Array.isArray(result.data) && typeof result.data === 'object') {
     const data = { ...result.data };
     const fallback = result.status < 300 ? 'Success' : `estate.${data.code || (result.status === 401 ? 'unauthorized' : result.status === 403 ? 'forbidden' : result.status === 400 ? 'invalid' : 'serverError')}`;
     if (typeof data.message === 'string' || data.code) {
@@ -135,4 +136,34 @@ export const getApi = async (path, id) => {
   } catch (e) {
     return e;
   }
+};
+
+export const getApiBlob = async (path) => {
+  try {
+    const result = await axios.get(constant?.baseUrl + path, getRequestConfig({ responseType: "blob" }));
+    return normalizeResponse(result);
+  } catch (e) {
+    return e;
+  }
+};
+
+export const downloadApiFile = async (path, filename) => {
+  const result = await getApiBlob(path);
+  if (result?.status !== 200) return result;
+  const url = URL.createObjectURL(result.data);
+  if (filename) {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  } else {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+  return result;
 };

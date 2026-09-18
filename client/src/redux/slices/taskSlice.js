@@ -2,13 +2,8 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getApi } from "../../services/api";
 
 export const fetchTaskData = createAsyncThunk("fetchTaskData", async () => {
-  const user = JSON.parse(localStorage.getItem("user"));
   try {
-    const response = await getApi(
-      user.role === "superAdmin"
-        ? `api/task`
-        : `api/task/?createBy=${user._id}`,
-    );
+    const response = await getApi("api/task");
     return response;
   } catch (error) {
     throw error;

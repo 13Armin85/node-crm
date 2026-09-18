@@ -21,12 +21,11 @@ import {
 } from "@chakra-ui/react";
 import Card from "components/card/Card";
 import Spinner from "components/spinner/Spinner";
-import { constant } from "constant";
 import { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getApi } from "services/api";
+import { downloadApiFile, getApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CustomView from "utils/customView";
 import { useLocation } from "react-router-dom";
@@ -78,9 +77,8 @@ const View = () => {
 
   const download = async (data) => {
     if (data) {
-      let result = await getApi(`api/document/download/`, data);
+      let result = await downloadApiFile(`api/document/download/${data}`);
       if (result && result.status === 200) {
-        window.open(`${constant.baseUrl}api/document/download/${data}`);
         toast.success(tr("file Download successful"));
       } else if (result && result.response.status === 404) {
         toast.error(tr("file Not Found"));

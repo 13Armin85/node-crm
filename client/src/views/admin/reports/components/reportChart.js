@@ -146,6 +146,7 @@ const ReportChart = (props) => {
   const user = JSON.parse(localStorage.getItem("user"));
   const isEmailsActive = modules?.find((item) => item?.moduleName === "Emails");
   const isCallsActive = modules?.find((item) => item?.moduleName === "Calls");
+  const moduleEnabled = (module) => module?.isActive !== false;
 
   const featchChart = async () => {
     const data = {
@@ -154,7 +155,7 @@ const ReportChart = (props) => {
       filter: selection,
     };
     let result = await postApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/reporting/index"
         : `api/reporting/index?sender=${user?._id}`,
       data,
@@ -170,7 +171,7 @@ const ReportChart = (props) => {
         const dataSet = reportChart[key][0];
         let seriesData = [];
 
-        if (dataSet?.Emails && isEmailsActive?.isActive) {
+        if (dataSet?.Emails && moduleEnabled(isEmailsActive)) {
           seriesData = seriesData?.concat(
             dataSet?.Emails?.map((item) => ({
               x: item?.date,
@@ -178,19 +179,22 @@ const ReportChart = (props) => {
             })),
           );
         }
-        if (dataSet?.Calls && isCallsActive?.isActive) {
+        if (dataSet?.Calls && moduleEnabled(isCallsActive)) {
           seriesData = seriesData?.concat(
             dataSet?.Calls?.map((item) => ({ x: item?.date, y: item?.Callcount })),
           );
         }
+        if (dataSet?.TextMessages) {
+          seriesData = dataSet.TextMessages.map((item) => ({ x: item.date, y: item.TextSentCount }));
+        }
 
         return {
           name:
-            key === "Email" && isEmailsActive?.isActive
+            key === "Email" && moduleEnabled(isEmailsActive)
               ? "Emails"
-              : key === "Call" && isCallsActive?.isActive
+              : key === "Call" && moduleEnabled(isCallsActive)
                 ? "Call"
-                : "",
+                : key === "Text" ? "Text messages" : "",
           data: seriesData,
         };
       }),
@@ -226,6 +230,7 @@ const ReportChart = (props) => {
             <option value="all">{t("All")}</option>
             <option value="Emails">{t("Email")}</option>
             <option value="Call">{t("Call")}</option>
+            <option value="Text messages">{t("Text messages")}</option>
           </Select>
           <Box
             width={{ base: "100%", md: "auto" }}

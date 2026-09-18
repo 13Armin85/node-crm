@@ -271,7 +271,7 @@ export default function HeaderLinks(props) {
               </Text>
             </MenuItem>
 
-            {loginUser?.role === "superAdmin" && (
+            {loginUser?.role === "admin" && (
               <MenuItem
                 _hover={{ bg: "none" }}
                 _focus={{ bg: "none" }}

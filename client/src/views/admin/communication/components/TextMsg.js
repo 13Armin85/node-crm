@@ -67,7 +67,7 @@ const TextMsg = () => {
 
   const fetchData = async () => {
     let result = await getApi(
-      user?.role === "superAdmin"
+      user?.role === "admin"
         ? "api/contact/"
         : `api/contact/?createBy=${user?._id}`,
     );

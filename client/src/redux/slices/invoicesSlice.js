@@ -7,7 +7,7 @@ export const fetchInvoicesData = createAsyncThunk(
     const user = JSON.parse(localStorage.getItem("user"));
     try {
       const response = await getApi(
-        user.role === "superAdmin"
+        user.role === "admin"
           ? "api/invoices/"
           : `api/invoices/?createBy=${user._id}`,
       );

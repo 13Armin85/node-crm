@@ -55,6 +55,7 @@ const AddEdit = (props) => {
   const userId = JSON.parse(localStorage.getItem("user"))?._id;
   const [assignToLeadData, setAssignToLeadData] = useState([]);
   const [assignToContactData, setAssignToContactData] = useState([]);
+  const [assignees, setAssignees] = useState([]);
   const user = JSON.parse(localStorage.getItem("user"));
   const [isLoding, setIsLoding] = useState(false);
   const [contactModelOpen, setContactModel] = useState(false);
@@ -80,6 +81,7 @@ const AddEdit = (props) => {
     notes: "",
     assignTo: props?.leadContect === "contactView" && id ? id : "",
     assignToLead: props?.leadContect === "leadView" && id ? id : "",
+    assignedToUser: userId,
     reminder: "",
     start: "",
     end: "",
@@ -191,6 +193,7 @@ const AddEdit = (props) => {
         setFieldValue("url", result?.data?.url);
         setFieldValue("status", result?.data?.status);
         setFieldValue("assignToLead", result?.data?.assignToLead);
+        setFieldValue("assignedToUser", result?.data?.assignedToUser || userId);
         // setFieldValue('allDay', result?.data?.allDay === 'Yes' ? 'Yes' : 'No')
         setFieldValue("allDay", result?.data?.allDay);
 
@@ -217,6 +220,7 @@ const AddEdit = (props) => {
       setFieldValue("url", data?.url);
       setFieldValue("status", data?.status);
       setFieldValue("assignToLead", data?.assignToLead);
+      setFieldValue("assignedToUser", data?.assignedToUser || userId);
       setFieldValue("allDay", data?.allDay === "Yes" ? "Yes" : "No");
       setFieldValue("allDay", data?.allDay);
 
@@ -229,7 +233,7 @@ const AddEdit = (props) => {
     if (view === true) {
       if (values?.category === "Contact" && assignToContactData?.length <= 0) {
         setAssignToContactData(contactData);
-        // result = await getApi(user.role === 'superAdmin' ? 'api/contact/' : `api/contact/?createBy=${user._id}`)
+        // result = await getApi(user.role === 'admin' ? 'api/contact/' : `api/contact/?createBy=${user._id}`)
         // setAssignToContactData(result?.data)
       } else if (values?.category === "Lead" && assignToLeadData?.length <= 0) {
         setAssignToLeadData(leadData);
@@ -242,7 +246,7 @@ const AddEdit = (props) => {
           assignToContactData?.length <= 0
         ) {
           result = await getApi(
-            user.role === "superAdmin"
+            user.role === "admin"
               ? "api/contact/"
               : `api/contact/?createBy=${user._id}`
           );
@@ -252,7 +256,7 @@ const AddEdit = (props) => {
           assignToLeadData?.length <= 0
         ) {
           result = await getApi(
-            user?.role === "superAdmin"
+            user?.role === "admin"
               ? "api/lead/"
               : `api/lead/?createBy=${user._id}`
           );
@@ -263,6 +267,14 @@ const AddEdit = (props) => {
       }
     }
   }, [props, values?.category]);
+
+  useEffect(() => {
+    const fetchAssignees = async () => {
+      const result = await getApi("api/task/assignees");
+      if (result?.status === 200) setAssignees(result.data || []);
+    };
+    fetchAssignees();
+  }, []);
 
   useEffect(() => {
     if (userAction === "edit" || data) {
@@ -358,11 +370,11 @@ const AddEdit = (props) => {
                       )}
                       {!props?.leadContect && (
                         <>
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             contactAccess?.create) && (
                             <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
                           )}
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             leadAccess?.create) && (
                             <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
                           )}
@@ -374,6 +386,28 @@ const AddEdit = (props) => {
                 <Text mb="10px" color={"red"}>
                   {" "}
                   {errors?.category && touched?.category && errors?.category}
+                </Text>
+              </GridItem>
+              <GridItem colSpan={{ base: 12, md: 6 }}>
+                <FormLabel display="flex" ms="4px" fontSize="sm" fontWeight="500" mb="8px">
+                  <LocalizedText text="Assigned User" />
+                </FormLabel>
+                <Select
+                  value={values?.assignedToUser || ""}
+                  name="assignedToUser"
+                  onChange={handleChange}
+                  fontWeight="500"
+                  placeholder={tr("Select user")}
+                  mb="10px"
+                >
+                  {assignees.map((item) => (
+                    <option value={item._id} key={item._id}>
+                      {[item.firstName, item.lastName].filter(Boolean).join(" ") || item.username}
+                    </option>
+                  ))}
+                </Select>
+                <Text fontSize="xs" color="gray.500" mt="-6px" mb="10px">
+                  <LocalizedText text="Changing the assignee delegates this task to that user." />
                 </Text>
               </GridItem>
               <GridItem

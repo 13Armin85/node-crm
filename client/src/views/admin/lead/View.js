@@ -30,12 +30,11 @@ import FolderTreeView from "components/FolderTreeView/folderTreeView";
 import Card from "components/card/Card";
 import { HSeparator } from "components/separator/Separator";
 import Spinner from "components/spinner/Spinner";
-import { constant } from "constant";
 import { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getApi } from "services/api";
+import { downloadApiFile, getApi } from "services/api";
 import PhoneCall from "../contact/components/phonCall";
 import AddEmailHistory from "../emailHistory/components/AddEmail";
 import AddMeeting from "../meeting/components/Addmeeting";
@@ -96,8 +95,8 @@ const View = () => {
   }, []);
 
   const fetchUserDetails = async () => {
-    let result = await getApi("api/user/");
-    setUserData(result?.data?.user);
+    let result = await getApi("api/task/assignees");
+    setUserData(result?.data);
   };
 
   const [
@@ -333,9 +332,8 @@ const View = () => {
 
   const download = async (data) => {
     if (data) {
-      let result = await getApi(`api/document/download/`, data);
+      let result = await downloadApiFile(`api/document/download/${data}`);
       if (result && result?.status === 200) {
-        window.open(`${constant?.baseUrl}api/document/download/${data}`);
         toast.success(tr("file Download successful"));
       } else if (result && result?.response?.status === 404) {
         toast.error(tr("file Not Found"));
@@ -473,7 +471,7 @@ const View = () => {
               >
                 <Flex justifyContent={"right"}>
                   <Menu>
-                    {(user?.role === "superAdmin" ||
+                    {(user?.role === "admin" ||
                       permission?.create ||
                       permission?.update ||
                       permission?.delete) && (
@@ -488,7 +486,7 @@ const View = () => {
                       )}
                     <MenuDivider />
                     <MenuList minWidth={2}>
-                      {(user?.role === "superAdmin" || permission?.create) && (
+                      {(user?.role === "admin" || permission?.create) && (
                         <MenuItem
                           color={"blue"}
                           onClick={() => onOpen()}
@@ -497,7 +495,7 @@ const View = () => {
                         ><LocalizedText text="Add" /></MenuItem>
                       )}
 
-                      {(user?.role === "superAdmin" || permission?.update) && (
+                      {(user?.role === "admin" || permission?.update) && (
                         <MenuItem
                           onClick={() => {
                             setEdit(true);
@@ -514,7 +512,7 @@ const View = () => {
                         display={"flex"}
                         style={{ alignItems: "center" }}
                       ><LocalizedText text="Print as PDF" /></MenuItem>
-                      {(user?.role === "superAdmin" || permission?.delete) && (
+                      {(user?.role === "admin" || permission?.delete) && (
                         <>
                           <MenuDivider />
                           <MenuItem
@@ -879,14 +877,14 @@ const View = () => {
               </TabPanel>
             </TabPanels>
           </Tabs>
-          {(user?.role === "superAdmin" ||
+          {(user?.role === "admin" ||
             permission?.update ||
             permission?.delete) && (
               <Card mt={3}>
                 <Grid templateColumns="repeat(6, 1fr)" gap={1}>
                   <GridItem colStart={6}>
                     <Flex justifyContent={"right"}>
-                      {user?.role === "superAdmin" || permission?.update ? (
+                      {user?.role === "admin" || permission?.update ? (
                         <Button
                           size="sm"
                           onClick={() => setEdit(true)}
@@ -898,7 +896,7 @@ const View = () => {
                       ) : (
                         ""
                       )}
-                      {user?.role === "superAdmin" || permission?.delete ? (
+                      {user?.role === "admin" || permission?.delete ? (
                         <Button
                           size="sm"
                           style={{ background: "red.800" }}

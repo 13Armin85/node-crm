@@ -5,7 +5,7 @@ export const fetchEmailsData = createAsyncThunk("fetchEmailsData", async () => {
   const user = JSON.parse(localStorage.getItem("user"));
   try {
     const response = await getApi(
-      user.role === "superAdmin"
+      user.role === "admin"
         ? "api/email/"
         : `api/email/?sender=${user._id}`,
     );

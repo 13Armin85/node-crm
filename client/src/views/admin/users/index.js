@@ -9,15 +9,12 @@ import {
   MenuItem,
   MenuList,
   Text,
-  useDisclosure,
 } from "@chakra-ui/react";
 import { getApi } from "services/api";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import { SearchIcon } from "@chakra-ui/icons";
 import { CiMenuKebab } from "react-icons/ci";
 import { IoIosArrowBack } from "react-icons/io";
-import AddUser from "./Add";
-import Edit from "./Edit";
 import UserAdvanceSearch from "./components/userAdvanceSearch";
 import { deleteManyApi } from "services/api";
 import CommonDeleteModel from "components/commonDeleteModel";
@@ -95,7 +92,7 @@ const Index = () => {
                 onClick={() => navigate(`/userView/${row?.values._id}`)}
                 icon={<ViewIcon mb={1} fontSize={15} />}
               ><LocalizedText text="View" /></MenuItem>
-              {row?.original?.role === "superAdmin" ? (
+              {row?.original?.role === "admin" ? (
                 ""
               ) : (
                 <MenuItem

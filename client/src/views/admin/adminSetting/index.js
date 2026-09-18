@@ -1,7 +1,7 @@
 import { Icon, SimpleGrid } from "@chakra-ui/react";
 import MiniStatistics from "components/card/MiniStatistics";
 import IconBox from "components/icons/IconBox";
-import { FaCreativeCommonsBy, FaWpforms } from "react-icons/fa";
+import { FaWpforms } from "react-icons/fa";
 import { HiUsers } from "react-icons/hi";
 import { TbExchange } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
@@ -27,26 +27,6 @@ const Index = () => {
             />
           }
           name="Users"
-        />
-        <MiniStatistics
-          fontsize="md"
-          onClick={() => navigate("/role")}
-          startContent={
-            <IconBox
-              w="56px"
-              h="56px"
-              bg="linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)"
-              icon={
-                <Icon
-                  w="28px"
-                  h="28px"
-                  as={FaCreativeCommonsBy}
-                  color="white"
-                />
-              }
-            />
-          }
-          name="Roles"
         />
         <MiniStatistics
           fontsize="md"

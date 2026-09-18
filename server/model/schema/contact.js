@@ -34,6 +34,10 @@ const contactSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'Quotes',
     }],
+    relatedLeads: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Leads' }],
+    relatedOpportunities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Opportunities' }],
+    relatedProperties: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Properties' }],
+    partnerCustomer: { type: mongoose.Schema.Types.ObjectId, ref: 'PartnerCustomers', default: null },
     // // 5. History:
     // notesandComments: String,
     // // 6. Tags or Categories

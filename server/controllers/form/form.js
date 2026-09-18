@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const CustomField = require("../../model/schema/customField");
+const { syncLead, unlinkLead } = require('../../services/relationshipSync');
 
 const getFieldType = (field) => {
   if (field?.ref) {
@@ -236,6 +237,7 @@ const add = async (req, res) => {
     newDocument.createdDate = new Date();
 
     await newDocument.save();
+    if (collectionName === 'Leads') await syncLead(newDocument);
 
     return res
       .status(200)
@@ -289,6 +291,7 @@ const deleteField = async (req, res) => {
     const result = await ExistingModel.findByIdAndUpdate(req.params.id, {
       deleted: true,
     });
+    if (customField.moduleName === 'Leads' && result) await unlinkLead(result._id);
 
     return res
       .status(200)
@@ -343,6 +346,7 @@ const deleteManyField = async (req, res) => {
       { _id: { $in: req.body.ids } },
       { $set: { deleted: true } },
     );
+    if (customField.moduleName === 'Leads') await Promise.all((req.body.ids || []).map(unlinkLead));
 
     return res
       .status(200)
@@ -405,6 +409,7 @@ const edit = async (req, res) => {
     );
 
     if (result) {
+      if (collectionName === 'Leads') await syncLead(result);
       return res
         .status(200)
         .json({

@@ -32,12 +32,11 @@ import FolderTreeView from "components/FolderTreeView/folderTreeView";
 import Card from "components/card/Card";
 import { HSeparator } from "components/separator/Separator";
 import Spinner from "components/spinner/Spinner";
-import { constant } from "constant";
 import { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getApi } from "services/api";
+import { downloadApiFile, getApi } from "services/api";
 import PhoneCall from "../contact/components/phonCall";
 import AddEmailHistory from "../emailHistory/components/AddEmail";
 import AddMeeting from "../meeting/components/Addmeeting";
@@ -322,9 +321,8 @@ const View = (props) => {
 
   const download = async (data) => {
     if (data) {
-      let result = await getApi(`api/document/download/`, data);
+      let result = await downloadApiFile(`api/document/download/${data}`);
       if (result && result?.status === 200) {
-        window.open(`${constant?.baseUrl}api/document/download/${data}`);
         toast.success(tr("file Download successful"));
       } else if (result && result?.response?.status === 404) {
         toast.error(tr("file Not Found"));
@@ -491,7 +489,7 @@ const View = (props) => {
                       <Heading size="md" mb={3}><LocalizedText text="Opportunity Project Details" /></Heading>
                       <Flex id="hide-btn">
                         <Menu>
-                          {(user?.role === "superAdmin" ||
+                          {(user?.role === "admin" ||
                             permission?.create ||
                             permission?.update ||
                             permission?.delete) && (
@@ -506,7 +504,7 @@ const View = (props) => {
                           )}
                           <MenuDivider />
                           <MenuList minWidth={2}>
-                            {(user?.role === "superAdmin" ||
+                            {(user?.role === "admin" ||
                               permission?.create) && (
                               <MenuItem
                                 color={"blue"}
@@ -520,7 +518,7 @@ const View = (props) => {
                                 {" "}<LocalizedText text="Add" />{" "}
                               </MenuItem>
                             )}
-                            {(user?.role === "superAdmin" ||
+                            {(user?.role === "admin" ||
                               permission?.update) && (
                               <MenuItem
                                 onClick={() => {
@@ -538,7 +536,7 @@ const View = (props) => {
                               display={"flex"}
                               style={{ alignItems: "center" }}
                             ><LocalizedText text="Print as PDF" /></MenuItem>
-                            {(user?.role === "superAdmin" ||
+                            {(user?.role === "admin" ||
                               permission?.delete) && (
                               <>
                                 <MenuDivider />
@@ -678,10 +676,10 @@ const View = (props) => {
                     <Text
                       color={
                         opportunitydata?.category === "contact" &&
-                        (contactAccess?.view || user?.role === "superAdmin")
+                        (contactAccess?.view || user?.role === "admin")
                           ? "brand.600"
                           : leadAccess?.view ||
-                              (user?.role === "superAdmin" &&
+                              (user?.role === "admin" &&
                                 opportunitydata?.category === "lead")
                             ? "brand.600"
                             : "blackAlpha.900"
@@ -730,14 +728,14 @@ const View = (props) => {
             </Grid>
           </Card>
 
-          {(user?.role === "superAdmin" ||
+          {(user?.role === "admin" ||
             permission?.update ||
             permission?.delete) && (
             <Card mt={3}>
               <Grid templateColumns="repeat(2, 1fr)" gap={1}>
                 <GridItem colStart={6}>
                   <Flex justifyContent={"right"}>
-                    {user?.role === "superAdmin" || permission?.update ? (
+                    {user?.role === "admin" || permission?.update ? (
                       <Button
                         size="sm"
                         onClick={() => {
@@ -752,7 +750,7 @@ const View = (props) => {
                     ) : (
                       ""
                     )}
-                    {user?.role === "superAdmin" || permission?.delete ? (
+                    {user?.role === "admin" || permission?.delete ? (
                       <Button
                         size="sm"
                         style={{ background: "red.800" }}

@@ -130,7 +130,7 @@ const Index = (props) => {
       Header: tr("Account Name"),
       accessor: "accountName",
       cell: (cell) =>
-        user?.role === "superAdmin" || accountAccess?.view ? (
+        user?.role === "admin" || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -160,6 +160,13 @@ const Index = (props) => {
               : "-"}
           </Text>
         ),
+    },
+    { Header: tr("Contact"), accessor: "contactName" },
+    { Header: tr("Lead"), accessor: "leadName" },
+    {
+      Header: tr("Properties"),
+      accessor: "propertyNames",
+      cell: (cell) => <Text noOfLines={2}>{(cell?.value || []).join("، ") || "-"}</Text>,
     },
     {
       Header: tr("Opportunity Amount"),

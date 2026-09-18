@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const CustomField = require("../../model/schema/customField");
-const RoleAccess = require('../../model/schema/roleAccess');
 
 const index = async (req, res) => {
     try {
@@ -466,23 +465,6 @@ const createNewModule = async (req, res) => {
             return res.status(400).json({ success: false, message: `Module name already exist` });
         }
 
-        const access = await RoleAccess.find()
-        if (!access[0]?.access[moduleName]) {
-            await RoleAccess.updateMany({},
-                {
-                    $push: {
-                        access: {
-                            "title": moduleName,
-                            "create": false,
-                            "update": false,
-                            "delete": false,
-                            "view": false
-                        }
-                    }
-                }
-            )
-        }
-
         await newModule.save();
         return res.status(200).json({ message: "Module added successfully", data: newModule });
 
@@ -531,11 +513,6 @@ const changeModuleName = async (req, res) => {
         if (!result) {
             return res.status(404).json({ success: false, message: 'Module not found' });
         }
-
-        await RoleAccess.updateMany(
-            { "access.title": oldModule.moduleName }, // Filter criteria to find the documents
-            { $set: { "access.$.title": moduleName } } // Update operation
-        );
 
         // Function to change module name without losing data
         const changeModuleName = async (oldModuleName, newModuleName) => {
@@ -894,12 +871,6 @@ const changeIsViewFields = async (req, res) => {
 const deletmodule = async (req, res) => {
     try {
         const module = await CustomField.findByIdAndUpdate(req.params.id, { deleted: true });
-        const accessName = await CustomField.findById(req.params.id);
-        await RoleAccess.updateMany({}, {
-            $pull: {
-                access: { "title": accessName.moduleName } // remove the access object with matching title
-            }
-        });
         res.status(200).json({ message: "Module delete successfully", module })
     } catch (err) {
         res.status(404).json({ message: "error", err })

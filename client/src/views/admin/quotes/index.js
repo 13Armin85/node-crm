@@ -29,6 +29,7 @@ import ImportModal from "./components/ImportModel";
 import { fetchQuotesData } from "../../../redux/slices/quotesSlice";
 import { TbFileInvoice } from "react-icons/tb";
 import { postApi } from "services/api";
+import CurrencyAmount from "components/CurrencyAmount";
 
 const Index = (props) => {
   const [action, setAction] = useState(false);
@@ -223,7 +224,7 @@ const Index = (props) => {
         <div className="selectOpt">
           <Text>
             {cell?.row?.original?.grandTotal
-              ? `${cell?.row?.original?.currency} ${cell?.row?.original?.grandTotal}`
+              ? <CurrencyAmount amount={cell.row.original.grandTotal} currency={cell.row.original.currency} compact />
               : "-"}
           </Text>
         </div>

@@ -65,6 +65,7 @@ import html2pdf from "html2pdf.js";
 import { FaFilePdf } from "react-icons/fa";
 import AddEditQuotes from "../quotes/AddEdit";
 import AddEditInvoice from "../invoice/AddEdit";
+import CurrencyAmount from "components/CurrencyAmount";
 const View = () => {
   const param = useParams();
   const textColor = useColorModeValue("gray.500", "white");
@@ -350,11 +351,15 @@ const View = () => {
       accessor: "grandTotal",
       cell: (cell) => (
         <div className="selectOpt">
-          <Text>
-            {cell?.row?.original?.grandTotal
-              ? `$${cell?.row?.original?.grandTotal}`
-              : "-"}
-          </Text>
+          {cell?.row?.original?.grandTotal ? (
+            <CurrencyAmount
+              amount={cell.row.original.grandTotal}
+              currency={cell.row.original.currency || "USD"}
+              compact
+            />
+          ) : (
+            <Text>-</Text>
+          )}
         </div>
       ),
     },
@@ -445,11 +450,15 @@ const View = () => {
       accessor: "grandTotal",
       cell: (cell) => (
         <div className="selectOpt">
-          <Text>
-            {cell?.row?.original?.grandTotal
-              ? `$${cell?.row?.original?.grandTotal}`
-              : "-"}
-          </Text>
+          {cell?.row?.original?.grandTotal ? (
+            <CurrencyAmount
+              amount={cell.row.original.grandTotal}
+              currency={cell.row.original.currency || "USD"}
+              compact
+            />
+          ) : (
+            <Text>-</Text>
+          )}
         </div>
       ),
     },

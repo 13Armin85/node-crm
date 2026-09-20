@@ -13,6 +13,7 @@ const { Lead } = require('../../model/schema/lead');
 const FormDefinition = require('../../model/schema/formDefinition');
 const { defaults, legacyModules, getDefinition } = require('../../services/formDefinitions');
 const { validateFields, normalizeProperty, validateDefinition, objectId, fail, InputError } = require('../../services/estateValidation');
+const { getTryUsdRate } = require('../../services/exchangeRate');
 const router = express.Router();
 const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const modules = {
@@ -48,7 +49,14 @@ router.get('/definitions/:module', asyncRoute(async (req, res) => {
 router.put('/definitions/:module', adminOnly, asyncRoute(async (req, res) => {
   const current = await getDefinition(req.params.module);
   if (!current) return res.status(404).json({ code: 'notFound' });
-  const baseline = { fields: defaults[req.params.module] || current.fields.filter(f => f.kind === 'SYSTEM_FIELD') };
+  const configured = defaults[req.params.module] || [];
+  const configuredNames = new Set(configured.map(field => field.name));
+  const baseline = {
+    fields: [
+      ...configured,
+      ...current.fields.filter(field => field.kind === 'SYSTEM_FIELD' && !configuredNames.has(field.name)),
+    ],
+  };
   const fields = validateDefinition(req.body, current, baseline);
   if (req.body.revision !== current.revision) return res.status(409).json({ code: 'conflict' });
   let updated;
@@ -121,6 +129,13 @@ router.get('/dashboard/sales-summary', asyncRoute(async (req, res) => {
     };
   };
   res.json({ sold: bucket('SOLD'), available: bucket('AVAILABLE'), bySeller: summary?.sellers || [] });
+}));
+router.get('/dashboard/exchange-rate', asyncRoute(async (req, res) => {
+  try {
+    res.json(await getTryUsdRate());
+  } catch (error) {
+    res.status(503).json({ code: 'exchangeRateUnavailable', message: error.message });
+  }
 }));
 router.param('module', (req, res, next, moduleName) => {
   req.estateModule = modules[moduleName]; next();

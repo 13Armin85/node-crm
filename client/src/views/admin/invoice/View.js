@@ -45,6 +45,7 @@ import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { invoicesSchema } from "../../../schema/invoicesSchema";
 import CommonCheckTable from "components/reactTable/checktable";
+import CurrencyAmount from "components/CurrencyAmount";
 
 const View = (props) => {
   const params = useParams();
@@ -174,11 +175,7 @@ const View = (props) => {
       accessor: "grandTotal",
       cell: (cell) => (
         <div className="selectOpt">
-          <Text>
-            {cell?.row?.original?.grandTotal
-              ? `$${cell?.row?.original?.grandTotal}`
-              : "-"}
-          </Text>
+          {cell?.row?.original?.grandTotal ? <CurrencyAmount amount={cell.row.original.grandTotal} currency={cell.row.original.currency || "USD"} compact /> : <Text>-</Text>}
         </div>
       ),
     },
@@ -254,7 +251,7 @@ const View = (props) => {
     billingCountry: data?.billingCountry,
     shippingCountry: data?.shippingCountry,
     isCheck: data?.isCheck,
-    currency: data?.currency,
+    currency: data?.currency === "$" ? "USD" : data?.currency,
     total: data?.total,
     discount: data?.discount,
     subtotal: data?.subtotal,
@@ -593,8 +590,12 @@ const View = (props) => {
                           : null
                       }
                     >
+                      <option value="Draft"><LocalizedText text="Draft" /></option>
+                      <option value="Sent"><LocalizedText text="Sent" /></option>
+                      <option value="Pending"><LocalizedText text="Pending" /></option>
+                      <option value="Partially Paid"><LocalizedText text="Partially Paid" /></option>
                       <option value="Paid"><LocalizedText text="Paid" /></option>
-                      <option value="Unpaid"><LocalizedText text="Unpaid" /></option>
+                      <option value="Overdue"><LocalizedText text="Overdue" /></option>
                       <option value="Cancelled"><LocalizedText text="Cancelled" /></option>
                     </Select>
                     <Text mb="10px" color={"red"}>
@@ -1181,31 +1182,31 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Total" /></Text>
-                <Text>{`${data?.currency}${data?.total ? data?.total : "0"}`}</Text>
+                <CurrencyAmount amount={data?.total} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Discount" /></Text>
-                <Text>{`${data?.currency}${data?.discount || "0"}`}</Text>
+                <CurrencyAmount amount={data?.discount} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Subtotal" /></Text>
-                <Text>{`${data?.currency}${data?.subtotal ? data?.subtotal : "0"}`}</Text>
+                <CurrencyAmount amount={data?.subtotal} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping" /></Text>
-                <>{`${data?.currency}${data?.shipping ? data?.shipping : "0"}`}</>
+                <CurrencyAmount amount={data?.shipping} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping Tax" /></Text>
-                <Text>{`${data?.currency}${data?.shippingTax ? data?.shippingTax : "0"}`}</Text>
+                <CurrencyAmount amount={data?.shippingTax} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Tax" /></Text>
-                <Text>{`${data?.currency}${data?.tax ? data?.tax : "0"}`}</Text>
+                <CurrencyAmount amount={data?.tax} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Grand Total" /></Text>
-                <Text>{`${data?.currency}${data?.grandTotal ? data?.grandTotal : "0"}`}</Text>
+                <CurrencyAmount amount={data?.grandTotal} currency={data?.currency} />
               </GridItem>
             </Grid>
           </Card>

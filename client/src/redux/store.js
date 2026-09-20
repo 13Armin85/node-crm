@@ -1,4 +1,4 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import imageReducer from "./slices/imageSlice";
@@ -46,8 +46,7 @@ const contactPersistConfig = {
   storage,
 };
 
-export const store = configureStore({
-  reducer: {
+const appReducer = combineReducers({
     modules: moduleSlice,
     images: persistReducer(imagesPersistConfig, imageReducer),
     user: userReducer,
@@ -68,8 +67,15 @@ export const store = configureStore({
     quotesData: quotesSlice,
     invoicesData: invoicesSlice,
     opportunityProjectData: opportunityProjectSlice,
-    bankData : getBankSlice
-  },
+    bankData: getBankSlice,
+});
+
+// Clearing the authenticated user also drops every in-memory, user-scoped cache.
+const rootReducer = (state, action) =>
+  appReducer(action.type === "user/clearUser" ? undefined : state, action);
+
+export const store = configureStore({
+  reducer: rootReducer,
   middleware,
 });
 

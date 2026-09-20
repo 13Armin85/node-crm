@@ -4,6 +4,7 @@ import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
   ButtonGroup,
+  Badge,
   Flex,
   Box,
   Menu,
@@ -20,7 +21,6 @@ import CommonCheckTable from "../../../components/reactTable/checktable";
 import TaskAdvanceSearch from "./components/TaskAdvanceSearch";
 import { SearchIcon } from "@chakra-ui/icons";
 import { CiMenuKebab } from "react-icons/ci";
-import EventView from "./eventView";
 import ImportModal from "../lead/components/ImportModal";
 import { putApi } from "services/api";
 import { useLocation } from "react-router-dom";
@@ -34,12 +34,37 @@ import { toast } from "react-toastify";
 import { FiColumns, FiList, FiPlus } from "react-icons/fi";
 import TaskKanban from "./components/TaskKanban";
 
+const selectionValue = (value) => {
+  if (!value || typeof value !== "object") return value || "";
+  return value._id || value.id || value.value || value.status || value.key || "";
+};
+
+const taskStatus = (value) => {
+  const status = String(selectionValue(value) || "todo");
+  return ["todo", "inProgress", "pending", "onHold", "completed"].includes(status)
+    ? status
+    : "todo";
+};
+
+const taskPriority = (task) => {
+  const priority = String(selectionValue(task?.priority || task?.customFields?.priority) || "normal").toLowerCase();
+  return ["low", "normal", "high", "urgent"].includes(priority) ? priority : "normal";
+};
+
+const normalizeTaskRecord = (task) => ({
+  ...task,
+  category: selectionValue(task?.category) || "None",
+  status: taskStatus(task?.status),
+  priority: taskPriority(task),
+  assignTo: selectionValue(task?.assignTo),
+  assignToLead: selectionValue(task?.assignToLead),
+  assignedToUser: selectionValue(task?.assignedToUser),
+  createBy: selectionValue(task?.createBy),
+});
+
 const Task = () => {
   const [action, setAction] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [edit, setEdit] = useState(false);
-  const [eventView, setEventView] = useState(false);
-  const [id, setId] = useState("");
   const [selectedId, setSelectedId] = useState();
   const [selectedValues, setSelectedValues] = useState([]);
   const [advanceSearch, setAdvanceSearch] = useState(false);
@@ -56,11 +81,7 @@ const Task = () => {
   const [viewMode, setViewMode] = useState("kanban");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [assignees, setAssignees] = useState([]);
-  const [permission, leadAccess, contactAccess] = HasAccess([
-    "Tasks",
-    "Leads",
-    "Contacts",
-  ]);
+  const [permission] = HasAccess(["Tasks"]);
   const location = useLocation();
   const state = location?.state;
   const navigate = useNavigate();
@@ -98,7 +119,6 @@ const Task = () => {
                 color={"green"}
                 icon={<ViewIcon mb={1} fontSize={15} />}
                 onClick={() => {
-                  setId(row?.original?._id);
                   handleViewOpen(row?.values?._id);
                 }}
               ><LocalizedText text="View" /></MenuItem>
@@ -149,7 +169,13 @@ const Task = () => {
         </div>
       ),
     },
-    { Header: tr("Related"), accessor: "category", type: "text", formikType: "" },
+    {
+      Header: tr("Related"),
+      accessor: "category",
+      type: "text",
+      formikType: "",
+      cell: ({ value }) => <LocalizedText text={selectionValue(value) || "None"} />,
+    },
     {
       Header: tr("Status"),
       accessor: "status",
@@ -158,18 +184,19 @@ const Task = () => {
       cell: (cell) => (
         <div className="selectOpt">
           <Select
+            data-task-select="status"
             className={changeStatus(cell)}
             onChange={(e) => setStatusData(cell, e)}
             height={7}
             width={130}
-            value={cell?.value}
+            value={taskStatus(cell?.value)}
             style={{ fontSize: "14px" }}
           >
-            <option value="completed"><LocalizedText text="Completed" /></option>
-            <option value="todo"><LocalizedText text="Todo" /></option>
-            <option value="onHold"><LocalizedText text="On Hold" /></option>
-            <option value="inProgress"><LocalizedText text="In Progress" /></option>
-            <option value="pending"><LocalizedText text="Pending" /></option>
+            <option value="todo" label={tr("Todo")}>{tr("Todo")}</option>
+            <option value="inProgress" label={tr("In Progress")}>{tr("In Progress")}</option>
+            <option value="pending" label={tr("Pending")}>{tr("Pending")}</option>
+            <option value="onHold" label={tr("On Hold")}>{tr("On Hold")}</option>
+            <option value="completed" label={tr("Completed")}>{tr("Completed")}</option>
           </Select>
         </div>
       ),
@@ -179,6 +206,17 @@ const Task = () => {
       accessor: "assignedToUserName",
       type: "text",
       formikType: "",
+    },
+    {
+      Header: tr("Priority"),
+      accessor: "priority",
+      type: "text",
+      formikType: "",
+      cell: ({ row }) => {
+        const priority = taskPriority(row.original);
+        const schemes = { low: "green", normal: "blue", high: "orange", urgent: "red" };
+        return <Badge colorScheme={schemes[priority]}><LocalizedText text={priority} /></Badge>;
+      },
     },
     { Header: tr("Related"), accessor: "assignToName", type: "text", formikType: "" },
     { Header: tr("Start Date"), accessor: "start", type: "date", formikType: "" },
@@ -192,7 +230,7 @@ const Task = () => {
     setIsLoding(true);
     const result = await dispatch(fetchTaskData());
     if (result?.payload?.status === 200) {
-      setData(result?.payload?.data);
+      setData((result?.payload?.data || []).map(normalizeTaskRecord));
     } else {
       toast.error(tr("Failed to fetch data"), tr("error"));
     }
@@ -231,7 +269,7 @@ const Task = () => {
     } else toast.error(tr("Failed to delegate task"));
   };
   const changeStatus = (cell) => {
-    switch (cell?.value) {
+    switch (taskStatus(cell?.value)) {
       case "pending":
         return "pending";
       case "completed":
@@ -263,10 +301,6 @@ const Task = () => {
     }
   };
 
-  const handleDateClick = (cell) => {
-    setId(cell?.row?.values?._id);
-    setEventView(true);
-  };
   // const [selectedColumns, setSelectedColumns] = useState([...tableColumns]);
   // const dataColumn = tableColumns?.filter(item => selectedColumns?.find(colum => colum?.Header === item.Header))
 
@@ -295,27 +329,27 @@ const Task = () => {
 
   const visibleData = assigneeFilter === "all"
     ? data
-    : data.filter((item) => String(item.assignedToUser || item.createBy) === assigneeFilter);
+    : data.filter((item) => String(selectionValue(item.assignedToUser) || selectionValue(item.createBy)) === assigneeFilter);
 
   return (
-    <div>
+    <Box width="100%" minW={0}>
       <Flex mb={4} justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={3}>
         <Box>
-          <Text fontSize="2xl" fontWeight="900">مدیریت وظایف</Text>
-          <Text color="gray.500" fontSize="sm">وظایف را بین کاربران واگذار کنید و وضعیت کار را با درگ‌ و دراپ تغییر دهید.</Text>
+          <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="900"><LocalizedText text="Task Management" /></Text>
+          <Text color="gray.500" fontSize="sm"><LocalizedText text="Assign tasks to users and change work status with drag and drop." /></Text>
         </Box>
-        <Flex gap={2} wrap="wrap">
+        <Flex gap={2} wrap="wrap" width={{ base: "100%", md: "auto" }}>
           {user?.role === "admin" && (
-            <Select size="sm" w="190px" value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)}>
-              <option value="all">همه کاربران</option>
+            <Select size="sm" w={{ base: "100%", sm: "190px" }} value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)}>
+              <option value="all">{tr("All users")}</option>
               {assignees.map((item) => <option key={item._id} value={item._id}>{[item.firstName, item.lastName].filter(Boolean).join(" ") || item.username}</option>)}
             </Select>
           )}
-          <ButtonGroup size="sm" isAttached variant="outline">
-            <Button leftIcon={<FiColumns />} colorScheme={viewMode === "kanban" ? "brand" : "gray"} onClick={() => setViewMode("kanban")}>کانبان</Button>
-            <Button leftIcon={<FiList />} colorScheme={viewMode === "list" ? "brand" : "gray"} onClick={() => setViewMode("list")}>لیست</Button>
+          <ButtonGroup size="sm" isAttached variant="outline" flex={{ base: "1 1 auto", sm: "initial" }}>
+            <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiColumns />} colorScheme={viewMode === "kanban" ? "brand" : "gray"} onClick={() => setViewMode("kanban")}><LocalizedText text="Kanban" /></Button>
+            <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiList />} colorScheme={viewMode === "list" ? "brand" : "gray"} onClick={() => setViewMode("list")}><LocalizedText text="List" /></Button>
           </ButtonGroup>
-          {permission?.create && <Button size="sm" variant="brand" leftIcon={<FiPlus />} onClick={addBtn}>وظیفه جدید</Button>}
+          {permission?.create && <Button flex={{ base: "1 1 auto", sm: "initial" }} size="sm" variant="brand" leftIcon={<FiPlus />} onClick={addBtn}><LocalizedText text="New Task" /></Button>}
         </Flex>
       </Flex>
       {viewMode === "kanban" ? (
@@ -375,8 +409,6 @@ const Task = () => {
         id={selectedId}
         setAction={setAction}
       />
-      {/* <EditTask isOpen={edit} onClose={setEdit} viewClose={onClose} id={selectedId} setAction={setAction} /> */}
-      {/* <EventView fetchData={fetchData} isOpen={eventView} access={permission} contactAccess={contactAccess} leadAccess={leadAccess} onClose={setEventView} id={id} setAction={setAction} action={action} /> */}
       <CommonDeleteModel
         isOpen={deleteMany}
         onClose={() => setDeleteMany(false)}
@@ -390,7 +422,7 @@ const Task = () => {
         isOpen={isImportLead}
         onClose={setIsImportLead}
       />
-    </div>
+    </Box>
   );
 };
 

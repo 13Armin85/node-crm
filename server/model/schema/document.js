@@ -20,6 +20,11 @@ const fileSchema = new mongoose.Schema({
     linkPartnerCustomer: { type: mongoose.Schema.Types.ObjectId, ref: 'PartnerCustomers' },
     entityType: { type: String, enum: ['Contact', 'Lead', 'Property', 'Opportunity', 'PartnerCustomer', null], default: null },
     entityId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    category: {
+        type: String,
+        enum: ['GENERAL', 'PROPERTIES', 'LEADS', 'OPPORTUNITIES', 'PARTNER_CUSTOMERS', 'CONTACTS', 'INVOICES', 'QUOTES', 'TASKS', 'MEETINGS', 'CALLS', 'EMAILS', null],
+        default: null,
+    },
     path: {
         type: String,
         required: true,
@@ -44,6 +49,8 @@ const documentSchema = new mongoose.Schema({
         required: true,
     },
     file: [fileSchema],
+    // Hidden container used for documents intentionally uploaded without a folder.
+    isRoot: { type: Boolean, default: false },
     parentFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'Document', default: null },
     createBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -56,6 +63,7 @@ const documentSchema = new mongoose.Schema({
 });
 
 documentSchema.index({ createBy: 1, parentFolder: 1, folderName: 1, deleted: 1 });
+documentSchema.index({ createBy: 1, isRoot: 1, deleted: 1 });
 
 // Create the model for the main document
 

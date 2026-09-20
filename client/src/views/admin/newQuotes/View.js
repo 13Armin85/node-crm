@@ -45,6 +45,7 @@ import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { quoteSchema } from "../../../schema/quoteSchema";
 import CommonCheckTable from "components/reactTable/checktable";
+import CurrencyAmount from "components/CurrencyAmount";
 
 const View = (props) => {
   const params = useParams();
@@ -186,9 +187,7 @@ const View = (props) => {
       cell: (cell) => (
         <div className="selectOpt">
           <Text>
-            {cell?.row?.original?.grandTotal
-              ? `$${cell?.row?.original?.grandTotal}`
-              : "-"}
+            {cell?.row?.original?.grandTotal ? <CurrencyAmount amount={cell.row.original.grandTotal} currency={cell.row.original.currency || "USD"} compact /> : "-"}
           </Text>
         </div>
       ),
@@ -1396,31 +1395,31 @@ const View = (props) => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Total" /></Text>
-                <Text>{`${data?.currency}${data?.total ? data?.total : "0"}`}</Text>
+                <CurrencyAmount amount={data?.total} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Discount" /></Text>
-                <Text>{`${data?.currency}${data?.discount || "0"}`}</Text>
+                <CurrencyAmount amount={data?.discount} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Subtotal" /></Text>
-                <Text>{`${data?.currency}${data?.subtotal ? data?.subtotal : "0"}`}</Text>
+                <CurrencyAmount amount={data?.subtotal} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping" /></Text>
-                <>{`${data?.currency}${data?.shipping ? data?.shipping : "0"}`}</>
+                <CurrencyAmount amount={data?.shipping} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping Tax" /></Text>
-                <Text>{`${data?.currency}${data?.shippingTax ? data?.shippingTax : "0"}`}</Text>
+                <CurrencyAmount amount={data?.shippingTax} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Tax" /></Text>
-                <Text>{`${data?.currency}${data?.tax ? data?.tax : "0"}`}</Text>
+                <CurrencyAmount amount={data?.tax} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Grand Total" /></Text>
-                <Text>{`${data?.currency}${data?.grandTotal ? data?.grandTotal : "0"}`}</Text>
+                <CurrencyAmount amount={data?.grandTotal} currency={data?.currency} />
               </GridItem>
             </Grid>
           </Card>

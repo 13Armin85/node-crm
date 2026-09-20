@@ -54,7 +54,7 @@ const AddEdit = (props) => {
     assignUser: type === "edit" ? opprtunityDetails?.assignUser : null,
     type: type === "edit" ? opprtunityDetails?.type : "",
     leadSource: type === "edit" ? opprtunityDetails?.leadSource : "",
-    currency: type === "edit" ? opprtunityDetails?.currency : "",
+    currency: type === "edit" ? (opprtunityDetails?.currency === "$" ? "USD" : opprtunityDetails?.currency) : "TRY",
     opportunityAmount:
       type === "edit" ? opprtunityDetails?.opportunityAmount : "",
     amount: type === "edit" ? opprtunityDetails?.amount : "",
@@ -349,8 +349,8 @@ const AddEdit = (props) => {
                   placeholder={tr("Select Type")}
                   borderColor={errors?.type && touched?.type ? "red.300" : null}
                 >
-                  <option value={"Existing Bussiness"}><LocalizedText text="Existing Bussiness" /></option>
-                  <option value={"New Bussiness"}><LocalizedText text="New Bussiness" /></option>
+                  <option value="New Business"><LocalizedText text="New Business" /></option>
+                  <option value="Existing Business"><LocalizedText text="Existing Business" /></option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -386,12 +386,12 @@ const AddEdit = (props) => {
                   <option value={"Self Generated"}><LocalizedText text="Self Generated" /></option>
                   <option value={"Employee"}><LocalizedText text="Employee" /></option>
                   <option value={"Partner"}><LocalizedText text="Partner" /></option>
-                  <option value={"Public Relation"}><LocalizedText text="Public Relation" /></option>
+                  <option value={"Public Relations"}><LocalizedText text="Public Relations" /></option>
                   <option value={"Direct Mail"}><LocalizedText text="Direct Mail" /></option>
                   <option value={"Conference"}><LocalizedText text="Conference" /></option>
                   <option value={"Trade Show"}><LocalizedText text="Trade Show" /></option>
-                  <option value={"Web Site"}><LocalizedText text="Web Site" /></option>
-                  <option value={"Word Of Mouth"}><LocalizedText text="Word Of Mouth" /></option>
+                  <option value={"Website"}><LocalizedText text="Website" /></option>
+                  <option value={"Word of Mouth"}><LocalizedText text="Word of Mouth" /></option>
                   <option value={"Email"}><LocalizedText text="Email" /></option>
                   <option value={"Other"}><LocalizedText text="Other" /></option>
                 </Select>
@@ -424,7 +424,9 @@ const AddEdit = (props) => {
                     errors?.currency && touched?.currency ? "red.300" : null
                   }
                 >
-                  <option value={"$"}><LocalizedText text="USD" /></option>
+                  <option value="TRY">TRY — Turkish Lira (₺)</option>
+                  <option value="USD">USD — US Dollar ($)</option>
+                  <option value="EUR">EUR — Euro (€)</option>
                 </Select>
                 <Text mb="10px" fontSize="sm" color={"red"}>
                   {" "}
@@ -573,7 +575,7 @@ const AddEdit = (props) => {
                   <option value={"Prospecting"}><LocalizedText text="Prospecting" /></option>
                   <option value={"Qualification"}><LocalizedText text="Qualification" /></option>
                   <option value={"Needs Analysis"}><LocalizedText text="Needs Analysis" /></option>
-                  <option value={"Value Propositon"}><LocalizedText text="Value Propositon" /></option>
+                  <option value={"Value Proposition"}><LocalizedText text="Value Proposition" /></option>
                   <option value={"Identifying Decision Makers"}><LocalizedText text="Identifying Decision Makers" /></option>
                   <option value={"Perception Analysis"}><LocalizedText text="Perception Analysis" /></option>
                   <option value={"Proposal/Price Quote"}><LocalizedText text="Proposal/Price Quote" /></option>

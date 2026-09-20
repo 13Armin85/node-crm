@@ -437,8 +437,8 @@ const Index = (props) => {
           _id: "6690bf4a4e0f5916f4314cd9",
         },
         {
-          name: "Value Propositon",
-          value: "Value Propositon",
+          name: "Value Proposition",
+          value: "Value Proposition",
           _id: "6690bf4a4e0f5916f4314cda",
         },
         {

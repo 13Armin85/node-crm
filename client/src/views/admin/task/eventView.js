@@ -102,7 +102,19 @@ const EventView = (props) => {
                     >
                       {" "}<LocalizedText text="Task Related To" />{" "}
                     </Text>
-                    <Text>{data?.category ? data?.category : " - "}</Text>
+                    <Text>{data?.category ? <LocalizedText text={data.category} /> : " - "}</Text>
+                  </GridItem>
+                  <GridItem colSpan={{ base: 12, md: 6 }}>
+                    <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
+                      <LocalizedText text="Status" />
+                    </Text>
+                    <Text><LocalizedText text={data?.status || "Todo"} /></Text>
+                  </GridItem>
+                  <GridItem colSpan={{ base: 12, md: 6 }}>
+                    <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
+                      <LocalizedText text="Priority" />
+                    </Text>
+                    <Text><LocalizedText text={data?.priority || data?.customFields?.priority || "Normal"} /></Text>
                   </GridItem>
                   <GridItem colSpan={{ base: 12, md: 6 }}>
                     <Text

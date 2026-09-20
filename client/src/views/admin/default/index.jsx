@@ -38,6 +38,7 @@ import CountUpComponent from "../../../../src/components/countUpComponent/countU
 import Spinner from 'components/spinner/Spinner';
 import { useSelector } from "react-redux";
 import { useLanguage } from "i18n";
+import CurrencyAmount from "components/CurrencyAmount";
 
 const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, meta, action, mb = 4 }) => {
   const background = useColorModeValue(
@@ -118,7 +119,7 @@ const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, m
 };
 
 export default function UserReports() {
-  const { t, language, direction } = useLanguage();
+  const { t, direction } = useLanguage();
   // Chakra Color Mode
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
@@ -256,13 +257,9 @@ export default function UserReports() {
     Property: '/properties',
   };
   const maxStatisticLength = Math.max(...(data || []).map((item) => item?.length || 0), 1);
-  const formatMoney = ({ amount = 0, currency = 'TRY' }) => new Intl.NumberFormat(
-    language === 'fa' ? 'fa-IR' : language === 'tr' ? 'tr-TR' : 'en-US',
-    { style: 'currency', currency, maximumFractionDigits: 0 },
-  ).format(amount);
   const moneyValues = values => values?.length
-    ? values.map(value => <Text key={value.currency} fontSize={{ base: 'lg', md: 'xl' }} fontWeight="900" lineHeight="1.3" data-no-translate>{formatMoney(value)}</Text>)
-    : <Text fontSize="xl" fontWeight="900">{formatMoney({ amount: 0, currency: 'TRY' })}</Text>;
+    ? values.map(value => <CurrencyAmount key={value.currency} amount={value.amount} currency={value.currency} compact fontSize={{ base: 'lg', md: 'xl' }} fontWeight="900" lineHeight="1.3" />)
+    : <CurrencyAmount amount={0} currency="TRY" compact fontSize="xl" fontWeight="900" />;
 
   useEffect(() => {
     fetchData();

@@ -22,6 +22,10 @@ export default function ManagedFormLayout({ moduleName, formik, children }) {
   const configure = (node, currentField) => {
     if (!React.isValidElement(node)) return node;
     const type = typeof node.type === 'string' ? node.type : node.type.displayName || node.type.name || '';
+    // Native options must keep a primitive text child. Recursively cloning their
+    // content can make the browser stringify a React/localized value as
+    // "[object Object]" in a closed select.
+    if (type === 'option') return node;
     const name = findName(node);
     const field = fields.find(f => f.name === name && f.kind === 'SYSTEM_FIELD');
     const isContainer = /GridItem|FormControl/.test(type);

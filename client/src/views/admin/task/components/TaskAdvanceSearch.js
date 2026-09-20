@@ -180,18 +180,19 @@ const TaskAdvanceSearch = (props) => {
                   mt={2}
                 ><LocalizedText text="Status" /></FormLabel>
                 <Select
+                  data-task-select="status"
                   value={values?.status}
                   fontSize="sm"
                   name="status"
                   onChange={handleChange}
                   fontWeight="500"
                 >
-                  {!state && <option value=""><LocalizedText text="Select Status" /></option>}
-                  <option value="completed"><LocalizedText text="Completed" /></option>
-                  <option value="todo"><LocalizedText text="Todo" /></option>
-                  <option value="pending"><LocalizedText text="Pending" /></option>
-                  <option value="inProgress"><LocalizedText text="In Progress" /></option>
-                  <option value="onHold"><LocalizedText text="On Hold" /></option>
+                  {!state && <option value="" label={tr("Select Status")}>{tr("Select Status")}</option>}
+                  <option value="todo" label={tr("Todo")}>{tr("Todo")}</option>
+                  <option value="inProgress" label={tr("In Progress")}>{tr("In Progress")}</option>
+                  <option value="pending" label={tr("Pending")}>{tr("Pending")}</option>
+                  <option value="onHold" label={tr("On Hold")}>{tr("On Hold")}</option>
+                  <option value="completed" label={tr("Completed")}>{tr("Completed")}</option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}
@@ -209,6 +210,7 @@ const TaskAdvanceSearch = (props) => {
                   mt={2}
                 ><LocalizedText text="Related" /></FormLabel>
                 <Select
+                  data-task-select="related"
                   value={values?.category}
                   fontSize="sm"
                   name="category"
@@ -216,9 +218,9 @@ const TaskAdvanceSearch = (props) => {
                   fontWeight="500"
                   placeholder={tr("Select Category")}
                 >
-                  <option value="contact"><LocalizedText text="Contact" /></option>
-                  <option value="lead"><LocalizedText text="Lead" /></option>
-                  <option value="none"><LocalizedText text="None" /></option>
+                  <option value="None" label={tr("None")}>{tr("None")}</option>
+                  <option value="Contact" label={tr("Contact")}>{tr("Contact")}</option>
+                  <option value="Lead" label={tr("Lead")}>{tr("Lead")}</option>
                 </Select>
 
                 <Text mb="10px" color={"red"}>

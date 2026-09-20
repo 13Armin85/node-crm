@@ -1,5 +1,6 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
+import CurrencyAmount from 'components/CurrencyAmount';
 import { AddIcon, CloseIcon } from "@chakra-ui/icons";
 import {
   Box,
@@ -97,7 +98,7 @@ const AddEdit = (props) => {
     quoteDate: type === "edit" ? invoiceDetails?.quoteDate : "",
     dueDate: type === "edit" ? invoiceDetails?.dueDate : "",
     invoiceDate: type === "edit" ? invoiceDetails?.invoiceDate : "",
-    status: type === "edit" ? invoiceDetails?.status : "Paid",
+    status: type === "edit" ? invoiceDetails?.status : "Draft",
     assignedTo: type === "edit" ? invoiceDetails?.assignedTo : null,
     description: type === "edit" ? invoiceDetails?.description : "",
     account: type === "edit" ? invoiceDetails?.account : null,
@@ -115,7 +116,7 @@ const AddEdit = (props) => {
     billingCountry: type === "edit" ? invoiceDetails?.billingCountry : "",
     shippingCountry: type === "edit" ? invoiceDetails?.shippingCountry : "",
     isCheck: type === "edit" ? invoiceDetails?.isCheck : false,
-    currency: type === "edit" ? invoiceDetails?.currency : "$",
+    currency: type === "edit" ? (invoiceDetails?.currency === "$" ? "USD" : invoiceDetails?.currency) : "TRY",
     total: type === "edit" ? invoiceDetails?.total : "0",
     discount: type === "edit" ? invoiceDetails?.discount : "",
     subtotal: type === "edit" ? invoiceDetails?.subtotal : "0",
@@ -595,8 +596,12 @@ const AddEdit = (props) => {
                       errors?.status && touched?.status ? "red.300" : null
                     }
                   >
+                    <option value="Draft"><LocalizedText text="Draft" /></option>
+                    <option value="Sent"><LocalizedText text="Sent" /></option>
+                    <option value="Pending"><LocalizedText text="Pending" /></option>
+                    <option value="Partially Paid"><LocalizedText text="Partially Paid" /></option>
                     <option value="Paid"><LocalizedText text="Paid" /></option>
-                    <option value="Unpaid"><LocalizedText text="Unpaid" /></option>
+                    <option value="Overdue"><LocalizedText text="Overdue" /></option>
                     <option value="Cancelled"><LocalizedText text="Cancelled" /></option>
                   </Select>
                   <Text mb="10px" fontSize="sm" color={"red"}>
@@ -1078,7 +1083,9 @@ const AddEdit = (props) => {
                       errors?.currency && touched?.currency ? "red.300" : null
                     }
                   >
-                    <option value="$" selected><LocalizedText text="USD" /></option>
+                    <option value="TRY">TRY — Turkish Lira (₺)</option>
+                    <option value="USD">USD — US Dollar ($)</option>
+                    <option value="EUR">EUR — Euro (€)</option>
                   </Select>
                   <Text mb="10px" fontSize="sm" color={"red"}>
                     {" "}
@@ -1193,11 +1200,9 @@ const AddEdit = (props) => {
                                     }}
                                     size="sm"
                                   >
-                                    <option value="none"><LocalizedText text="none" /></option>
-                                    <option value="percent">%</option>
-                                    <option value="flatAmount">
-                                      {values?.currency}
-                                    </option>
+                                    <option value="none"><LocalizedText text="No Discount" /></option>
+                                    <option value="percent"><LocalizedText text="Percentage" /> (%)</option>
+                                    <option value="flatAmount"><LocalizedText text="Fixed Amount" /> ({values?.currency})</option>
                                   </Select>
                                 </FormControl>
                               </Td>
@@ -1388,8 +1393,10 @@ const AddEdit = (props) => {
                     }
                   >
                     <option value="0">0%</option>
+                    <option value="1">1%</option>
                     <option value="10">10%</option>
                     <option value="18">18%</option>
+                    <option value="20">20%</option>
                   </Select>
                   <Text mb="10px" fontSize="sm" color={"red"}>
                     {" "}
@@ -1547,9 +1554,9 @@ const AddEdit = (props) => {
                           <td>{item?.id}</td>
                           <td>{item?.productName}</td>
                           <td>{item?.qty}</td>
-                          <td>{item?.rate}</td>
-                          <td>{`${item?.discountType === "percent" ? `${item?.discount}%` : item?.discountType === "flatAmount" ? `${values?.currency}${item?.discount}` : item?.discountType === "none" ? 0 : ""}`}</td>
-                          <td>{item?.amount}</td>
+                          <td><CurrencyAmount amount={item?.rate} currency={values?.currency} compact /></td>
+                          <td>{item?.discountType === "percent" ? `${item?.discount}%` : item?.discountType === "flatAmount" ? <CurrencyAmount amount={item?.discount} currency={values?.currency} compact /> : item?.discountType === "none" ? 0 : ""}</td>
+                          <td><CurrencyAmount amount={item?.amount} currency={values?.currency} compact /></td>
                         </tr>
                       ))}
                   </tbody>
@@ -1561,35 +1568,35 @@ const AddEdit = (props) => {
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${values?.currency} ${values?.total || 0}`}</td>
+                      ><CurrencyAmount amount={values?.total} currency={values?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Discount" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${values?.currency} ${values?.discount || 0}`}</td>
+                      ><CurrencyAmount amount={values?.discount} currency={values?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Subtotal" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${values?.currency} ${values?.subtotal || 0}`}</td>
+                      ><CurrencyAmount amount={values?.subtotal} currency={values?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Shipping" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${values?.currency} ${values?.shipping || 0}`}</td>
+                      ><CurrencyAmount amount={values?.shipping} currency={values?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Shipping Tax" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${values?.currency} ${values?.shippingTax || 0}`}</td>
+                      ><CurrencyAmount amount={values?.shippingTax} currency={values?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Tax (" />{values?.ptax}%)
@@ -1597,14 +1604,14 @@ const AddEdit = (props) => {
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${values?.currency} ${values?.tax || 0}`}</td>
+                      ><CurrencyAmount amount={values?.tax} currency={values?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Grand Total" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${values?.currency} ${values?.grandTotal || 0}`}</td>
+                      ><CurrencyAmount amount={values?.grandTotal} currency={values?.currency} compact /></td>
                     </tr>
                   </table>
                 </div>

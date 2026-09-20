@@ -1,7 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { getStoredUser } from "services/authSession";
 
 const initialState = {
-  user: JSON.parse(window.localStorage.getItem("user")),
+  user: getStoredUser(),
 };
 
 const localSlice = createSlice({
@@ -14,7 +15,6 @@ const localSlice = createSlice({
     },
     clearUser: (state) => {
       state.user = null;
-      // You can also update localStorage here if needed
     },
   },
 });

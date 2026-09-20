@@ -4,6 +4,14 @@ const mongoose = require('mongoose');
 const { sendEmail } = require('../../middelwares/mail');
 
 const TASK_STATUSES = ['todo', 'inProgress', 'pending', 'onHold', 'completed'];
+const TASK_CATEGORIES = ['None', 'Contact', 'Lead'];
+const TASK_PRIORITIES = ['low', 'normal', 'high', 'urgent'];
+const PRIORITY_COLORS = {
+    low: { backgroundColor: '#E8F5E9', borderColor: '#66BB6A', textColor: '#1B5E20' },
+    normal: { backgroundColor: '#E3F2FD', borderColor: '#42A5F5', textColor: '#0D47A1' },
+    high: { backgroundColor: '#FFF3E0', borderColor: '#FFA726', textColor: '#8A3B00' },
+    urgent: { backgroundColor: '#FFEBEE', borderColor: '#EF5350', textColor: '#8E1010' },
+};
 const currentUser = (req) => User.findOne({ _id: req.user.userId, deleted: false });
 const isValidId = (value) => !value || mongoose.Types.ObjectId.isValid(value);
 const escapeHtml = (value = '') => String(value)
@@ -46,7 +54,7 @@ const normalizeTask = (body, actor, existing) => {
     const allowed = [
         'title', 'category', 'description', 'notes', 'reminder', 'start', 'end',
         'backgroundColor', 'borderColor', 'textColor', 'display', 'url', 'allDay',
-        'assignTo', 'assignToLead', 'assignedToUser', 'status', 'customFields',
+        'assignTo', 'assignToLead', 'assignedToUser', 'status', 'priority', 'customFields',
     ];
     const result = {};
     allowed.forEach((key) => {
@@ -60,6 +68,17 @@ const normalizeTask = (body, actor, existing) => {
         result.delegatedBy = actor._id;
     }
     if (result.status && !TASK_STATUSES.includes(result.status)) delete result.status;
+    if (Object.prototype.hasOwnProperty.call(result, 'priority')) {
+        const priority = String(result.priority || '').toLowerCase();
+        result.priority = TASK_PRIORITIES.includes(priority) ? priority : 'normal';
+        Object.assign(result, PRIORITY_COLORS[result.priority]);
+    }
+    if (Object.prototype.hasOwnProperty.call(result, 'category')) {
+        const category = TASK_CATEGORIES.find(item => item.toLowerCase() === String(result.category || '').toLowerCase());
+        result.category = category || 'None';
+        if (result.category !== 'Contact') result.assignTo = null;
+        if (result.category !== 'Lead') result.assignToLead = null;
+    }
     return result;
 };
 

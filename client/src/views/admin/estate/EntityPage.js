@@ -7,6 +7,7 @@ import DynamicFormRenderer, { isVisible, fieldPath, localized } from 'components
 import { useLanguage } from 'i18n';
 import { getApi, postApi, putApi, deleteApi } from 'services/api';
 import { HasAccess } from '../../../redux/accessUtils';
+import CurrencyAmount from 'components/CurrencyAmount';
 
 const propertySections = [
   ['estate.section.basic', name => ['title', 'description', 'category', 'subtype', 'transactionType'].includes(name)],
@@ -68,7 +69,6 @@ export function EntityPage({ moduleName }) {
   const open = (item, view) => { setError(''); setRecord(item); setReadOnly(view); };
   const filterNames = moduleName === 'Properties' ? ['category', 'subtype', 'transactionType', 'district', 'neighborhood', 'residence', 'bedroom', 'buildingAge', 'occupancyStatus', 'floor', 'area.type', 'sale.status'] : moduleName === 'Partner Customers' ? ['customerType', 'status', 'district'] : ['district', 'neighborhood'];
   const name = item => item.title || item.fullName || item.companyName || item.name || item.propertyType || item._id;
-  const formatPrice = item => item.price?.amount != null ? new Intl.NumberFormat(language, { style: 'currency', currency: item.price.currency || 'TRY' }).format(item.price.amount) : '';
   const remove = async () => {
     const result = await deleteApi(`${base}/`, deleting._id);
     if (result.status === 200) { setDeleting(null); setNotice('Success'); fetchData(); }
@@ -94,7 +94,7 @@ export function EntityPage({ moduleName }) {
         <Select maxW="180px" value={order} aria-label={t('estate.order')} onChange={e => setOrder(e.target.value)}><option value="asc">{t('estate.ascending')}</option><option value="desc">{t('estate.descending')}</option></Select>
       </Stack>
       {busy ? <Spinner /> : <Box overflowX="auto"><Table size="sm"><Thead><Tr><Th>{t('Name')}</Th><Th>{t(moduleName === 'Properties' ? 'Price' : 'Phone')}</Th><Th>{t('Created Date')}</Th><Th>{t('Actions')}</Th></Tr></Thead>
-        <Tbody>{items.map(item => <Tr key={item._id}><Td data-no-translate>{name(item)}</Td><Td data-no-translate>{moduleName === 'Properties' ? formatPrice(item) : item.phone || item.district}</Td><Td>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(language) : ''}</Td><Td><Stack direction="row"><Button size="xs" onClick={() => open(item, true)}>{t('Details')}</Button>{permissions?.update && <Button size="xs" onClick={() => open(item, false)}>{t('Edit')}</Button>}{permissions?.delete && <Button size="xs" colorScheme="red" onClick={() => setDeleting(item)}>{t('Delete')}</Button>}</Stack></Td></Tr>)}</Tbody></Table>{!items.length && <Text p={6}>{t('No Data Found')}</Text>}</Box>}
+        <Tbody>{items.map(item => <Tr key={item._id}><Td data-no-translate>{name(item)}</Td><Td data-no-translate>{moduleName === 'Properties' ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} /> : item.phone || item.district}</Td><Td>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(language) : ''}</Td><Td><Stack direction="row"><Button size="xs" onClick={() => open(item, true)}>{t('Details')}</Button>{permissions?.update && <Button size="xs" onClick={() => open(item, false)}>{t('Edit')}</Button>}{permissions?.delete && <Button size="xs" colorScheme="red" onClick={() => setDeleting(item)}>{t('Delete')}</Button>}</Stack></Td></Tr>)}</Tbody></Table>{!items.length && <Text p={6}>{t('No Data Found')}</Text>}</Box>}
       <Stack direction="row" justify="space-between"><Button disabled={page <= 1 || busy} onClick={() => setPage(page - 1)}>{t('Previous Page')}</Button><Text>{page} / {Math.max(1, Math.ceil(total / 20))} ({total})</Text><Button disabled={page * 20 >= total || busy} onClick={() => setPage(page + 1)}>{t('Next Page')}</Button></Stack>
     </Stack></Card>
     <Modal isOpen={record !== null} onClose={() => setRecord(null)} size="4xl" scrollBehavior="inside"><ModalOverlay /><ModalContent dir={direction}>

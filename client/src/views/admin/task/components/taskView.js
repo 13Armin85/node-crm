@@ -271,7 +271,19 @@ const TaskView = (props) => {
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
                   {" "}<LocalizedText text="Task Related To" />{" "}
                 </Text>
-                <Text>{data?.category ? data?.category : " - "}</Text>
+                <Text>{data?.category ? <LocalizedText text={data.category} /> : " - "}</Text>
+              </GridItem>
+              <GridItem colSpan={{ base: 2, md: 1 }}>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
+                  <LocalizedText text="Status" />
+                </Text>
+                <Text><LocalizedText text={data?.status || "Todo"} /></Text>
+              </GridItem>
+              <GridItem colSpan={{ base: 2, md: 1 }}>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
+                  <LocalizedText text="Priority" />
+                </Text>
+                <Text><LocalizedText text={data?.priority || data?.customFields?.priority || "Normal"} /></Text>
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
@@ -402,12 +414,12 @@ const TaskView = (props) => {
                 >
                   <Text
                     color={
-                      data?.category === "contact" &&
+                      data?.category === "Contact" &&
                       (contactAccess?.view || user?.role === "admin")
                         ? "brand.600"
                         : leadAccess?.view ||
                             (user?.role === "admin" &&
-                              data?.category === "lead")
+                              data?.category === "Lead")
                           ? "brand.600"
                           : "blackAlpha.900"
                     }

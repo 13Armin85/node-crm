@@ -256,7 +256,7 @@ const OpprtunityAdvanceSearch = (props) => {
                   <option value={"Prospecting"}><LocalizedText text="Prospecting" /></option>
                   <option value={"Qualification"}><LocalizedText text="Qualification" /></option>
                   <option value={"Needs Analysis"}><LocalizedText text="Needs Analysis" /></option>
-                  <option value={"Value Propositon"}><LocalizedText text="Value Propositon" /></option>
+                  <option value={"Value Proposition"}><LocalizedText text="Value Proposition" /></option>
                   <option value={"Identifying Decision Makers"}><LocalizedText text="Identifying Decision Makers" /></option>
                   <option value={"Perception Analysis"}><LocalizedText text="Perception Analysis" /></option>
                   <option value={"Proposal/Price Quote"}><LocalizedText text="Proposal/Price Quote" /></option>

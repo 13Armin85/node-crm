@@ -1,10 +1,6 @@
-import { LocalizedText } from 'i18n/runtime';
-// Chakra imports
 import {
   Box,
   Flex,
-  Grid,
-  GridItem,
   Icon,
   Text,
   useColorModeValue,
@@ -12,60 +8,25 @@ import {
 // Assets
 import Dropzone from "components/Dropzone";
 import { MdUpload } from "react-icons/md";
+import { useLanguage } from "i18n";
 
 export default function Upload(props) {
-  const { used, total, count, ...rest } = props;
-  // Chakra Color Mode
-  const textColorPrimary = useColorModeValue("secondaryGray.900", "white");
+  const { count } = props;
+  const { t } = useLanguage();
   const brandColor = useColorModeValue("brand.500", "white");
-  const textColorSecondary = "gray.400";
   return (
-    <Grid templateColumns="repeat(12, 1fr)" mb={3} gap={2}>
-      <GridItem colSpan={{ base: 12, "2xl": 5 }}>
-        <Dropzone
-          w={{ base: "100%", "2xl": "240px" }}
-          me="36px"
-          minH={200}
-          height={"100%"}
-          onFileSelect={props?.onFileSelect}
-          content={
-            <Box>
-              <Icon as={MdUpload} w="70px" h="70px" color={brandColor} />
-              <Flex justify="center" mx="auto" mb="12px">
-                <Text fontSize="xl" fontWeight="700" color={brandColor}><LocalizedText text="Upload Files" /></Text>
-              </Flex>
-              <Text fontSize="sm" fontWeight="500" color="secondaryGray.500">
-                {count > 0 && (
-                  <Text
-                    fontSize="sm"
-                    fontWeight="500"
-                    color="secondaryGray.500"
-                  ><LocalizedText text="Selected Files :" />{count}
-                  </Text>
-                )}
-              </Text>
-            </Box>
-          }
-        />
-      </GridItem>
-      <GridItem colSpan={{ base: 12, "2xl": 7 }}>
-        <Flex direction="column">
-          <Text
-            color={textColorPrimary}
-            fontWeight="bold"
-            textAlign="start"
-            fontSize="2xl"
-            mt={{ base: "20px", "2xl": "50px" }}
-          ><LocalizedText text="Upload Files" /></Text>
-          <Text
-            color={textColorSecondary}
-            fontSize="md"
-            my={{ base: "auto", "2xl": "10px" }}
-            mx="auto"
-            textAlign="start"
-          ><LocalizedText text="Accepted File Types (Images, PDFs, Word docs, Powerpoint, Excel, ZIP, and video files - 15MB max)" /></Text>
-        </Flex>
-      </GridItem>
-    </Grid>
+    <Dropzone
+      w="100%"
+      minH={{ base: "150px", md: "190px" }}
+      borderRadius="16px"
+      onFileSelect={props?.onFileSelect}
+      content={<Flex direction="column" align="center" justify="center" py={6}>
+        <Flex w="64px" h="64px" borderRadius="20px" bg="brand.50" align="center" justify="center" mb={3}><Icon as={MdUpload} w="34px" h="34px" color={brandColor} /></Flex>
+        <Text fontSize={{ base: "md", md: "lg" }} textAlign="center" fontWeight="900" color={brandColor}>{t("Drop files here")}</Text>
+        <Text fontSize="sm" textAlign="center" color="gray.500" mt={1}>{t("or click to choose files")}</Text>
+        <Text fontSize="xs" textAlign="center" color="gray.400" mt={2}>{t("Images, PDF, Word, Excel, ZIP and video")}</Text>
+        {count > 0 && <Box mt={3} px={3} py={1} bg="green.50" color="green.600" borderRadius="full" fontSize="sm" fontWeight="800">{count} {t("Files")} {t("selected")}</Box>}
+      </Flex>}
+    />
   );
 }

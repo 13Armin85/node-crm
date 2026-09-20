@@ -105,10 +105,10 @@ function SignIn() {
         checkBox,
       );
       if (response && response?.status === 200) {
-        navigate("/default");
+        dispatch(setUser(response?.data?.user));
+        navigate("/default", { replace: true });
         toast.success(t("Login Successfully!"));
         resetForm();
-        dispatch(setUser(response?.data?.user));
       } else {
         toast.error(
           response?.data?.error ||

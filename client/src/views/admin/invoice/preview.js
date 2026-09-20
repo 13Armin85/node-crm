@@ -20,6 +20,7 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { getApi } from "services/api";
+import CurrencyAmount from "components/CurrencyAmount";
 
 const Preview = (props) => {
   const { onClose, isOpen, id, generatePDF, selectedId, isLoading } = props;
@@ -164,9 +165,9 @@ const Preview = (props) => {
                           <td>{item?.id}</td>
                           <td>{item?.productName}</td>
                           <td>{item?.qty}</td>
-                          <td>{item?.rate}</td>
-                          <td>{`${item?.discountType === "percent" ? `${item?.discount}%` : item?.discountType === "flatAmount" ? `${invoiceDetails?.currency}${item?.discount}` : item?.discountType === "none" ? 0 : ""}`}</td>
-                          <td>{item?.amount}</td>
+                          <td><CurrencyAmount amount={item?.rate} currency={invoiceDetails?.currency} compact /></td>
+                          <td>{item?.discountType === "percent" ? `${item?.discount}%` : item?.discountType === "flatAmount" ? <CurrencyAmount amount={item?.discount} currency={invoiceDetails?.currency} compact /> : item?.discountType === "none" ? 0 : ""}</td>
+                          <td><CurrencyAmount amount={item?.amount} currency={invoiceDetails?.currency} compact /></td>
                         </tr>
                       ))}
                   </tbody>
@@ -178,35 +179,35 @@ const Preview = (props) => {
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${invoiceDetails?.currency} ${invoiceDetails?.total || 0}`}</td>
+                      ><CurrencyAmount amount={invoiceDetails?.total} currency={invoiceDetails?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Discount" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${invoiceDetails?.currency} ${invoiceDetails?.discount || 0}`}</td>
+                      ><CurrencyAmount amount={invoiceDetails?.discount} currency={invoiceDetails?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Subtotal" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${invoiceDetails?.currency} ${invoiceDetails?.subtotal || 0}`}</td>
+                      ><CurrencyAmount amount={invoiceDetails?.subtotal} currency={invoiceDetails?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Shipping" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${invoiceDetails?.currency} ${invoiceDetails?.shipping || 0}`}</td>
+                      ><CurrencyAmount amount={invoiceDetails?.shipping} currency={invoiceDetails?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Shipping Tax" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${invoiceDetails?.currency} ${invoiceDetails?.shippingTax || 0}`}</td>
+                      ><CurrencyAmount amount={invoiceDetails?.shippingTax} currency={invoiceDetails?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Tax (" />{invoiceDetails?.ptax}%)
@@ -214,14 +215,14 @@ const Preview = (props) => {
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${invoiceDetails?.currency} ${invoiceDetails?.tax || 0}`}</td>
+                      ><CurrencyAmount amount={invoiceDetails?.tax} currency={invoiceDetails?.currency} compact /></td>
                     </tr>
                     <tr>
                       <th style={{ textAlign: "start" }}><LocalizedText text="Grand Total" /></th>
                       <td>:</td>
                       <td
                         style={{ textAlign: "start" }}
-                      >{`${invoiceDetails?.currency} ${invoiceDetails?.grandTotal || 0}`}</td>
+                      ><CurrencyAmount amount={invoiceDetails?.grandTotal} currency={invoiceDetails?.currency} compact /></td>
                     </tr>
                   </table>
                 </div>

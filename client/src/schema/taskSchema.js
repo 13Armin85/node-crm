@@ -14,6 +14,7 @@ export const TaskSchema = yup.object({
   backgroundColor: yup.string(),
   borderColor: yup.string(),
   textColor: yup.string(),
+  priority: yup.string().oneOf(["low", "normal", "high", "urgent"]),
   display: yup.string(),
   url: yup.string(),
   createBy: yup.string(),

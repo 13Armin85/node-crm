@@ -16,10 +16,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Radio,
-  RadioGroup,
   Select,
-  Stack,
   Text,
   Textarea,
 } from "@chakra-ui/react";
@@ -35,8 +32,37 @@ import moment from "moment";
 import { putApi } from "services/api";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
-import { HasAccess } from "../../../../redux/accessUtils";
-import View from "views/admin/lead/View";
+
+const selectionValue = (value) => {
+  if (!value || typeof value !== "object") return value || "";
+  return value._id || value.id || value.value || value.status || value.key || "";
+};
+
+const normalizeTaskCategory = (value) =>
+  ({ none: "None", contact: "Contact", lead: "Lead" }[
+    String(selectionValue(value)).toLowerCase()
+  ] || "None");
+
+const normalizeTaskStatus = (value) => {
+  const status = String(selectionValue(value) || "todo");
+  return ["todo", "inProgress", "pending", "onHold", "completed"].includes(status)
+    ? status
+    : "todo";
+};
+
+const normalizeTaskPriority = (value) => {
+  const priority = String(selectionValue(value) || "normal").toLowerCase();
+  return ["low", "normal", "high", "urgent"].includes(priority)
+    ? priority
+    : "normal";
+};
+
+const priorityColors = {
+  low: { backgroundColor: "#E8F5E9", borderColor: "#66BB6A", textColor: "#1B5E20" },
+  normal: { backgroundColor: "#E3F2FD", borderColor: "#42A5F5", textColor: "#0D47A1" },
+  high: { backgroundColor: "#FFF3E0", borderColor: "#FFA726", textColor: "#8A3B00" },
+  urgent: { backgroundColor: "#FFEBEE", borderColor: "#EF5350", textColor: "#8E1010" },
+};
 
 const AddEdit = (props) => {
   const {
@@ -45,13 +71,11 @@ const AddEdit = (props) => {
     fetchData,
     userAction,
     setAction,
-    viewData,
     id,
     view,
     data,
   } = props;
 
-  const [isChecked, setIsChecked] = useState(false);
   const userId = JSON.parse(localStorage.getItem("user"))?._id;
   const [assignToLeadData, setAssignToLeadData] = useState([]);
   const [assignToContactData, setAssignToContactData] = useState([]);
@@ -64,8 +88,6 @@ const AddEdit = (props) => {
 
   const today = new Date()?.toISOString()?.split("T")[0];
   const todayTime = new Date()?.toISOString()?.split(".")[0];
-
-  const [leadAccess, contactAccess] = HasAccess(["Leads", "Contacts"]);
 
   const contactData = useSelector((state) => state?.contactData?.data);
 
@@ -85,9 +107,9 @@ const AddEdit = (props) => {
     reminder: "",
     start: "",
     end: "",
-    backgroundColor: "",
-    borderColor: "#ffffff",
-    textColor: "",
+    priority: "normal",
+    status: "todo",
+    ...priorityColors.normal,
     allDay: false,
     display: "",
     url: "",
@@ -179,10 +201,10 @@ const AddEdit = (props) => {
         let result = await getApi("api/task/view/", id);
         setFieldValue("customFields", result?.data?.customFields || {});
         setFieldValue("title", result?.data?.title);
-        setFieldValue("category", result?.data?.category);
+        setFieldValue("category", normalizeTaskCategory(result?.data?.category));
         setFieldValue("description", result?.data?.description);
         setFieldValue("notes", result?.data?.notes);
-        setFieldValue("assignTo", result?.data?.assignTo);
+        setFieldValue("assignTo", selectionValue(result?.data?.assignTo));
         setFieldValue("reminder", result?.data?.reminder);
         setFieldValue("start", result?.data?.start);
         setFieldValue("end", result?.data?.end);
@@ -191,9 +213,10 @@ const AddEdit = (props) => {
         setFieldValue("textColor", result?.data?.textColor);
         setFieldValue("display", result?.data?.display);
         setFieldValue("url", result?.data?.url);
-        setFieldValue("status", result?.data?.status);
-        setFieldValue("assignToLead", result?.data?.assignToLead);
-        setFieldValue("assignedToUser", result?.data?.assignedToUser || userId);
+        setFieldValue("status", normalizeTaskStatus(result?.data?.status));
+        setFieldValue("priority", normalizeTaskPriority(result?.data?.priority || result?.data?.customFields?.priority));
+        setFieldValue("assignToLead", selectionValue(result?.data?.assignToLead));
+        setFieldValue("assignedToUser", selectionValue(result?.data?.assignedToUser) || userId);
         // setFieldValue('allDay', result?.data?.allDay === 'Yes' ? 'Yes' : 'No')
         setFieldValue("allDay", result?.data?.allDay);
 
@@ -206,10 +229,10 @@ const AddEdit = (props) => {
     } else if (data) {
       setFieldValue("customFields", data?.customFields || {});
       setFieldValue("title", data?.title);
-      setFieldValue("category", data?.category);
+      setFieldValue("category", normalizeTaskCategory(data?.category));
       setFieldValue("description", data?.description);
       setFieldValue("notes", data?.notes);
-      setFieldValue("assignTo", data?.assignTo);
+      setFieldValue("assignTo", selectionValue(data?.assignTo));
       setFieldValue("reminder", data?.reminder);
       setFieldValue("start", data?.start);
       setFieldValue("end", data?.end);
@@ -218,9 +241,10 @@ const AddEdit = (props) => {
       setFieldValue("textColor", data?.textColor);
       setFieldValue("display", data?.display);
       setFieldValue("url", data?.url);
-      setFieldValue("status", data?.status);
-      setFieldValue("assignToLead", data?.assignToLead);
-      setFieldValue("assignedToUser", data?.assignedToUser || userId);
+      setFieldValue("status", normalizeTaskStatus(data?.status));
+      setFieldValue("priority", normalizeTaskPriority(data?.priority || data?.customFields?.priority));
+      setFieldValue("assignToLead", selectionValue(data?.assignToLead));
+      setFieldValue("assignedToUser", selectionValue(data?.assignedToUser) || userId);
       setFieldValue("allDay", data?.allDay === "Yes" ? "Yes" : "No");
       setFieldValue("allDay", data?.allDay);
 
@@ -284,15 +308,15 @@ const AddEdit = (props) => {
   }, [userAction, id, data]);
 
   return (
-    <Modal isOpen={isOpen} size={"xl"}>
+    <Modal isOpen={isOpen} size={"xl"} isCentered scrollBehavior="inside">
       {!props.from && <ModalOverlay />}
-      <ModalContent overflowY={"auto"} height={"600px"}>
+      <ModalContent maxH={{ base: "calc(100vh - 24px)", md: "calc(100vh - 64px)" }} mx={{ base: 3, md: 0 }}>
         <ModalHeader justifyContent="space-between" display="flex">
           {userAction === "add" ? tr("Create Task") : tr("Edit Task")}
 
           <IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
         </ModalHeader>
-        <ModalBody overflowY={"auto"} height={"700px"}><ManagedFormLayout moduleName="Tasks" formik={formik}>
+        <ModalBody overflowY="auto" px={{ base: 4, md: 6 }}><ManagedFormLayout moduleName="Tasks" formik={formik}>
           {/* Contact Model  */}
           <ContactModel
             isOpen={contactModelOpen}
@@ -351,38 +375,21 @@ const AddEdit = (props) => {
                   fontWeight="500"
                   mb="8px"
                 ><LocalizedText text="Related" /></FormLabel>
-                <RadioGroup
+                <Select
+                  data-task-select="related"
+                  name="category"
+                  value={values.category}
                   onChange={(e) => {
-                    setFieldValue("category", e);
+                    setFieldValue("category", e.target.value);
                     setFieldValue("assignTo", null);
                     setFieldValue("assignToLead", null);
                   }}
-                  value={values.category}
+                  placeholder={tr("Select Category")}
                 >
-                  <Stack direction="row">
-                    <Stack direction="row">
-                      <Radio value="None"><LocalizedText text="None" /></Radio>
-                      {props?.leadContect === "contactView" && (
-                        <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
-                      )}
-                      {props?.leadContect === "leadView" && (
-                        <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
-                      )}
-                      {!props?.leadContect && (
-                        <>
-                          {(user?.role === "admin" ||
-                            contactAccess?.create) && (
-                            <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
-                          )}
-                          {(user?.role === "admin" ||
-                            leadAccess?.create) && (
-                            <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
-                          )}
-                        </>
-                      )}
-                    </Stack>
-                  </Stack>
-                </RadioGroup>
+                  <option value="None" label={tr("None")}>{tr("None")}</option>
+                  {(props?.leadContect === "contactView" || !props?.leadContect) && <option value="Contact" label={tr("Contact")}>{tr("Contact")}</option>}
+                  {(props?.leadContect === "leadView" || !props?.leadContect) && <option value="Lead" label={tr("Lead")}>{tr("Lead")}</option>}
+                </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}
                   {errors?.category && touched?.category && errors?.category}
@@ -393,7 +400,7 @@ const AddEdit = (props) => {
                   <LocalizedText text="Assigned User" />
                 </FormLabel>
                 <Select
-                  value={values?.assignedToUser || ""}
+                  value={selectionValue(values?.assignedToUser)}
                   name="assignedToUser"
                   onChange={handleChange}
                   fontWeight="500"
@@ -453,7 +460,7 @@ const AddEdit = (props) => {
                     ><LocalizedText text="Assign To Contact" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
-                        value={values?.assignTo}
+                        value={selectionValue(values?.assignTo)}
                         name="assignTo"
                         onChange={handleChange}
                         mb={
@@ -506,7 +513,7 @@ const AddEdit = (props) => {
                     ><LocalizedText text="Assign To Lead" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
                       <Select
-                        value={values?.assignToLead}
+                        value={selectionValue(values?.assignToLead)}
                         name="assignToLead"
                         onChange={handleChange}
                         mb={
@@ -631,89 +638,27 @@ const AddEdit = (props) => {
                   {errors?.end && touched?.end && errors?.end}
                 </Text>
               </GridItem>
-              <GridItem colSpan={{ base: 12, sm: 4 }}>
-                <FormLabel
-                  display="flex"
-                  ms="4px"
-                  fontSize="sm"
-                  fontWeight="500"
-                  mb="8px"
-                ><LocalizedText text="Background-Color" /></FormLabel>
-                <Input
-                  type="color"
-                  fontSize="sm"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values?.backgroundColor}
-                  name="backgroundColor"
-                  fontWeight="500"
-                  borderColor={
-                    errors?.backgroundColor && touched?.backgroundColor
-                      ? "red.300"
-                      : null
-                  }
-                />
-                <Text mb="10px" color={"red"}>
-                  {" "}
-                  {errors?.backgroundColor &&
-                    touched?.backgroundColor &&
-                    errors?.backgroundColor}
-                </Text>
-              </GridItem>
-              <GridItem colSpan={{ base: 12, sm: 4 }}>
-                <FormLabel
-                  display="flex"
-                  ms="4px"
-                  fontSize="sm"
-                  fontWeight="500"
-                  mb="8px"
-                ><LocalizedText text="Border-Color" /></FormLabel>
-                <Input
-                  fontSize="sm"
-                  type="color"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values?.borderColor}
-                  name="borderColor"
-                  placeholder={tr("borderColor")}
-                  fontWeight="500"
-                  borderColor={
-                    errors?.borderColor && touched?.borderColor
-                      ? "red.300"
-                      : null
-                  }
-                />
-                <Text mb="10px" color={"red"}>
-                  {" "}
-                  {errors?.borderColor &&
-                    touched?.borderColor &&
-                    errors?.borderColor}
-                </Text>
-              </GridItem>
-              <GridItem colSpan={{ base: 12, sm: 4 }}>
-                <FormLabel
-                  display="flex"
-                  ms="4px"
-                  fontSize="sm"
-                  fontWeight="500"
-                  mb="8px"
-                ><LocalizedText text="Text-Color" /></FormLabel>
-                <Input
-                  fontSize="sm"
-                  type="color"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values?.textColor}
-                  name="textColor"
-                  placeholder={tr("textColor")}
-                  fontWeight="500"
-                  textColor={
-                    errors?.textColor && touched?.textColor ? "red.300" : null
-                  }
-                />
-                <Text mb="10px" color={"red"}>
-                  {" "}
-                  {errors?.textColor && touched?.textColor && errors?.textColor}
+              <GridItem colSpan={{ base: 12, md: 6 }}>
+                <FormLabel display="flex" ms="4px" fontSize="sm" fontWeight="500" mb="8px">
+                  <LocalizedText text="Task priority" />
+                </FormLabel>
+                <Select
+                  value={normalizeTaskPriority(values?.priority)}
+                  onChange={(event) => {
+                    const priority = normalizeTaskPriority(event.target.value);
+                    setFieldValue("priority", priority);
+                    Object.entries(priorityColors[priority]).forEach(([field, color]) =>
+                      setFieldValue(field, color),
+                    );
+                  }}
+                >
+                  <option value="low">{tr("Low")}</option>
+                  <option value="normal">{tr("Normal")}</option>
+                  <option value="high">{tr("High")}</option>
+                  <option value="urgent">{tr("Urgent")}</option>
+                </Select>
+                <Text mt="6px" mb="10px" fontSize="xs" color="gray.500">
+                  <LocalizedText text="Task priority controls its background color." />
                 </Text>
               </GridItem>
 
@@ -749,15 +694,17 @@ const AddEdit = (props) => {
                   mb="8px"
                 ><LocalizedText text="Status" /></FormLabel>
                 <Select
+                  data-task-select="status"
+                  name="status"
                   onChange={(e) => setFieldValue("status", e?.target?.value)}
-                  value={values?.status}
+                  value={normalizeTaskStatus(values?.status)}
                   style={{ fontSize: "14px" }}
                 >
-                  <option value="todo"><LocalizedText text="Todo" /></option>
-                  <option value="onHold"><LocalizedText text="On Hold" /></option>
-                  <option value="pending"><LocalizedText text="Pending" /></option>
-                  <option value="inProgress"><LocalizedText text="In Progress" /></option>
-                  <option value="completed"><LocalizedText text="Completed" /></option>
+                  <option value="todo" label={tr("Todo")}>{tr("Todo")}</option>
+                  <option value="inProgress" label={tr("In Progress")}>{tr("In Progress")}</option>
+                  <option value="pending" label={tr("Pending")}>{tr("Pending")}</option>
+                  <option value="onHold" label={tr("On Hold")}>{tr("On Hold")}</option>
+                  <option value="completed" label={tr("Completed")}>{tr("Completed")}</option>
                 </Select>
               </GridItem>
               <GridItem colSpan={{ base: 12 }}>

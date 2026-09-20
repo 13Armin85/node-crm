@@ -55,24 +55,88 @@ const defaults = {
   ],
   Residences: [field('name', 'text', 'Name', 'نام', 'Ad', required), ...address(), field('address', 'textarea', 'Address', 'آدرس', 'Adres'), field('notes', 'textarea', 'Notes', 'یادداشت‌ها', 'Notlar')],
 };
-const legacyModules = ['Leads', 'Contacts', 'Tasks', 'Meetings', 'Calls', 'Emails', 'Opportunities', 'Invoices', 'Documents', 'Users', 'Email Template'];
+Object.assign(defaults, require('./completeFormDefinitions')({ field, options, required }));
+defaults.Properties.push(
+  field('lrNo', 'text', 'L.R. Number', 'شماره ثبتی', 'L.R. Numarası'),
+  field('Floor', 'number', 'Legacy Floor Number', 'شماره طبقه قدیمی', 'Eski Kat Numarası'),
+  field('yearBuilt', 'number', 'Year Built', 'سال ساخت', 'Yapım Yılı'),
+  field('propertyDescription', 'textarea', 'Property Description', 'توضیحات تکمیلی ملک', 'Gayrimenkul Açıklaması'),
+  field('parking', 'radio', 'Parking', 'پارکینگ', 'Otopark', { options: options(['Yes', 'No']) }),
+  field('flooringType', 'text', 'Flooring Type', 'نوع کف‌پوش', 'Zemin Türü'),
+  field('location', 'text', 'Location', 'موقعیت', 'Konum'),
+  field('Facility', 'text', 'Facilities', 'امکانات', 'Olanaklar'),
+);
+const legacyModules = [
+  'Leads', 'Contacts', 'Tasks', 'Meetings', 'Calls', 'Emails', 'Opportunities',
+  'Invoices', 'Quotes', 'Opportunity Project', 'Bank Details', 'Documents', 'Users',
+  'Email Template',
+];
 const safeName = name => /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)*$/.test(name) && !name.split('.').some(part => ['__proto__', 'prototype', 'constructor', 'password', 'roles', 'createBy', 'deleted'].includes(part));
 async function getDefinition(moduleName) {
+  const legacy = await CustomField.findOne({ moduleName, deleted: false }).lean();
+  const mapLegacyFields = (kind = 'SYSTEM_FIELD') => (legacy?.fields || [])
+    .filter(item => safeName(item.name)
+      && !item.delete
+      && !item.isDefault
+      && (kind === 'SYSTEM_FIELD' || !item.fixed))
+    .map(item => ({
+      ...field(item.name,
+        ({ check: 'checkbox', tel: 'phone', range: 'number', 'datetime-local': 'datetime' })[item.type]
+          || (require('./estateCatalog').fieldTypes.includes(item.type) ? item.type : 'text'),
+        item.label || item.name, item.label || item.name, item.label || item.name, {
+          required: item.validation?.some(rule => rule.require) || false,
+          locked: kind === 'SYSTEM_FIELD' && Boolean(item.fixed),
+          options: item.options?.map(option => ({
+            value: String(option.value),
+            label: localized(option.name, option.name, option.name),
+          })),
+          relation: item.ref,
+        }),
+      kind,
+    }));
   const existing = await FormDefinition.findOne({ moduleName }).lean();
   if (existing) {
     const baseline = defaults[moduleName] || [];
-    const existingNames = new Set(existing.fields.map(item => item.name));
+    const mergedExisting = existing.fields.map(item => {
+      const system = item.kind === 'SYSTEM_FIELD'
+        ? baseline.find(candidate => candidate.name === item.name)
+        : null;
+      return system ? {
+        ...item,
+        type: system.type,
+        relation: system.relation,
+        condition: system.condition,
+        external: Boolean(system.external),
+        locked: Boolean(system.locked),
+        ...(system.locked ? { enabled: true, required: Boolean(system.required) } : {}),
+      } : item;
+    });
+    const existingNames = new Set(mergedExisting.map(item => item.name));
     const missing = baseline.filter(item => !existingNames.has(item.name));
-    return missing.length ? { ...existing, fields: [...existing.fields, ...missing.map((item, index) => ({ ...item, order: existing.fields.length + index }))] } : existing;
+    const knownNames = new Set([...existingNames, ...baseline.map(item => item.name)]);
+    const legacyCustom = defaults[moduleName]
+      ? mapLegacyFields('CUSTOM_FIELD').filter(item => !knownNames.has(item.name))
+      : [];
+    const additions = [...missing, ...legacyCustom];
+    return {
+      ...existing,
+      fields: [...mergedExisting, ...additions.map((item, index) => ({
+        ...item,
+        order: mergedExisting.length + index,
+      }))],
+    };
   }
-  const legacy = await CustomField.findOne({ moduleName, deleted: false }).lean();
   if (!defaults[moduleName] && !legacyModules.includes(moduleName) && !legacy) return null;
-  let fields = defaults[moduleName] || (legacy?.fields || []).filter(f => safeName(f.name)).map(f => field(f.name,
-    ({ check: 'checkbox', tel: 'phone', range: 'number', 'datetime-local': 'datetime' })[f.type] || (require('./estateCatalog').fieldTypes.includes(f.type) ? f.type : 'text'),
-    f.label || f.name, f.label || f.name, f.label || f.name, {
-      required: f.validation?.some(v => v.require) || false, locked: Boolean(f.fixed),
-      options: f.options?.map(o => ({ value: String(o.value), label: localized(o.name, o.name, o.name) })),
-    }));
+  let fields;
+  if (defaults[moduleName]) {
+    const names = new Set(defaults[moduleName].map(item => item.name));
+    fields = [
+      ...defaults[moduleName],
+      ...mapLegacyFields('CUSTOM_FIELD').filter(item => !names.has(item.name)),
+    ];
+  } else {
+    fields = mapLegacyFields('SYSTEM_FIELD');
+  }
   if (!fields.length && legacyModules.includes(moduleName)) {
     const modelName = { Users: 'User', Documents: 'Document', 'Email Template': 'EmailTemps' }[moduleName] || moduleName;
     const model = require('mongoose').models[modelName];

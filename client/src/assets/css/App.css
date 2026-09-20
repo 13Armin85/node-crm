@@ -77,6 +77,13 @@ option {
   box-sizing: border-box;
 }
 
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
 ::-webkit-scrollbar {
   height: 4px !important;
   width: 7px;
@@ -720,17 +727,41 @@ option {
   .crm-shell {
     --crm-sidebar-width: 0px;
   }
+
   .crm-shell[data-sidebar-open="true"] {
-    --crm-sidebar-width: min(280px, 42vw);
+    --crm-sidebar-width: 0px;
   }
-  .crm-shell[data-sidebar-open="false"] .crm-sidebar-shell {
+
+  .crm-sidebar-shell {
+    width: min(280px, calc(100vw - 48px));
+    transform: translateX(-105%);
+    box-shadow: var(--crm-shadow);
     visibility: hidden;
+    transition: transform 200ms ease, visibility 200ms ease;
+  }
+
+  .crm-shell[data-sidebar-open="true"] .crm-sidebar-shell {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .crm-main {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
   }
 }
 
 @media (max-width: 991px) {
   .crm-content {
     padding: 6px 14px !important;
+  }
+
+  .crm-content > *,
+  .chakra-grid,
+  .chakra-simple-grid,
+  .chakra-card {
+    min-width: 0;
   }
 
   .chakra-card,
@@ -769,6 +800,11 @@ option {
 
   .crm-header {
     padding-inline: 12px;
+  }
+
+  .crm-header-profile {
+    min-width: 0;
+    max-width: calc(100vw - 70px);
   }
 
   .crm-header .chakra-heading {
@@ -811,6 +847,12 @@ option {
   .chakra-hstack {
     max-width: 100%;
   }
+
+  .chakra-modal__header,
+  .chakra-modal__body,
+  .chakra-modal__footer {
+    padding-inline: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -822,6 +864,10 @@ option {
   .chakra-menu__menu-list {
     min-width: calc(100vw - 24px) !important;
     max-width: calc(100vw - 24px) !important;
+  }
+
+  .crm-sidebar-shell {
+    width: min(280px, calc(100vw - 24px));
   }
 }
 

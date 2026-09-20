@@ -15,37 +15,41 @@ import { ThemeEditorProvider } from "@hypertheme-editor/chakra-ui";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Provider } from "react-redux";
+import { useSelector } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { LanguageProvider, TranslationBoundary } from "i18n";
 import { RtlProvider } from 'components/rtlProvider/RtlProvider';
-
-const getStoredUser = () => {
-  try {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser || storedUser === "undefined" || storedUser === "null") return null;
-
-    const user = JSON.parse(storedUser);
-    if (user?.role === "superAdmin") {
-      const migratedUser = { ...user, role: "admin" };
-      localStorage.setItem("user", JSON.stringify(migratedUser));
-      return migratedUser;
-    }
-    if (!["admin", "user"].includes(user?.role)) return null;
-    return user;
-  } catch (error) {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("token");
-    return null;
-  }
-};
+import {
+  AUTH_CHANGED_EVENT,
+  clearAuthSession,
+  getAuthSession,
+} from "services/authSession";
 
 function App() {
-  const token =
-    localStorage.getItem("token") || sessionStorage.getItem("token");
+  const reduxUser = useSelector((state) => state?.user?.user);
+  const [session, setSession] = React.useState(getAuthSession);
 
-  const user = getStoredUser();
+  React.useEffect(() => {
+    const syncSession = () => setSession(getAuthSession());
+    window.addEventListener("storage", syncSession);
+    window.addEventListener(AUTH_CHANGED_EVENT, syncSession);
+    return () => {
+      window.removeEventListener("storage", syncSession);
+      window.removeEventListener(AUTH_CHANGED_EVENT, syncSession);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const nextSession = getAuthSession();
+    setSession(nextSession);
+    if (!nextSession.token && (localStorage.getItem("token") || sessionStorage.getItem("token"))) {
+      clearAuthSession();
+    }
+  }, [reduxUser]);
+
+  const user = reduxUser || session.user;
+  const token = session.token;
 
   return (
     <>

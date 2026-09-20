@@ -13,6 +13,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 15 * 1024 * 1024, files: 20 } });
 const validId = (value) => mongoose.Types.ObjectId.isValid(value);
+const categories = new Set(['GENERAL', 'PROPERTIES', 'LEADS', 'OPPORTUNITIES', 'PARTNER_CUSTOMERS', 'CONTACTS', 'INVOICES', 'QUOTES', 'TASKS', 'MEETINGS', 'CALLS', 'EMAILS']);
+const categoryForEntity = {
+    Property: 'PROPERTIES', Lead: 'LEADS', Opportunity: 'OPPORTUNITIES',
+    PartnerCustomer: 'PARTNER_CUSTOMERS', Contact: 'CONTACTS',
+};
 
 const actorScope = async (req) => {
     const actor = await User.findOne({ _id: req.user.userId, deleted: false });
@@ -30,6 +35,7 @@ const index = async (req, res) => {
         const folders = await Document.find(query).populate('createBy', 'firstName lastName username').sort({ folderName: 1 }).lean();
         const entityType = req.query.entityType;
         const entityId = req.query.entityId;
+        const category = categories.has(req.query.category) ? req.query.category : null;
         const result = folders.map((folder) => {
             let files = (folder.file || []).filter((item) => !item.deleted).map((item) => {
                 if (item.entityType) return item;
@@ -39,12 +45,13 @@ const index = async (req, res) => {
             });
             if (entityType) files = files.filter((item) => item.entityType === entityType);
             if (entityId) files = files.filter((item) => String(item.entityId) === String(entityId));
+            if (category) files = files.filter((item) => (item.category || categoryForEntity[item.entityType] || 'GENERAL') === category);
             return {
                 ...folder,
                 createByName: [folder.createBy?.firstName, folder.createBy?.lastName].filter(Boolean).join(' ') || folder.createBy?.username,
                 files,
             };
-        }).filter((folder) => !entityType || folder.files.length);
+        }).filter((folder) => (!entityType && !category) || folder.files.length);
         res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ message: 'Failed to load documents', error: error.message });
@@ -60,7 +67,7 @@ const createFolder = async (req, res) => {
         const parentFolder = req.body.parentFolder && validId(req.body.parentFolder) ? req.body.parentFolder : null;
         const existing = await Document.findOne({ createBy: access.actor._id, parentFolder, folderName, deleted: false });
         if (existing) return res.status(200).json(existing);
-        const folder = await Document.create({ folderName, parentFolder, createBy: access.actor._id, file: [] });
+        const folder = await Document.create({ folderName, parentFolder, createBy: access.actor._id, file: [], isRoot: false });
         res.status(201).json(folder);
     } catch (error) {
         res.status(400).json({ message: 'Failed to create folder', error: error.message });
@@ -99,12 +106,14 @@ const file = async (req, res) => {
         if (req.body.folderId && validId(req.body.folderId)) {
             folder = await Document.findOne({ _id: req.body.folderId, ...access.query, deleted: false });
         } else {
-            const folderName = String(req.body.folderName || 'عمومی').trim();
-            folder = await Document.findOne({ folderName, createBy: access.actor._id, parentFolder: null, deleted: false });
-            if (!folder) folder = new Document({ folderName, createBy: access.actor._id, parentFolder: null, file: [] });
+            folder = await Document.findOne({ createBy: access.actor._id, isRoot: true, deleted: false });
+            if (!folder) folder = new Document({ folderName: '__ROOT__', isRoot: true, createBy: access.actor._id, parentFolder: null, file: [] });
         }
         if (!folder) return res.status(404).json({ message: 'Folder not found or access denied' });
         const relation = entityFields(req.body);
+        const category = categories.has(req.body.category)
+            ? req.body.category
+            : (categoryForEntity[relation.entityType] || 'GENERAL');
         const customFields = (() => { try { return JSON.parse(req.body.customFields || '{}'); } catch { return {}; } })();
         const baseUrl = `${req.protocol}://${req.get('host')}`;
         const files = req.files.map((item) => ({
@@ -115,6 +124,7 @@ const file = async (req, res) => {
             size: item.size,
             createOn: new Date(),
             customFields,
+            category,
             ...relation,
         }));
         folder.file.push(...files);
@@ -172,6 +182,7 @@ const linkDocument = async (req, res) => {
         if (!relation.entityId) return res.status(400).json({ message: 'Select a valid record' });
         ['linkContact', 'linkLead', 'linkProperty', 'linkOpportunity', 'linkPartnerCustomer'].forEach((key) => { result.found[key] = null; });
         Object.assign(result.found, relation);
+        result.found.category = categoryForEntity[relation.entityType] || result.found.category || 'GENERAL';
         await result.folder.save();
         res.status(200).json({ message: 'Document linked successfully' });
     } catch (error) {

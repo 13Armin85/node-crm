@@ -45,6 +45,23 @@ test('builder adds, edits, reorders and removes custom fields while protecting s
   assert.throws(() => validateDefinition({ fields: [] }, current, baseline));
   assert.throws(() => validateDefinition({ fields: [...baseline.fields, { ...custom, label: { en: 'Only' } }] }, current, baseline));
 });
+test('form builder catalogs every CRM data-entry module with unique valid fields', () => {
+  const expectedModules = [
+    'Properties', 'Partner Customers', 'Residences', 'Leads', 'Contacts',
+    'Opportunities', 'Tasks', 'Meetings', 'Calls', 'Emails', 'Invoices',
+    'Quotes', 'Opportunity Project', 'Bank Details', 'Documents', 'Users',
+    'Email Template',
+  ];
+  assert.deepEqual(Object.keys(defaults), expectedModules);
+  for (const [moduleName, fields] of Object.entries(defaults)) {
+    assert(fields.length > 0, `${moduleName} has no fields`);
+    assert.equal(new Set(fields.map(field => field.name)).size, fields.length, `${moduleName} has duplicate fields`);
+    assert.equal(validateDefinition({ fields }, { fields }, { fields }).length, fields.length);
+  }
+  assert(defaults.Properties.some(field => field.name === 'lrNo'));
+  assert(defaults.Invoices.some(field => field.name === 'quoteStage'));
+  assert(defaults.Leads.some(field => field.name === 'associatedListing' && field.external));
+});
 test('migration preserves explicit values and reports unknown types', () => {
   assert.deepEqual(mapProperty({ category: 'COMMERCIAL', propertyType: 'Apartment', price: { amount: 10 }, listingPrice: 20 }).update, {});
   assert.equal(mapProperty({ propertyType: 'Unknown' }).unknown, 'Unknown');

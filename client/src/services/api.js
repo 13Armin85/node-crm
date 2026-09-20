@@ -1,6 +1,7 @@
 import axios from "axios";
 import { constant } from "constant";
 import { translate } from 'i18n';
+import { saveAuthSession } from "./authSession";
 
 const getRequestConfig = (config = {}) => ({
   ...config,
@@ -47,12 +48,11 @@ export const postApi = async (path, data, login) => {
       getRequestConfig(),
     );
     if (result?.data?.token && result?.data?.token !== null) {
-      if (login) {
-        localStorage.setItem("token", result?.data?.token);
-      } else {
-        sessionStorage.setItem("token", result?.data?.token);
-      }
-      localStorage.setItem("user", JSON.stringify(result?.data?.user));
+      saveAuthSession({
+        token: result.data.token,
+        user: result.data.user,
+        remember: Boolean(login),
+      });
     }
     return normalizeResponse(result);
   } catch (e) {

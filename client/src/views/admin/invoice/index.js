@@ -26,6 +26,7 @@ import ImportModal from "./components/ImportModel";
 import InvoiceAdvanceSearch from "./components/InvoiceAdvanceSearch";
 import Preview from "./preview";
 import { TbFileInvoice } from "react-icons/tb";
+import CurrencyAmount from "components/CurrencyAmount";
 
 const Index = (props) => {
   const [action, setAction] = useState(false);
@@ -225,11 +226,9 @@ const Index = (props) => {
       accessor: "grandTotal",
       cell: (cell) => (
         <div className="selectOpt">
-          <Text>
-            {cell?.row?.original?.grandTotal
-              ? `${cell?.row?.original?.currency} ${cell?.row?.original?.grandTotal}`
-              : "-"}
-          </Text>
+          {cell?.row?.original?.grandTotal
+            ? <CurrencyAmount amount={cell.row.original.grandTotal} currency={cell.row.original.currency} compact />
+            : <Text>-</Text>}
         </div>
       ),
     },

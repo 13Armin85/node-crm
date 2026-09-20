@@ -17,7 +17,7 @@ import {
 import { ItemContent } from "components/menu/ItemContent";
 import { SearchBar } from "components/navbar/searchBar/SearchBar";
 import PropTypes from "prop-types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 // Assets
 import { MdInfoOutline, MdNotificationsNone } from "react-icons/md";
 import { FaEthereum } from "react-icons/fa";
@@ -30,6 +30,8 @@ import FixedPlugin from "components/fixedPlugin/FixedPlugin";
 import { useDispatch, useSelector } from "react-redux";
 import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect";
 import { useLanguage } from "i18n";
+import { clearUser } from "../../redux/slices/localSlice";
+import { clearAuthSession } from "services/authSession";
 export default function HeaderLinks(props) {
   const { secondary } = props;
   // Chakra Color Mode
@@ -58,19 +60,16 @@ export default function HeaderLinks(props) {
   const userId = JSON.parse(localStorage.getItem("user"))?._id;
   const loginUser = useSelector((state) => state?.user?.user);
 
-  const [isLogoutScheduled, setIsLogoutScheduled] = useState(false);
-
-  const logOut = (message) => {
-    localStorage.clear();
-    sessionStorage.clear();
-    navigate("/auth");
+  const logOut = useCallback((message) => {
+    clearAuthSession();
+    dispatch(clearUser());
+    navigate("/auth/sign-in", { replace: true });
     if (message) {
       toast.error(message);
     } else {
       toast.success(t("Log out Successfully"));
     }
-    setIsLogoutScheduled(true);
-  };
+  }, [dispatch, navigate, t]);
 
   useEffect(() => {
     const token =
@@ -81,23 +80,20 @@ export default function HeaderLinks(props) {
         const decodedToken = jwtDecode(token);
         const currentTime = Date.now() / 1000; // Convert milliseconds to seconds
         if (decodedToken?.exp < currentTime) {
-          if (!isLogoutScheduled) {
-            logOut("Token has expired");
-          }
+          logOut(t("Token has expired"));
         } else {
           // Schedule automatic logout when the token expires
           const timeToExpire = (decodedToken?.exp - currentTime) * 1000; // Convert seconds to milliseconds
-          setTimeout(() => {
-            if (!isLogoutScheduled) {
-              logOut("Token has expired");
-            }
+          const timeoutId = setTimeout(() => {
+            logOut(t("Token has expired"));
           }, timeToExpire);
+          return () => clearTimeout(timeoutId);
         }
       } catch (error) {
         console.error("Error decoding token:", error);
       }
     }
-  }, [isLogoutScheduled]);
+  }, [logOut, t]);
 
   return (
     <Flex

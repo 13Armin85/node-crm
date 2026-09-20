@@ -89,7 +89,14 @@ function validateDefinition(input, current, baseline) {
         if (typeof field[key]?.[lang] !== 'string' || (key === 'label' && !field[key][lang].trim())) fail(key, 'translationsRequired');
       }
     }
-    const result = { ...field, order, relation: system?.relation, condition: system?.condition, locked: system?.locked || false };
+    const result = {
+      ...field,
+      order,
+      relation: system?.relation,
+      condition: system?.condition,
+      external: Boolean(system?.external),
+      locked: system?.locked || false,
+    };
     if (system) {
       result.kind = 'SYSTEM_FIELD'; result.type = system.type;
       if (system.options) result.options = system.options.map(option => ({ ...option, label: field.options?.find(o => o.value === option.value)?.label || option.label }));

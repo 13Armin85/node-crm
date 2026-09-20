@@ -221,6 +221,7 @@ const DocumentPage = () => {
   return (
     <Box width="100%" minW={0}>
       <Flex
+        className="crm-page-hero crm-document-heading"
         justify="space-between"
         align={{ base: "stretch", md: "center" }}
         direction={{ base: "column", md: "row" }}
@@ -228,8 +229,8 @@ const DocumentPage = () => {
         mb={5}
       >
         <Box minW={0}>
-          <Heading size={{ base: "md", md: "lg" }}>{t("Document Center")}</Heading>
-          <Text color="gray.500" mt={1} fontSize={{ base: "sm", md: "md" }}>
+          <Heading className="crm-page-hero__title" size={{ base: "md", md: "lg" }}>{t("Document Center")}</Heading>
+          <Text className="crm-page-hero__subtitle" mt={1} fontSize={{ base: "sm", md: "md" }}>
             {t("Store documents in folders or without a folder and filter them by section.")}
           </Text>
         </Box>

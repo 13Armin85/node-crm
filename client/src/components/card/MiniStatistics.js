@@ -21,7 +21,7 @@ export default function Default(props) {
   const textColorSecondary = "secondaryGray.600";
 
   return (
-    <Card cursor={"pointer"} py="15px" onClick={props?.onClick}>
+    <Card className="crm-stat-card" cursor={"pointer"} py="15px" onClick={props?.onClick}>
       <Flex
         my="auto"
         h="100%"
@@ -30,7 +30,7 @@ export default function Default(props) {
       >
         {startContent}
 
-        <Stat my="auto" minW="0" ms={startContent ? "18px" : "0px"}>
+        <Stat className="crm-stat-card__content" my="auto" minW="0" ms={startContent ? "18px" : "0px"}>
           <StatLabel
             lineHeight="1.5"
             overflowWrap="anywhere"

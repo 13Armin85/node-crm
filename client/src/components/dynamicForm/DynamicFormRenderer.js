@@ -86,7 +86,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
     };
     Object.entries(resets[field.name] || {}).forEach(([key, v]) => formik.setFieldValue(key, v));
   };
-  return <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={5} dir="ltr">
+  return <Grid className="crm-dynamic-form" templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={5} dir="ltr">
     {[...definition.fields].sort((a, b) => a.order - b.order).filter(field => (!customOnly || field.kind === 'CUSTOM_FIELD') && !field.external && isVisible(field, formik.values)).map(field => {
       const path = fieldPath(field); const value = getIn(formik.values, path); const error = getIn(formik.errors, path);
       const label = localized(field.label, language); const id = `field-${path}`;
@@ -117,7 +117,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
           value={value ?? ''}
           onChange={e => change(field, type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)} />;
       }
-      return <FormControl key={path} isRequired={field.required} isInvalid={Boolean(error)}>
+      return <FormControl className="crm-dynamic-field" key={path} isRequired={field.required} isInvalid={Boolean(error)} data-read-only={readOnly ? "true" : "false"}>
         {field.type !== 'checkbox' && <FormLabel htmlFor={id}>{label}</FormLabel>}
         <Box>{control}</Box>
         {field.helpText && <FormHelperText>{localized(field.helpText, language)}</FormHelperText>}

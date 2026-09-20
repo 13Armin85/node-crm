@@ -31,7 +31,9 @@ export default function Dashboard(props) {
   // states and functions
   const [fixed] = useState(false);
   const [toggleSidebar, setToggleSidebar] = useState(false);
-  const [openSidebar, setOpenSidebar] = useState(false);
+  const [openSidebar, setOpenSidebar] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1280,
+  );
   const { direction, t } = useLanguage();
   const location = useLocation();
   // const user = JSON.parse(localStorage.getItem("user"))
@@ -216,6 +218,14 @@ export default function Dashboard(props) {
     dispatch(fetchImage());
     dispatch(fetchModules());
   }, [dispatch]);
+
+  useEffect(() => {
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape" && window.innerWidth < 1280) setOpenSidebar(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
 
   const largeLogo = useSelector((state) =>
     state?.images?.images?.filter((item) => item?.isActive === true),

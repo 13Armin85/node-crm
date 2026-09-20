@@ -1,315 +1,137 @@
-import { LocalizedText } from 'i18n/runtime';
-// Chakra Imports
 import {
   Avatar,
+  Box,
   Button,
   Flex,
   Icon,
-  Image,
+  IconButton,
   Menu,
   MenuButton,
+  MenuDivider,
   MenuItem,
   MenuList,
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
-// Custom Components
-import { ItemContent } from "components/menu/ItemContent";
-import { SearchBar } from "components/navbar/searchBar/SearchBar";
 import PropTypes from "prop-types";
 import { useCallback, useEffect } from "react";
-// Assets
-import { MdInfoOutline, MdNotificationsNone } from "react-icons/md";
-import { FaEthereum } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
-import { getApi } from "services/api";
+import {
+  FiBell,
+  FiChevronDown,
+  FiHome,
+  FiLogOut,
+  FiSettings,
+  FiUser,
+} from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import jwtDecode from "jwt-decode";
-import { ThemeEditor } from "./ThemeEditor";
-import FixedPlugin from "components/fixedPlugin/FixedPlugin";
 import { useDispatch, useSelector } from "react-redux";
 import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect";
 import { useLanguage } from "i18n";
 import { clearUser } from "../../redux/slices/localSlice";
 import { clearAuthSession } from "services/authSession";
-export default function HeaderLinks(props) {
-  const { secondary } = props;
-  // Chakra Color Mode
-  const navbarIcon = useColorModeValue("gray.400", "white");
-  let menuBg = useColorModeValue("white", "navy.800");
-  const textColor = useColorModeValue("secondaryGray.900", "white");
-  const textColorBrand = useColorModeValue("brand.700", "brand.400");
-  const ethColor = useColorModeValue("gray.700", "white");
-  const borderColor = useColorModeValue("#E6ECFA", "rgba(135, 140, 189, 0.3)");
-  const ethBg = useColorModeValue("secondaryGray.300", "navy.900");
-  const ethBox = useColorModeValue("white", "navy.800");
-  const shadow = useColorModeValue(
-    "14px 17px 40px 4px rgba(112, 144, 176, 0.18)",
-    "14px 17px 40px 4px rgba(112, 144, 176, 0.06)",
-  );
-  const { t } = useLanguage();
-  // const borderButton = useColorModeValue('secondaryGray.500', 'whiteAlpha.200');
 
-  // const [loginUser, setLoginUser] = useState();
+export default function HeaderLinks() {
+  const panelBg = useColorModeValue("white", "#121a2b");
+  const textColor = useColorModeValue("#172033", "white");
+  const mutedColor = useColorModeValue("gray.500", "gray.400");
+  const { t, direction } = useLanguage();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userData = useSelector((state) => state?.user?.user);
-
   const data = typeof userData === "string" ? JSON.parse(userData) : userData;
-  const user = [data?.firstName, data?.lastName].filter(Boolean).join(" ");
-  const userId = JSON.parse(localStorage.getItem("user"))?._id;
-  const loginUser = useSelector((state) => state?.user?.user);
+  const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+  const loginUser = data || storedUser;
+  const userName = [loginUser?.firstName, loginUser?.lastName].filter(Boolean).join(" ") || t("User");
+  const userRole = loginUser?.role ? t(loginUser.role) : t("Team member");
 
   const logOut = useCallback((message) => {
     clearAuthSession();
     dispatch(clearUser());
     navigate("/auth/sign-in", { replace: true });
-    if (message) {
-      toast.error(message);
-    } else {
-      toast.success(t("Log out Successfully"));
-    }
+    message ? toast.error(message) : toast.success(t("Log out Successfully"));
   }, [dispatch, navigate, t]);
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) return undefined;
 
-    if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
-        const currentTime = Date.now() / 1000; // Convert milliseconds to seconds
-        if (decodedToken?.exp < currentTime) {
-          logOut(t("Token has expired"));
-        } else {
-          // Schedule automatic logout when the token expires
-          const timeToExpire = (decodedToken?.exp - currentTime) * 1000; // Convert seconds to milliseconds
-          const timeoutId = setTimeout(() => {
-            logOut(t("Token has expired"));
-          }, timeToExpire);
-          return () => clearTimeout(timeoutId);
-        }
-      } catch (error) {
-        console.error("Error decoding token:", error);
+    try {
+      const decodedToken = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      if (decodedToken?.exp < currentTime) {
+        logOut(t("Token has expired"));
+        return undefined;
       }
+      const timeoutId = setTimeout(() => logOut(t("Token has expired")), (decodedToken.exp - currentTime) * 1000);
+      return () => clearTimeout(timeoutId);
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return undefined;
     }
   }, [logOut, t]);
 
   return (
-    <Flex
-      w={{ sm: "100%", md: "auto" }}
-      alignItems="center"
-      justifyContent={"end"}
-      flexDirection="row"
-      gap="8px"
-      bg={menuBg}
-      flexWrap={secondary ? { base: "wrap", md: "nowrap" } : "unset"}
-      p="6px"
-      dir="ltr"
-      borderRadius="30px"
-      boxShadow={shadow}
-      position="relative"
-      zIndex="1500"
-    >
-      {/* <SearchBar
-				mb={secondary ? { base: "10px", md: "unset" } : "unset"}
-				me="10px"
-				borderRadius="30px"
-			/> */}
-
-      <Flex
-        bg={ethBg}
-        display={secondary ? "flex" : "none"}
-        borderRadius="30px"
-        ms="auto"
-        p="6px"
-        align="center"
-        me="6px"
-      >
-        <Flex
-          align="center"
-          justify="center"
-          bg={ethBox}
-          h="29px"
-          w="29px"
-          borderRadius="30px"
-          me="7px"
-        >
-          <Icon color={ethColor} w="9px" h="14px" as={FaEthereum} />
-        </Flex>
-        <Text
-          w="max-content"
-          color={ethColor}
-          fontSize="sm"
-          fontWeight="700"
-          me="6px"
-        >
-          1,924
-          <Text as="span" display={{ base: "none", md: "unset" }}>
-            {" "}<LocalizedText text="ETH" /></Text>
-        </Text>
-      </Flex>
-
-      <Menu>
-        <MenuButton p="0px" aria-label={t("Profile Settings")}>
-          <Icon
-            mt="6px"
-            as={MdNotificationsNone}
-            color={navbarIcon}
-            w="18px"
-            h="18px"
-            me="10px"
-          />
-        </MenuButton>
-        <MenuList
-          boxShadow={shadow}
-          p="20px"
-          borderRadius="20px"
-          bg={menuBg}
-          border="none"
-          mt="22px"
-          me={{ base: "30px", md: "unset" }}
-          minW={{ base: "unset", md: "400px", xl: "450px" }}
-          maxW={{ base: "360px", md: "unset" }}
-        >
-          <Flex jusitfy="space-between" w="100%" mb="20px">
-            <Text fontSize="md" fontWeight="600" color={textColor}>
-              {t("Notifications")}
-            </Text>
-            <Text
-              fontSize="sm"
-              fontWeight="500"
-              color={textColorBrand}
-              ms="auto"
-              cursor="pointer"
-            >
-              {t("Mark all read")}
-            </Text>
-          </Flex>
-          <Flex flexDirection="column">
-            <MenuItem
-              _hover={{ bg: "none" }}
-              _focus={{ bg: "none" }}
-              px="0"
-              borderRadius="8px"
-              mb="10px"
-            >
-              <ItemContent info="Horizon UI Dashboard PRO" aName="Alicia" />
-            </MenuItem>
-            <MenuItem
-              _hover={{ bg: "none" }}
-              _focus={{ bg: "none" }}
-              px="0"
-              borderRadius="8px"
-              mb="10px"
-            >
-              <ItemContent
-                info="Horizon Design System Free"
-                aName="Josh Henry"
-              />
-            </MenuItem>
-          </Flex>
-        </MenuList>
-      </Menu>
-      {/* <FixedPlugin /> */}
-      {/* <ThemeEditor navbarIcon={navbarIcon} /> */}
-      <Flex gap="8px" align="center" me="10px" flexShrink={0}>
+    <Flex className="crm-header-actions" align="center" gap={{ base: "4px", md: "8px" }} dir="ltr">
+      <Flex className="crm-header-tools" align="center">
         <ThemeToggle />
         <LanguageSelect compact />
       </Flex>
 
-      <Menu style={{ zIndex: 1500 }}>
-        <MenuButton p="0px">
-          <Avatar
-            _hover={{ cursor: "pointer" }}
-            color="white"
-            name={user || t('User')}
-            bg="#11047A"
-            size="sm"
-            w="40px"
-            h="40px"
-          />
-        </MenuButton>
-        <MenuList
-          boxShadow={shadow}
-          p="0px"
-          mt="10px"
-          borderRadius="20px"
-          bg={menuBg}
-          border="none"
+      <Menu placement="bottom-end" isLazy>
+        <MenuButton
+          as={IconButton}
+          className="crm-header-icon-button"
+          aria-label={t("Notifications")}
+          icon={<FiBell />}
+          variant="ghost"
+        />
+        <MenuList className="crm-notifications-menu" dir={direction} p="10px">
+          <Flex align="center" justify="space-between" px="8px" py="6px">
+            <Text fontSize="sm" fontWeight="800" color={textColor}>{t("Notifications")}</Text>
+            <Box className="crm-live-badge">{t("Live")}</Box>
+          </Flex>
+          <Flex className="crm-notifications-empty" direction="column" align="center" justify="center">
+            <Flex className="crm-notifications-empty__icon" align="center" justify="center"><FiBell /></Flex>
+            <Text fontWeight="700" fontSize="sm">{t("You are all caught up")}</Text>
+            <Text color={mutedColor} fontSize="xs" textAlign="center">{t("New activity will appear here")}</Text>
+          </Flex>
+        </MenuList>
+      </Menu>
+
+      <Box className="crm-header-divider" />
+
+      <Menu placement="bottom-end" isLazy>
+        <MenuButton
+          as={Button}
+          className="crm-profile-button"
+          variant="ghost"
+          rightIcon={<FiChevronDown />}
+          h="48px"
+          px={{ base: "4px", md: "7px" }}
         >
-          <Flex w="100%" mb="0px">
-            <Text
-              ps="20px"
-              pt="16px"
-              pb="10px"
-              w="100%"
-              borderBottom="1px solid"
-              borderColor={borderColor}
-              fontSize="sm"
-              fontWeight="700"
-              textTransform={"capitalize"}
-              color={textColor}
-            >
-              {t("Hey")}, {user}
-            </Text>
+          <Flex align="center" gap="10px" textAlign="start">
+            <Avatar name={userName} size="sm" className="crm-profile-avatar" />
+            <Box className="crm-profile-meta">
+              <Text color={textColor} fontSize="sm" fontWeight="800" lineHeight="1.2" noOfLines={1}>{userName}</Text>
+              <Text color={mutedColor} fontSize="11px" lineHeight="1.35" noOfLines={1}>{userRole}</Text>
+            </Box>
           </Flex>
-
-          <Flex flexDirection="column" p="10px">
-            <MenuItem
-              _hover={{ bg: "none" }}
-              _focus={{ bg: "none" }}
-              borderRadius="8px"
-              px="14px"
-            >
-              <Text fontSize="sm" onClick={() => navigate(`/admin/`)}>
-                {t("Home")}
-              </Text>
-            </MenuItem>
-
-            {loginUser?.role === "admin" && (
-              <MenuItem
-                _hover={{ bg: "none" }}
-                _focus={{ bg: "none" }}
-                borderRadius="8px"
-                px="14px"
-              >
-                <Text fontSize="sm" onClick={() => navigate("/admin-setting")}>
-                  {t("Admin Settings")}
-                </Text>
-              </MenuItem>
-            )}
-            <MenuItem
-              _hover={{ bg: "none" }}
-              _focus={{ bg: "none" }}
-              borderRadius="8px"
-              px="14px"
-            >
-              <Text
-                fontSize="sm"
-                onClick={() =>
-                  navigate(
-                    `/userView/${JSON.parse(localStorage.getItem("user"))?._id}`,
-                  )
-                }
-              >
-                {t("Profile Settings")}
-              </Text>
-            </MenuItem>
-            {/*<MenuItem _hover={{ bg: 'none' }} _focus={{ bg: 'none' }} borderRadius="8px" px="14px">
-							<Text fontSize="sm">Newsletter Settings</Text>
-						</MenuItem> */}
-            <MenuItem
-              _hover={{ bg: "none" }}
-              onClick={() => logOut()}
-              _focus={{ bg: "none" }}
-              color="red.400"
-              borderRadius="8px"
-              px="14px"
-            >
-              <Text fontSize="sm">{t("Log out")}</Text>
-            </MenuItem>
-          </Flex>
+        </MenuButton>
+        <MenuList className="crm-profile-menu" dir={direction} bg={panelBg} p="8px">
+          <Box px="10px" pt="7px" pb="10px">
+            <Text fontSize="xs" color={mutedColor}>{t("Signed in as")}</Text>
+            <Text fontSize="sm" fontWeight="800" color={textColor}>{userName}</Text>
+          </Box>
+          <MenuDivider />
+          <MenuItem icon={<Icon as={FiHome} />} onClick={() => navigate("/admin/")}>{t("Home")}</MenuItem>
+          {loginUser?.role === "admin" && (
+            <MenuItem icon={<Icon as={FiSettings} />} onClick={() => navigate("/admin-setting")}>{t("Admin Settings")}</MenuItem>
+          )}
+          <MenuItem icon={<Icon as={FiUser} />} onClick={() => navigate(`/userView/${storedUser?._id}`)}>{t("Profile Settings")}</MenuItem>
+          <MenuDivider />
+          <MenuItem className="crm-menu-danger" icon={<Icon as={FiLogOut} />} onClick={() => logOut()}>{t("Log out")}</MenuItem>
         </MenuList>
       </Menu>
     </Flex>
@@ -317,8 +139,8 @@ export default function HeaderLinks(props) {
 }
 
 HeaderLinks.propTypes = {
-  variant: PropTypes?.string,
-  fixed: PropTypes?.bool,
-  secondary: PropTypes?.bool,
-  onOpen: PropTypes?.func,
+  variant: PropTypes.string,
+  fixed: PropTypes.bool,
+  secondary: PropTypes.bool,
+  onOpen: PropTypes.func,
 };

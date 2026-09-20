@@ -13,6 +13,9 @@ import {
   MenuList,
   Select,
   Text,
+  Input,
+  InputGroup,
+  InputLeftElement,
   useDisclosure,
 } from "@chakra-ui/react";
 import { getApi } from "services/api";
@@ -31,7 +34,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { fetchTaskData } from "../../../redux/slices/taskSlice";
 import { toast } from "react-toastify";
-import { FiColumns, FiList, FiPlus } from "react-icons/fi";
+import { FiColumns, FiFilter, FiList, FiPlus, FiSearch } from "react-icons/fi";
 import TaskKanban from "./components/TaskKanban";
 
 const selectionValue = (value) => {
@@ -327,16 +330,23 @@ const Task = () => {
     });
   }, []);
 
-  const visibleData = assigneeFilter === "all"
-    ? data
-    : data.filter((item) => String(selectionValue(item.assignedToUser) || selectionValue(item.createBy)) === assigneeFilter);
+  const taskSource = displaySearchData ? searchedData : data;
+  const visibleData = taskSource
+    .filter((item) => assigneeFilter === "all" || String(selectionValue(item.assignedToUser) || selectionValue(item.createBy)) === assigneeFilter)
+    .filter((item) => {
+      const needle = searchboxOutside.trim().toLowerCase();
+      if (!needle) return true;
+      return [item.title, item.description, item.notes, item.category]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(needle));
+    });
 
   return (
     <Box width="100%" minW={0}>
-      <Flex mb={4} justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={3}>
+      <Flex className="crm-page-hero crm-task-page-hero" mb={4} justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={3}>
         <Box>
-          <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="900"><LocalizedText text="Task Management" /></Text>
-          <Text color="gray.500" fontSize="sm"><LocalizedText text="Assign tasks to users and change work status with drag and drop." /></Text>
+          <Text className="crm-page-hero__title" fontSize={{ base: "xl", md: "2xl" }} fontWeight="900"><LocalizedText text="Task Management" /></Text>
+          <Text className="crm-page-hero__subtitle" fontSize="sm"><LocalizedText text="Assign tasks to users and change work status with drag and drop." /></Text>
         </Box>
         <Flex gap={2} wrap="wrap" width={{ base: "100%", md: "auto" }}>
           {user?.role === "admin" && (
@@ -352,9 +362,16 @@ const Task = () => {
           {permission?.create && <Button flex={{ base: "1 1 auto", sm: "initial" }} size="sm" variant="brand" leftIcon={<FiPlus />} onClick={addBtn}><LocalizedText text="New Task" /></Button>}
         </Flex>
       </Flex>
+      {viewMode === "kanban" && (
+        <Flex className="crm-task-searchbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
+          <InputGroup><InputLeftElement h="100%" pointerEvents="none"><FiSearch /></InputLeftElement><Input value={searchboxOutside} onChange={(event) => setSearchboxOutside(event.target.value)} placeholder={tr("Search...")} /></InputGroup>
+          <Button variant="outline" colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setAdvanceSearch(true)}><LocalizedText text="Filters" /></Button>
+        </Flex>
+      )}
       {viewMode === "kanban" ? (
         <TaskKanban tasks={visibleData} assignees={assignees} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
       ) : <CommonCheckTable
+        pageHeader={false}
         title={tr("Tasks")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}

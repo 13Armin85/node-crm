@@ -1,4 +1,4 @@
-import { Icon, SimpleGrid } from "@chakra-ui/react";
+import { Box, Flex, Heading, Icon, SimpleGrid, Text } from "@chakra-ui/react";
 import MiniStatistics from "components/card/MiniStatistics";
 import IconBox from "components/icons/IconBox";
 import { FaWpforms } from "react-icons/fa";
@@ -9,12 +9,14 @@ import { GrValidate } from "react-icons/gr";
 import { TbTableColumn } from "react-icons/tb";
 import { VscFileSubmodule } from "react-icons/vsc";
 import { IoIosSwitch } from "react-icons/io";
+import { useLanguage } from "i18n";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   return (
-    <div>
-      <SimpleGrid templateColumns="repeat(auto-fit, minmax(min(100%, 220px), 1fr))" gap="20px" mb="20px">
+    <Box className="crm-settings-page">
+      <SimpleGrid className="crm-settings-grid" templateColumns="repeat(auto-fit, minmax(min(100%, 220px), 1fr))" gap="16px" mb="20px">
         <MiniStatistics
           fontsize="md"
           onClick={() => navigate("/user")}
@@ -109,7 +111,7 @@ const Index = () => {
           name="Active Deactive Module"
         />
       </SimpleGrid>
-    </div>
+    </Box>
   );
 };
 

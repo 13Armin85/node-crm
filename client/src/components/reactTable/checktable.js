@@ -30,11 +30,13 @@ import {
   ModalHeader,
   ModalOverlay,
   TagCloseButton,
+  IconButton,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@chakra-ui/system";
 import { BsColumnsGap } from "react-icons/bs";
+import { FiFilter, FiLayers } from "react-icons/fi";
 import { FaSort, FaSortDown, FaSortUp } from "react-icons/fa";
-import { SearchIcon, DeleteIcon, AddIcon } from "@chakra-ui/icons";
+import { DeleteIcon, AddIcon } from "@chakra-ui/icons";
 import {
   useGlobalFilter,
   usePagination,
@@ -91,6 +93,7 @@ const CommonCheckTable = (props) => {
     customSearch,
     addBtn,
     exportColumn,
+    pageHeader = true,
   } = props;
   const { dataLength } = props;
   const { handleSearchType } = props;
@@ -448,36 +451,53 @@ const CommonCheckTable = (props) => {
     }
   }, [columns]);
 
+  const showPageHero = pageHeader !== false && Boolean(title) && ManageGrid !== false && !size;
+
   return (
     <>
+      {showPageHero && (
+        <Flex className="crm-page-hero crm-list-page-hero" align={{ base: "flex-start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} gap="18px">
+          <Flex align="center" gap="14px">
+            <Flex className="crm-page-hero__icon" align="center" justify="center"><FiLayers /></Flex>
+            <Box>
+              <Flex align="center" gap="9px" wrap="wrap">
+                <Text className="crm-page-hero__title"><LocalizedText text={title} /></Text>
+                <Box className="crm-page-hero__count"><CountUpComponent key={data?.length} targetNumber={dataLength ?? data?.length ?? 0} /> <LocalizedText text="records" /></Box>
+              </Flex>
+              <Text className="crm-page-hero__subtitle"><LocalizedText text="Manage business records from one place" /></Text>
+            </Box>
+          </Flex>
+          <Flex className="crm-list-page-hero__actions" gap="8px" wrap="wrap">
+            {addBtn !== false && (access?.create || access === true) && (
+              <Button onClick={() => handleClick()} leftIcon={<AddIcon />} className="crm-page-hero__action"><LocalizedText text="Add New" /></Button>
+            )}
+            {BackButton && BackButton}
+          </Flex>
+        </Flex>
+      )}
       <Card
+        className={`crm-data-card${showPageHero ? " crm-list-table" : ""}`}
         direction="column"
         w="100%"
-        overflowX={{ sm: "scroll", lg: "hidden" }}
+        overflow="hidden"
       >
-        <Grid templateColumns="repeat(12, 1fr)" gap={2}>
+        <Grid className="crm-table-toolbar" templateColumns="repeat(12, 1fr)" gap={3}>
           <GridItem
-            colSpan={{ base: 12, md: 8 }}
+            colSpan={{ base: 12, lg: showPageHero ? 10 : 8 }}
             display={"flex"}
             alignItems={"center"}
           >
-            <Flex alignItems={"center"} flexWrap={"wrap"}>
-              {title && (
-                <Text
-                  color={textColor}
-                  fontSize="22px"
-                  fontWeight="700"
-                  lineHeight="100%"
-                  textTransform={"capitalize"}
-                  me={3}
-                >
-                  <LocalizedText text={title} /> (
-                  <CountUpComponent
-                    key={data?.length}
-                    targetNumber={dataLength ?? data?.length ?? 0}
-                  />
-                  )
-                </Text>
+            <Flex className="crm-table-toolbar__main" alignItems={"center"} flexWrap={"wrap"} w="100%">
+              {title && !showPageHero && (
+                <Flex className="crm-table-title" align="center" me={{ base: 0, md: 3 }}>
+                  <Box className="crm-table-title__mark" />
+                  <Text color={textColor} fontSize={{ base: "18px", md: "20px" }} fontWeight="800" textTransform="capitalize">
+                    <LocalizedText text={title} />
+                  </Text>
+                  <Box className="crm-table-count">
+                    <CountUpComponent key={data?.length} targetNumber={dataLength ?? data?.length ?? 0} />
+                  </Box>
+                </Flex>
               )}
               {customSearch !== false && (
                 <CustomSearchInput
@@ -507,11 +527,11 @@ const CommonCheckTable = (props) => {
                     <Button
                       variant="outline"
                       colorScheme="brand"
-                      leftIcon={<SearchIcon />}
+                      leftIcon={<FiFilter />}
                       mt={{ sm: "5px", md: "0" }}
                       size="sm"
                       onClick={() => setAdvaceSearch(true)}
-                    ><LocalizedText text="Advance Search" /></Button>
+                    ><LocalizedText text="Filters" /></Button>
                   )}
               {searchDisplay || displaySearchData ? (
                 <Button
@@ -548,22 +568,18 @@ const CommonCheckTable = (props) => {
             handleAdvanceSearch={handleAdvanceSearch}
           />
           <GridItem
-            colSpan={{ base: 12, md: 4 }}
+            colSpan={{ base: 12, lg: showPageHero ? 2 : 4 }}
             display={"flex"}
             justifyContent={"end"}
             alignItems={"center"}
             textAlign={"right"}
+            gap="8px"
+            className="crm-table-toolbar__actions"
           >
             {ManageGrid !== false && (
               <Menu isLazy>
-                <MenuButton p={4}>
-                  <BsColumnsGap />
-                </MenuButton>
-                <MenuList
-                  minW={"fit-content"}
-                  transform={"translate(1670px, 60px)"}
-                  zIndex={2}
-                >
+                <MenuButton as={IconButton} className="crm-table-settings" aria-label={tr("Manage Columns")} icon={<BsColumnsGap />} variant="outline" size="sm" />
+                <MenuList minW="210px" zIndex={2} p="8px">
                   <MenuItem
                     onClick={() => setManageColumnsModel(true)}
                     width={"165px"}
@@ -598,7 +614,7 @@ const CommonCheckTable = (props) => {
                 </MenuList>
               </Menu>
             )}
-            {addBtn !== false && (access?.create || access === true) && (
+            {!showPageHero && addBtn !== false && (access?.create || access === true) && (
               <Button
                 onClick={() => handleClick()}
                 size="sm"
@@ -608,31 +624,29 @@ const CommonCheckTable = (props) => {
             )}
             {BackButton && BackButton}
           </GridItem>
-          <HStack spacing={4} mb={2}>
-            {(getTagValues || [])?.map((item) => (
-              <Tag
-                size={"md"}
-                p={2}
-                key={item?.value}
-                borderRadius="full"
-                variant="solid"
-                colorScheme="gray"
-              >
-                <TagLabel><LocalizedText text={item?.value} /></TagLabel>
-                <TagCloseButton onClick={() => handleRemoveFromTag(item)} />
-              </Tag>
-            ))}
-          </HStack>
+          {(getTagValues || [])?.length > 0 && (
+            <GridItem colSpan={12}>
+              <HStack className="crm-filter-tags" spacing={2} flexWrap="wrap">
+                {(getTagValues || [])?.map((item) => (
+                  <Tag size="md" p={2} key={item?.value} borderRadius="full" variant="subtle" colorScheme="blue">
+                    <TagLabel><LocalizedText text={item?.value} /></TagLabel>
+                    <TagCloseButton onClick={() => handleRemoveFromTag(item)} />
+                  </Tag>
+                ))}
+              </HStack>
+            </GridItem>
+          )}
         </Grid>
         <Box
           overflowY={"auto"}
-          className={size ? `small-table-fix-container` : `table-fix-container`}
+          className={`${size ? "small-table-fix-container" : "table-fix-container"} crm-table-scroll`}
         >
           <Table
             {...getTableProps()}
+            className="crm-data-table"
             variant="simple"
             color="gray.500"
-            mb="24px"
+            mb="0"
           >
             <Thead zIndex={1}>
               {headerGroups?.map((headerGroup, index) => (
@@ -784,7 +798,7 @@ const CommonCheckTable = (props) => {
                             {...cell?.getCellProps()}
                             key={index}
                             fontSize={{ sm: "14px" }}
-                            minW={{ sm: "150px", md: "200px", lg: "auto" }}
+                            minW={{ base: "132px", md: "160px", lg: "auto" }}
                             borderColor="transparent"
                           >
                             {data}

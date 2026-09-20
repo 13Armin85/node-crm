@@ -18,6 +18,7 @@ import {
   Th,
   Thead,
   Tr,
+  Button,
 } from "@chakra-ui/react";
 // Assets
 // Custom components
@@ -119,7 +120,7 @@ const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, m
 };
 
 export default function UserReports() {
-  const { t, direction } = useLanguage();
+  const { t, direction, language } = useLanguage();
   // Chakra Color Mode
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
@@ -265,9 +266,36 @@ export default function UserReports() {
     fetchData();
   }, [user?._id]);
 
+  const dashboardLocale = language === "fa" ? "fa-IR" : language === "tr" ? "tr-TR" : "en-US";
+  const todayLabel = new Intl.DateTimeFormat(dashboardLocale, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(new Date());
+  const displayName = user?.firstName || user?.username || t("User");
+
   return (
-    <>
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap="20px" mb="20px">
+    <Box className="crm-dashboard-page">
+      <Flex className="crm-dashboard-hero" align={{ base: "flex-start", lg: "center" }} justify="space-between" direction={{ base: "column", lg: "row" }} gap="20px">
+        <Box position="relative" zIndex="1">
+          <Text className="crm-dashboard-hero__date">{todayLabel}</Text>
+          <Heading className="crm-dashboard-hero__title">
+            {t("Welcome back")}, <Box as="span" data-no-translate>{displayName}</Box>
+          </Heading>
+          <Text className="crm-dashboard-hero__subtitle">{t("Your business overview is ready")}</Text>
+        </Box>
+        <Flex className="crm-dashboard-hero__actions" position="relative" zIndex="1" gap="10px" wrap="wrap">
+          {propertiesModule?.isActive && (
+            <Button className="crm-dashboard-hero__primary" leftIcon={<LuBuilding2 />} onClick={() => navigate("/properties")}>{t("Browse properties")}</Button>
+          )}
+          {tasksModule?.isActive && (
+            <Button className="crm-dashboard-hero__secondary" leftIcon={<MdAddTask />} onClick={() => navigate("/task")}>{t("Open tasks")}</Button>
+          )}
+        </Flex>
+      </Flex>
+
+      <SimpleGrid className="crm-dashboard-stats" columns={{ base: 1, sm: 2, xl: 4 }} gap="16px" mb="20px">
         {(taskView?.create || taskView?.update || taskView?.delete || taskView?.view) && (tasksModule?.isActive) &&
           <MiniStatistics
             onClick={() => navigate("/task")}
@@ -380,7 +408,7 @@ export default function UserReports() {
         </Card>
       )}
 
-      <Grid Grid templateColumns="repeat(12, 1fr)" gap={3} >
+      <Grid className="crm-dashboard-charts" templateColumns="repeat(12, 1fr)" gap={4}>
         {
           (emailModule?.isActive || callModule?.isActive) &&
           <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
@@ -578,6 +606,6 @@ export default function UserReports() {
         </Card>}
       </SimpleGrid>
 
-    </>
+    </Box>
   );
 }

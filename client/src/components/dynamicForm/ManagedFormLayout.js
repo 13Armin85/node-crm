@@ -39,6 +39,6 @@ export default function ManagedFormLayout({ moduleName, formik, children }) {
     return React.cloneElement(node, patch);
   };
   return <>{failed && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
-    {definition && <Box mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
+    {definition && <Box className="crm-managed-fields" mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
   </>;
 }

@@ -1,11 +1,12 @@
 import { tr, withLocalization } from 'i18n/runtime';
 import Card from "components/card/Card";
-import { SimpleGrid, Stat, StatLabel, StatNumber } from "@chakra-ui/react";
+import { Box, Heading, SimpleGrid, Stat, StatLabel, StatNumber, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { getApi } from "services/api";
 import ReportChart from "./components/reportChart";
 import CommonCheckTable from "components/reactTable/checktable";
+import { useLanguage } from "i18n";
 
 const Report = () => {
   const title = "Reports";
@@ -13,6 +14,7 @@ const Report = () => {
   const [isLoding, setIsLoding] = useState(false);
   const [selectedValues, setSelectedValues] = useState([]);
   const [summary, setSummary] = useState([]);
+  const { t } = useLanguage();
   // const [selectedColumns, setSelectedColumns] = useState([]);
   // const [columns, setColumns] = useState([]);
 
@@ -72,8 +74,9 @@ const Report = () => {
   }, []);
 
   return (
-    <div>
-      <SimpleGrid columns={{ base: 2, md: 4, xl: 7 }} spacing={3} mb={4}>
+    <Box className="crm-reports-page">
+      <Box className="crm-page-hero crm-section-heading"><Text className="crm-section-heading__eyebrow">{t("Analytics")}</Text><Heading>{t("Reports")}</Heading><Text>{t("Monitor team activity and performance")}</Text></Box>
+      <SimpleGrid className="crm-report-stats" columns={{ base: 2, md: 4, xl: 7 }} spacing={3} mb={4}>
         {summary.map((item) => (
           <Card key={item.name} py={4}>
             <Stat>
@@ -86,6 +89,7 @@ const Report = () => {
       <ReportChart />
       <Card mt={4}>
         <CommonCheckTable
+          pageHeader={false}
           title={title}
           isLoding={isLoding}
           columnData={tableColumns ?? []}
@@ -102,7 +106,7 @@ const Report = () => {
           // setSelectedColumns={setSelectedColumns}
         />
       </Card>
-    </div>
+    </Box>
   );
 };
 

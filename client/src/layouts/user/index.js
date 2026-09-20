@@ -42,7 +42,9 @@ export default function User(props) {
   const [fixed] = useState(false);
   const [toggleSidebar, setToggleSidebar] = useState(false);
   const [route, setRoute] = useState();
-  const [openSidebar, setOpenSidebar] = useState(true);
+  const [openSidebar, setOpenSidebar] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1280,
+  );
   const { direction, t } = useLanguage();
   const modules = useSelector((state) => state?.modules?.data);
   // functions for changing the states from components
@@ -61,6 +63,14 @@ export default function User(props) {
 
   useEffect(() => {
     fetchRoute();
+  }, []);
+
+  useEffect(() => {
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape" && window.innerWidth < 1280) setOpenSidebar(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
 
   let routes = [

@@ -18,7 +18,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import React from "react";
-import { MdHelpOutline } from "react-icons/md";
+import { MdHelpOutline, MdOutlineDescription } from "react-icons/md";
 import { useLanguage } from "i18n";
 
 const helpContent = {
@@ -617,21 +617,19 @@ export default function PageHelp({ route, activeRouteName }) {
 
   return (
     <>
-      <Flex justifyContent="flex-end" mb="14px">
-        <Tooltip label={t("Help")} hasArrow placement="left">
-          <IconButton
-            aria-label={t("Help")}
-            icon={<Icon as={MdHelpOutline} w="18px" h="18px" />}
-            onClick={onOpen}
-            size="sm"
-            minW="34px"
-            h="34px"
-            borderRadius="10px"
-            colorScheme="brand"
-            variant="solid"
-          />
-        </Tooltip>
-      </Flex>
+      {route?.under ? (
+        <Flex className="crm-page-hero crm-detail-page-hero" align={{ base: "flex-start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} gap="16px">
+          <Flex align="center" gap="14px">
+            <Flex className="crm-page-hero__icon" align="center" justify="center"><Icon as={MdOutlineDescription} /></Flex>
+            <Box><Heading className="crm-page-hero__title">{t(pageName)}</Heading><Text className="crm-page-hero__subtitle">{t("View and manage record details")}</Text></Box>
+          </Flex>
+          <Tooltip label={t("Help")} hasArrow placement="left"><IconButton className="crm-page-hero__help" aria-label={t("Help")} icon={<Icon as={MdHelpOutline} />} onClick={onOpen} /></Tooltip>
+        </Flex>
+      ) : (
+        <Flex justifyContent="flex-end" mb="14px">
+          <Tooltip label={t("Help")} hasArrow placement="left"><IconButton aria-label={t("Help")} icon={<Icon as={MdHelpOutline} w="18px" h="18px" />} onClick={onOpen} size="sm" minW="34px" h="34px" borderRadius="10px" colorScheme="brand" variant="solid" /></Tooltip>
+        </Flex>
+      )}
 
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
         <ModalOverlay />

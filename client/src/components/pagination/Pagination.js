@@ -43,6 +43,7 @@ const Pagination = (props) => {
 
   return (
     <Flex
+      className="crm-pagination"
       justifyContent={pageOptions?.length !== 1 ? "space-between" : "end"}
       mt={2}
       alignItems="center"

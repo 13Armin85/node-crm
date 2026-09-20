@@ -20,20 +20,20 @@ export const buttonStyles = {
           borderRadius: "16px",
         }),
         brand: (props) => ({
-          bg: mode("brand.500", "brand.400")(props),
+          bg: mode("linear-gradient(135deg, #3563E9, #4F7AF2)", "linear-gradient(135deg, #4F7AF2, #6E92F8)")(props),
           color: "white",
           boxShadow: mode(
             "0 10px 24px rgba(23, 125, 220, 0.25)",
             "0 10px 28px rgba(62, 155, 239, 0.24)",
           )(props),
           _focus: {
-            bg: mode("brand.500", "brand.400")(props),
+            bg: mode("linear-gradient(135deg, #3563E9, #4F7AF2)", "linear-gradient(135deg, #4F7AF2, #6E92F8)")(props),
           },
           _active: {
-            bg: mode("brand.500", "brand.400")(props),
+            bg: mode("linear-gradient(135deg, #264CC7, #3563E9)", "linear-gradient(135deg, #416CDE, #5B86F7)")(props),
           },
           _hover: {
-            bg: mode("brand.600", "brand.400")(props),
+            bg: mode("linear-gradient(135deg, #264CC7, #3563E9)", "linear-gradient(135deg, #416CDE, #5B86F7)")(props),
             transform: "translateY(-1px)",
             boxShadow: mode(
               "0 16px 32px rgba(23, 125, 220, 0.30)",

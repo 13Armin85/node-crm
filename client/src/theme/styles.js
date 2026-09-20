@@ -2,16 +2,16 @@ import { mode } from "@chakra-ui/theme-tools";
 export const globalStyles = {
   colors: {
     brand: {
-      50: "#EEF7FF",
-      100: "#D8ECFF",
-      200: "#A8D6FF",
-      300: "#71BAF8",
-      400: "#3E9BEF",
-      500: "#177DDC",
-      600: "#0F66B8",
-      700: "#11508C",
-      800: "#103C68",
-      900: "#0A2748",
+      50: "#EEF4FF",
+      100: "#DDE8FF",
+      200: "#B9D0FF",
+      300: "#8AAFFF",
+      400: "#5B86F7",
+      500: "#3563E9",
+      600: "#264CC7",
+      700: "#203DA1",
+      800: "#1E357F",
+      900: "#192A65",
     },
     brandScheme: {
       100: "#D8ECFF",
@@ -93,16 +93,16 @@ export const globalStyles = {
     global: (props) => ({
       body: {
         overflowX: "hidden",
-        bg: mode("#F5F7FB", "#07111F")(props),
+        bg: mode("#F3F6FB", "#080D18")(props),
         color: mode("gray.700", "whiteAlpha.900")(props),
         fontFamily:
           'Inter, "Plus Jakarta Sans", "Vazirmatn", "Segoe UI", sans-serif',
         letterSpacing: "0",
         backgroundImage: mode(
-          "linear-gradient(135deg, rgba(23, 125, 220, 0.08), transparent 34%), linear-gradient(rgba(15, 102, 184, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 102, 184, 0.035) 1px, transparent 1px)",
-          "linear-gradient(135deg, rgba(122, 183, 255, 0.09), transparent 34%), linear-gradient(225deg, rgba(56, 223, 183, 0.08), transparent 36%), linear-gradient(rgba(157, 178, 210, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(157, 178, 210, 0.035) 1px, transparent 1px)",
+          "radial-gradient(circle at 8% 8%, rgba(53, 99, 233, 0.10), transparent 28%), radial-gradient(circle at 92% 6%, rgba(20, 184, 166, 0.07), transparent 24%)",
+          "radial-gradient(circle at 8% 8%, rgba(91, 134, 247, 0.15), transparent 30%), radial-gradient(circle at 90% 4%, rgba(45, 212, 191, 0.10), transparent 26%)",
         )(props),
-        backgroundSize: mode("auto, 48px 48px, 48px 48px", "auto, auto, 52px 52px, 52px 52px")(props),
+        backgroundAttachment: "fixed",
       },
       input: {
         color: mode("gray.700", "whiteAlpha.900")(props),

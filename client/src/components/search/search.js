@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { InputGroup, InputLeftElement, Input } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 import { useLanguage } from "i18n";
@@ -41,16 +41,17 @@ const CustomSearchInput = ({
 
   return (
     <InputGroup
-      width={{ sm: "100%", md: "30%" }}
-      mx={{ sm: 0, md: 3 }}
+      className="crm-table-search"
+      width={{ base: "100%", md: "min(320px, 40%)" }}
+      mx={{ base: 0, md: 3 }}
       my={{ sm: "8px", md: "0" }}
     >
       <InputLeftElement
         size="sm"
-        top="-3px"
+        h="100%"
         pointerEvents="none"
         zIndex="0"
-        children={<SearchIcon color="gray.300" borderRadius="16px" />}
+        children={<SearchIcon color="gray.400" />}
       />
       <Input
         type="text"
@@ -60,7 +61,7 @@ const CustomSearchInput = ({
         onChange={handleInputChange}
         fontWeight="500"
         placeholder={t("Search...")}
-        borderRadius="16px"
+        borderRadius="12px"
       />
     </InputGroup>
   );

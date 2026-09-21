@@ -1,4 +1,5 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import { formLabel } from 'utils/formValue';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -386,8 +387,8 @@ const Editopportunityproject = (props) => {
                           return (
                             <option value={item?._id} key={item?._id}>
                               {values?.category === "Contact"
-                                ? `${item?.fullName}`
-                                : item?.leadName}
+                                ? formLabel(item, item?._id)
+                                : formLabel(item?.leadName, item?._id)}
                             </option>
                           );
                         })}
@@ -430,11 +431,10 @@ const Editopportunityproject = (props) => {
                           formik?.touched?.lead && formik?.errors?.lead
                         }
                       >
-                        ?
                         {assignToLeadData?.map((item) => {
                           return (
                             <option value={item?._id} key={item?._id}>
-                              {item?.leadName}
+                              {formLabel(item?.leadName, item?._id)}
                             </option>
                           );
                         })}

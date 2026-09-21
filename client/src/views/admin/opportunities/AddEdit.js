@@ -1,4 +1,5 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import { formLabel } from 'utils/formValue';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
@@ -134,7 +135,6 @@ const AddEdit = (props) => {
     handleSubmit,
     setFieldValue,
   } = formik;
-  console.log(errors);
   const fetchData = async () => {
     setIsLoding(true);
     let result = await getApi("api/task/assignees");
@@ -266,7 +266,7 @@ const AddEdit = (props) => {
                             <option
                               value={item?._id}
                               key={item?._id}
-                            >{`${item?.name}`}</option>
+                            >{formLabel(item, item?._id)}</option>
                           );
                         })}
                     </Select>

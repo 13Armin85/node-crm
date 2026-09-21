@@ -1,5 +1,6 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
+import { AsyncRelationSelect } from 'components/dynamicForm/DynamicFormRenderer';
 import CurrencyAmount from 'components/CurrencyAmount';
 import { AddIcon, CloseIcon } from "@chakra-ui/icons";
 import {
@@ -52,6 +53,7 @@ import ContactModel from "components/commonTableModel/ContactModel";
 import { HasAccess } from "../../../redux/accessUtils";
 import { fetchInvoicesData } from "../../../redux/slices/invoicesSlice";
 import moment from "moment";
+import { formLabel, formValue } from "utils/formValue";
 
 const AddEdit = (props) => {
   const {
@@ -98,12 +100,12 @@ const AddEdit = (props) => {
     quoteDate: type === "edit" ? invoiceDetails?.quoteDate : "",
     dueDate: type === "edit" ? invoiceDetails?.dueDate : "",
     invoiceDate: type === "edit" ? invoiceDetails?.invoiceDate : "",
-    status: type === "edit" ? invoiceDetails?.status : "Draft",
-    assignedTo: type === "edit" ? invoiceDetails?.assignedTo : null,
+    status: type === "edit" ? formValue(invoiceDetails?.status) || "Draft" : "Draft",
+    assignedTo: type === "edit" ? formValue(invoiceDetails?.assignedTo) : "",
     description: type === "edit" ? invoiceDetails?.description : "",
-    account: type === "edit" ? invoiceDetails?.account : null,
+    account: type === "edit" ? formValue(invoiceDetails?.account) : "",
     contact:
-      type === "edit" ? invoiceDetails?.contact : contactId ? contactId : null,
+      type === "edit" ? formValue(invoiceDetails?.contact) : formValue(contactId),
     billingStreet: type === "edit" ? invoiceDetails?.billingStreet : "",
     shippingStreet: type === "edit" ? invoiceDetails?.shippingStreet : "",
     billingCity: type === "edit" ? invoiceDetails?.billingCity : "",
@@ -563,7 +565,7 @@ const AddEdit = (props) => {
                             <option
                               value={item?._id}
                               key={item?._id}
-                            >{`${item?.firstName} ${item?.lastName}`}</option>
+                            >{formLabel(item, item?._id)}</option>
                           );
                         })}
                       </Select>
@@ -650,34 +652,16 @@ const AddEdit = (props) => {
                       fontSize="sm"
                       fontWeight="500"
                       mb="8px"
-                    ><LocalizedText text="Account" /></FormLabel>
+                    ><LocalizedText text="Partner Customer" /></FormLabel>
                     <Flex justifyContent={"space-between"}>
-                      <Select
-                        value={values?.account}
-                        name="account"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        mb={
-                          errors?.account && touched?.account
-                            ? undefined
-                            : "10px"
-                        }
-                        fontWeight="500"
-                        placeholder={tr("Account")}
-                        borderColor={
-                          errors?.account && touched?.account ? "red.300" : null
-                        }
-                      >
-                        {accountList?.length > 0 &&
-                          accountList?.map((item) => {
-                            return (
-                              <option
-                                value={item?._id}
-                                key={item?._id}
-                              >{`${item?.name}`}</option>
-                            );
-                          })}
-                      </Select>
+                      <Box flex="1" minW={0} mb={errors?.account && touched?.account ? undefined : "10px"}>
+                        <AsyncRelationSelect
+                          id="invoice-account"
+                          moduleName="Partner Customers"
+                          value={values?.account}
+                          onChange={(value) => setFieldValue("account", value)}
+                        />
+                      </Box>
                       <IconButton
                         onClick={() => setAccountModel(true)}
                         ml={2}
@@ -723,7 +707,7 @@ const AddEdit = (props) => {
                               <option
                                 value={item?._id}
                                 key={item?._id}
-                              >{`${item?.firstName} ${item?.lastName}`}</option>
+                              >{formLabel(item, item?._id)}</option>
                             );
                           })}
                       </Select>

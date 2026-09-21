@@ -234,7 +234,6 @@ const Index = () => {
           cell: ({ row }) => (
             <div className="selectOpt">
               <Select
-                defaultValue={"active"}
                 className={changeStatus(row)}
                 onChange={(e) => setStatusData(row, e)}
                 height={7}

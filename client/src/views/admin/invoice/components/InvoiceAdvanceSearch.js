@@ -204,9 +204,13 @@ const InvoiceAdvanceSearch = (props) => {
                     errors?.status && touched?.status ? "red.300" : null
                   }
                 >
-                  <option value="Paid"><LocalizedText text="Paid" /></option>
-                  <option value="Unpaid"><LocalizedText text="Unpaid" /></option>
-                  <option value="Cancelled"><LocalizedText text="Cancelled" /></option>
+                  <option value="Draft">{tr("Draft")}</option>
+                  <option value="Sent">{tr("Sent")}</option>
+                  <option value="Pending">{tr("Pending")}</option>
+                  <option value="Partially Paid">{tr("Partially Paid")}</option>
+                  <option value="Paid">{tr("Paid")}</option>
+                  <option value="Overdue">{tr("Overdue")}</option>
+                  <option value="Cancelled">{tr("Cancelled")}</option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}

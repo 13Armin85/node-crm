@@ -7,6 +7,7 @@ import axios from 'axios';
 import { constant } from 'constant';
 import CalendarDateInput from 'components/date/CalendarDateInput';
 import CurrencyAmount from 'components/CurrencyAmount';
+import { formLabel, formValue } from 'utils/formValue';
 
 export const fieldPath = field => field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
 export const isVisible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => getIn(values, key) === expected);
@@ -40,6 +41,7 @@ export function FileInput({ value = [], onChange, disabled }) {
 }
 export function AsyncRelationSelect({ moduleName, value, onChange, id, disabled }) {
   const { t } = useLanguage();
+  const selectedValue = formValue(value);
   const [query, setQuery] = useState('');
   const [options, setOptions] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -47,12 +49,12 @@ export function AsyncRelationSelect({ moduleName, value, onChange, id, disabled 
   const [error, setError] = useState(false);
   useEffect(() => {
     let active = true;
-    if (!value) { setSelected(null); return undefined; }
-    getApi(`api/estate/${encodeURIComponent(moduleName)}/options?id=${encodeURIComponent(value)}`).then(result => {
+    if (!selectedValue) { setSelected(null); return undefined; }
+    getApi(`api/estate/${encodeURIComponent(moduleName)}/options?id=${encodeURIComponent(selectedValue)}`).then(result => {
       if (active && result.status === 200) setSelected(result.data[0] || null);
     });
     return () => { active = false; };
-  }, [moduleName, value]);
+  }, [moduleName, selectedValue]);
   useEffect(() => {
     let active = true;
     const timer = setTimeout(async () => {
@@ -65,9 +67,9 @@ export function AsyncRelationSelect({ moduleName, value, onChange, id, disabled 
   const all = selected && !options.some(o => o.value === selected.value) ? [selected, ...options] : options;
   return <Stack spacing={1}>
     {!disabled && <Input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('Search...')} aria-label={t('Search...')} />}
-    <Select id={id} value={value || ''} onChange={e => onChange(e.target.value)} disabled={disabled}>
+    <Select id={id} value={selectedValue} onChange={e => onChange(e.target.value)} disabled={disabled}>
       <option value="">{t(busy ? 'estate.loading' : 'Select')}</option>
-      {all.map(option => <option key={option.value} value={option.value} data-no-translate>{option.label}</option>)}
+      {all.map(option => <option key={formValue(option.value)} value={formValue(option.value)} data-no-translate>{formLabel(option.label, formValue(option.value))}</option>)}
     </Select>
     {error && <Text color="red.500">{t('estate.serverError')}</Text>}
     {!busy && !error && !all.length && <Text fontSize="sm">{t('No Data Found')}</Text>}
@@ -92,7 +94,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       const label = localized(field.label, language); const id = `field-${path}`;
       let options = field.options || [];
       if (field.name === 'subtype') options = options.filter(o => (formik.values.category === 'COMMERCIAL' ? ['SHOP', 'OFFICE'] : ['APARTMENT', 'RESIDENCE', 'VILLA']).includes(o.value));
-      const common = { id, name: path, value: value ?? '', onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly };
+      const common = { id, name: path, value: formValue(value) || formLabel(value), onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly };
       let control;
       if (field.relation) control = <AsyncRelationSelect id={id} moduleName={field.relation} value={value} onChange={v => change(field, v)} disabled={readOnly} />;
       else if (field.type === 'file') control = <FileInput value={value || []} onChange={v => change(field, v)} disabled={readOnly} />;
@@ -101,7 +103,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       else if (field.type === 'checkbox') control = <Checkbox id={id} isChecked={Boolean(value)} isDisabled={readOnly} onChange={e => change(field, e.target.checked)}>{label}</Checkbox>;
       else if (field.type === 'radio') control = <RadioGroup id={id} value={value || ''} onChange={v => change(field, v)}><Stack direction="row" flexWrap="wrap">{options.map(o => <Radio isDisabled={readOnly} key={o.value} value={o.value}>{localized(o.label, language)}</Radio>)}</Stack></RadioGroup>;
       else if (field.type === 'multiselect') control = <Stack>{options.map(o => <Checkbox key={o.value} isDisabled={readOnly} isChecked={(value || []).includes(o.value)} onChange={e => change(field, e.target.checked ? [...(value || []), o.value] : value.filter(v => v !== o.value))}>{localized(o.label, language)}</Checkbox>)}</Stack>;
-      else if (field.type === 'select') control = <Select {...common} isDisabled={readOnly}><option value="">{t('Select')}</option>{options.map(o => <option key={o.value} value={o.value}>{localized(o.label, language)}</option>)}</Select>;
+      else if (field.type === 'select') control = <Select {...common} isDisabled={readOnly}><option value="">{t('Select')}</option>{options.map(o => <option key={formValue(o.value)} value={formValue(o.value)}>{formLabel(localized(o.label, language), formLabel(o.value))}</option>)}</Select>;
       else if (['date', 'datetime'].includes(field.type)) control = <CalendarDateInput
         {...common}
         type={field.type === 'datetime' ? 'datetime-local' : 'date'}

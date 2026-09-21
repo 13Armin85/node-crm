@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertIcon, Box } from '@chakra-ui/react';
 import { getApi } from 'services/api';
-import { useLanguage } from 'i18n';
+import { translate, useLanguage } from 'i18n';
 import DynamicFormRenderer, { localized } from './DynamicFormRenderer';
+import { formLabel, formValue } from 'utils/formValue';
 
 const findName = node => {
   if (!React.isValidElement(node)) return null;
@@ -19,13 +20,23 @@ export default function ManagedFormLayout({ moduleName, formik, children }) {
     return () => { active = false; };
   }, [moduleName]);
   const fields = definition?.fields || [];
+  const optionText = value => {
+    if (value == null || typeof value === 'boolean') return '';
+    if (Array.isArray(value)) return value.map(optionText).join('');
+    if (React.isValidElement(value)) {
+      if (value.props.text !== undefined) return formLabel(translate(value.props.text, language));
+      return optionText(value.props.children);
+    }
+    return formLabel(translate(value, language));
+  };
   const configure = (node, currentField) => {
     if (!React.isValidElement(node)) return node;
-    const type = typeof node.type === 'string' ? node.type : node.type.displayName || node.type.name || '';
-    // Native options must keep a primitive text child. Recursively cloning their
-    // content can make the browser stringify a React/localized value as
-    // "[object Object]" in a closed select.
-    if (type === 'option') return node;
+    const type = typeof node.type === 'string' ? node.type : node.type?.displayName || node.type?.name || '';
+    // React components inside a native option can be stringified by the browser.
+    if (type === 'option') return React.cloneElement(node, {
+      ...(node.props.value !== undefined ? { value: formValue(node.props.value) } : {}),
+      children: optionText(node.props.children) || optionText(node.props.label) || formLabel(formValue(node.props.value)),
+    });
     const name = findName(node);
     const field = fields.find(f => f.name === name && f.kind === 'SYSTEM_FIELD');
     const isContainer = /GridItem|FormControl/.test(type);
@@ -34,6 +45,11 @@ export default function ManagedFormLayout({ moduleName, formik, children }) {
     if (/FormLabel/.test(type) && activeField) return React.cloneElement(node, {}, localized(activeField.label, language));
     const patch = {};
     if (field && typeof node.props.name === 'string' && field.placeholder) patch.placeholder = localized(field.placeholder, language);
+    if (/^(Select|Input|Textarea|select|input|textarea)$/.test(type) && node.props.value != null) {
+      patch.value = typeof node.props.value === 'object'
+        ? (type === 'Select' || type === 'select' ? formValue(node.props.value) : formLabel(node.props.value))
+        : formValue(node.props.value);
+    }
     if (isContainer && field) patch.order = field.order;
     if (node.props.children) patch.children = React.Children.map(node.props.children, child => configure(child, activeField));
     return React.cloneElement(node, patch);

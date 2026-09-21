@@ -619,11 +619,11 @@ const CommonCheckTable = (props) => {
             {BackButton && BackButton}
           </GridItem>
           <HStack spacing={4} mb={2}>
-            {(getTagValues || [])?.map((item) => (
+            {(getTagValues || [])?.map((item, index) => (
               <Tag
                 size={"md"}
                 p={2}
-                key={item?.value}
+                key={`${item?.name ?? item?.value ?? item}-${index}`}
                 borderRadius="full"
                 variant="solid"
                 colorScheme="gray"
@@ -709,7 +709,7 @@ const CommonCheckTable = (props) => {
               ) : data?.length === 0 ? (
                 <Tr>
                   <Td colSpan={columns.length}>
-                    <Text
+                    <Box
                       textAlign={"center"}
                       width="100%"
                       color={textColor}
@@ -717,14 +717,14 @@ const CommonCheckTable = (props) => {
                       fontWeight="700"
                     >
                       <DataNotFound />
-                    </Text>
+                    </Box>
                   </Td>
                 </Tr>
               ) : (
                 page?.map((row, i) => {
                   prepareRow(row);
                   return (
-                    <Tr {...row?.getRowProps()}>
+                    <Tr {...row?.getRowProps()} key={row.id}>
                       {row?.cells?.map((cell, index) => {
                         let data = "";
                         columnData?.forEach((item) => {
@@ -733,23 +733,23 @@ const CommonCheckTable = (props) => {
                               item?.cell &&
                               typeof item?.cell === "function"
                             ) {
+                              const renderedCell = item.cell(cell);
                               data = (
                                 <Flex
-                                  Flex
                                   align="center"
                                   justifyContent={
                                     item?.Header === "Action" && "center"
                                   }
                                 >
-                                  <Text
+                                  <Box
                                     color={textColor}
                                     fontSize="sm"
                                     fontWeight="700"
                                   >
-                                    {item?.cell(cell) === " "
+                                    {renderedCell === " "
                                       ? "-"
-                                      : item?.cell(cell)}
-                                  </Text>
+                                      : renderedCell}
+                                  </Box>
                                 </Flex>
                               );
                             } else {
@@ -844,8 +844,8 @@ const CommonCheckTable = (props) => {
             />
             <ModalBody>
               <div>
-                {columnData?.map((column) => (
-                  <Text display={"flex"} key={column?.accessor} py={2}>
+                {columnData?.map((column, index) => (
+                  <Text display={"flex"} key={`${column?.id ?? column?.accessor ?? column?.Header}-${index}`} py={2}>
                     <Checkbox
                       defaultChecked={selectedColumns?.some(
                         (selectedColumn) =>

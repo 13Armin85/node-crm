@@ -627,8 +627,8 @@ const CommonCheckTable = (props) => {
           {(getTagValues || [])?.length > 0 && (
             <GridItem colSpan={12}>
               <HStack className="crm-filter-tags" spacing={2} flexWrap="wrap">
-                {(getTagValues || [])?.map((item) => (
-                  <Tag size="md" p={2} key={item?.value} borderRadius="full" variant="subtle" colorScheme="blue">
+                {(getTagValues || [])?.map((item, index) => (
+                  <Tag size="md" p={2} key={`${item?.name ?? item?.value ?? item}-${index}`} borderRadius="full" variant="subtle" colorScheme="blue">
                     <TagLabel><LocalizedText text={item?.value} /></TagLabel>
                     <TagCloseButton onClick={() => handleRemoveFromTag(item)} />
                   </Tag>
@@ -713,7 +713,7 @@ const CommonCheckTable = (props) => {
               ) : (data && data?.length === 0) || data === undefined ? (
                 <Tr>
                   <Td colSpan={columns?.length}>
-                    <Text
+                    <Box
                       textAlign={"center"}
                       width="100%"
                       color={textColor}
@@ -721,14 +721,14 @@ const CommonCheckTable = (props) => {
                       fontWeight="700"
                     >
                       <DataNotFound />
-                    </Text>
+                    </Box>
                   </Td>
                 </Tr>
               ) : (
                 page?.map((row, i) => {
                   prepareRow(row);
                   return (
-                    <Tr {...row?.getRowProps()}>
+                    <Tr {...row?.getRowProps()} key={row.id}>
                       {row?.cells?.map((cell, index) => {
                         let data = "";
                         columnData?.forEach((item) => {
@@ -737,23 +737,23 @@ const CommonCheckTable = (props) => {
                               item?.cell &&
                               typeof item?.cell === "function"
                             ) {
+                              const renderedCell = item.cell(cell);
                               data = (
                                 <Flex
-                                  Flex
                                   align="center"
                                   justifyContent={
                                     item?.Header === "Action" && "center"
                                   }
                                 >
-                                  <Text
+                                  <Box
                                     color={textColor}
                                     fontSize="sm"
                                     fontWeight="700"
                                   >
-                                    {item?.cell(cell) === " "
+                                    {renderedCell === " "
                                       ? "-"
-                                      : item?.cell(cell)}
-                                  </Text>
+                                      : renderedCell}
+                                  </Box>
                                 </Flex>
                               );
                             } else {
@@ -848,8 +848,8 @@ const CommonCheckTable = (props) => {
             />
             <ModalBody>
               <div>
-                {columnData?.map((column) => (
-                  <Text display={"flex"} key={column?.accessor} py={2}>
+                {columnData?.map((column, index) => (
+                  <Text display={"flex"} key={`${column?.id ?? column?.accessor ?? column?.Header}-${index}`} py={2}>
                     <Checkbox
                       defaultChecked={columns?.some(
                         (item) => item?.accessor === column?.accessor

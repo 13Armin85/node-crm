@@ -1,4 +1,5 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import { formLabel } from 'utils/formValue';
 import { LinkIcon } from "@chakra-ui/icons";
 import {
   Button,
@@ -190,7 +191,7 @@ const Link = (props) => {
                       {data?.map((item) => {
                         return (
                           <option value={item?.value} key={item?.value}>
-                            {values?.linkWith === "Contact" && `${item?.label}`}
+                            {values?.linkWith === "Contact" && formLabel(item?.label, item?.value)}
                           </option>
                         );
                       })}
@@ -241,7 +242,7 @@ const Link = (props) => {
                         {data?.map((item) => {
                           return (
                             <option value={item?.value} key={item?.value}>
-                              {values?.linkWith === "lead" && `${item?.label}`}
+                              {values?.linkWith === "lead" && formLabel(item?.label, item?.value)}
                             </option>
                           );
                         })}

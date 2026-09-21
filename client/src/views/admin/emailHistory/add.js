@@ -1,4 +1,5 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import { formLabel } from 'utils/formValue';
 import {
   Button,
   Flex,
@@ -306,8 +307,8 @@ const AddEmailHistory = (props) => {
                           return (
                             <option value={item?._id} key={item?._id}>
                               {values?.category === "Contact"
-                                ? `${item?.fullName}`
-                                : item?.leadName}
+                                ? formLabel(item, item?._id)
+                                : formLabel(item?.leadName, item?._id)}
                             </option>
                           );
                         })}
@@ -353,8 +354,8 @@ const AddEmailHistory = (props) => {
                           return (
                             <option value={item?._id} key={item?._id}>
                               {values?.category === "Contact"
-                                ? `${item?.firstName} ${item?.lastName}`
-                                : item?.leadName}
+                                ? formLabel(item, item?._id)
+                                : formLabel(item?.leadName, item?._id)}
                             </option>
                           );
                         })}
@@ -494,7 +495,7 @@ const AddEmailHistory = (props) => {
                       <option
                         value={item?._id}
                         key={item?._id}
-                      >{`${item?.firstName} ${item?.lastName}`}</option>
+                      >{formLabel(item, item?._id)}</option>
                     );
                   })}
                 </Select>

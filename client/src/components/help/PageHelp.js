@@ -603,13 +603,21 @@ const fallbackContent = {
 export default function PageHelp({ route, activeRouteName }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { language, t } = useLanguage();
-  const pageName = (route?.parentName || route?.name || activeRouteName || "").trim();
+  const pageName = (
+    route?.parentName ||
+    route?.name ||
+    activeRouteName ||
+    ""
+  ).trim();
   const contentGroup = helpContent[pageName] || fallbackContent;
   const content = contentGroup[language] || contentGroup.en;
   const modalBg = useColorModeValue("white", "navy.800");
   const sectionBg = useColorModeValue("secondaryGray.100", "whiteAlpha.100");
   const textColor = useColorModeValue("secondaryGray.900", "white");
-  const mutedColor = useColorModeValue("secondaryGray.700", "secondaryGray.200");
+  const mutedColor = useColorModeValue(
+    "secondaryGray.700",
+    "secondaryGray.200",
+  );
   const borderColor = useColorModeValue("secondaryGray.200", "whiteAlpha.200");
   const accentBg = useColorModeValue("brand.50", "whiteAlpha.100");
 
@@ -617,20 +625,6 @@ export default function PageHelp({ route, activeRouteName }) {
 
   return (
     <>
-      {route?.under ? (
-        <Flex className="crm-page-hero crm-detail-page-hero" align={{ base: "flex-start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} gap="16px">
-          <Flex align="center" gap="14px">
-            <Flex className="crm-page-hero__icon" align="center" justify="center"><Icon as={MdOutlineDescription} /></Flex>
-            <Box><Heading className="crm-page-hero__title">{t(pageName)}</Heading><Text className="crm-page-hero__subtitle">{t("View and manage record details")}</Text></Box>
-          </Flex>
-          <Tooltip label={t("Help")} hasArrow placement="left"><IconButton className="crm-page-hero__help" aria-label={t("Help")} icon={<Icon as={MdHelpOutline} />} onClick={onOpen} /></Tooltip>
-        </Flex>
-      ) : (
-        <Flex justifyContent="flex-end" mb="14px">
-          <Tooltip label={t("Help")} hasArrow placement="left"><IconButton aria-label={t("Help")} icon={<Icon as={MdHelpOutline} w="18px" h="18px" />} onClick={onOpen} size="sm" minW="34px" h="34px" borderRadius="10px" colorScheme="brand" variant="solid" /></Tooltip>
-        </Flex>
-      )}
-
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
         <ModalOverlay />
         <ModalContent bg={modalBg} dir="ltr">

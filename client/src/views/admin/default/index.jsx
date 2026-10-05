@@ -267,19 +267,27 @@ export default function UserReports() {
   }, [user?._id]);
 
   const dashboardLocale = language === "fa" ? "fa-IR" : language === "tr" ? "tr-TR" : "en-US";
-  const todayLabel = new Intl.DateTimeFormat(dashboardLocale, {
+  const dashboardDateOptions = {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
-  }).format(new Date());
+  };
+  const today = new Date();
+  const todayLabel = language === "fa"
+    ? (() => {
+      const parts = new Intl.DateTimeFormat("fa-IR-u-nu-latn", dashboardDateOptions).formatToParts(today);
+      const getPart = type => parts.find(part => part.type === type)?.value || "";
+      return `${getPart("weekday")}, ${getPart("day")} ${getPart("month")} ${getPart("year")}`;
+    })()
+    : new Intl.DateTimeFormat(dashboardLocale, dashboardDateOptions).format(today);
   const displayName = user?.firstName || user?.username || t("User");
 
   return (
     <Box className="crm-dashboard-page">
       <Flex className="crm-dashboard-hero" align={{ base: "flex-start", lg: "center" }} justify="space-between" direction={{ base: "column", lg: "row" }} gap="20px">
         <Box position="relative" zIndex="1">
-          <Text className="crm-dashboard-hero__date">{todayLabel}</Text>
+          <Text className="crm-dashboard-hero__date" dir="ltr">{todayLabel}</Text>
           <Heading className="crm-dashboard-hero__title">
             {t("Welcome back")}, <Box as="span" data-no-translate>{displayName}</Box>
           </Heading>

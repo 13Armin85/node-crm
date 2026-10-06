@@ -72,7 +72,8 @@ const register = async (req, res) => {
 
 const index = async (req, res) => {
   try {
-    const query = { ...req.query, deleted: false };
+    // Older accounts may not have the deleted flag stored in MongoDB.
+    const query = { ...req.query, deleted: { $ne: true } };
 
     let user = await User.find(query).exec();
 

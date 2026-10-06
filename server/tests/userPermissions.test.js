@@ -25,8 +25,13 @@ test('authenticated user routes enforce the developer hierarchy with database ad
   const admin = { _id: '64d33173fd7ff3fa0924a102', username: 'admin@example.com', role: 'admin', deleted: false };
   const user = { _id: '64d33173fd7ff3fa0924a103', username: 'user@example.com', role: 'user', deleted: false };
   const records = new Map([developer, admin, user].map(actor => [actor._id, { ...actor }]));
+  const legacyAdmin = { _id: '64d33173fd7ff3fa0924a104', username: 'legacy-admin@example.com', role: 'admin' };
+  const legacyUser = { _id: '64d33173fd7ff3fa0924a105', username: 'legacy-user@example.com', role: 'user' };
+  const deletedUser = { _id: '64d33173fd7ff3fa0924a106', username: 'deleted@example.com', role: 'user', deleted: true };
+  for (const record of [legacyAdmin, legacyUser, deletedUser]) records.set(record._id, record);
   const matches = (record, query) => Object.entries(query).every(([key, value]) => {
     if (value?.$in) return value.$in.map(String).includes(String(record[key]));
+    if (value && Object.hasOwn(value, '$ne')) return record[key] !== value.$ne;
     return String(record[key]) === String(value);
   });
   const query = value => ({
@@ -72,6 +77,21 @@ test('authenticated user routes enforce the developer hierarchy with database ad
   };
   const registration = { username: 'created@example.com', password: 'test-password-123', role: 'user', firstName: 'Created' };
 
+  await t.test('developer and admin can list every active account including legacy admin and user records', async () => {
+    const expectedIds = [developer, admin, user, legacyAdmin, legacyUser].map(record => record._id).sort();
+    for (const actor of [developer, admin]) {
+      const response = await api('GET', '/user/', null, actor);
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.data.user.map(record => record._id).sort(), expectedIds);
+    }
+    const filtered = await api('GET', '/user/?role=admin');
+    assert.deepEqual(filtered.data.user.map(record => record._id).sort(), [admin._id, legacyAdmin._id].sort());
+    const includeDeleted = await api('GET', '/user/?deleted=true');
+    assert.deepEqual(includeDeleted.data.user.map(record => record._id).sort(), expectedIds);
+    assert.equal((await api('GET', '/user/', null, user)).status, 403);
+    assert.equal((await api('GET', '/user/', null, null)).status, 401);
+  });
+
   await t.test('anonymous, users and admins cannot register any role even with a forged token role', async () => {
     assert.equal((await api('POST', '/user/register', registration, null)).status, 401);
     for (const actor of [admin, user]) for (const role of ['user', 'admin', 'developer']) {
@@ -87,6 +107,11 @@ test('authenticated user routes enforce the developer hierarchy with database ad
       assert.equal(created.role, role);
       assert.notEqual(created.password, registration.password);
       assert.equal(await bcrypt.compare(registration.password, created.password), true);
+    }
+    const response = await api('GET', '/user/');
+    assert.equal(response.status, 200);
+    for (const role of ['user', 'admin', 'developer']) {
+      assert(response.data.user.some(record => record.username === `created-${role}@example.com` && record.role === role));
     }
   });
   await t.test('admin cannot promote anyone to developer or modify a developer account', async () => {

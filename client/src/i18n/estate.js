@@ -1,4 +1,5 @@
 const messages = {
+  Retry: ['Retry', 'تلاش مجدد', 'Tekrar dene'],
   'Open sidebar': ['Open sidebar', 'باز کردن منوی کناری', 'Kenar çubuğunu aç'],
   'Close sidebar': ['Close sidebar', 'بستن منوی کناری', 'Kenar çubuğunu kapat'],
   Navigation: ['Navigation', 'منوی اصلی', 'Gezinme'],

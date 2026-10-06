@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
   Button,
   Menu,
   MenuButton,
@@ -35,6 +38,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [isLoding, setIsLoding] = useState(false);
   const [data, setData] = useState([]);
+  const [loadError, setLoadError] = useState("");
   const [displaySearchData, setDisplaySearchData] = useState(false);
   const [searchedData, setSearchedData] = useState([]);
   const [userAction, setUserAction] = useState("");
@@ -129,9 +133,22 @@ const Index = () => {
 
   const fetchData = async () => {
     setIsLoding(true);
-    let result = await getApi("api/user/");
-    setData(result?.data?.user);
-    setIsLoding(false);
+    setLoadError("");
+    try {
+      const result = await getApi("api/user/");
+      if (result?.status === 200 && Array.isArray(result?.data?.user)) {
+        setData(result.data.user);
+      } else {
+        const message = result?.data?.message || result?.response?.data?.message;
+        const errorKey = result?.status === 401 ? "estate.unauthorized"
+          : result?.status === 403 ? "estate.forbidden" : "estate.serverError";
+        setLoadError(typeof message === "string" ? message : tr(errorKey));
+      }
+    } catch (error) {
+      setLoadError(tr("estate.serverError"));
+    } finally {
+      setIsLoding(false);
+    }
   };
 
   const handleDeleteClick = async () => {
@@ -156,6 +173,15 @@ const Index = () => {
 
   return (
     <div>
+      {loadError && (
+        <Alert status="error" mb={4}>
+          <AlertIcon />
+          <AlertDescription flex="1">{loadError}</AlertDescription>
+          <Button size="sm" onClick={fetchData} isLoading={isLoding}>
+            <LocalizedText text="Retry" />
+          </Button>
+        </Alert>
+      )}
       <CommonCheckTable
         title={tr("Users")}
         isLoding={isLoding}

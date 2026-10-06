@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -91,7 +92,7 @@ const Index = () => {
   const fetchData = async () => {
     setIsLoding(true);
     let result = await getApi(
-      user?.role === "admin"
+      isAdmin(user)
         ? "api/lead/"
         : `api/lead/?createBy=${user?._id}`
     );

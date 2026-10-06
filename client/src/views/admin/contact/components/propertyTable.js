@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import {
   Box,
   Checkbox,
@@ -160,7 +161,7 @@ export default function PropertyTable(props) {
                       data = (
                         <Link
                           to={
-                            user?.role !== "admin"
+                            !isAdmin(user)
                               ? `/propertyView/${cell?.row?.original?._id}`
                               : `/propertyView/${cell?.row?.original?._id}`
                           }

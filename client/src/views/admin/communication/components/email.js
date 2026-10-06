@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
@@ -77,7 +78,7 @@ const Email = () => {
 
   const fetchData = async () => {
     let result = await getApi(
-      user?.role === "admin"
+      isAdmin(user)
         ? "api/contact/"
         : `api/contact/?createBy=${user?._id}`,
     );

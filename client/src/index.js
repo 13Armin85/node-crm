@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import React from "react";
 import ReactDOM from "react-dom";
 import "assets/css/App.css";
@@ -58,7 +59,7 @@ function App() {
         {token && user?.role ? (
           user.role === "user" ? (
             <Route path="/*" element={<UserLayout />} />
-          ) : user.role === "admin" ? (
+          ) : isAdmin(user) ? (
             <Route path="/*" element={<AdminLayout />} />
           ) : (
             <Route path="/*" element={<AuthLayout />} />

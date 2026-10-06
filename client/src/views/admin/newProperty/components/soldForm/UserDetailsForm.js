@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Flex,
@@ -36,14 +37,14 @@ const UserDetailsForm = (props) => {
       let result;
       if (values?.category === "Contact" && contactList?.length <= 0) {
         result = await getApi(
-          user.role === "admin"
+          isAdmin(user)
             ? "api/contact/"
             : `api/contact/?createBy=${user._id}`
         );
         setContactList(result?.data);
       } else if (values?.category === "Lead" && leadList?.length <= 0) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/lead/"
             : `api/lead/?createBy=${user._id}`
         );
@@ -96,10 +97,10 @@ const UserDetailsForm = (props) => {
           value={values?.category}
         >
           <Stack direction="row">
-            {(user?.role === "admin" || contactAccess?.create) && (
+            {(isAdmin(user) || contactAccess?.create) && (
               <Radio value="Contact"><LocalizedText text="Contact" /></Radio>
             )}
-            {(user?.role === "admin" || leadAccess?.create) && (
+            {(isAdmin(user) || leadAccess?.create) && (
               <Radio value="Lead"><LocalizedText text="Lead" /></Radio>
             )}
           </Stack>

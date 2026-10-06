@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import {
@@ -124,14 +125,14 @@ const AddMeeting = (props) => {
       let result;
       if (values?.related === "Contact" && contactdata?.length <= 0) {
         result = await getApi(
-          user.role === "admin"
+          isAdmin(user)
             ? "api/contact/"
             : `api/contact/?createBy=${user?._id}`
         );
         setContactData(result?.data);
       } else if (values?.related === "Lead" && leaddata?.length <= 0) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/lead/"
             : `api/lead/?createBy=${user?._id}`
         );

@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText } from 'i18n/runtime';
 import { CloseIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
@@ -265,7 +266,7 @@ const EventView = (props) => {
                 </Grid>
               </ModalBody>
               <DrawerFooter>
-                {(access?.view || user?.role === "admin") && (
+                {(access?.view || isAdmin(user)) && (
                   <IconButton
                     variant="outline"
                     colorScheme={"green"}
@@ -275,7 +276,7 @@ const EventView = (props) => {
                     icon={<ViewIcon />}
                   />
                 )}
-                {(access?.update || user?.role === "admin") && (
+                {(access?.update || isAdmin(user)) && (
                   <IconButton
                     variant="outline"
                     onClick={() => setEdit(true)}
@@ -285,7 +286,7 @@ const EventView = (props) => {
                     icon={<EditIcon />}
                   />
                 )}
-                {(access?.delete || user?.role === "admin") && (
+                {(access?.delete || isAdmin(user)) && (
                   <IconButton
                     colorScheme="red"
                     onClick={() => setDelete(true)}

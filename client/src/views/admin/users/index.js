@@ -19,8 +19,10 @@ import UserAdvanceSearch from "./components/userAdvanceSearch";
 import { deleteManyApi } from "services/api";
 import CommonDeleteModel from "components/commonDeleteModel";
 import AddEditUser from "./AddEditUser";
+import { isDeveloper, canEditUser, canDeleteUser } from 'roles';
 
 const Index = () => {
+  const actor = JSON.parse(localStorage.getItem('user') || 'null');
   const [action, setAction] = useState(false);
   const [editData, setEditData] = useState({});
   const [isOpen, setIsOpen] = useState(false);
@@ -76,7 +78,7 @@ const Index = () => {
               minW={"fit-content"}
               transform={"translate(1520px, 173px);"}
             >
-              <MenuItem
+              {canEditUser(actor, row?.original) && <MenuItem
                 py={2.5}
                 onClick={() => {
                   setEditData(row?.original);
@@ -85,14 +87,14 @@ const Index = () => {
                   setUserAction("edit");
                 }}
                 icon={<EditIcon mb={1} fontSize={15} />}
-              ><LocalizedText text="Edit" /></MenuItem>
+              ><LocalizedText text="Edit" /></MenuItem>}
               <MenuItem
                 py={2.5}
                 color={"green"}
                 onClick={() => navigate(`/userView/${row?.values._id}`)}
                 icon={<ViewIcon mb={1} fontSize={15} />}
               ><LocalizedText text="View" /></MenuItem>
-              {row?.original?.role === "admin" ? (
+              {!canDeleteUser(actor, row?.original) ? (
                 ""
               ) : (
                 <MenuItem
@@ -117,6 +119,7 @@ const Index = () => {
   // const dataColumn = tableColumns?.filter(item => selectedColumns?.find(colum => colum?.Header === item.Header))
 
   const handleOpen = () => {
+    if (!isDeveloper(actor)) return;
     setUserAction("add");
     setIsOpen(true);
   };
@@ -172,7 +175,7 @@ const Index = () => {
         // isOpen={isOpen}
         // onClose={onclose}
         access={{
-          create: true,
+          create: isDeveloper(actor),
           edit: true,
           delete: true,
           view: true,

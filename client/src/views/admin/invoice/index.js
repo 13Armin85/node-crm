@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { DeleteIcon, EditIcon, SearchIcon, ViewIcon } from "@chakra-ui/icons";
 import {
@@ -155,7 +156,7 @@ const Index = (props) => {
       Header: tr("Contact"),
       accessor: "contact",
       cell: (cell) =>
-        user?.role === "admin" || contactAccess?.view ? (
+        isAdmin(user) || contactAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -190,7 +191,7 @@ const Index = (props) => {
       Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
-        user?.role === "admin" || accountAccess?.view ? (
+        isAdmin(user) || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>

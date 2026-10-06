@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../model/schema/user');
 const bcrypt = require('bcrypt');
+const { provisionDeveloper } = require('../services/provisionDeveloper');
 const { initializeLeadSchema } = require("../model/schema/lead");
 const { initializeContactSchema } = require("../model/schema/contact");
 const { initializePropertySchema } = require("../model/schema/property");
@@ -50,13 +51,13 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
         mongoose.set("strictQuery", false);
         await mongoose.connect(DATABASE_URL, DB_OPTIONS);
 
-        // Migrate legacy role records to the simplified admin/user model.
+        // Preserve developer accounts while migrating legacy roles.
         await User.collection.updateMany(
             { role: 'superAdmin' },
             { $set: { role: 'admin' }, $unset: { roles: '' } },
         );
         await User.collection.updateMany(
-            { role: { $nin: ['admin', 'user'] } },
+            { role: { $nin: ['developer', 'admin', 'user'] } },
             { $set: { role: 'user' }, $unset: { roles: '' } },
         );
         await User.collection.updateMany(
@@ -84,11 +85,19 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
         /*  */
         await initializedSchemas();
 
+        const developerExisting = await User.exists({ role: 'developer', deleted: false });
+        if (!developerExisting && process.env.INITIAL_DEVELOPER_EMAIL && process.env.INITIAL_DEVELOPER_PASSWORD) {
+            await provisionDeveloper();
+            console.log('Developer created successfully.');
+        } else if (!developerExisting) {
+            console.warn('No developer exists. Configure INITIAL_DEVELOPER_EMAIL and INITIAL_DEVELOPER_PASSWORD, then run npm run provision:developer.');
+        }
+
         const initialAdminUsername = process.env.INITIAL_ADMIN_EMAIL;
         const initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD;
-        let adminExisting = await User.find({ role: 'admin' });
+        const privilegedExisting = await User.exists({ role: { $in: ['developer', 'admin'] }, deleted: false });
         const validInitialAdmin = initialAdminUsername && initialAdminPassword && initialAdminPassword !== 'replace-with-a-strong-password';
-        if (adminExisting.length <= 0 && validInitialAdmin) {
+        if (!privilegedExisting && validInitialAdmin) {
             const phoneNumber = process.env.INITIAL_ADMIN_PHONE || undefined;
             const firstName = process.env.INITIAL_ADMIN_FIRST_NAME || 'System';
             const lastName = process.env.INITIAL_ADMIN_LAST_NAME || 'Administrator';
@@ -101,7 +110,7 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
             // Save the user to the database
             await user.save();
             console.log("Admin created successfully..");
-        } else if (adminExisting.length <= 0) {
+        } else if (!privilegedExisting) {
             console.warn('No administrator exists. Set INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD for the first startup.');
         }
 

@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getApi } from "../../services/api";
 
@@ -7,7 +8,7 @@ export const fetchOpportunityData = createAsyncThunk(
     const user = JSON.parse(localStorage.getItem("user"));
     try {
       const response = await getApi(
-        user.role === "admin"
+        isAdmin(user)
           ? "api/opportunity/"
           : `api/opportunity/?createBy=${user._id}`,
       );

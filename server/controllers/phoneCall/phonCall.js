@@ -1,3 +1,4 @@
+const { isAdmin } = require('../../services/userRoles');
 const PhoneCall = require("../../model/schema/phoneCall");
 const User = require("../../model/schema/user");
 const mongoose = require("mongoose");
@@ -67,7 +68,7 @@ const index = async (req, res) => {
 
         const user = await User.findById(req.user.userId);
 
-        if (user?.role !== "admin") {
+        if (!isAdmin(user)) {
             delete query.sender;
             query.deleted = false;
             query.$or = [

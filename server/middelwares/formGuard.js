@@ -10,6 +10,8 @@ module.exports = async (req, res, next) => {
     const module = await CustomField.findById(moduleId).lean();
     if (!module || ['Accounts', 'Account', 'Payments'].includes(module.moduleName)) return res.status(404).json({ code: 'notFound' });
     const action = req.method === 'GET' ? 'view' : req.method === 'DELETE' || req.path.includes('delete') ? 'delete' : req.method === 'PUT' ? 'update' : 'create';
+    // Account mutations must use the user controller's role and password safeguards.
+    if (['User', 'Users'].includes(module.moduleName) && action !== 'view') return res.status(403).json({ code: 'forbidden' });
     if (!can(req.actor, module.moduleName, action)) return res.status(403).json({ code: 'forbidden' });
     if (module.moduleName === 'Properties' && ['create', 'update'].includes(action)) {
       req.url = `/Properties${action === 'update' ? `/${req.params.id}` : ''}`;

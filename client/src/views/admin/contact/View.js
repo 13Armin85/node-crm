@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
@@ -315,7 +316,7 @@ const View = () => {
       Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
-        user?.role === "admin" || accountAccess?.view ? (
+        isAdmin(user) || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -414,7 +415,7 @@ const View = () => {
       Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
-        user?.role === "admin" || accountAccess?.view ? (
+        isAdmin(user) || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -625,7 +626,7 @@ const View = () => {
               >
                 <Flex justifyContent={"right"}>
                   <Menu>
-                    {(user?.role === "admin" ||
+                    {(isAdmin(user) ||
                       permission?.create ||
                       permission?.update ||
                       permission?.delete) && (
@@ -641,7 +642,7 @@ const View = () => {
                     )}
                     <MenuDivider />
                     <MenuList minWidth={2} zIndex={"99"}>
-                      {(user?.role === "admin" || permission?.create) && (
+                      {(isAdmin(user) || permission?.create) && (
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => onOpen()}
@@ -649,7 +650,7 @@ const View = () => {
                           icon={<AddIcon />}
                         ><LocalizedText text="Add" /></MenuItem>
                       )}
-                      {(user?.role === "admin" || permission?.update) && (
+                      {(isAdmin(user) || permission?.update) && (
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => setEdit(true)}
@@ -664,7 +665,7 @@ const View = () => {
                         style={{ alignItems: "center" }}
                       ><LocalizedText text="Print as PDF" /></MenuItem>
 
-                      {(user?.role === "admin" || permission?.delete) && (
+                      {(isAdmin(user) || permission?.delete) && (
                         <>
                           <MenuDivider />
                           <MenuItem
@@ -1305,7 +1306,7 @@ const View = () => {
             </TabPanels>
           </Tabs>
 
-          {(user?.role === "admin" ||
+          {(isAdmin(user) ||
             permission?.update ||
             permission?.delete) && (
             <Card mt={3}>

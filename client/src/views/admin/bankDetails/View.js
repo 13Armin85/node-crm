@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
@@ -237,7 +238,7 @@ const View = () => {
                       <Heading size="md" mb={3}><LocalizedText text="Bank Details" /></Heading>
                       <Flex id="hide-btn">
                         <Menu>
-                          {(user?.role === "admin" ||
+                          {(isAdmin(user) ||
                             permission?.create ||
                             permission?.update ||
                             permission?.delete) && (
@@ -252,7 +253,7 @@ const View = () => {
                           )}
                           <MenuDivider />
                           <MenuList minWidth={2}>
-                            {(user?.role === "admin" ||
+                            {(isAdmin(user) ||
                               permission?.create) && (
                               <MenuItem
                                 color={"blue"}
@@ -265,7 +266,7 @@ const View = () => {
                                 {" "}<LocalizedText text="Add" />{" "}
                               </MenuItem>
                             )}
-                            {(user?.role === "admin" ||
+                            {(isAdmin(user) ||
                               permission?.update) && (
                               <MenuItem
                                 onClick={() => {
@@ -282,7 +283,7 @@ const View = () => {
                               display={"flex"}
                               style={{ alignItems: "center" }}
                             ><LocalizedText text="Print as PDF" /></MenuItem>
-                            {(user?.role === "admin" ||
+                            {(isAdmin(user) ||
                               permission?.delete) && (
                               <>
                                 <MenuDivider />
@@ -547,14 +548,14 @@ const View = () => {
             </Grid>
           </Tabs>
 
-          {(user?.role === "admin" ||
+          {(isAdmin(user) ||
             permission?.update ||
             permission?.delete) && (
             <Card mt={3}>
               <Grid templateColumns="repeat(2, 1fr)" gap={1}>
                 <GridItem colStart={6}>
                   <Flex justifyContent={"right"}>
-                    {user?.role === "admin" || permission?.update ? (
+                    {isAdmin(user) || permission?.update ? (
                       <Button
                         size="sm"
                         onClick={() => {
@@ -568,7 +569,7 @@ const View = () => {
                     ) : (
                       ""
                     )}
-                    {user?.role === "admin" || permission?.delete ? (
+                    {isAdmin(user) || permission?.delete ? (
                       <Button
                         size="sm"
                         style={{ background: "red.800" }}

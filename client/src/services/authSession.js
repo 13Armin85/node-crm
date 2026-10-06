@@ -8,7 +8,7 @@ const parseUser = (value) => {
   try {
     const user = JSON.parse(value);
     if (user?.role === "superAdmin") return { ...user, role: "admin" };
-    return ["admin", "user"].includes(user?.role) ? user : null;
+    return ["developer", "admin", "user"].includes(user?.role) ? user : null;
   } catch (error) {
     return null;
   }

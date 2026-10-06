@@ -1,3 +1,5 @@
+import { isAdmin, isDeveloper } from 'roles';
+
 export const HasAccess = (actions) => {
   const user = JSON.parse(localStorage.getItem("user"));
   const permission = {
@@ -9,5 +11,9 @@ export const HasAccess = (actions) => {
     export: true,
   };
 
-  return actions.map(() => ['admin', 'user'].includes(user?.role) ? permission : {});
+  const adminModules = ['Users', 'Roles', 'Custom Fields', 'Active Deactive Module'];
+  return actions.map(title => {
+    if (!isAdmin(user) && (user?.role !== 'user' || adminModules.includes(title))) return {};
+    return title === 'Users' ? { ...permission, create: isDeveloper(user) } : permission;
+  });
 };

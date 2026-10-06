@@ -1,5 +1,7 @@
 // Existing English keys remain stable; aliases cover historical spelling/casing.
 const rows = `
+Developer|توسعه‌دهنده|Geliştirici
+developer|توسعه‌دهنده|Geliştirici
 Message|پیام|Mesaj
 Title|عنوان|Başlık
 Grand Total|جمع کل|Genel Toplam

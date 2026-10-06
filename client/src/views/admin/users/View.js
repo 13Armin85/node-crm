@@ -30,8 +30,10 @@ import { setUser } from "../../../redux/slices/localSlice";
 import CommonDeleteModel from "components/commonDeleteModel";
 import { deleteApi } from "services/api";
 import AddEditUser from "./AddEditUser";
+import { isDeveloper, canEditUser, canDeleteUser } from 'roles';
 
 const View = () => {
+  const actor = JSON.parse(localStorage.getItem('user') || 'null');
   const dispatch = useDispatch();
   const userData = useSelector((state) => state?.user?.user);
 
@@ -57,6 +59,8 @@ const View = () => {
   const size = "lg";
 
   const handleOpen = (type) => {
+    if (type === 'add' && !isDeveloper(actor)) return;
+    if (type === 'edit' && !canEditUser(actor, data)) return;
     setUserAction(type);
     setIsOpen(true);
   };
@@ -136,7 +140,7 @@ const View = () => {
                 <Flex
                   justifyContent={{ base: "start", sm: "start", md: "end" }}
                 >
-                  {data?.role === "admin" && (
+                  {canEditUser(actor, data) && (
                     <Menu>
                       <MenuButton
                         variant="outline"
@@ -149,20 +153,18 @@ const View = () => {
                       ><LocalizedText text="Actions" /></MenuButton>
                       <MenuDivider />
                       <MenuList minWidth={"13rem"}>
-                        <MenuItem
+                        {isDeveloper(actor) && <MenuItem
                           alignItems={"start"}
                           onClick={() => handleOpen("add")}
                           icon={<AddIcon />}
-                        ><LocalizedText text="Add" /></MenuItem>
+                        ><LocalizedText text="Add" /></MenuItem>}
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => handleOpen("edit")}
                           icon={<EditIcon />}
                           color="green"
                         ><LocalizedText text="Edit" /></MenuItem>
-                        {data?.role !== "admin" &&
-                          JSON.parse(localStorage.getItem("user"))?.role ===
-                            "admin" && (
+                        {canDeleteUser(actor, data) && (
                             <>
                               <MenuDivider />
                               <MenuItem
@@ -211,7 +213,7 @@ const View = () => {
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Role" /></Text>
-                <Text textTransform="capitalize">{data?.role ? tr(data.role === 'admin' ? 'Admin' : 'User') : ' - '}</Text>
+                <Text textTransform="capitalize">{data?.role ? tr({ developer: 'Developer', admin: 'Admin', user: 'User' }[data.role]) : ' - '}</Text>
               </GridItem>
             </Grid>
           </Card>
@@ -220,7 +222,7 @@ const View = () => {
             <Grid templateColumns="repeat(6, 1fr)" gap={1}>
               <GridItem colStart={6}>
                 <Flex justifyContent={"right"}>
-                  <Button
+                  {canEditUser(actor, data) && <Button
                     onClick={() => {
                       handleOpenModal(userData);
                       handleOpen("edit");
@@ -230,10 +232,8 @@ const View = () => {
                     variant="outline"
                     size="sm"
                     colorScheme="green"
-                  ><LocalizedText text="Edit" /></Button>
-                  {data?.role !== "admin" &&
-                    JSON.parse(localStorage.getItem("user"))?.role ===
-                      "admin" && (
+                  ><LocalizedText text="Edit" /></Button>}
+                  {canDeleteUser(actor, data) && (
                       <Button
                         size="sm"
                         style={{ background: "red.800" }}

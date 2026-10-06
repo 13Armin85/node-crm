@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import {
   Avatar,
   Box,
@@ -126,7 +127,7 @@ export default function HeaderLinks() {
           </Box>
           <MenuDivider />
           <MenuItem icon={<Icon as={FiHome} />} onClick={() => navigate("/admin/")}>{t("Home")}</MenuItem>
-          {loginUser?.role === "admin" && (
+          {isAdmin(loginUser) && (
             <MenuItem icon={<Icon as={FiSettings} />} onClick={() => navigate("/admin-setting")}>{t("Admin Settings")}</MenuItem>
           )}
           <MenuItem icon={<Icon as={FiUser} />} onClick={() => navigate(`/userView/${storedUser?._id}`)}>{t("Profile Settings")}</MenuItem>

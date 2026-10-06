@@ -194,7 +194,7 @@ module.exports = ({ field, options, required }) => {
       f('lastName', 'text', 'Last Name', 'نام خانوادگی', required),
       f('username', 'email', 'Email / Username', 'ایمیل / نام کاربری', required),
       f('phoneNumber', 'phone', 'Phone Number', 'شماره تلفن'),
-      choice('role', 'Role', 'نقش', ['admin', 'user'], required),
+      choice('role', 'Role', 'نقش', ['developer', 'admin', 'user'], required),
     ],
     'Email Template': [
       f('templateName', 'text', 'Template Name', 'نام قالب', required),

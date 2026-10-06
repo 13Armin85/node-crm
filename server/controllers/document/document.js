@@ -1,3 +1,4 @@
+const { isAdmin } = require('../../services/userRoles');
 const multer = require('multer');
 const Document = require('../../model/schema/document');
 const User = require('../../model/schema/user');
@@ -22,7 +23,7 @@ const categoryForEntity = {
 const actorScope = async (req) => {
     const actor = await User.findOne({ _id: req.user.userId, deleted: false });
     if (!actor) return null;
-    return { actor, query: actor.role === 'admin' ? {} : { createBy: actor._id } };
+    return { actor, query: isAdmin(actor) ? {} : { createBy: actor._id } };
 };
 
 const index = async (req, res) => {

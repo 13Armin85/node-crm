@@ -1,3 +1,4 @@
+const { isAdmin } = require('../../services/userRoles');
 const Opprtunities = require('../../model/schema/opprtunity')
 const User = require('../../model/schema/user')
 const mongoose = require('mongoose');
@@ -34,7 +35,7 @@ const index = async (req, res) => {
         query.deleted = false;
 
         const user = await User.findById(req.user.userId)
-        if (user?.role !== "admin") {
+        if (!isAdmin(user)) {
             delete query.createBy
             query.$or = [{ createBy: new mongoose.Types.ObjectId(req.user.userId) }, { assignUser: new mongoose.Types.ObjectId(req.user.userId) }];
         }

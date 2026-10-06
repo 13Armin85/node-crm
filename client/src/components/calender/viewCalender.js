@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { CloseIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   DrawerFooter,
@@ -130,7 +131,7 @@ const ViewCalender = (props) => {
               </ModalBody>
               <DrawerFooter>
                 {access?.view ||
-                  (user?.role === "admin" && (
+                  (isAdmin(user) && (
                     <IconButton
                       variant="outline"
                       colorScheme={"green"}
@@ -141,7 +142,7 @@ const ViewCalender = (props) => {
                     />
                   ))}
                 {access?.update ||
-                  (user?.role === "admin" && (
+                  (isAdmin(user) && (
                     <IconButton
                       variant="outline"
                       onClick={() => setEdit(true)}
@@ -152,7 +153,7 @@ const ViewCalender = (props) => {
                     />
                   ))}
                 {access?.delete ||
-                  (user?.role === "admin" && (
+                  (isAdmin(user) && (
                     <IconButton
                       colorScheme="red"
                       onClick={() => setDelete(true)}

@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { formLabel } from 'utils/formValue';
 import {
@@ -103,14 +104,14 @@ const AddPhoneCall = (props) => {
       let result;
       if (values?.category === "Contact" && assignToContactData?.length <= 0) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/contact/"
             : `api/contact/?createBy=${user._id}`,
         );
         setAssignToContactData(result?.data);
       } else if (values?.category === "Lead" && assignToLeadData?.length <= 0) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/lead/"
             : `api/lead/?createBy=${user?._id}`,
         );
@@ -120,7 +121,7 @@ const AddPhoneCall = (props) => {
         assignToProperyData?.length <= 0)
       ) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/property"
             : `api/property/?createBy=${user?._id}`,
         );

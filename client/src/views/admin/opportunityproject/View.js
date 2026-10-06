@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
@@ -489,7 +490,7 @@ const View = (props) => {
                       <Heading size="md" mb={3}><LocalizedText text="Opportunity Project Details" /></Heading>
                       <Flex id="hide-btn">
                         <Menu>
-                          {(user?.role === "admin" ||
+                          {(isAdmin(user) ||
                             permission?.create ||
                             permission?.update ||
                             permission?.delete) && (
@@ -504,7 +505,7 @@ const View = (props) => {
                           )}
                           <MenuDivider />
                           <MenuList minWidth={2}>
-                            {(user?.role === "admin" ||
+                            {(isAdmin(user) ||
                               permission?.create) && (
                               <MenuItem
                                 color={"blue"}
@@ -518,7 +519,7 @@ const View = (props) => {
                                 {" "}<LocalizedText text="Add" />{" "}
                               </MenuItem>
                             )}
-                            {(user?.role === "admin" ||
+                            {(isAdmin(user) ||
                               permission?.update) && (
                               <MenuItem
                                 onClick={() => {
@@ -536,7 +537,7 @@ const View = (props) => {
                               display={"flex"}
                               style={{ alignItems: "center" }}
                             ><LocalizedText text="Print as PDF" /></MenuItem>
-                            {(user?.role === "admin" ||
+                            {(isAdmin(user) ||
                               permission?.delete) && (
                               <>
                                 <MenuDivider />
@@ -676,10 +677,10 @@ const View = (props) => {
                     <Text
                       color={
                         opportunitydata?.category === "contact" &&
-                        (contactAccess?.view || user?.role === "admin")
+                        (contactAccess?.view || isAdmin(user))
                           ? "brand.600"
                           : leadAccess?.view ||
-                              (user?.role === "admin" &&
+                              (isAdmin(user) &&
                                 opportunitydata?.category === "lead")
                             ? "brand.600"
                             : "blackAlpha.900"
@@ -728,14 +729,14 @@ const View = (props) => {
             </Grid>
           </Card>
 
-          {(user?.role === "admin" ||
+          {(isAdmin(user) ||
             permission?.update ||
             permission?.delete) && (
             <Card mt={3}>
               <Grid templateColumns="repeat(2, 1fr)" gap={1}>
                 <GridItem colStart={6}>
                   <Flex justifyContent={"right"}>
-                    {user?.role === "admin" || permission?.update ? (
+                    {isAdmin(user) || permission?.update ? (
                       <Button
                         size="sm"
                         onClick={() => {
@@ -750,7 +751,7 @@ const View = (props) => {
                     ) : (
                       ""
                     )}
-                    {user?.role === "admin" || permission?.delete ? (
+                    {isAdmin(user) || permission?.delete ? (
                       <Button
                         size="sm"
                         style={{ background: "red.800" }}

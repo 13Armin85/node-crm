@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr } from 'i18n/runtime';
 import {
   Flex,
@@ -50,14 +51,14 @@ export const FirstStepper = (props) => {
       let result;
       if (values?.category === "contact" && assignToContactData?.length <= 0) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/contact/"
             : `api/contact/?createBy=${user?._id}`
         );
         setAssignToContactData(result?.data);
       } else if (values?.category === "lead" && assignToLeadData <= 0) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/lead/"
             : `api/lead/?createBy=${user?._id}`
         );

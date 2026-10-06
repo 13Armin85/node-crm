@@ -31,6 +31,7 @@ import { toast } from "react-toastify";
 import { userSchema } from "schema";
 import { postApi, putApi } from "services/api";
 import { setUser } from "../../../redux/slices/localSlice";
+import { isDeveloper, isAdmin, canEditUser } from 'roles';
 
 const AddEditUser = (props) => {
   const {
@@ -78,6 +79,8 @@ const AddEditUser = (props) => {
   } = formik;
 
   const AddData = async () => {
+    if (userAction === 'add' && !isDeveloper(user)) return;
+    if (userAction === 'edit' && !canEditUser(user, data)) return;
     if (userAction === "add") {
       try {
         setIsLoding(true);
@@ -98,7 +101,9 @@ const AddEditUser = (props) => {
     } else if (userAction === "edit") {
       try {
         setIsLoding(true);
-        let response = await putApi(`api/user/edit/${selectedId}`, values);
+        const payload = { ...values };
+        if (!isAdmin(user)) delete payload.role;
+        let response = await putApi(`api/user/edit/${selectedId}`, payload);
         if (response && response?.status === 200) {
           // setEdit(false)
           fetchData();
@@ -197,11 +202,12 @@ const AddEditUser = (props) => {
                 value={values.role}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                isDisabled={userAction === "edit" && user?._id === selectedId}
+                isDisabled={!isAdmin(user) || (userAction === "edit" && user?._id === selectedId)}
                 borderColor={errors.role && touched.role ? "red.300" : undefined}
               >
                 <option value="user">{tr("User")}</option>
                 <option value="admin">{tr("Admin")}</option>
+                {isDeveloper(user) && <option value="developer">{tr("Developer")}</option>}
               </Select>
               <Text mb="10px" color="red">{errors.role && touched.role && errors.role}</Text>
             </GridItem>

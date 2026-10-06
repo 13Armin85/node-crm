@@ -3,14 +3,14 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require('../../config/auth');
 const { sendEmail } = require("../../middelwares/mail");
+const { USER_ROLES, isAdmin, isDeveloper, sameUser, canEditUser, canAssignRole, canDeleteUser } = require('../../services/userRoles');
 
 const normalizeEmail = (value) =>
   typeof value === "string" ? value.trim().toLowerCase() : value;
 
 const normalizePassword = (value) =>
   typeof value === "string" ? value.trim() : value;
-const USER_ROLES = new Set(["admin", "user"]);
-const normalizeRole = (value) => USER_ROLES.has(value) ? value : null;
+const normalizeRole = (value) => USER_ROLES.includes(value) ? value : null;
 const escapeHtml = (value = '') => String(value)
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -34,13 +34,14 @@ const sendAccountCreatedEmail = async (user) => {
 // User Registration
 const register = async (req, res) => {
   try {
+    if (!isDeveloper(req.actor)) return res.status(403).json({ code: 'forbidden' });
     const { username, password, firstName, lastName, phoneNumber } =
       req.body;
     const role = normalizeRole(req.body.role);
     const normalizedUsername = normalizeEmail(username);
     const normalizedPassword = normalizePassword(password);
     if (!normalizedUsername || !normalizedPassword || normalizedPassword.length < 8) return res.status(400).json({ code: 'invalid' });
-    if (!role) return res.status(400).json({ code: 'invalidRole', message: 'Role must be admin or user' });
+    if (!role) return res.status(400).json({ code: 'invalidRole', message: 'Role must be developer, admin or user' });
     const user = await User.findOne({ username: normalizedUsername });
 
     if (user?.deleted) {
@@ -83,7 +84,7 @@ const index = async (req, res) => {
 
 const view = async (req, res) => {
   try {
-    if (req.actor.role !== 'admin' && String(req.actor._id) !== String(req.params.id)) {
+    if (!isAdmin(req.actor) && String(req.actor._id) !== String(req.params.id)) {
       return res.status(403).json({ code: 'forbidden' });
     }
     let user = await User.findOne({ _id: req.params.id });
@@ -111,11 +112,11 @@ let deleteData = async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
-    if (user.role !== "admin") {
+    if (canDeleteUser(req.actor, user)) {
       await User.deleteOne({ _id: userId });
       res.send({ message: "Record deleted Successfully" });
     } else {
-      res.status(404).json({ message: "admin can not delete" });
+      res.status(403).json({ code: 'forbidden', message: 'You cannot delete this account' });
     }
   } catch (error) {
     res.status(500).json({ error });
@@ -132,19 +133,19 @@ const deleteMany = async (req, res) => {
       (user) => !defaultUsers.includes(user.username),
     );
 
-    const nonAdmins = filteredUsers.filter(
-      (user) => user.role !== "admin",
-    );
-    const nonAdminIds = nonAdmins.map((user) => user._id);
+    if (filteredUsers.some(user => !canDeleteUser(req.actor, user))) {
+      return res.status(403).json({ code: 'forbidden', message: 'You cannot delete these accounts' });
+    }
+    const deletableIds = filteredUsers.map((user) => user._id);
 
-    if (nonAdminIds.length === 0) {
+    if (deletableIds.length === 0) {
       return res
         .status(400)
         .json({ message: "No users to delete or all users are protected." });
     }
 
     const deletedUsers = await User.deleteMany(
-      { _id: { $in: nonAdminIds } },
+      { _id: { $in: deletableIds } },
     );
 
     res.status(200).json({ message: "done", deletedUsers });
@@ -156,18 +157,20 @@ const deleteMany = async (req, res) => {
 const edit = async (req, res) => {
   try {
     let { username, firstName, lastName, phoneNumber } = req.body;
-    if (req.actor.role !== 'admin' && String(req.actor._id) !== String(req.params.id)) {
+    const target = await User.findById(req.params.id);
+    if (!target) return res.status(404).json({ code: 'notFound' });
+    if (!canEditUser(req.actor, target)) {
       return res.status(403).json({ code: 'forbidden' });
     }
     const role = req.body.role === undefined ? undefined : normalizeRole(req.body.role);
     if (req.body.role !== undefined && !role) {
-      return res.status(400).json({ code: 'invalidRole', message: 'Role must be admin or user' });
+      return res.status(400).json({ code: 'invalidRole', message: 'Role must be developer, admin or user' });
     }
-    if (role && req.actor.role !== 'admin') {
+    if (role && !canAssignRole(req.actor, target, role)) {
       return res.status(403).json({ code: 'forbidden' });
     }
-    if (String(req.actor?._id) === String(req.params.id) && role && role !== 'admin') {
-      return res.status(400).json({ code: 'adminSelfDemotion', message: 'Administrators cannot change their own role' });
+    if (sameUser(req.actor, target) && role && role !== target.role) {
+      return res.status(400).json({ code: 'adminSelfDemotion', message: 'You cannot change your own role' });
     }
 
     let result = await User.updateOne(
@@ -182,6 +185,7 @@ const edit = async (req, res) => {
           ...(role ? { role } : {}),
         },
       },
+      { runValidators: true },
     );
 
     res.status(200).json(result);

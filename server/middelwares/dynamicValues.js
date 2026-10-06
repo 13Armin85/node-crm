@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { getDefinition } = require('../services/formDefinitions');
 const { validateFields, normalizeProperty, objectId } = require('../services/estateValidation');
-const { can, scope } = require('./permissions');
+const { can, scope, isAdmin } = require('./permissions');
 // Extend existing controllers without changing their response contracts.
 module.exports = moduleName => async (req, res, next) => {
   try {
@@ -27,7 +27,7 @@ module.exports = moduleName => async (req, res, next) => {
     else delete req.body.createBy;
     delete req.body.deleted;
     delete req.body.roles;
-    if (moduleName !== 'Users' || req.actor.role !== 'admin') delete req.body.role;
+    if (moduleName !== 'Users' || !isAdmin(req.actor)) delete req.body.role;
     next();
   } catch (error) { res.status(400).json({ code: error.code || 'invalid', field: error.field }); }
 };

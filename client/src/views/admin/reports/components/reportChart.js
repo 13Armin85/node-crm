@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { Box, Flex, Radio, RadioGroup, Select, Stack, Text, useColorModeValue } from "@chakra-ui/react";
 import Card from "components/card/Card";
 import moment from "moment";
@@ -155,7 +156,7 @@ const ReportChart = (props) => {
       filter: selection,
     };
     let result = await postApi(
-      user?.role === "admin"
+      isAdmin(user)
         ? "api/reporting/index"
         : `api/reporting/index?sender=${user?._id}`,
       data,

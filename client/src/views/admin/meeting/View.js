@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
@@ -288,14 +289,14 @@ const View = () => {
               </Card>
             </GridItem>
           </Grid>
-          {(user?.role === "admin" ||
+          {(isAdmin(user) ||
             permission?.update ||
             permission?.delete) && (
             <Card mt={3}>
               <Grid templateColumns="repeat(6, 1fr)" gap={1}>
                 <GridItem colStart={6}>
                   <Flex justifyContent={"right"}>
-                    {user?.role === "admin" || permission?.delete ? (
+                    {isAdmin(user) || permission?.delete ? (
                       <Button
                         size="sm"
                         style={{ background: "red.800" }}

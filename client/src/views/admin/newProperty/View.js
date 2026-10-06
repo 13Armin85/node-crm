@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
@@ -666,7 +667,7 @@ const View = () => {
               >
                 <Flex justifyContent={"right"}>
                   <Menu>
-                    {(user?.role === "admin" ||
+                    {(isAdmin(user) ||
                       permission?.create ||
                       permission?.update ||
                       permission?.delete) && (
@@ -682,7 +683,7 @@ const View = () => {
                       )}
                     <MenuDivider />
                     <MenuList minWidth={2}>
-                      {(user?.role === "admin" || permission?.create) && (
+                      {(isAdmin(user) || permission?.create) && (
                         <MenuItem
                           alignItems={"start"}
                           color={"blue"}
@@ -690,7 +691,7 @@ const View = () => {
                           icon={<AddIcon />}
                         ><LocalizedText text="Add" /></MenuItem>
                       )}
-                      {(user?.role === "admin" || permission?.update) && (
+                      {(isAdmin(user) || permission?.update) && (
                         <MenuItem
                           alignItems={"start"}
                           onClick={() => setEdit(true)}
@@ -704,7 +705,7 @@ const View = () => {
                         display={"flex"}
                         style={{ alignItems: "center" }}
                       ><LocalizedText text="Print as PDF" /></MenuItem>
-                      {(user?.role === "admin" || permission?.delete) && (
+                      {(isAdmin(user) || permission?.delete) && (
                         <>
                           <MenuDivider />
                           <MenuItem
@@ -991,7 +992,7 @@ const View = () => {
                                           }}
                                         ><LocalizedText text="Sold" /></MenuItem>
                                       )}
-                                    {user?.role === "admin" &&
+                                    {isAdmin(user) &&
                                       item?.status !== "Blocked" && (
                                         <MenuItem
                                           py={2.5}
@@ -1379,7 +1380,7 @@ const View = () => {
 
           {(permission?.delete ||
             permission?.update ||
-            user?.role === "admin") && (
+            isAdmin(user)) && (
               <Card mt={3}>
                 <Grid templateColumns="repeat(6, 1fr)" gap={1}>
                   <GridItem colStart={6}>

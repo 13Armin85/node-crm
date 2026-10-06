@@ -1,3 +1,4 @@
+const { isAdmin } = require('../../services/userRoles');
 const mongoose = require('mongoose');
 const { Lead } = require('../../model/schema/lead');
 const { Contact } = require('../../model/schema/contact');
@@ -16,7 +17,7 @@ const index = async (req, res) => {
     try {
         const actor = await getActor(req);
         if (!actor) return res.status(401).json({ message: 'Authentication failed' });
-        const users = await User.find(actor.role === 'admin' ? { deleted: false } : { _id: actor._id, deleted: false })
+        const users = await User.find(isAdmin(actor) ? { deleted: false } : { _id: actor._id, deleted: false })
             .select('_id firstName lastName username role').lean();
         const ids = users.map((user) => user._id);
         const [emails, calls, texts, tasks] = await Promise.all([
@@ -44,8 +45,8 @@ const lineChart = async (req, res) => {
     try {
         const actor = await getActor(req);
         if (!actor) return res.status(401).json({ message: 'Authentication failed' });
-        const own = actor.role === 'admin' ? {} : { createBy: actor._id };
-        const taskScope = actor.role === 'admin' ? {} : { assignedToUser: actor._id };
+        const own = isAdmin(actor) ? {} : { createBy: actor._id };
+        const taskScope = isAdmin(actor) ? {} : { assignedToUser: actor._id };
         const [leads, contacts, properties, opportunities, partners, tasks, completed] = await Promise.all([
             Lead.countDocuments({ ...own, deleted: false }),
             Contact.countDocuments({ ...own, deleted: false }),
@@ -111,9 +112,9 @@ const data = async (req, res) => {
         if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
             return res.status(400).json({ message: 'Invalid date range' });
         }
-        const requestedSender = actor.role === 'admin' && mongoose.Types.ObjectId.isValid(req.query.sender)
+        const requestedSender = isAdmin(actor) && mongoose.Types.ObjectId.isValid(req.query.sender)
             ? new mongoose.Types.ObjectId(req.query.sender)
-            : actor.role === 'admin' ? null : actor._id;
+            : isAdmin(actor) ? null : actor._id;
         const match = { timestamp: { $gte: start, $lte: end }, deleted: { $ne: true } };
         if (requestedSender) match.sender = requestedSender;
         const textMatch = { timestamp: match.timestamp };

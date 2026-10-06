@@ -10,6 +10,7 @@
     "check": "node scripts/check.js",
     "migrate:estate": "node scripts/migrate-estate.js",
     "seed:local-users": "node scripts/seed-local-users.js",
+    "provision:developer": "node scripts/provision-developer.js",
     "seed:demo": "node scripts/seed-demo-data.js"
   },
   "author": "",

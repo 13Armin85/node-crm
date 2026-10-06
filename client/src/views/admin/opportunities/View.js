@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
@@ -179,7 +180,7 @@ const View = (props) => {
                     <Flex id="hide-btn">
                       <Heading size="md" mb={3}><LocalizedText text="Opportunities Details" /></Heading>
                       <Menu>
-                        {(user.role === "admin" ||
+                        {(isAdmin(user) ||
                           opportunityAccess?.create ||
                           opportunityAccess?.update ||
                           opportunityAccess?.delete) && (
@@ -195,7 +196,7 @@ const View = (props) => {
                         )}
                         <MenuDivider />
                         <MenuList minWidth={2}>
-                          {(user?.role === "admin" ||
+                          {(isAdmin(user) ||
                             opportunityAccess?.create) && (
                             <MenuItem
                               onClick={() => {
@@ -208,7 +209,7 @@ const View = (props) => {
                               icon={<AddIcon />}
                             ><LocalizedText text="Add" /></MenuItem>
                           )}
-                          {(user?.role === "admin" ||
+                          {(isAdmin(user) ||
                             opportunityAccess?.update) && (
                             <MenuItem
                               onClick={() => {
@@ -227,7 +228,7 @@ const View = (props) => {
                             style={{ alignItems: "center" }}
                           ><LocalizedText text="Print as PDF" /></MenuItem>
 
-                          {(user?.role === "admin" ||
+                          {(isAdmin(user) ||
                             opportunityAccess?.delete) && (
                             <>
                               <MenuDivider />
@@ -348,24 +349,24 @@ const View = (props) => {
                 {data?.assignUser ? (
                   <Link
                     to={
-                      user?.role === "admin" &&
+                      isAdmin(user) &&
                       `/userView/${data?.assignUser}`
                     }
                   >
                     <Text
                       color={
-                        user?.role === "admin"
+                        isAdmin(user)
                           ? "blue.500"
                           : "blackAlpha.900"
                       }
                       sx={{
                         "&:hover": {
                           color:
-                            user?.role === "admin"
+                            isAdmin(user)
                               ? "blue.500"
                               : "blackAlpha.900",
                           textDecoration:
-                            user?.role === "admin" ? "underline" : "none",
+                            isAdmin(user) ? "underline" : "none",
                         },
                       }}
                       style={{ cursor: "pointer" }}
@@ -376,18 +377,18 @@ const View = (props) => {
                 ) : (
                   <Text
                     color={
-                      user?.role === "admin"
+                      isAdmin(user)
                         ? "blue.500"
                         : "blackAlpha.900"
                     }
                     sx={{
                       "&:hover": {
                         color:
-                          user?.role === "admin"
+                          isAdmin(user)
                             ? "blue.500"
                             : "blackAlpha.900",
                         textDecoration:
-                          user?.role === "admin" ? "underline" : "none",
+                          isAdmin(user) ? "underline" : "none",
                       },
                     }}
                   >
@@ -845,7 +846,7 @@ const View = (props) => {
                             <GridItem colSpan={{ base: 2, md: 1 }} >
                                 <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}> Assign To  </Text>
                                 <Link to={data?.assignTo ? opportunityAccess?.view && `/contactView/${data?.assignTo}` : leadAccess?.view && `/leadView/${data?.assignToLead}`}>
-                                    <Text color={(data?.category === 'contact' && (opportunityAccess?.view || user?.role === 'admin')) ? 'brand.600' : (leadAccess?.view || user?.role === 'admin' && data?.category === 'lead') ? 'brand.600' : 'blackAlpha.900'} sx={{ '&:hover': { color: 'blue.500', textDecoration: 'underline' } }}>{data?.assignToName ? data?.assignToName : ' - '}</Text>
+                                    <Text color={(data?.category === 'contact' && (opportunityAccess?.view || isAdmin(user))) ? 'brand.600' : (leadAccess?.view || isAdmin(user) && data?.category === 'lead') ? 'brand.600' : 'blackAlpha.900'} sx={{ '&:hover': { color: 'blue.500', textDecoration: 'underline' } }}>{data?.assignToName ? data?.assignToName : ' - '}</Text>
                                 </Link>
                             </GridItem>
                             <GridItem colSpan={{ base: 2, md: 1 }} >
@@ -901,12 +902,12 @@ const View = (props) => {
       </Grid>
       {(opportunityAccess?.update ||
         opportunityAccess?.delete ||
-        user?.role === "admin") && (
+        isAdmin(user)) && (
         <Card mt={3}>
           <Grid templateColumns="repeat(6, 1fr)" gap={1}>
             <GridItem colStart={6}>
               <Flex justifyContent={"right"}>
-                {(opportunityAccess?.update || user?.role === "admin") && (
+                {(opportunityAccess?.update || isAdmin(user)) && (
                   <Button
                     size="sm"
                     onClick={() => {
@@ -919,7 +920,7 @@ const View = (props) => {
                     colorScheme="green"
                   ><LocalizedText text="Edit" /></Button>
                 )}
-                {(opportunityAccess?.delete || user?.role === "admin") && (
+                {(opportunityAccess?.delete || isAdmin(user)) && (
                   <Button
                     size="sm"
                     style={{ background: "red.800" }}

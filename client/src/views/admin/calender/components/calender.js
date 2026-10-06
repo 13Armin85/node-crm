@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText } from 'i18n/runtime';
 import FullCalendar from "@fullcalendar/react";
 import Card from "components/card/Card";
@@ -71,7 +72,7 @@ const Calender = (props) => {
   return (
     <div>
       <Card>
-        {(taskAccess?.view || user?.role === "admin") && (
+        {(taskAccess?.view || isAdmin(user)) && (
           <AddEdit
             isOpen={taskModel}
             onClose={setTaskModel}
@@ -105,15 +106,15 @@ const Calender = (props) => {
         />
 
         <div style={{ display: "flex", justifyContent: "end" }}>
-          {(callAccess?.create || user?.role === "admin") && (
+          {(callAccess?.create || isAdmin(user)) && (
             <Flex alignItems={"center"} fontSize={"14px"} marginRight={"10px"}>
               <GoDotFill color="green" fontSize={"18px"} /><LocalizedText text="Calls" /></Flex>
           )}
-          {(meetingAccess?.create || user?.role === "admin") && (
+          {(meetingAccess?.create || isAdmin(user)) && (
             <Flex alignItems={"center"} fontSize={"14px"} marginRight={"10px"}>
               <GoDotFill color="red" fontSize={"18px"} /><LocalizedText text="Meetings" /></Flex>
           )}
-          {(emailAccess?.create || user?.role === "admin") && (
+          {(emailAccess?.create || isAdmin(user)) && (
             <Flex alignItems={"center"} fontSize={"14px"}>
               <GoDotFill color="blue" fontSize={"18px"} /><LocalizedText text="Emails" /></Flex>
           )}

@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
@@ -109,7 +110,7 @@ const Task = () => {
             minW={"fit-content"}
             transform={"translate(1520px, 173px);"}
           >
-            {(permission?.update || user?.role !== "admin") && (
+            {(permission?.update || !isAdmin(user)) && (
               <MenuItem
                 py={2.5}
                 icon={<EditIcon fontSize={15} mb={1} />}
@@ -224,7 +225,7 @@ const Task = () => {
     { Header: tr("Related"), accessor: "assignToName", type: "text", formikType: "" },
     { Header: tr("Start Date"), accessor: "start", type: "date", formikType: "" },
     { Header: tr("End Date"), accessor: "end", type: "date", formikType: "" },
-    ...(permission?.update || user?.role !== "admin" || permission?.view || permission?.delete
+    ...(permission?.update || !isAdmin(user) || permission?.view || permission?.delete
       ? [actionHeader]
       : []),
   ];
@@ -349,7 +350,7 @@ const Task = () => {
           <Text className="crm-page-hero__subtitle" fontSize="sm"><LocalizedText text="Assign tasks to users and change work status with drag and drop." /></Text>
         </Box>
         <Flex gap={2} wrap="wrap" width={{ base: "100%", md: "auto" }}>
-          {user?.role === "admin" && (
+          {isAdmin(user) && (
             <Select size="sm" w={{ base: "100%", sm: "190px" }} value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)}>
               <option value="all">{tr("All users")}</option>
               {assignees.map((item) => <option key={item._id} value={item._id}>{[item.firstName, item.lastName].filter(Boolean).join(" ") || item.username}</option>)}

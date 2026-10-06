@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { useEffect, useState } from "react";
 import { getApi } from "services/api";
 import Calender from "./components/calender";
@@ -11,7 +12,7 @@ const Index = () => {
 
   const fetchData = async () => {
     let result = await getApi(
-      user?.role === "admin"
+      isAdmin(user)
         ? "api/calendar/"
         : `api/calendar/?createBy=${user?._id}`,
     );

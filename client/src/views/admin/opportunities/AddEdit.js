@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { formLabel } from 'utils/formValue';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
@@ -159,7 +160,7 @@ const AddEdit = (props) => {
   };
 
   useEffect(() => {
-    if (user?.role === "admin") fetchData();
+    if (isAdmin(user)) fetchData();
   }, []);
 
   useEffect(() => {
@@ -232,7 +233,7 @@ const AddEdit = (props) => {
                     errors?.opportunityName}
                 </Text>
               </GridItem>
-              {(user?.role === "admin" || accountAccess?.view) && (
+              {(isAdmin(user) || accountAccess?.view) && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
                     display="flex"
@@ -285,7 +286,7 @@ const AddEdit = (props) => {
                   </Text>
                 </GridItem>
               )}
-              {user.role === "admin" && (
+              {isAdmin(user) && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
                     display="flex"

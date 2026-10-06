@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { formLabel } from 'utils/formValue';
 import { AddIcon, CloseIcon } from "@chakra-ui/icons";
@@ -304,7 +305,7 @@ const AddEdit = (props) => {
 
   useEffect(() => {
     if (type === "edit") fetchQuotesDetails();
-    if (user?.role === "admin") fetchData();
+    if (isAdmin(user)) fetchData();
   }, [type, selectedId]);
 
   useEffect(() => {
@@ -406,7 +407,7 @@ const AddEdit = (props) => {
                   {errors?.title && touched?.title && errors?.title}
                 </Text>
               </GridItem>
-              {(user?.role === "admin" || opportunityAccess?.view) && (
+              {(isAdmin(user) || opportunityAccess?.view) && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
                     display="flex"
@@ -562,7 +563,7 @@ const AddEdit = (props) => {
                     errors?.validUntil}
                 </Text>
               </GridItem>
-              {user?.role === "admin" && (
+              {isAdmin(user) && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
                     display="flex"
@@ -762,7 +763,7 @@ const AddEdit = (props) => {
               <GridItem colSpan={{ base: 12 }}>
                 <Heading as="h1" size="md" mt="10px"><LocalizedText text="Address Information" /></Heading>
               </GridItem>
-              {(user?.role === "admin" || accountAccess?.view) && (
+              {(isAdmin(user) || accountAccess?.view) && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
                     display="flex"
@@ -808,7 +809,7 @@ const AddEdit = (props) => {
                   </Text>
                 </GridItem>
               )}
-              {(user?.role === "admin" || contactAccess?.view) && (
+              {(isAdmin(user) || contactAccess?.view) && (
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
                     display="flex"

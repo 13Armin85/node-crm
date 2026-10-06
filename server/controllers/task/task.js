@@ -1,3 +1,4 @@
+const { isAdmin } = require('../../services/userRoles');
 const Task = require('../../model/schema/task');
 const User = require('../../model/schema/user');
 const mongoose = require('mongoose');
@@ -39,7 +40,7 @@ const sendTaskAssignmentEmail = async (task, actor) => {
 };
 
 const accessFilter = (user, extra = {}) => {
-    if (user.role === 'admin') return { ...extra };
+    if (isAdmin(user)) return { ...extra };
     return {
         ...extra,
         $or: [
@@ -128,7 +129,7 @@ const index = async (req, res) => {
         if (!user) return res.status(401).json({ message: 'Authentication failed' });
         const query = { deleted: false };
         if (req.query.status && TASK_STATUSES.includes(req.query.status)) query.status = req.query.status;
-        if (req.query.assignedToUser && user.role === 'admin' && isValidId(req.query.assignedToUser)) {
+        if (req.query.assignedToUser && isAdmin(user) && isValidId(req.query.assignedToUser)) {
             query.assignedToUser = new mongoose.Types.ObjectId(req.query.assignedToUser);
         }
         const result = await Task.aggregate(taskPipeline(accessFilter(user, query)));

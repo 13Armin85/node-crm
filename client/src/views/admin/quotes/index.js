@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -151,7 +152,7 @@ const Index = (props) => {
       Header: tr("Contact"),
       accessor: "contact",
       cell: (cell) =>
-        user?.role === "admin" || contactAccess?.view ? (
+        isAdmin(user) || contactAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>
@@ -186,7 +187,7 @@ const Index = (props) => {
       Header: tr("Account"),
       accessor: "account",
       cell: (cell) =>
-        user?.role === "admin" || accountAccess?.view ? (
+        isAdmin(user) || accountAccess?.view ? (
           <div className="selectOpt">
             <Text
               onClick={() =>

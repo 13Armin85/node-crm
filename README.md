@@ -21,7 +21,17 @@ cd ..\client
 npm install
 ```
 
-Edit `server/.env` before first startup. `JWT_SECRET` is required in production. Set `CORS_ORIGINS` to a comma-separated list of allowed client origins. If the database has no super administrator, set `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD`; these values are only used to create the first administrator.
+Edit `server/.env` before first startup. `JWT_SECRET` is required in production. Set `CORS_ORIGINS` to a comma-separated list of allowed client origins. If the database has no administrator, set `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD`; these values are only used to create the first administrator.
+
+The access hierarchy is `developer > admin > user`. Developers inherit every administrator permission. Only developers can register accounts or assign the `developer` role. Administrators can manage ordinary users and administrator roles, but cannot edit, demote, or delete developer accounts. Accounts cannot change their own role or delete themselves.
+
+To provision the programmer's account, set `INITIAL_DEVELOPER_EMAIL` and `INITIAL_DEVELOPER_PASSWORD` (at least 8 characters) in `server/.env`. Startup provisions this account only if no active developer exists. For an existing installation, run this command from `server`:
+
+```powershell
+npm run provision:developer
+```
+
+This server-only command creates the configured account, or promotes the account with the same email and resets its password to the configured value. Existing administrators are not promoted automatically. Remove the initial developer credentials from `.env` after provisioning. Sign in with this developer account to register further users through the Users page.
 
 Start the API and client in separate terminals:
 

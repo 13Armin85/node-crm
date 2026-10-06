@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { formLabel } from 'utils/formValue';
 import { LinkIcon } from "@chakra-ui/icons";
@@ -92,7 +93,7 @@ const Link = (props) => {
   const fetchData = async () => {
     if (values?.linkWith === "Contact") {
       let result = await getApi(
-        user?.role === "admin"
+        isAdmin(user)
           ? "api/contact/"
           : `api/contact/?createBy=${user._id}`,
       );
@@ -106,7 +107,7 @@ const Link = (props) => {
       ]);
     } else if (values?.linkWith === "lead") {
       let result = await getApi(
-        user.role === "admin"
+        isAdmin(user)
           ? "api/lead/"
           : `api/lead/?createBy=${user._id}`,
       );

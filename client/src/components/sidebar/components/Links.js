@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Box, Flex, Text, Tooltip } from "@chakra-ui/react";
 import { useLanguage } from "i18n";
+import { ROLE_PATH } from 'roles';
 
 export function SidebarLinks({ routes, setOpenSidebar, openSidebar }) {
   const location = useLocation();
@@ -38,7 +39,7 @@ export function SidebarLinks({ routes, setOpenSidebar, openSidebar }) {
         );
       }
 
-      if (route?.under || !user?.role || !route?.layout?.includes(`/${user.role}`)) {
+      if (route?.under || !user?.role || !route?.layout?.includes(ROLE_PATH[user.role])) {
         return null;
       }
 

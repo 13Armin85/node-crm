@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import React, { useEffect, useState } from 'react';
 import {
   Alert, AlertIcon, Badge, Box, Button, Checkbox, Flex, FormControl,
@@ -50,7 +51,7 @@ export default function FormBuilder() {
   const [selected, setSelected] = useState(0);
   const [savedNames, setSavedNames] = useState([]);
   const [changed, setChanged] = useState(false);
-  const admin = JSON.parse(localStorage.getItem('user') || '{}').role === 'admin';
+  const admin = isAdmin(JSON.parse(localStorage.getItem('user') || '{}'));
   const panelBg = useColorModeValue('white', 'navy.800');
   const subtleBg = useColorModeValue('gray.50', 'whiteAlpha.50');
   const border = useColorModeValue('gray.200', 'whiteAlpha.200');

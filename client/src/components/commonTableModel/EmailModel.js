@@ -1,3 +1,4 @@
+import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Button,
@@ -158,21 +159,21 @@ const EmailModel = (props) => {
       let result;
       if (values?.category === "Contact" && assignToContactData?.length <= 0) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/contact/"
             : `api/contact/?createBy=${user?._id}`,
         );
         setAssignToContactData(result?.data);
       } else if (values?.category === "Lead" && assignToLeadData <= 0) {
         result = await getApi(
-          user?.role === "admin"
+          isAdmin(user)
             ? "api/lead/"
             : `api/lead/?createBy=${user?._id}`,
         );
         setAssignToLeadData(result?.data);
       }
       const propertyOptionData = await getApi(
-        user?.role === "admin"
+        isAdmin(user)
           ? "api/property"
           : `api/property/?createBy=${user?._id}`,
       );

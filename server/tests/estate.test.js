@@ -81,6 +81,6 @@ test('migration preserves explicit values and reports unknown types', () => {
 test('fixed admin and user roles govern modules', () => {
   assert.equal(can({ role: 'user' }, 'Partner Customers', 'view'), true);
   assert.equal(can({ role: 'user' }, 'Properties', 'create'), true);
-  assert.equal(can({ role: 'user' }, 'Users', 'view'), false);
+  assert.equal(can({ role: 'user' }, 'Users', 'view'), true);
   assert.equal(can({ role: 'admin' }, 'Residences', 'delete'), true);
 });

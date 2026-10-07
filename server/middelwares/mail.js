@@ -33,6 +33,7 @@ const sendEmail = async (to, subject, text, html) => {
             host: config.host,
             port: config.port,
             secure: config.secure,
+            requireTLS: !config.secure,
             connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT || 10000),
             greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT || 10000),
             socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT || 20000),

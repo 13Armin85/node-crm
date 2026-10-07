@@ -8,9 +8,20 @@ module.exports = moduleName => async (req, res, next) => {
     const action = req.method === 'POST' ? 'create' : 'update';
     const ownProfile = moduleName === 'Users' && action === 'update' && String(req.actor._id) === req.params.id;
     if (!ownProfile && !can(req.actor, moduleName, action)) return res.status(403).json({ code: 'forbidden' });
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return res.status(400).json({ code: 'invalid' });
+    if (moduleName === 'Users' && !isAdmin(req.actor) && req.body.role && req.body.role !== req.actor.role) return res.status(403).json({ code: 'forbidden' });
+    if (action === 'create') req.body.createBy = req.actor._id;
+    else delete req.body.createBy;
+    for (const key of ['_id', '__v', 'deleted', 'roles', 'createdDate', 'updatedDate', 'authVersion']) delete req.body[key];
+    if (moduleName !== 'Users' || !isAdmin(req.actor)) delete req.body.role;
+    req.body.modifiedBy = req.actor._id;
+    if (!isAdmin(req.actor) && ['Calls', 'Emails', 'Texts'].includes(moduleName)) {
+      req.body.sender = req.actor._id;
+      req.body.salesAgent = req.actor._id;
+    }
     const definition = await getDefinition(moduleName);
     if (!definition) return next();
-    const model = mongoose.models[({ Users: 'User', Documents: 'Document', 'Email Template': 'EmailTemps' })[moduleName] || moduleName];
+    const model = mongoose.models[({ Users: 'User', Documents: 'Document', 'Email Template': 'EmailTemps', OpportunityProject: 'OpportunityProjects', 'Opportunity Project': 'OpportunityProjects', 'Bank Details': 'BankDetails' })[moduleName] || moduleName];
     let previous = {};
     if (req.params.id && model) {
       if (!objectId(req.params.id)) return res.status(400).json({ code: 'invalid', field: 'id' });

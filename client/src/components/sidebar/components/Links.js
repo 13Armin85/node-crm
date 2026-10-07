@@ -1,20 +1,37 @@
+import { safeInternalPath } from 'services/contentSecurity';
 import { Fragment } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, matchPath, matchRoutes, useLocation } from "react-router-dom";
 import { Box, Flex, Text, Tooltip } from "@chakra-ui/react";
 import { useLanguage } from "i18n";
 import { ROLE_PATH } from 'roles';
+
+const flattenRoutes = (items) => (Array.isArray(items) ? items : []).flatMap((route) =>
+  route?.category || route?.collapse ? flattenRoutes(route.items) : [route],
+);
+const normalizePath = (path) => String(path || "").replace(/\/+$/, "").toLowerCase();
+const normalizeName = (name) => String(name || "").trim().toLowerCase();
 
 export function SidebarLinks({ routes, setOpenSidebar, openSidebar }) {
   const location = useLocation();
   const { t } = useLanguage();
   const user = JSON.parse(localStorage.getItem("user") || "null");
-
-  const activeRoute = (routePath) => {
-    if (!routePath) return false;
-    const normalizedPath = routePath.toLowerCase();
-    const currentPath = location.pathname.toLowerCase();
-    return currentPath === normalizedPath || currentPath.startsWith(`${normalizedPath}/`);
-  };
+  const eligibleRoutes = flattenRoutes(routes).filter((route) =>
+    route?.path && user?.role && Array.isArray(route.layout) && route.layout.includes(ROLE_PATH[user.role]),
+  );
+  const visibleRoutes = eligibleRoutes.filter((route) => !route.under);
+  const matched = matchRoutes(
+    eligibleRoutes.map((route) => ({ path: route.path, item: route })),
+    location,
+  )?.[0]?.route?.item;
+  const selected = (matched?.under
+    ? visibleRoutes.find((route) => [matched.parentName, matched.name].some((name) =>
+      normalizeName(name) === normalizeName(route.name),
+    ))
+    : matched) || visibleRoutes.filter((route) =>
+      matchPath({ path: route.path, end: false }, location.pathname),
+    ).sort((a, b) => b.path.length - a.path.length)[0];
+  const selectedPath = normalizePath(selected?.path);
+  const renderedPaths = new Set();
 
   const closeMobileSidebar = () => {
     if (window.innerWidth < 1280 && typeof setOpenSidebar === "function") {
@@ -26,7 +43,7 @@ export function SidebarLinks({ routes, setOpenSidebar, openSidebar }) {
     items.map((route, index) => {
       const key = route?.path || route?.name || index;
 
-      if (route?.category) {
+      if (route?.category || route?.collapse) {
         return (
           <Fragment key={key}>
             {openSidebar && (
@@ -39,17 +56,19 @@ export function SidebarLinks({ routes, setOpenSidebar, openSidebar }) {
         );
       }
 
-      if (route?.under || !user?.role || !route?.layout?.includes(ROLE_PATH[user.role])) {
+      const pathKey = normalizePath(route?.path);
+      if (route?.under || !pathKey || !user?.role || !Array.isArray(route?.layout)
+        || !route.layout.includes(ROLE_PATH[user.role]) || renderedPaths.has(pathKey)) {
         return null;
       }
+      renderedPaths.add(pathKey);
 
-      const isActive = activeRoute(route?.path);
+      const isActive = pathKey === selectedPath;
       const link = (
         <Flex
           className={`crm-sidebar-link${isActive ? " is-active" : ""}`}
           align="center"
           justify={openSidebar ? "flex-start" : "center"}
-          onClick={closeMobileSidebar}
         >
           <Flex className="crm-sidebar-link__icon" align="center" justify="center">
             {route?.icon}
@@ -64,13 +83,13 @@ export function SidebarLinks({ routes, setOpenSidebar, openSidebar }) {
       );
 
       return (
-        <Fragment key={key}>
+        <Fragment key={pathKey}>
           {route?.separator && openSidebar && (
             <Text className="crm-sidebar-section" as="p">
               {t(route.separator)}
             </Text>
           )}
-          <NavLink to={route?.path} aria-label={t(route?.name)}>
+          <Link to={safeInternalPath(route.path)} aria-label={t(route.name)} aria-current={isActive ? "page" : undefined} onClick={closeMobileSidebar}>
             {openSidebar ? (
               link
             ) : (
@@ -78,7 +97,7 @@ export function SidebarLinks({ routes, setOpenSidebar, openSidebar }) {
                 {link}
               </Tooltip>
             )}
-          </NavLink>
+          </Link>
         </Fragment>
       );
     });

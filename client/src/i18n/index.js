@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import estate from './estate';
+import notificationMessages from './notifications';
 import legacy, { aliases } from './legacy';
 
 export const LANGUAGES = {
@@ -159,6 +160,11 @@ const fa = {
   "Login Successfully!": "ورود با موفقیت انجام شد!",
   "Manage Columns": "مدیریت ستون‌ها",
   "Mark all read": "همه خوانده شد",
+  "Task assigned to you": "وظیفه‌ای به شما واگذار شد",
+  "Task status changed": "وضعیت وظیفه تغییر کرد",
+  "Failed to update notifications": "به‌روزرسانی اعلان‌ها ناموفق بود",
+  "By": "توسط",
+  "unread": "خوانده‌نشده",
   "Meetings": "جلسات",
   "Module": "ماژول",
   "Module Data Report": "گزارش داده‌های ماژول",
@@ -421,6 +427,11 @@ const tr = {
   "Login Successfully!": "Giriş başarılı!",
   "Manage Columns": "Sütunları Yönet",
   "Mark all read": "Tümünü okundu işaretle",
+  "Task assigned to you": "Size bir görev atandı",
+  "Task status changed": "Görev durumu değişti",
+  "Failed to update notifications": "Bildirimler güncellenemedi",
+  "By": "Yapan",
+  "unread": "okunmamış",
   "Meetings": "Toplantılar",
   "Module": "Modül",
   "Module Data Report": "Modül Veri Raporu",
@@ -582,7 +593,7 @@ const tr = {
   "Failed to delete file": "Dosya silinemedi",
 };
 
-const dictionaries = { en: { ...legacy.en, ...estate.en }, fa: { ...fa, ...legacy.fa, ...estate.fa }, tr: { ...tr, ...legacy.tr, ...estate.tr } };
+const dictionaries = { en: { ...legacy.en, ...estate.en, ...notificationMessages.en }, fa: { ...fa, ...legacy.fa, ...estate.fa, ...notificationMessages.fa }, tr: { ...tr, ...legacy.tr, ...estate.tr, ...notificationMessages.tr } };
 
 const LanguageContext = createContext({
   language: "en",

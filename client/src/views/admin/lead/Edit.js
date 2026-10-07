@@ -1,3 +1,4 @@
+import ManagedFormLayout from "components/dynamicForm/ManagedFormLayout";
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
@@ -156,7 +157,7 @@ const Edit = (props) => {
   }, []);
 
   const fetchUserDetails = async () => {
-    let result = await getApi("api/task/assignees");
+    let result = await getApi("api/user/options");
     setUserData(result?.data);
   };
 
@@ -194,7 +195,8 @@ const Edit = (props) => {
                 touched={touched}
               />
             )}
-            <RelationFields values={values} setFieldValue={setFieldValue} contact partner />
+            <RelationFields definition={definition} values={values} setFieldValue={setFieldValue} contact partner />
+            <ManagedFormLayout moduleName="Leads" definition={definition} formik={formik} includeCustom={false}>
             <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
               <GridItem colSpan={{ base: 12 }}>
                 <FormLabel
@@ -264,6 +266,7 @@ const Edit = (props) => {
                 </Flex>
               </GridItem>
             </Grid>
+            </ManagedFormLayout>
           </DrawerBody>
           <SelectPorpertyModel
             onClose={() => setPropertyModel(false)}

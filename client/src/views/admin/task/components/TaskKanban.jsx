@@ -35,7 +35,7 @@ const taskPriority = (task) => {
   return ["low", "normal", "high", "urgent"].includes(priority) ? priority : "normal";
 };
 
-const TaskKanban = ({ tasks = [], assignees = [], onDelegate, onStatusChange, onView }) => {
+const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegate, onStatusChange, onView }) => {
   const { t } = useLanguage();
   const columnBg = useColorModeValue("gray.50", "#0f1727");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
@@ -140,7 +140,7 @@ const TaskKanban = ({ tasks = [], assignees = [], onDelegate, onStatusChange, on
                                   <Flex align="center" gap={1.5} minW={0}><FiUser /><Text noOfLines={1}>{task.assignedToUserName || t("Unassigned")}</Text></Flex>
                                   {(task.end || task.start) && <Flex align="center" gap={1.5}><FiCalendar /><Text noOfLines={1}>{task.end || task.start}</Text></Flex>}
                                 </Flex>
-                                <Select
+                                {canDelegate && <Select
                                   mt={3}
                                   size="xs"
                                   borderRadius="8px"
@@ -155,7 +155,7 @@ const TaskKanban = ({ tasks = [], assignees = [], onDelegate, onStatusChange, on
                                       {[item.firstName, item.lastName].filter(Boolean).join(" ") || item.username}
                                     </option>
                                   ))}
-                                </Select>
+                                </Select>}
                                 {task.category && task.category !== "None" && (
                                   <Badge mt={3} colorScheme="brand" variant="subtle" borderRadius="full">
                                     {task.assignToName || t(objectValue(task.category))}

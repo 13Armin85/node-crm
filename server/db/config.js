@@ -96,7 +96,7 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
         const initialAdminUsername = process.env.INITIAL_ADMIN_EMAIL;
         const initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD;
         const privilegedExisting = await User.exists({ role: { $in: ['developer', 'admin'] }, deleted: false });
-        const validInitialAdmin = initialAdminUsername && initialAdminPassword && initialAdminPassword !== 'replace-with-a-strong-password';
+        const validInitialAdmin = initialAdminUsername && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(initialAdminUsername) && initialAdminPassword && initialAdminPassword.length >= 12 && Buffer.byteLength(initialAdminPassword, 'utf8') <= 72 && initialAdminPassword !== 'replace-with-a-strong-password';
         if (!privilegedExisting && validInitialAdmin) {
             const phoneNumber = process.env.INITIAL_ADMIN_PHONE || undefined;
             const firstName = process.env.INITIAL_ADMIN_FIRST_NAME || 'System';

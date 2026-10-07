@@ -37,7 +37,7 @@ import { fetchPropertyData } from "../../../redux/slices/propertySlice";
 import Add from "./Add";
 import ImportModal from "./components/ImportModal";
 import Edit from "./Edit";
-import * as XLSX from "xlsx";
+import { exportSpreadsheet } from "utils/spreadsheet";
 import PaginationProperty from "./PaginationProperty";
 import { BsColumnsGap } from "react-icons/bs";
 import CustomSearchInput from "components/search/search";
@@ -291,17 +291,7 @@ const Index = () => {
     fileName,
     extension,
   ) => {
-    const csvHeader = csvColumns?.map((col) => col?.Header);
-
-    const csvContent = [
-      csvHeader,
-      ...jsonArray?.map((row) => csvColumns?.map((col) => row[col?.accessor])),
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet(csvContent);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet 1");
-    XLSX.writeFile(wb, `${fileName}.${extension}`); // .csv, .xlsx
+    exportSpreadsheet({ jsonArray, csvColumns, fileName, extension }).catch(console.error);
     setSelectedValues([]);
   };
   return (

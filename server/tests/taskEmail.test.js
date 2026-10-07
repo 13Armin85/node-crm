@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const Task = require('../model/schema/task');
 const User = require('../model/schema/user');
+const Notification = require('../model/schema/notification');
 const mail = require('../middelwares/mail');
 
 test('creating an assigned task emails the selected user', async t => {
@@ -17,6 +18,7 @@ test('creating an assigned task emails the selected user', async t => {
   });
   t.mock.method(User, 'exists', async () => ({ _id: assigneeId }));
   t.mock.method(Task, 'create', async task => ({ ...task, _id: new mongoose.Types.ObjectId() }));
+  const createNotification = t.mock.method(Notification, 'create', async notification => notification);
   const sendEmail = t.mock.method(mail, 'sendEmail', async () => 'sent');
   const controller = require('../controllers/task/task');
   const response = {
@@ -37,4 +39,7 @@ test('creating an assigned task emails the selected user', async t => {
   assert.match(sendEmail.mock.calls[0].arguments[1], /new task has been sent/i);
   assert.match(sendEmail.mock.calls[0].arguments[2], /Call the customer/);
   assert.match(sendEmail.mock.calls[0].arguments[2], /A new task has been sent to you/i);
+  assert.equal(createNotification.mock.callCount(), 1);
+  assert.equal(String(createNotification.mock.calls[0].arguments[0].recipient), String(assigneeId));
+  assert.equal(createNotification.mock.calls[0].arguments[0].type, 'task_assigned');
 });

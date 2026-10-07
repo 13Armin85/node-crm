@@ -201,7 +201,7 @@ const AddEdit = (props) => {
 
   const fetchData = async () => {
     setIsLoding(true);
-    let result = await getApi("api/task/assignees");
+    let result = await getApi("api/user/options");
     setUserData(result?.data);
     setIsLoding(false);
   };

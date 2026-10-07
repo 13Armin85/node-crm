@@ -19,6 +19,7 @@ import {
   MenuDivider,
   MenuItem,
   MenuList,
+  Portal,
   Grid,
   GridItem,
   Checkbox,
@@ -476,6 +477,7 @@ const CommonCheckTable = (props) => {
         </Flex>
       )}
       <Card
+        data-compact-table={props.compact || ["Leads", "Contacts"].includes(title)}
         className={`crm-data-card${showPageHero ? " crm-list-table" : ""}`}
         direction="column"
         w="100%"
@@ -579,7 +581,8 @@ const CommonCheckTable = (props) => {
             {ManageGrid !== false && (
               <Menu isLazy>
                 <MenuButton as={IconButton} className="crm-table-settings" aria-label={tr("Manage Columns")} icon={<BsColumnsGap />} variant="outline" size="sm" />
-                <MenuList minW="210px" zIndex={2} p="8px">
+                <Portal>
+                <MenuList minW="210px" zIndex="dropdown" p="8px">
                   <MenuItem
                     onClick={() => setManageColumnsModel(true)}
                     width={"165px"}
@@ -612,6 +615,7 @@ const CommonCheckTable = (props) => {
                     </>
                   )}
                 </MenuList>
+                </Portal>
               </Menu>
             )}
             {!showPageHero && addBtn !== false && (access?.create || access === true) && (

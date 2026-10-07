@@ -1,5 +1,5 @@
 import { isAdmin } from 'roles';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert, AlertIcon, Badge, Box, Button, Checkbox, Flex, FormControl,
   FormLabel, Grid, GridItem, Icon, IconButton, Input, Select, SimpleGrid,
@@ -14,6 +14,7 @@ import Card from 'components/card/Card';
 import { getApi, putApi } from 'services/api';
 import { useLanguage } from 'i18n';
 import { localized } from 'components/dynamicForm/DynamicFormRenderer';
+import { announceFormDefinition } from 'services/formDefinitionEvents';
 
 const types = ['text', 'textarea', 'number', 'currency', 'select', 'multiselect', 'checkbox', 'radio', 'date', 'datetime', 'email', 'phone', 'file', 'url'];
 const languages = ['en', 'fa', 'tr'];
@@ -51,6 +52,12 @@ export default function FormBuilder() {
   const [selected, setSelected] = useState(0);
   const [savedNames, setSavedNames] = useState([]);
   const [changed, setChanged] = useState(false);
+  const draft = useRef(null);
+  const activeModule = useRef(moduleName);
+  const saving = useRef(false);
+  activeModule.current = moduleName;
+  draft.current = definition;
+  useEffect(() => () => { activeModule.current = null; }, []);
   const admin = isAdmin(JSON.parse(localStorage.getItem('user') || '{}'));
   const panelBg = useColorModeValue('white', 'navy.800');
   const subtleBg = useColorModeValue('gray.50', 'whiteAlpha.50');
@@ -79,8 +86,6 @@ export default function FormBuilder() {
     return () => { active = false; };
   }, [moduleName]);
 
-  if (!admin) return <Alert status="error" mt="100px"><AlertIcon />{t('estate.forbidden')}</Alert>;
-
   const field = definition?.fields[selected];
   const fieldCount = definition?.fields?.length || 0;
   const customCount = definition?.fields?.filter(item => item.kind === 'CUSTOM_FIELD').length || 0;
@@ -88,13 +93,13 @@ export default function FormBuilder() {
 
   const update = patch => {
     setDefinition(current => ({ ...current, fields: current.fields.map((item, index) => index === selected ? { ...item, ...patch } : item) }));
-    setChanged(true); setSuccess(false);
+    setChanged(true); setSuccess(false); setError('');
   };
 
   const add = () => {
     const next = { name: `field_${Date.now()}`, kind: 'CUSTOM_FIELD', type: 'text', label: emptyLocalized(), enabled: true, required: false, options: [], order: definition.fields.length };
     setDefinition(current => ({ ...current, fields: [...current.fields, next] }));
-    setSelected(definition.fields.length); setChanged(true); setSuccess(false);
+    setSelected(definition.fields.length); setChanged(true); setSuccess(false); setError('');
   };
 
   const move = delta => {
@@ -102,25 +107,63 @@ export default function FormBuilder() {
     if (target < 0 || target >= fields.length) return;
     [fields[selected], fields[target]] = [fields[target], fields[selected]];
     setDefinition({ ...definition, fields: fields.map((item, order) => ({ ...item, order })) });
-    setSelected(target); setChanged(true); setSuccess(false);
+    setSelected(target); setChanged(true); setSuccess(false); setError('');
   };
 
   const remove = () => {
     const fields = definition.fields.filter((_, index) => index !== selected).map((item, order) => ({ ...item, order }));
     setDefinition({ ...definition, fields });
     setSelected(Math.max(0, Math.min(selected - 1, fields.length - 1)));
-    setChanged(true); setSuccess(false);
+    setChanged(true); setSuccess(false); setError('');
   };
 
-  const save = async () => {
+  const save = useCallback(async () => {
+    if (saving.current || !draft.current) return false;
+    const snapshot = draft.current;
+    const targetModule = moduleName;
+    saving.current = true;
     setBusy(true); setError(''); setSuccess(false);
-    const result = await putApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`, definition);
-    if (result.status === 200) {
-      setDefinition(result.data); setSavedNames(result.data.fields.map(item => item.name));
-      setChanged(false); setSuccess(true);
-    } else setError(result.data?.code || 'serverError');
-    setBusy(false);
+    try {
+      const result = await putApi(`api/estate/definitions/${encodeURIComponent(targetModule)}`, snapshot);
+      if (result.status !== 200) {
+        if (activeModule.current === targetModule) setError(result.data?.code || 'serverError');
+        return false;
+      }
+      announceFormDefinition(result.data);
+      let clean = false;
+      if (activeModule.current === targetModule) {
+        const unchanged = draft.current === snapshot;
+        setDefinition(current => current === snapshot ? result.data : { ...current, _id: result.data._id, revision: result.data.revision });
+        setSavedNames(result.data.fields.map(item => item.name));
+        setChanged(!unchanged); setSuccess(unchanged);
+        clean = unchanged;
+      }
+      return clean;
+    } catch (_) {
+      if (activeModule.current === targetModule) setError('serverError');
+      return false;
+    } finally { saving.current = false; if (activeModule.current === targetModule) setBusy(false); }
+  }, [moduleName]);
+
+  useEffect(() => {
+    if (!admin || !changed || busy || error || !definition) return undefined;
+    const complete = definition.fields.every(item =>
+      languages.every(lang => item.label?.[lang]?.trim()) &&
+      (!['select', 'radio', 'multiselect'].includes(item.type) || item.relation ||
+        (item.options?.length && item.options.every(option => option.value && languages.every(lang => option.label?.[lang]?.trim()))))
+    );
+    if (!complete) return undefined;
+    const timer = setTimeout(save, 700);
+    return () => clearTimeout(timer);
+  }, [admin, changed, busy, error, definition, save]);
+
+  const changeModule = async event => {
+    const next = event.target.value;
+    if (busy || (changed && !await save())) return;
+    setModuleName(next);
   };
+
+  if (!admin) return <Alert status="error" mt="100px"><AlertIcon />{t('estate.forbidden')}</Alert>;
 
   const updateOption = (optionIndex, patch) => update({ options: field.options.map((option, index) => index === optionIndex ? { ...option, ...patch } : option) });
 
@@ -131,7 +174,7 @@ export default function FormBuilder() {
         {languages.map(lang => (
           <FormControl key={lang}>
             <FormLabel color={muted} fontSize="xs" mb="6px">{t(`estate.language.${lang}`)}</FormLabel>
-            <Input dir="ltr" value={field[key]?.[lang] || ''} onChange={event => update({ [key]: { ...emptyLocalized(), ...field[key], [lang]: event.target.value } })} borderRadius="12px" bg={panelBg} />
+            <Input data-testid={`field-${key}-${lang}`} dir="ltr" value={field[key]?.[lang] || ''} onChange={event => update({ [key]: { ...emptyLocalized(), ...field[key], [lang]: event.target.value } })} borderRadius="12px" bg={panelBg} />
           </FormControl>
         ))}
       </SimpleGrid>
@@ -149,7 +192,7 @@ export default function FormBuilder() {
           </Flex>
           <FormControl maxW={{ base: '100%', md: '300px' }}>
             <FormLabel fontSize="xs" color="whiteAlpha.800" mb="6px">{t('estate.selectModule')}</FormLabel>
-            <Select data-testid="module-select" aria-label={t('Module')} value={moduleName} onChange={event => setModuleName(event.target.value)} bg="white" color="navy.700" border="0" borderRadius="14px" fontWeight="700" h="46px">
+            <Select data-testid="module-select" aria-label={t('Module')} value={moduleName} isDisabled={busy} onChange={changeModule} bg="white" color="navy.700" border="0" borderRadius="14px" fontWeight="700" h="46px">
               {modules.map(name => <option key={name} value={name}>{t(name)}</option>)}
             </Select>
           </FormControl>
@@ -212,7 +255,7 @@ export default function FormBuilder() {
                     <Section icon={MdOutlineSettings} title={t('estate.fieldSettings')} description={t('estate.fieldSettingsHint')}>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing="18px">
                         <FormControl><FormLabel fontSize="sm">{t('Type')}</FormLabel><Select value={field.type} isDisabled={field.kind === 'SYSTEM_FIELD' || savedNames.includes(field.name)} onChange={event => update({ type: event.target.value, defaultValue: undefined })} borderRadius="12px" bg={panelBg}>{types.map(type => <option key={type} value={type}>{t(`estate.type.${type}`)}</option>)}</Select></FormControl>
-                        <Box><Text fontWeight="700" fontSize="sm" mb="12px">{t('estate.fieldBehavior')}</Text><Flex gap="18px" minH="40px" align="center" flexWrap="wrap"><Checkbox isChecked={field.enabled !== false} isDisabled={field.locked} onChange={event => update({ enabled: event.target.checked })}>{t('estate.enabled')}</Checkbox><Checkbox isChecked={Boolean(field.required)} isDisabled={field.locked} onChange={event => update({ required: event.target.checked })}>{t('estate.required')}</Checkbox></Flex></Box>
+                        <Box><Text fontWeight="700" fontSize="sm" mb="12px">{t('estate.fieldBehavior')}</Text><Flex gap="18px" minH="40px" align="center" flexWrap="wrap"><Checkbox data-testid="field-enabled" isChecked={field.enabled !== false} isDisabled={field.locked} onChange={event => update({ enabled: event.target.checked })}>{t('estate.enabled')}</Checkbox><Checkbox data-testid="field-required" isChecked={Boolean(field.required)} isDisabled={field.locked} onChange={event => update({ required: event.target.checked })}>{t('estate.required')}</Checkbox></Flex></Box>
                       </SimpleGrid>
                       {(field.locked || savedNames.includes(field.name)) && <Flex mt="14px" gap="8px" color={muted} fontSize="xs" align="center"><Icon as={MdInfoOutline} /><Text>{t('estate.protectedFieldHint')}</Text></Flex>}
                     </Section>
@@ -244,14 +287,15 @@ export default function FormBuilder() {
                     )}
                   </Stack>
 
-                  <Flex position="sticky" bottom="0" zIndex="2" px={{ base: 4, md: 5 }} py="14px" bg={panelBg} borderTop="1px solid" borderColor={border} justify="space-between" align="center" gap="12px">
-                    <Flex align="center" gap="7px" color={changed ? 'orange.400' : 'green.400'} minW="0"><Icon as={changed ? MdInfoOutline : MdCheckCircle} flexShrink={0} /><Text fontSize="xs" fontWeight="700" noOfLines={1}>{t(changed ? 'estate.unsavedChanges' : 'estate.allChangesSaved')}</Text></Flex>
-                    <Button data-testid="save-form" leftIcon={<MdSave />} variant="brand" isLoading={busy} isDisabled={!changed} onClick={save} borderRadius="12px" px={{ base: 4, md: 7 }} flexShrink={0}>{t('Save')}</Button>
-                  </Flex>
+
                 </Card>
               </GridItem>
             )}
           </Grid>
+                  <Flex position="sticky" bottom="0" zIndex="2" px={{ base: 4, md: 5 }} py="14px" bg={panelBg} borderTop="1px solid" borderColor={border} justify="space-between" align="center" gap="12px">
+                    <Flex align="center" gap="7px" color={changed ? 'orange.400' : 'green.400'} minW="0"><Icon as={changed ? MdInfoOutline : MdCheckCircle} flexShrink={0} /><Text fontSize="xs" fontWeight="700" noOfLines={1}>{t(changed ? 'estate.unsavedChanges' : 'estate.allChangesSaved')}</Text></Flex>
+                    <Button data-testid="save-form" leftIcon={<MdSave />} variant="brand" isLoading={busy} isDisabled={!changed} onClick={save} borderRadius="12px" px={{ base: 4, md: 7 }} flexShrink={0}>{t('Save')}</Button>
+                  </Flex>
         </>
       )}
     </Box>

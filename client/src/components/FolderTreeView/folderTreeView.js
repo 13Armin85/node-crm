@@ -1,3 +1,4 @@
+import { getApiBlob } from "services/api";
 import { LocalizedText } from 'i18n/runtime';
 import { DeleteIcon, DownloadIcon, LinkIcon, ViewIcon } from "@chakra-ui/icons";
 import {
@@ -61,6 +62,14 @@ const FolderTreeView = ({
     setId(data);
   };
   const user = JSON.parse(localStorage.getItem("user"));
+  const preview = async (file) => {
+    const result = await getApiBlob(`api/document/download/${file._id}`);
+    if (result?.status !== 200) return;
+    const url = URL.createObjectURL(result.data);
+    window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  };
+
 
   function isImageUrl(url) {
     const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp"];
@@ -130,7 +139,7 @@ const FolderTreeView = ({
                       alignItems={"start"}
                       pr={10}
                       color={"green"}
-                      onClick={() => window.open(data?.img)}
+                      onClick={() => preview(data)}
                       icon={<ViewIcon fontSize={15} />}
                     ><LocalizedText text="View" /></MenuItem>
                   )}

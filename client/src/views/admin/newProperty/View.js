@@ -1,3 +1,4 @@
+import { safeUrl, openSafeUrl } from 'services/contentSecurity';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -1329,7 +1330,7 @@ const View = () => {
                                   <Text
                                     ml={2}
                                     color="green.400"
-                                    onClick={() => window.open(item?.img)}
+                                    onClick={() => openSafeUrl(item?.img)}
                                     cursor={"pointer"}
                                     sx={{
                                       "&:hover": {
@@ -1435,7 +1436,7 @@ const View = () => {
                 ? data &&
                 data?.propertyPhotos?.length > 0 &&
                 data?.propertyPhotos?.map((item) => (
-                  <a href={item?.img} target="_blank">
+                  <a href={safeUrl(item?.img)} target="_blank" rel="noopener noreferrer">
                     <Image
                       width={"100%"}
                       m={1}
@@ -1449,7 +1450,7 @@ const View = () => {
                   ? data &&
                   data?.virtualToursOrVideos?.length > 0 &&
                   data?.virtualToursOrVideos?.map((item) => (
-                    <a href={item.img} target="_blank">
+                    <a href={safeUrl(item.img)} target="_blank" rel="noopener noreferrer">
                       <video
                         width="380"
                         controls
@@ -1466,7 +1467,7 @@ const View = () => {
                     ? data &&
                     data?.floorPlans?.length > 0 &&
                     data?.floorPlans?.map((item) => (
-                      <a href={item?.img} target="_blank">
+                      <a href={safeUrl(item?.img)} target="_blank" rel="noopener noreferrer">
                         <Image
                           width={"100%"}
                           m={1}

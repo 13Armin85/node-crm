@@ -4,7 +4,6 @@ import {
   Flex,
   Heading,
   Icon,
-  IconButton,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -13,12 +12,13 @@ import {
   ModalHeader,
   ModalOverlay,
   Text,
-  Tooltip,
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
 import React from "react";
-import { MdHelpOutline, MdOutlineDescription } from "react-icons/md";
+import { matchRoutes, useLocation } from "react-router-dom";
+import { getStoredUser } from "services/authSession";
+import { MdHelpOutline } from "react-icons/md";
 import { useLanguage } from "i18n";
 
 const helpContent = {
@@ -576,6 +576,24 @@ const helpContent = {
   },
 };
 
+helpContent.Residences = {
+  en: { title: "Residences guide", purpose: "Organize residential projects, buildings and their locations, then connect properties to the right residence.", actions: "Search residences, create or edit a residence and review its address and related properties using the actions available to your role." },
+  fa: { title: "راهنمای مجتمع‌ها", purpose: "این صفحه برای ثبت پروژه‌ها و مجتمع‌های مسکونی و موقعیت آن‌ها و ارتباط دادن ملک‌ها به مجتمع مربوطه است.", actions: "مجتمع‌ها را جستجو کنید، مجتمع جدید بسازید یا اطلاعات آن را ویرایش کنید و آدرس و ملک‌های مرتبط را با گزینه‌های مجاز حساب خود بررسی کنید." },
+  tr: { title: "Siteler rehberi", purpose: "Konut projelerini, binaları ve konumlarını düzenleyin; mülkleri ilgili siteye bağlayın.", actions: "Siteleri arayın, yeni site oluşturun veya düzenleyin; adres ve ilişkili mülkleri rolünüze sunulan işlemlerle inceleyin." },
+};
+const buttonLabels = { en: "Page description", fa: "توضیحات صفحه", tr: "Sayfa açıklaması" };
+const personalPages = new Set(["Opportunities", "Invoices", "Meetings", "Calls", "Emails", "Calender", "Documents", "Reporting and Analytics", "Tasks", "Dashboard"]);
+const privacyNote = {
+  en: "Your account shows only your own or assigned records in personal sections. Reports and analytics summarize your activity.",
+  fa: "در بخش‌های شخصی، فقط اطلاعات متعلق به شما یا واگذارشده به شما نمایش داده می‌شود. گزارش‌ها و تحلیل‌ها مربوط به فعالیت خودتان است.",
+  tr: "Kişisel bölümlerde yalnızca size ait veya size atanmış kayıtlar gösterilir. Raporlar ve analizler kendi etkinliklerinizi özetler.",
+};
+const userTaskActions = {
+  en: "Review tasks assigned to you, create a task for yourself, update its status, add comments and track progress. Only admins and developers can assign or delegate tasks to another colleague.",
+  fa: "تسک‌های واگذارشده به خودتان را ببینید، برای خودتان تسک بسازید، وضعیت را تغییر دهید، توضیح اضافه کنید و پیشرفت را پیگیری کنید. فقط ادمین و دولوپر می‌توانند تسک را به همکار دیگری واگذار کنند.",
+  tr: "Size atanan görevleri inceleyin, kendiniz için görev oluşturun, durumu güncelleyin, yorum ekleyin ve ilerlemeyi takip edin. Yalnızca yöneticiler ve geliştiriciler görevleri başka bir çalışana atayabilir.",
+};
+
 const fallbackContent = {
   en: {
     title: "Page guide",
@@ -600,16 +618,20 @@ const fallbackContent = {
   },
 };
 
-export default function PageHelp({ route, activeRouteName }) {
+export default function PageHelp({ route, activeRouteName, routes = [] }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { language, t } = useLanguage();
+  const location = useLocation();
+  const matchedRoute = matchRoutes(routes.map(item => ({ path: item.path, handle: item })), location)?.at(-1)?.route.handle;
+  const selectedRoute = matchedRoute || route;
   const pageName = (
-    route?.parentName ||
-    route?.name ||
+    selectedRoute?.parentName ||
+    selectedRoute?.name ||
     activeRouteName ||
     ""
   ).trim();
-  const contentGroup = helpContent[pageName] || fallbackContent;
+  const contentGroup = helpContent[pageName === "estate.formBuilder" ? "Custom Fields" : pageName] || fallbackContent;
+  const ordinary = getStoredUser()?.role === "user";
   const content = contentGroup[language] || contentGroup.en;
   const modalBg = useColorModeValue("white", "navy.800");
   const sectionBg = useColorModeValue("secondaryGray.100", "whiteAlpha.100");
@@ -621,14 +643,19 @@ export default function PageHelp({ route, activeRouteName }) {
   const borderColor = useColorModeValue("secondaryGray.200", "whiteAlpha.200");
   const accentBg = useColorModeValue("brand.50", "whiteAlpha.100");
 
-  if (!pageName || pageName === "Sign In") return null;
+  if (!pageName) return null;
 
   return (
     <>
+      <Flex justify="flex-end" mb={3}>
+        <Button className="crm-page-help" variant="outline" size="sm" leftIcon={<Icon as={MdHelpOutline} />} onClick={onOpen} aria-label={buttonLabels[language] || buttonLabels.en}>
+          {buttonLabels[language] || buttonLabels.en}
+        </Button>
+      </Flex>
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
         <ModalOverlay />
-        <ModalContent bg={modalBg} dir="ltr">
-          <ModalHeader color={textColor} textAlign="left" paddingRight="48px">
+        <ModalContent bg={modalBg} dir={language === "fa" ? "rtl" : "ltr"}>
+          <ModalHeader color={textColor} textAlign={language === "fa" ? "right" : "left"} paddingRight="48px">
             {content.title}
           </ModalHeader>
           <ModalCloseButton right="12px" />
@@ -663,8 +690,9 @@ export default function PageHelp({ route, activeRouteName }) {
                 {t("What can the user do here?")}
               </Text>
               <Text color={mutedColor} lineHeight="1.9">
-                {content.actions}
+                {ordinary && pageName === "Tasks" ? userTaskActions[language] : content.actions}
               </Text>
+              {ordinary && personalPages.has(pageName) && <Text color={mutedColor} mt={3} lineHeight="1.9">{privacyNote[language]}</Text>}
             </Box>
           </ModalBody>
           <ModalFooter>

@@ -42,6 +42,8 @@ const fileSchema = new mongoose.Schema({
     },
 });
 
+fileSchema.set('toJSON', { transform(doc, value) { delete value.path; return value; } });
+
 // Define the schema for the main document
 const documentSchema = new mongoose.Schema({
     folderName: {

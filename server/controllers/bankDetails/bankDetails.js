@@ -5,7 +5,7 @@ const BankDetails = require("../../model/schema/bankDetails");
 
 const index = async (req, res) => {
     try {
-        query = req.query;
+        const query = { ...req.query };
         query.deleted = false;
 
         const user = await User.findById(req.user.userId);

@@ -145,7 +145,7 @@ const AddEdit = (props) => {
   } = formik;
   const fetchData = async () => {
     setIsLoding(true);
-    let result = await getApi("api/task/assignees");
+    let result = await getApi("api/user/options");
     setUserData(result?.data);
     setIsLoding(false);
   };
@@ -208,7 +208,7 @@ const AddEdit = (props) => {
             {type === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="Opportunities" /><IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody><ManagedFormLayout moduleName="Opportunities" definition={definition} definitionError={definitionError} formik={formik}>
-            <RelationFields values={values} setFieldValue={setFieldValue} contact lead properties />
+            <RelationFields definition={definition} values={values} setFieldValue={setFieldValue} contact lead properties />
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel

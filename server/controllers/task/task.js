@@ -1,8 +1,11 @@
+const { readActor } = require('../../services/recordAccess');
 const { isAdmin } = require('../../services/userRoles');
 const Task = require('../../model/schema/task');
 const User = require('../../model/schema/user');
 const mongoose = require('mongoose');
 const { sendEmail } = require('../../middelwares/mail');
+const { createNotification } = require('../../services/notifications');
+const { isDeepStrictEqual } = require('node:util');
 
 const TASK_STATUSES = ['todo', 'inProgress', 'pending', 'onHold', 'completed'];
 const TASK_CATEGORIES = ['None', 'Contact', 'Lead'];
@@ -39,17 +42,24 @@ const sendTaskAssignmentEmail = async (task, actor) => {
     }
 };
 
-const accessFilter = (user, extra = {}) => {
-    if (isAdmin(user)) return { ...extra };
-    return {
-        ...extra,
-        $or: [
-            { assignedToUser: user._id },
-            { assignedToUser: { $exists: false }, createBy: user._id },
-            { assignedToUser: null, createBy: user._id },
-        ],
-    };
+const notifyTaskUsers = async (task, actor, type, recipients, status) => {
+    const actorId = String(actor?._id || '');
+    const uniqueRecipients = [...new Set(recipients.filter(Boolean).map(String))]
+        .filter(recipientId => type === 'task_assigned' || recipientId !== actorId);
+    const statusLabels = { todo: 'Todo', inProgress: 'In Progress', pending: 'Pending', onHold: 'On Hold', completed: 'Completed' };
+    await Promise.all(uniqueRecipients.map(recipientId => createNotification({
+        recipientId,
+        actorId: actor?._id,
+        type,
+        message: task.title || 'Untitled task',
+        status: status ? statusLabels[status] || status : undefined,
+        module: 'Tasks',
+        entityId: task._id,
+        link: ['task_deleted', 'task_unassigned'].includes(type) ? '/task' : '/view/' + task._id,
+    })));
 };
+
+const { taskScope: accessFilter } = require('../../services/taskAccess');
 
 const normalizeTask = (body, actor, existing) => {
     const allowed = [
@@ -64,7 +74,7 @@ const normalizeTask = (body, actor, existing) => {
         }
     });
     result.updatedDate = new Date();
-    if (!result.assignedToUser && !existing?.assignedToUser) result.assignedToUser = actor._id;
+    if (!existing && !result.assignedToUser) result.assignedToUser = actor._id;
     if (result.assignedToUser && String(result.assignedToUser) !== String(existing?.assignedToUser || actor._id)) {
         result.delegatedBy = actor._id;
     }
@@ -132,7 +142,7 @@ const index = async (req, res) => {
         if (req.query.assignedToUser && isAdmin(user) && isValidId(req.query.assignedToUser)) {
             query.assignedToUser = new mongoose.Types.ObjectId(req.query.assignedToUser);
         }
-        const result = await Task.aggregate(taskPipeline(accessFilter(user, query)));
+        const result = await Task.aggregate(taskPipeline(accessFilter(readActor(req, user), query)));
         res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ message: 'Failed to load tasks', error: error.message });
@@ -141,6 +151,9 @@ const index = async (req, res) => {
 
 const assignees = async (req, res) => {
     try {
+        const user = await currentUser(req);
+        if (!user) return res.status(401).json({ message: 'Authentication failed' });
+        if (!isAdmin(user)) return res.status(403).json({ message: 'Only administrators and developers can assign tasks to other users' });
         const users = await User.find({ deleted: false }).select('_id firstName lastName username role').sort({ firstName: 1, lastName: 1 });
         res.status(200).json(users);
     } catch (error) {
@@ -152,12 +165,16 @@ const add = async (req, res) => {
     try {
         const user = await currentUser(req);
         if (!user) return res.status(401).json({ message: 'Authentication failed' });
+        if (!isAdmin(user) && req.body.assignedToUser && String(req.body.assignedToUser) !== String(user._id)) {
+            return res.status(403).json({ message: 'Only administrators and developers can assign tasks to other users' });
+        }
         const taskData = normalizeTask(req.body, user);
         const validationError = await validateReferences(taskData);
         if (validationError) return res.status(400).json({ message: validationError });
         taskData.createBy = user._id;
         taskData.createdDate = new Date();
         const result = await Task.create(taskData);
+        await notifyTaskUsers(result, user, 'task_assigned', [result.assignedToUser]);
         await sendTaskAssignmentEmail(result, user);
         res.status(200).json(result);
     } catch (error) {
@@ -176,11 +193,33 @@ const edit = async (req, res) => {
     try {
         const access = await findAccessible(req, req.params.id);
         if (!access?.task) return res.status(404).json({ message: 'Task not found or access denied' });
+        if (
+            !isAdmin(access.user)
+            && Object.prototype.hasOwnProperty.call(req.body, 'assignedToUser')
+            && String(req.body.assignedToUser || '') !== String(access.task.assignedToUser || '')
+        ) {
+            return res.status(403).json({ message: 'Only administrators and developers can assign tasks to other users' });
+        }
         const taskData = normalizeTask(req.body, access.user, access.task);
+        // Ordinary edits never write assignment fields, even if the current assignee was submitted.
+        if (!isAdmin(access.user)) {
+            delete taskData.assignedToUser;
+            delete taskData.delegatedBy;
+        }
         const validationError = await validateReferences(taskData);
         if (validationError) return res.status(400).json({ message: validationError });
-        const assigneeChanged = taskData.assignedToUser && String(taskData.assignedToUser) !== String(access.task.assignedToUser || '');
+        const assigneeChanged = Object.prototype.hasOwnProperty.call(taskData, 'assignedToUser') && String(taskData.assignedToUser || '') !== String(access.task.assignedToUser || '');
+        const statusChanged = taskData.status && taskData.status !== access.task.status;
+        const detailsChanged = ['title', 'description', 'notes', 'start', 'end', 'reminder', 'priority', 'category', 'assignTo', 'assignToLead', 'customFields'].some(key => Object.prototype.hasOwnProperty.call(taskData, key) && !isDeepStrictEqual(JSON.parse(JSON.stringify(taskData[key] ?? null)), JSON.parse(JSON.stringify(access.task[key] ?? null))));
         const result = await Task.findByIdAndUpdate(req.params.id, { $set: taskData }, { new: true, runValidators: true });
+        if (assigneeChanged) {
+            await notifyTaskUsers(result, access.user, 'task_assigned', [result.assignedToUser]);
+            await notifyTaskUsers(result, access.user, 'task_unassigned', [access.task.assignedToUser]);
+        }
+        if (statusChanged) {
+            await notifyTaskUsers(result, access.user, 'task_status_changed', [result.assignedToUser, result.createBy], result.status);
+        }
+        if (detailsChanged && !statusChanged) await notifyTaskUsers(result, access.user, 'task_updated', [result.assignedToUser, result.createBy].filter(id => !assigneeChanged || String(id) !== String(result.assignedToUser)));
         if (assigneeChanged) await sendTaskAssignmentEmail(result, access.user);
         res.status(200).json(result);
     } catch (error) {
@@ -193,9 +232,13 @@ const changeStatus = async (req, res) => {
         if (!TASK_STATUSES.includes(req.body.status)) return res.status(400).json({ message: 'Invalid task status' });
         const access = await findAccessible(req, req.params.id);
         if (!access?.task) return res.status(404).json({ message: 'Task not found or access denied' });
+        const statusChanged = access.task.status !== req.body.status;
         access.task.status = req.body.status;
         access.task.updatedDate = new Date();
         await access.task.save();
+        if (statusChanged) {
+            await notifyTaskUsers(access.task, access.user, 'task_status_changed', [access.task.assignedToUser, access.task.createBy], access.task.status);
+        }
         res.status(200).json(access.task);
     } catch (error) {
         res.status(400).json({ message: 'Failed to change status', error: error.message });
@@ -219,6 +262,7 @@ const deleteData = async (req, res) => {
         if (!access?.task) return res.status(404).json({ message: 'Task not found or access denied' });
         access.task.deleted = true;
         await access.task.save();
+        await notifyTaskUsers(access.task, access.user, 'task_deleted', [access.task.assignedToUser, access.task.createBy]);
         res.status(200).json({ message: 'Task removed successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Failed to remove task', error: error.message });
@@ -230,7 +274,10 @@ const deleteMany = async (req, res) => {
         const user = await currentUser(req);
         if (!user) return res.status(401).json({ message: 'Authentication failed' });
         const ids = Array.isArray(req.body) ? req.body.filter(mongoose.Types.ObjectId.isValid) : [];
-        const result = await Task.updateMany(accessFilter(user, { _id: { $in: ids }, deleted: false }), { $set: { deleted: true, updatedDate: new Date() } });
+        const filter = accessFilter(user, { _id: { $in: ids }, deleted: false });
+        const tasks = await Task.find(filter);
+        const result = await Task.updateMany(filter, { $set: { deleted: true, updatedDate: new Date() } });
+        if (result.modifiedCount) await Promise.all(tasks.map(task => notifyTaskUsers(task, user, 'task_deleted', [task.assignedToUser, task.createBy])));
         res.status(200).json({ message: 'Tasks removed successfully', result });
     } catch (error) {
         res.status(500).json({ message: 'Failed to remove tasks', error: error.message });

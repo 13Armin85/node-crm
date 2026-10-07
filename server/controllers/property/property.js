@@ -1,6 +1,6 @@
 const { Lead } = require("../../model/schema/lead");
 const { Property } = require("../../model/schema/property");
-const multer = require("multer");
+const { createUpload, validateUploads, withinRoot } = require("../../services/secureFiles");
 const fs = require("fs");
 const path = require("path");
 const { Contact } = require("../../model/schema/contact");
@@ -22,7 +22,7 @@ const index = async (req, res) => {
     })
     .exec();
 
-  const result = allData.filter((item) => item.createBy !== null);
+  const result = require('../../services/userRoles').isAdmin(req.actor) ? allData : allData.filter((item) => item.createBy !== null);
   res.send(result);
 };
 
@@ -236,35 +236,19 @@ const changeUnitStatus = async (req, res) => {
   }
 };
 
-const offerLetterStorage = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      const uploadDir = "uploads/offer-letter";
-      fs.mkdirSync(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-      const uploadDir = "uploads/offer-letter";
-      const filePath = path.join(uploadDir, file.originalname);
+const offerLetterStorage = createUpload({ directory: path.resolve(__dirname, "../../uploads/offer-letter"), kind: "image", maxFiles: 3 });
 
-      // Check if the file already exists in the destination directory
-      if (fs.existsSync(filePath)) {
-        // For example, you can append a timestamp to the filename to make it unique
-        const timestamp = Date.now() + Math.floor(Math.random() * 90);
-        cb(
-          null,
-          file.originalname.split(".")[0] +
-            "-" +
-            timestamp +
-            "." +
-            file.originalname.split(".")[1]
-        );
-      } else {
-        cb(null, file.originalname);
-      }
-    },
-  }),
+
+const validateLegacyFiles = (directory, req, res) => new Promise(resolve => {
+  res.once('finish', () => resolve(false));
+  validateUploads(path.resolve(__dirname, '../../uploads', directory))(req, res, () => resolve(true));
 });
+const legacyImageData = async file => {
+  if (!file) return '';
+  const safePath = withinRoot(path.resolve(__dirname, '../../uploads/offer-letter'), file.path);
+  if (!safePath) throw new Error('Invalid uploaded image');
+  return 'data:' + file.mimetype + ';base64,' + (await fs.promises.readFile(safePath)).toString('base64');
+};
 
 const getOrdinalSuffix = (number) => {
   const suffix = ["th", "st", "nd", "rd"][number % 10] || "th";
@@ -274,15 +258,17 @@ const getOrdinalSuffix = (number) => {
 };
 
 const genrateOfferLetter = async (req, res) => {
+  let browser;
   try {
+    if (!await validateLegacyFiles("offer-letter", req, res)) return;
     const { id } = req?.params;
     let unit = JSON?.parse(req?.body?.unit);
     unit.status = "Booked";
     const floor = JSON?.parse(req?.body?.floor);
     const url = req.protocol + "://" + req.get("host");
 
-    const buyerImageUrl = `${url}/api/property/offer-letter/${req?.files?.buyerImage?.[0]?.filename}`;
-    const salesManagerSignUrl = `${url}/api/property/offer-letter/${req?.files?.salesManagerSign?.[0]?.filename}`;
+    const buyerImageUrl = await legacyImageData(req?.files?.buyerImage?.[0]);
+    const salesManagerSignUrl = await legacyImageData(req?.files?.salesManagerSign?.[0]);
     const property = await Property.findById(id).lean();
     let purchaser = "";
     if (req?.body?.lead) {
@@ -334,8 +320,11 @@ const genrateOfferLetter = async (req, res) => {
       currentDate: moment().format("DD/MM/yyyy"),
     });
     
-    const browser = await puppeteer.launch({ headless: true });
+    browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
+    await page.setRequestInterception(true);
+    page.on("request", request => request.url().startsWith("data:") ? request.continue() : request.abort());
     await page.setContent(htmlContnet, { waitUntil: "load" });
 
     const pdfBuffer = await page.pdf({
@@ -382,7 +371,7 @@ const genrateOfferLetter = async (req, res) => {
       await contactFeild.save();
     }
 
-    await browser.close();
+
 
     let offerLatterFeiledPayload = {
       category: req.body.category,
@@ -419,6 +408,8 @@ const genrateOfferLetter = async (req, res) => {
   } catch (err) {
     console?.error("Failed to create Property:", err);
     res?.status(400)?.json({ error: "Failed to create Property" });
+  } finally {
+    if (browser) await browser.close();
   }
 };
 
@@ -529,7 +520,7 @@ const view = async (req, res) => {
       $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true },
     },
     { $unwind: { path: "$salesAgent", preserveNullAndEmptyArrays: true } },
-    { $match: { "users.deleted": false } },
+    { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
     {
       $addFields: {
         senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
@@ -602,7 +593,7 @@ const view = async (req, res) => {
     { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$createByRef", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true } },
-    { $match: { "users.deleted": false } },
+    { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
     {
       $addFields: {
         senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
@@ -691,38 +682,11 @@ const deleteMany = async (req, res) => {
 // },
 // });
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      const uploadDir = "uploads/Property/PropertyPhotos";
-      fs.mkdirSync(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-      const uploadDir = "uploads/Property/PropertyPhotos";
-      const filePath = path.join(uploadDir, file.originalname);
-
-      // Check if the file already exists in the destination directory
-      if (fs.existsSync(filePath)) {
-        // For example, you can append a timestamp to the filename to make it unique
-        const timestamp = Date.now() + Math.floor(Math.random() * 90);
-        cb(
-          null,
-          file.originalname.split(".")[0] +
-            "-" +
-            timestamp +
-            "." +
-            file.originalname.split(".")[1]
-        );
-      } else {
-        cb(null, file.originalname);
-      }
-    },
-  }),
-});
+const upload = createUpload({ directory: path.resolve(__dirname, "../../uploads/Property/PropertyPhotos"), kind: "image", maxFiles: 20 });
 
 const propertyPhoto = async (req, res) => {
   try {
+    if (!await validateLegacyFiles("Property/PropertyPhotos", req, res)) return;
     const { id } = req.params;
 
     if (!req.files || req.files.length === 0) {
@@ -747,38 +711,11 @@ const propertyPhoto = async (req, res) => {
   }
 };
 // --
-const virtualTours = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      const uploadDir = "uploads/Property/virtual-tours-or-videos";
-      fs.mkdirSync(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-      const uploadDir = "uploads/Property/virtual-tours-or-videos";
-      const filePath = path.join(uploadDir, file.originalname);
-
-      // Check if the file already exists in the destination directory
-      if (fs.existsSync(filePath)) {
-        // For example, you can append a timestamp to the filename to make it unique
-        const timestamp = Date.now() + Math.floor(Math.random() * 90);
-        cb(
-          null,
-          file.originalname.split(".")[0] +
-            "-" +
-            timestamp +
-            "." +
-            file.originalname.split(".")[1]
-        );
-      } else {
-        cb(null, file.originalname);
-      }
-    },
-  }),
-});
+const virtualTours = createUpload({ directory: path.resolve(__dirname, "../../uploads/Property/virtual-tours-or-videos"), kind: "document", maxFiles: 10 });
 
 const VirtualToursorVideos = async (req, res) => {
   try {
+    if (!await validateLegacyFiles("Property/virtual-tours-or-videos", req, res)) return;
     const { id } = req.params;
 
     if (!req.files || req.files.length === 0) {
@@ -803,38 +740,11 @@ const VirtualToursorVideos = async (req, res) => {
   }
 };
 
-const FloorPlansStorage = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      const uploadDir = "uploads/Property/floor-plans";
-      fs.mkdirSync(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-      const uploadDir = "uploads/Property/floor-plans";
-      const filePath = path.join(uploadDir, file.originalname);
-
-      // Check if the file already exists in the destination directory
-      if (fs.existsSync(filePath)) {
-        // For example, you can append a timestamp to the filename to make it unique
-        const timestamp = Date.now() + Math.floor(Math.random() * 90);
-        cb(
-          null,
-          file.originalname.split(".")[0] +
-            "-" +
-            timestamp +
-            "." +
-            file.originalname.split(".")[1]
-        );
-      } else {
-        cb(null, file.originalname);
-      }
-    },
-  }),
-});
+const FloorPlansStorage = createUpload({ directory: path.resolve(__dirname, "../../uploads/Property/floor-plans"), kind: "image", maxFiles: 20 });
 
 const FloorPlans = async (req, res) => {
   try {
+    if (!await validateLegacyFiles("Property/floor-plans", req, res)) return;
     const { id } = req.params;
 
     if (!req.files || req.files.length === 0) {
@@ -859,38 +769,11 @@ const FloorPlans = async (req, res) => {
   }
 };
 // --
-const PropertyDocumentsStorage = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      const uploadDir = "uploads/Property/property-documents";
-      fs.mkdirSync(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-      const uploadDir = "uploads/Property/property-documents";
-      const filePath = path.join(uploadDir, file.originalname);
-
-      // Check if the file already exists in the destination directory
-      if (fs.existsSync(filePath)) {
-        // For example, you can append a timestamp to the filename to make it unique
-        const timestamp = Date.now() + Math.floor(Math.random() * 90);
-        cb(
-          null,
-          file.originalname.split(".")[0] +
-            "-" +
-            timestamp +
-            "." +
-            file.originalname.split(".")[1]
-        );
-      } else {
-        cb(null, file.originalname);
-      }
-    },
-  }),
-});
+const PropertyDocumentsStorage = createUpload({ directory: path.resolve(__dirname, "../../uploads/Property/property-documents"), kind: "document", maxFiles: 20 });
 
 const PropertyDocuments = async (req, res) => {
   try {
+    if (!await validateLegacyFiles("Property/property-documents", req, res)) return;
     const { id } = req.params;
 
     if (!req.files || req.files.length === 0) {

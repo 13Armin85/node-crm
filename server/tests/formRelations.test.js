@@ -4,6 +4,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const User = require('../model/schema/user');
+const Notification = require('../model/schema/notification');
 const CustomField = require('../model/schema/customField');
 const FormDefinition = require('../model/schema/formDefinition');
 const { Lead, initializeLeadSchema } = require('../model/schema/lead');
@@ -19,6 +20,7 @@ test('authenticated lead form create, reload, edit and clear retain relations wi
   const contact = '64d33173fd7ff3fa0924a103';
   const partner = '64d33173fd7ff3fa0924a104';
   const opportunity = '64d33173fd7ff3fa0924a105';
+  const notifications = t.mock.method(Notification, 'create', async value => value);
   const records = new Map();
   const query = value => ({ select: () => query(value), lean: () => Promise.resolve(value), then: (resolve, reject) => Promise.resolve(value).then(resolve, reject) });
   t.mock.method(User, 'findOne', () => query(actor));
@@ -59,7 +61,7 @@ test('authenticated lead form create, reload, edit and clear retain relations wi
   t.after(() => new Promise(resolve => server.close(resolve)));
   const api = async (method, route, body) => {
     const response = await fetch(`http://127.0.0.1:${server.address().port}/api/form${route}`, {
-      method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt.sign({ userId: actor._id }, jwtSecret)}` },
+      method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt.sign({ userId: actor._id }, jwtSecret, { expiresIn: '5m' })}` },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     return { status: response.status, data: await response.json() };
@@ -84,4 +86,7 @@ test('authenticated lead form create, reload, edit and clear retain relations wi
   const empty = (await reload()).data.data;
   assert.equal(empty.contact, null);
   assert.equal(empty.partnerCustomer, null);
+  assert(notifications.mock.calls.some(call => call.arguments[0].type === 'record_created'));
+  assert(notifications.mock.calls.some(call => call.arguments[0].type === 'record_updated'));
+  assert(notifications.mock.calls.every(call => String(call.arguments[0].recipient) === actor._id));
 });

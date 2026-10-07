@@ -1,3 +1,4 @@
+const escapeRegExp = require('../../services/escapeRegExp');
 const mongoose = require("mongoose");
 const CustomField = require("../../model/schema/customField");
 
@@ -56,12 +57,12 @@ const add = async (req, res) => {
                 // Check for duplicate name in dynamic fields (case-insensitive)
                 const existingField = await CustomField.findOne({
                     _id: req.body.moduleId,
-                    'fields.name': { $regex: new RegExp(`^${req.body?.fields[0]?.name}$`, 'i') },
+                    'fields.name': { $regex: new RegExp(`^${escapeRegExp(req.body?.fields[0]?.name)}$`, 'i') },
                 });
 
                 const existingLabel = await CustomField.findOne({
                     _id: req.body.moduleId,
-                    'fields.label': { $regex: new RegExp(`^${req.body?.fields[0]?.label}$`, 'i') },
+                    'fields.label': { $regex: new RegExp(`^${escapeRegExp(req.body?.fields[0]?.label)}$`, 'i') },
                 });
 
                 if (caseInsensitiveMatch || existingField) {
@@ -352,7 +353,7 @@ const createNewModule = async (req, res) => {
         const url = req?.body?.isDefault ? "" : req.protocol + '://' + req?.get('host');
         const file = `${url}/api/custom-field/icon/${req?.file?.filename}`;
 
-        const existingModule = await CustomField.findOne({ moduleName: { $regex: new RegExp(`^${moduleName}$`, 'i') } }).exec();
+        const existingModule = await CustomField.findOne({ moduleName: { $regex: new RegExp(`^${escapeRegExp(moduleName)}$`, 'i') } }).exec();
 
         if (existingModule) {
             return res.status(400).json({ success: false, message: `Module name not available !` });

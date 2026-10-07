@@ -17,6 +17,7 @@ import { useLanguage } from "i18n";
 import { getApi, postApi, putApi, deleteApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CurrencyAmount from "components/CurrencyAmount";
+import { useFormDefinition } from "utils/managedForm";
 
 const propertySections = [
   ["estate.section.basic", (name) => ["title", "description", "category", "subtype", "transactionType"].includes(name)],
@@ -34,7 +35,7 @@ export function EntityPage({ moduleName }) {
   const { t, language, direction } = useLanguage();
   const [permissions] = HasAccess([moduleName]);
   const { id } = useParams();
-  const [definition, setDefinition] = useState(null);
+  const { definition, definitionError } = useFormDefinition(moduleName);
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -51,16 +52,6 @@ export function EntityPage({ moduleName }) {
   const [deleting, setDeleting] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const base = `api/estate/${encodeURIComponent(moduleName)}`;
-
-  useEffect(() => {
-    let active = true;
-    getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`).then((result) => {
-      if (!active) return;
-      if (result.status === 200) setDefinition(result.data);
-      else setError(result.data?.code || "serverError");
-    });
-    return () => { active = false; };
-  }, [moduleName]);
 
   useEffect(() => {
     const timer = setTimeout(() => { setSearch(query); setPage(1); }, 300);
@@ -92,6 +83,8 @@ export function EntityPage({ moduleName }) {
     }
     return () => { active = false; };
   }, [base, id]);
+
+  useEffect(() => { if (definitionError) setError('serverError'); }, [definitionError]);
 
   let initialValues = record || {};
   if (definition && !record?._id) {

@@ -2,23 +2,45 @@ import { useEffect, useState } from 'react';
 import { getIn, setIn } from 'formik';
 import { getApi } from 'services/api';
 import { formValue } from './formValue';
+import { FORM_DEFINITION_CHANGED, FORM_DEFINITION_STORAGE_KEY } from 'services/formDefinitionEvents';
 
-export function useFormDefinition(moduleName) {
+export function useFormDefinition(moduleName, enabled = true) {
   const [definition, setDefinition] = useState(null);
   const [definitionError, setDefinitionError] = useState(false);
   useEffect(() => {
-    let active = true;
+    let active = true, request = 0;
     setDefinition(null);
     setDefinitionError(false);
-    getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`).then(result => {
-      if (!active) return;
-      if (result.status === 200) setDefinition(result.data);
-      else setDefinitionError(true);
-    }).catch(() => {
-      if (active) setDefinitionError(true);
-    });
-    return () => { active = false; };
-  }, [moduleName]);
+    if (!moduleName || !enabled) return undefined;
+    const load = async () => {
+      const current = ++request;
+      try {
+        const result = await getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`);
+        if (!active || current !== request) return;
+        if (result.status === 200) { setDefinition(result.data); setDefinitionError(false); }
+        else setDefinitionError(true);
+      } catch (_) { if (active && current === request) setDefinitionError(true); }
+    };
+    const changed = event => {
+      if (event.detail?.moduleName !== moduleName) return;
+      ++request; // Ignore a fetch started before this confirmed save.
+      setDefinition(event.detail); setDefinitionError(false);
+    };
+    const stored = event => {
+      if (event.key !== FORM_DEFINITION_STORAGE_KEY) return;
+      try { if (JSON.parse(event.newValue)?.moduleName === moduleName) load(); } catch (_) {}
+    };
+    load();
+    window.addEventListener(FORM_DEFINITION_CHANGED, changed);
+    window.addEventListener('storage', stored);
+    window.addEventListener('focus', load);
+    return () => {
+      active = false;
+      window.removeEventListener(FORM_DEFINITION_CHANGED, changed);
+      window.removeEventListener('storage', stored);
+      window.removeEventListener('focus', load);
+    };
+  }, [moduleName, enabled]);
   return { definition, definitionError };
 }
 

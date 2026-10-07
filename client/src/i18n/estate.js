@@ -1,4 +1,8 @@
 const messages = {
+  'estate.invalidCredentials': ['Invalid username or password', 'ایمیل یا رمز عبور اشتباه است.', 'E-posta veya şifre yanlış.'],
+  'estate.rateLimited': ['Too many attempts. Please try again later.', 'تعداد تلاش‌ها زیاد است. چند دقیقه بعد دوباره تلاش کنید.', 'Çok fazla deneme. Lütfen birkaç dakika sonra tekrar deneyin.'],
+  'Invalid username or password': ['Invalid username or password', 'ایمیل یا رمز عبور اشتباه است.', 'E-posta veya şifre yanlış.'],
+  'Too many login attempts. Please try again later.': ['Too many login attempts. Please try again in 15 minutes.', 'تلاش‌های ناموفق ورود زیاد است. ۱۵ دقیقه بعد دوباره تلاش کنید.', 'Çok fazla başarısız giriş denemesi. Lütfen 15 dakika sonra tekrar deneyin.'],
   Retry: ['Retry', 'تلاش مجدد', 'Tekrar dene'],
   'Open sidebar': ['Open sidebar', 'باز کردن منوی کناری', 'Kenar çubuğunu aç'],
   'Close sidebar': ['Close sidebar', 'بستن منوی کناری', 'Kenar çubuğunu kapat'],

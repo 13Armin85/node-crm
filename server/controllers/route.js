@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+router.use(require('../middelwares/requestSecurity').requestSecurity);
 
 const contactRoute = require('./contact/_routes')
 const propertyRoute = require('./property/_routes');
@@ -27,6 +28,7 @@ const moduleActiveDeactiveRoute = require("./moduleActiveDeactive/_routes")
 const invoicesRoute = require("./invoices/_routes")
 const opportunitiesproject = require("./opportunityproject/_router")
 const bankDetailsRoute = require("./bankDetails/_routes")
+const notificationRoute = require("./notification/_routes")
 
 //Api`s
 router.use('/contact', contactRoute);
@@ -38,6 +40,7 @@ router.use('/reporting', reportingRoute);
 router.use('/user', userRoute);
 router.use('/estate', require('./estate/_routes'));
 router.use('/bank-details', bankDetailsRoute);
+router.use('/notification', notificationRoute);
 
 router.use('/email', emailRoute);
 router.use('/phoneCall', phoneCallRoute);
@@ -59,4 +62,4 @@ router.use("/opportunity", opportunityRoute);
 router.use("/quotes", quotesRoute);
 router.use("/invoices", invoicesRoute);
 router.use("/opportunityproject",opportunitiesproject)
-module.exports = router;
+module.exports = require('../middelwares/asyncErrors')(router);

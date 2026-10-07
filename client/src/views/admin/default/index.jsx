@@ -293,17 +293,17 @@ export default function UserReports() {
           <Text className="crm-dashboard-hero__subtitle">{t("Your business overview is ready")}</Text>
         </Box>
         <Flex className="crm-dashboard-hero__actions" position="relative" zIndex="1" gap="10px" wrap="wrap">
-          {propertiesModule?.isActive && (
+          {(isAdmin(user) || propertiesModule?.isActive) && (
             <Button className="crm-dashboard-hero__primary" leftIcon={<LuBuilding2 />} onClick={() => navigate("/properties")}>{t("Browse properties")}</Button>
           )}
-          {tasksModule?.isActive && (
+          {(isAdmin(user) || tasksModule?.isActive) && (
             <Button className="crm-dashboard-hero__secondary" leftIcon={<MdAddTask />} onClick={() => navigate("/task")}>{t("Open tasks")}</Button>
           )}
         </Flex>
       </Flex>
 
       <SimpleGrid className="crm-dashboard-stats" columns={{ base: 1, sm: 2, xl: 4 }} gap="16px" mb="20px">
-        {(taskView?.create || taskView?.update || taskView?.delete || taskView?.view) && (tasksModule?.isActive) &&
+        {(taskView?.create || taskView?.update || taskView?.delete || taskView?.view) && ((isAdmin(user) || tasksModule?.isActive)) &&
           <MiniStatistics
             onClick={() => navigate("/task")}
             startContent={
@@ -317,7 +317,7 @@ export default function UserReports() {
             name="Tasks"
             value={findModuleData("Tasks")}
           />}
-        {(contactsView?.create || contactsView?.update || contactsView?.delete || contactsView?.view) && (contactModule?.isActive) &&
+        {(contactsView?.create || contactsView?.update || contactsView?.delete || contactsView?.view) && ((isAdmin(user) || contactModule?.isActive)) &&
           < MiniStatistics
             onClick={() => navigate("/contacts")}
             startContent={
@@ -333,7 +333,7 @@ export default function UserReports() {
             name="Contacts"
             value={findModuleData("Contacts")}
           />}
-        {(leadView?.create || leadView?.update || leadView?.delete || leadView?.view) && (leadModule?.isActive) &&
+        {(leadView?.create || leadView?.update || leadView?.delete || leadView?.view) && ((isAdmin(user) || leadModule?.isActive)) &&
           <MiniStatistics
             onClick={() => navigate("/lead")}
             startContent={
@@ -349,7 +349,7 @@ export default function UserReports() {
             name="Leads"
             value={findModuleData("Leads")}
           />}
-        {(proprtyView?.create || proprtyView?.update || proprtyView?.delete || proprtyView?.view) && (propertiesModule?.isActive) &&
+        {(proprtyView?.create || proprtyView?.update || proprtyView?.delete || proprtyView?.view) && ((isAdmin(user) || propertiesModule?.isActive)) &&
           <MiniStatistics
             onClick={() => navigate("/properties")}
             startContent={
@@ -367,7 +367,7 @@ export default function UserReports() {
           />}
       </SimpleGrid>
 
-      {(proprtyView?.view || isAdmin(user)) && propertiesModule?.isActive && (
+      {(proprtyView?.view || isAdmin(user)) && (isAdmin(user) || propertiesModule?.isActive) && (
         <Card className="crm-sales-performance" mb="20px" overflow="hidden">
           <DashboardCardHeader
             title={t('dashboard.salesPerformance')}
@@ -417,13 +417,13 @@ export default function UserReports() {
 
       <Grid className="crm-dashboard-charts" templateColumns="repeat(12, 1fr)" gap={4}>
         {
-          (emailModule?.isActive || callModule?.isActive) &&
+          ((isAdmin(user) || emailModule?.isActive) || (isAdmin(user) || callModule?.isActive)) &&
           <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
             <Card>
               <DashboardCardHeader
-                title={`${t((emailModule?.isActive && callModule?.isActive) ? "Email and Call" : emailModule?.isActive ? "Email" : callModule?.isActive ? "Call" : "")} ${t("Report")}`}
+                title={`${t(((isAdmin(user) || emailModule?.isActive) && (isAdmin(user) || callModule?.isActive)) ? "Email and Call" : (isAdmin(user) || emailModule?.isActive) ? "Email" : (isAdmin(user) || callModule?.isActive) ? "Call" : "")} ${t("Report")}`}
                 icon={MdShowChart}
-                action={reportModule?.isActive ?
+                action={(isAdmin(user) || reportModule?.isActive) ?
                   <IconButton
                     color={"green.500"}
                     onClick={() => navigate("/reporting-analytics")}
@@ -508,7 +508,7 @@ export default function UserReports() {
           </Card>
         }
 
-        {leadView?.view && (leadModule?.isActive) && <Card className="crm-lead-chart">
+        {leadView?.view && ((isAdmin(user) || leadModule?.isActive)) && <Card className="crm-lead-chart">
           <DashboardCardHeader
             title={<LocalizedText text="Lead Statistics" />}
             icon={MdPieChart}
@@ -568,7 +568,7 @@ export default function UserReports() {
 
         </Card>}
 
-        {taskView?.view && (tasksModule?.isActive) && <Card >
+        {taskView?.view && ((isAdmin(user) || tasksModule?.isActive)) && <Card >
           <DashboardCardHeader
             title={<LocalizedText text="Task Statistics" />}
             icon={MdTaskAlt}

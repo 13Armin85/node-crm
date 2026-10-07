@@ -613,16 +613,15 @@ const routes = [
   // ------------- user Routes ------------------------
   {
     name: "Users",
-    layout: [ROLE_PATH.admin],
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
     path: "/user",
-    under: "user",
     icon: <Icon as={HiUsers} width="20px" height="20px" color="inherit" />,
     component: User,
   },
   {
     name: "User View",
     layout: [ROLE_PATH.admin, ROLE_PATH.user],
-    parentName: "Email",
+    parentName: "Users",
     under: "user",
     path: "/userView/:id",
     component: UserView,

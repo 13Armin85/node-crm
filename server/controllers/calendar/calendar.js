@@ -2,14 +2,19 @@ const Email = require('../../model/schema/email');
 const PhoneCall = require('../../model/schema/phoneCall');
 const Task = require('../../model/schema/task');
 const MeetingHistory = require('../../model/schema/meeting');
+const User = require('../../model/schema/user');
+const { readScope, readActor } = require('../../services/recordAccess');
+const { taskScope } = require('../../services/taskAccess');
 
 const index = async (req, res) => {
     try {
+        const actor = await User.findOne({ _id: req.user.userId, deleted: false });
+        if (!actor) return res.status(401).json({ code: 'unauthorized' });
         const query = { ...req.query, deleted: false };
-        const callData = await PhoneCall.find(query);
-        const emailData = await Email.find(query);
-        const meetingData = await MeetingHistory.find(query);
-        const taskData = await Task.find(query);
+        const callData = await PhoneCall.find(readScope(req, actor, 'Calls', query));
+        const emailData = await Email.find(readScope(req, actor, 'Emails', query));
+        const meetingData = await MeetingHistory.find(readScope(req, actor, 'Meetings', query));
+        const taskData = await Task.find(taskScope(readActor(req, actor), query));
 
         let taskDetails = [];
         let callDetails = [];

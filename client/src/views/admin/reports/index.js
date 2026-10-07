@@ -1,4 +1,3 @@
-import { isAdmin } from 'roles';
 import { tr, withLocalization } from 'i18n/runtime';
 import Card from "components/card/Card";
 import { Box, Flex, Heading, SimpleGrid, Stat, StatLabel, StatNumber, Text } from "@chakra-ui/react";
@@ -40,7 +39,7 @@ const Report = () => {
   //     // setSelectedColumns(JSON.parse(JSON.stringify(tempTableColumns)));
   // }
 
-  if (isAdmin(user)) {
+  if (user) {
     tableColumns?.unshift(
       {
         Header: tr("#"),
@@ -54,11 +53,7 @@ const Report = () => {
 
   const fetchData = async () => {
     setIsLoding(true);
-    let result = await getApi(
-      isAdmin(user)
-        ? "api/reporting"
-        : `api/reporting?_id=${user?._id}`,
-    );
+    let result = await getApi("api/reporting");
     if (result && result?.status === 200) {
       setData(result?.data);
     }

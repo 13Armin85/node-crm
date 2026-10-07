@@ -1,7 +1,10 @@
 import axios from "axios";
 import { constant } from "constant";
 import { translate } from 'i18n';
-import { saveAuthSession } from "./authSession";
+import { getStoredUser, saveAuthSession } from "./authSession";
+import { dataScopeHeaders } from "./adminDataScope";
+import { readVisibilityPath } from "./readVisibility";
+import { NOTIFICATIONS_CHANGED_EVENT } from "./notificationEvents";
 
 const getRequestConfig = (config = {}) => ({
   ...config,
@@ -31,6 +34,9 @@ const normalizeResponse = (result) => {
     result = { ...result, data };
   }
   if (result?.status >= 200 && result?.status < 300) {
+    if (["post", "put", "patch", "delete"].includes(result.config?.method) && !result.config?.url?.includes("/notification")) {
+      window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED_EVENT));
+    }
     return result;
   }
 
@@ -45,7 +51,7 @@ export const postApi = async (path, data, login) => {
     let result = await axios?.post(
       constant?.baseUrl + path,
       data,
-      getRequestConfig(),
+      getRequestConfig({ headers: dataScopeHeaders(path, 'post') }),
     );
     if (result?.data?.token && result?.data?.token !== null) {
       saveAuthSession({
@@ -118,18 +124,19 @@ export const deleteManyApi = async (path, data) => {
   }
 };
 
-export const getApi = async (path, id) => {
+export const getApi = async (path, id, options = {}) => {
+  path = readVisibilityPath(path, getStoredUser());
   try {
     if (id) {
       let result = await axios?.get(
         constant?.baseUrl + path + id,
-        getRequestConfig(),
+        getRequestConfig({ headers: options.dataScope === false ? {} : dataScopeHeaders(path) }),
       );
       return normalizeResponse(result);
     } else {
       let result = await axios?.get(
         constant?.baseUrl + path,
-        getRequestConfig(),
+        getRequestConfig({ headers: options.dataScope === false ? {} : dataScopeHeaders(path) }),
       );
       return normalizeResponse(result);
     }
@@ -140,7 +147,7 @@ export const getApi = async (path, id) => {
 
 export const getApiBlob = async (path) => {
   try {
-    const result = await axios.get(constant?.baseUrl + path, getRequestConfig({ responseType: "blob" }));
+    const result = await axios.get(constant?.baseUrl + path, getRequestConfig({ responseType: "blob", headers: dataScopeHeaders(path) }));
     return normalizeResponse(result);
   } catch (e) {
     return e;

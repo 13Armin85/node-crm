@@ -101,7 +101,7 @@ function SignIn() {
       setIsLoding(true);
       let response = await postApi(
         "api/user/login",
-        normalizeLoginValues(values),
+        { ...normalizeLoginValues(values), rememberMe: checkBox },
         checkBox,
       );
       if (response && response?.status === 200) {
@@ -271,8 +271,7 @@ function SignIn() {
                   <Checkbox
                     onChange={(e) => setCheckBox(e?.target?.checked)}
                     id="remember-login"
-                    value={checkBox}
-                    defaultChecked
+                    isChecked={checkBox}
                     colorScheme="brandScheme"
                     me="10px"
                   />

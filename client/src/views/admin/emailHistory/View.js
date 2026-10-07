@@ -1,3 +1,4 @@
+import { sanitizeHtml } from 'services/contentSecurity';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
@@ -309,7 +310,7 @@ const View = () => {
                                             data?.type === "message" ?
                                                 <Text>{data?.message ? data?.message : '-'}</Text>
                                                 :
-                                                <div dangerouslySetInnerHTML={{ __html: data?.html }} />
+                                                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(data?.html) }} />
                                         }
                                     </GridItem> */}
                 </Grid>
@@ -351,7 +352,7 @@ const View = () => {
                         alignItems: "center",
                         padding: "50px 50px",
                       }}
-                      dangerouslySetInnerHTML={{ __html: data?.html }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(data?.html) }}
                     />
                   )}
                 </pre>

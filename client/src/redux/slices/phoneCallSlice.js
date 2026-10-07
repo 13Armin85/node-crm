@@ -1,17 +1,11 @@
-import { isAdmin } from 'roles';
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getApi } from "../../services/api";
 
 export const fetchPhoneCallData = createAsyncThunk(
   "fetchPhoneCallData",
   async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    try {
-      const response = await getApi(
-        isAdmin(user)
-          ? "api/phoneCall"
-          : `api/phoneCall?sender=${user._id}`,
-      );
+      try {
+      const response = await getApi("api/phoneCall");
       return response;
     } catch (error) {
       throw error;

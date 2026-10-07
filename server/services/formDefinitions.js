@@ -113,11 +113,9 @@ async function getDefinition(moduleName) {
     });
     const existingNames = new Set(mergedExisting.map(item => item.name));
     const missing = baseline.filter(item => !existingNames.has(item.name));
-    const knownNames = new Set([...existingNames, ...baseline.map(item => item.name)]);
-    const legacyCustom = defaults[moduleName]
-      ? mapLegacyFields('CUSTOM_FIELD').filter(item => !knownNames.has(item.name))
-      : [];
-    const additions = [...missing, ...legacyCustom];
+    // A saved definition owns its custom fields. Re-importing legacy metadata
+    // here resurrected fields that administrators deliberately removed.
+    const additions = missing;
     return {
       ...existing,
       fields: [...mergedExisting, ...additions.map((item, index) => ({

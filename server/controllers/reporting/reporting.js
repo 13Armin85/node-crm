@@ -1,4 +1,6 @@
 const { isAdmin } = require('../../services/userRoles');
+const { recordScope, readActor } = require('../../services/recordAccess');
+const { taskScope } = require('../../services/taskAccess');
 const mongoose = require('mongoose');
 const { Lead } = require('../../model/schema/lead');
 const { Contact } = require('../../model/schema/contact');
@@ -17,14 +19,15 @@ const index = async (req, res) => {
     try {
         const actor = await getActor(req);
         if (!actor) return res.status(401).json({ message: 'Authentication failed' });
-        const users = await User.find(isAdmin(actor) ? { deleted: false } : { _id: actor._id, deleted: false })
+        const subject = readActor(req, actor);
+        const users = await User.find({ deleted: false, ...(isAdmin(subject) ? {} : { _id: subject._id }) })
             .select('_id firstName lastName username role').lean();
         const ids = users.map((user) => user._id);
         const [emails, calls, texts, tasks] = await Promise.all([
             Email.aggregate([{ $match: { sender: { $in: ids }, deleted: { $ne: true } } }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
             Call.aggregate([{ $match: { sender: { $in: ids }, deleted: { $ne: true } } }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
             TextMsg.aggregate([{ $match: { sender: { $in: ids } } }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
-            Task.aggregate([{ $match: { assignedToUser: { $in: ids }, deleted: false } }, { $group: { _id: '$assignedToUser', total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } } } }]),
+            Task.aggregate([{ $match: taskScope(subject, { deleted: false }) }, { $group: { _id: { $ifNull: ['$assignedToUser', '$createBy'] }, total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } } } }]),
         ]);
         const countFor = (rows, id, key = 'count') => rows.find((row) => String(row._id) === String(id))?.[key] || 0;
         res.status(200).json(users.map((user) => ({
@@ -45,16 +48,17 @@ const lineChart = async (req, res) => {
     try {
         const actor = await getActor(req);
         if (!actor) return res.status(401).json({ message: 'Authentication failed' });
-        const own = isAdmin(actor) ? {} : { createBy: actor._id };
-        const taskScope = isAdmin(actor) ? {} : { assignedToUser: actor._id };
+        const subject = readActor(req, actor);
+        const own = isAdmin(subject) ? {} : { createBy: subject._id };
+        const privateTasks = taskScope(subject);
         const [leads, contacts, properties, opportunities, partners, tasks, completed] = await Promise.all([
             Lead.countDocuments({ ...own, deleted: false }),
             Contact.countDocuments({ ...own, deleted: false }),
             Property.countDocuments({ ...own, deleted: false }),
-            Opportunity.countDocuments({ ...own, deleted: false }),
+            Opportunity.countDocuments(recordScope(subject, 'Opportunities', { deleted: false })),
             PartnerCustomer.countDocuments({ ...own, deleted: false }),
-            Task.countDocuments({ ...taskScope, deleted: false }),
-            Task.countDocuments({ ...taskScope, deleted: false, status: 'completed' }),
+            Task.countDocuments({ ...privateTasks, deleted: false }),
+            Task.countDocuments({ ...privateTasks, deleted: false, status: 'completed' }),
         ]);
         res.status(200).json([
             { name: 'Leads', length: leads, color: 'orange' },
@@ -112,9 +116,10 @@ const data = async (req, res) => {
         if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
             return res.status(400).json({ message: 'Invalid date range' });
         }
-        const requestedSender = isAdmin(actor) && mongoose.Types.ObjectId.isValid(req.query.sender)
+        const subject = readActor(req, actor);
+        const requestedSender = !isAdmin(subject) ? subject._id : mongoose.Types.ObjectId.isValid(req.query.sender)
             ? new mongoose.Types.ObjectId(req.query.sender)
-            : isAdmin(actor) ? null : actor._id;
+            : null;
         const match = { timestamp: { $gte: start, $lte: end }, deleted: { $ne: true } };
         if (requestedSender) match.sender = requestedSender;
         const textMatch = { timestamp: match.timestamp };

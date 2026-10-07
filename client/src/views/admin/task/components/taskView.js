@@ -1,3 +1,4 @@
+import { safeUrl } from 'services/contentSecurity';
 import { isAdmin } from 'roles';
 import { LocalizedText } from 'i18n/runtime';
 import {
@@ -385,7 +386,7 @@ const TaskView = (props) => {
                   {" "}<LocalizedText text="Task Link" />{" "}
                 </Text>
                 {data?.url ? (
-                  <a target="_blank" href={data?.url}>
+                  <a rel="noopener noreferrer" target="_blank" href={safeUrl(data?.url)}>
                     <IconButton
                       borderRadius="10px"
                       size="md"

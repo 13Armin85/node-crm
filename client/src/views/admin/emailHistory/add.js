@@ -175,7 +175,7 @@ const AddEmailHistory = (props) => {
   const fetchUsersData = async () => {
     setIsLoding(true);
     try {
-      let result = await getApi("api/task/assignees");
+      let result = await getApi("api/user/options");
 
       let salesPersons =
         result?.data?.filter((userData) => userData?.role === "user") || [];

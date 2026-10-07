@@ -9,6 +9,7 @@ import CalendarDateInput from 'components/date/CalendarDateInput';
 import CurrencyAmount from 'components/CurrencyAmount';
 import { formLabel, formValue } from 'utils/formValue';
 import PriceInput from 'components/PriceInput';
+import { isAdmin } from 'roles';
 
 export const fieldPath = field => field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
 export const isVisible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => getIn(values, key) === expected);
@@ -78,6 +79,7 @@ export function AsyncRelationSelect({ moduleName, value, onChange, id, disabled 
 }
 export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false }) {
   const { language, t } = useLanguage();
+  const [user] = useState(() => JSON.parse(localStorage.getItem('user')));
   if (!definition) return null;
   const change = (field, value) => {
     formik.setFieldValue(fieldPath(field), value);
@@ -90,7 +92,12 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
     Object.entries(resets[field.name] || {}).forEach(([key, v]) => formik.setFieldValue(key, v));
   };
   return <Grid className="crm-dynamic-form" templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={5} dir="ltr">
-    {[...definition.fields].sort((a, b) => a.order - b.order).filter(field => (!customOnly || field.kind === 'CUSTOM_FIELD') && !field.external && isVisible(field, formik.values)).map(field => {
+    {[...definition.fields].sort((a, b) => a.order - b.order).filter(field => {
+      if (!readOnly && definition.moduleName === 'Tasks' && field.kind === 'SYSTEM_FIELD') {
+        if (field.name === 'delegatedBy' || (field.name === 'assignedToUser' && !isAdmin(user))) return false;
+      }
+      return (!customOnly || field.kind === 'CUSTOM_FIELD') && !field.external && isVisible(field, formik.values);
+    }).map(field => {
       const path = fieldPath(field); const value = getIn(formik.values, path); const error = getIn(formik.errors, path);
       const label = localized(field.label, language); const id = `field-${path}`;
       let options = field.options || [];

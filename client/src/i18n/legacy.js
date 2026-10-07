@@ -405,6 +405,7 @@ const special = {
   'Phone number is invalid': ['شماره تلفن معتبر نیست', 'Telefon numarası geçersiz'],
   'Empty or invalid CSV file': ['فایل داده خالی یا نامعتبر است', 'CSV dosyası boş veya geçersiz'],
   'Empty or invalid XLSX file': ['فایل صفحه‌گسترده خالی یا نامعتبر است', 'XLSX dosyası boş veya geçersiz'],
+  'Empty or invalid import file. Maximum 100 rows and 15 MB.': ['فایل ورودی خالی یا نامعتبر است؛ حداکثر ۱۰۰ ردیف و ۱۵ مگابایت مجاز است.', 'İçe aktarma dosyası boş veya geçersiz. En fazla 100 satır ve 15 MB.'],
   'file Download successful': ['فایل با موفقیت دریافت شد', 'Dosya başarıyla indirildi'],
   'file Not Found': ['فایل یافت نشد', 'Dosya bulunamadı'],
   'Please select an authorized recipient': ['گیرنده مجاز را انتخاب کنید', 'Yetkili bir alıcı seçin'],

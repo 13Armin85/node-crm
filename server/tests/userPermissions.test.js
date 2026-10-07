@@ -4,6 +4,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../model/schema/user');
+const Notification = require('../model/schema/notification');
 const CustomField = require('../model/schema/customField');
 const FormDefinition = require('../model/schema/formDefinition');
 const { jwtSecret } = require('../config/auth');
@@ -24,6 +25,7 @@ test('authenticated user routes enforce the developer hierarchy with database ad
   const developer = { _id: '64d33173fd7ff3fa0924a101', username: 'developer@example.com', role: 'developer', deleted: false };
   const admin = { _id: '64d33173fd7ff3fa0924a102', username: 'admin@example.com', role: 'admin', deleted: false };
   const user = { _id: '64d33173fd7ff3fa0924a103', username: 'user@example.com', role: 'user', deleted: false };
+  t.mock.method(Notification, 'create', async value => value);
   const records = new Map([developer, admin, user].map(actor => [actor._id, { ...actor }]));
   const legacyAdmin = { _id: '64d33173fd7ff3fa0924a104', username: 'legacy-admin@example.com', role: 'admin' };
   const legacyUser = { _id: '64d33173fd7ff3fa0924a105', username: 'legacy-user@example.com', role: 'user' };
@@ -70,7 +72,7 @@ test('authenticated user routes enforce the developer hierarchy with database ad
   const api = async (method, route, body, actor = developer) => {
     const response = await fetch(`http://127.0.0.1:${server.address().port}/api${route}`, {
       method,
-      headers: { 'Content-Type': 'application/json', ...(actor ? { Authorization: `Bearer ${jwt.sign({ userId: actor._id, role: 'developer' }, jwtSecret)}` } : {}) },
+      headers: { 'Content-Type': 'application/json', ...(actor ? { Authorization: `Bearer ${jwt.sign({ userId: actor._id, role: 'developer' }, jwtSecret, { expiresIn: '5m' })}` } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     return { status: response.status, data: await response.json() };
@@ -88,7 +90,8 @@ test('authenticated user routes enforce the developer hierarchy with database ad
     assert.deepEqual(filtered.data.user.map(record => record._id).sort(), [admin._id, legacyAdmin._id].sort());
     const includeDeleted = await api('GET', '/user/?deleted=true');
     assert.deepEqual(includeDeleted.data.user.map(record => record._id).sort(), expectedIds);
-    assert.equal((await api('GET', '/user/', null, user)).status, 403);
+    assert.equal((await api('GET', '/user/', null, user)).status, 200);
+    assert.equal((await api('GET', '/user/view/' + developer._id, null, user)).status, 200);
     assert.equal((await api('GET', '/user/', null, null)).status, 401);
   });
 

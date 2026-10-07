@@ -1514,6 +1514,48 @@ body {
   border-radius: 16px !important;
 }
 
+.crm-notifications-count {
+  position: absolute;
+  top: -9px;
+  right: -12px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  color: white !important;
+  border: 2px solid var(--chakra-colors-chakra-body-bg, white);
+  border-radius: 999px;
+  background: #ef4444 !important;
+  font-size: 9px !important;
+  line-height: 13px !important;
+}
+
+.crm-notifications-list {
+  max-height: min(420px, calc(100vh - 180px));
+  overflow-y: auto;
+  margin-top: 5px;
+}
+
+.crm-notification-item {
+  min-height: 64px !important;
+  gap: 8px !important;
+  align-items: center !important;
+  padding: 10px 9px !important;
+  white-space: normal !important;
+  border-radius: 9px !important;
+}
+
+.crm-notification-item.is-unread {
+  background: rgba(53, 99, 233, .07);
+}
+
+.crm-notification-dot {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--crm-primary);
+}
+
 .crm-live-badge {
   padding: 3px 8px;
   color: #0f766e;
@@ -2902,3 +2944,16 @@ body.crm-kanban-is-dragging * {
     width: 100% !important;
   }
 }
+
+
+/* Keep directory tables inside a bounded viewport and the footer below page content. */
+.crm-main { display: flex; flex-direction: column; }
+.crm-workspace-body { flex: 1 0 auto; min-width: 0; }
+.crm-footer-container { flex: 0 0 auto; position: relative; padding-top: 16px; }
+.crm-data-card[data-compact-table="true"] { height: auto !important; }
+.crm-data-card[data-compact-table="true"] .crm-table-scroll {
+  min-height: 0;
+  height: auto;
+  max-height: clamp(180px, calc(100dvh - 420px), 500px);
+}
+.crm-page-help { align-self: flex-end; }

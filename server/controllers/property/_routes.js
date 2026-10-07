@@ -8,13 +8,14 @@ const guarded = require('../../middelwares/legacyScope');
 const { Property } = require('../../model/schema/property');
 
 const router = express.Router();
+const activity = require('../../middelwares/activityNotifications')('Properties');
 
 router.get("/", auth, loadUser, permit('Properties', 'view'), guarded.list, property.index);
 router.post("/add", auth, estateBridge);
-router.post("/addMany", auth, loadUser, estateBatch.add);
+router.post("/addMany", auth, loadUser, activity('record_created', estateBatch.add));
 router.get("/view/:id", auth, loadUser, permit('Properties', 'view'), guarded.record(Property), property.view);
 router.put("/edit/:id", auth, estateBridge);
 router.delete("/delete/:id", auth, estateBridge);
-router.post("/deleteMany", auth, loadUser, estateBatch.remove);
+router.post("/deleteMany", auth, loadUser, activity('record_deleted', estateBatch.remove));
 
 module.exports = router;

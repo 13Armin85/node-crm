@@ -2,6 +2,8 @@ const { Lead } = require("../../model/schema/lead");
 const email = require("../../model/schema/email");
 const PhoneCall = require("../../model/schema/phoneCall");
 const Task = require("../../model/schema/task");
+const { readScope, readActor } = require('../../services/recordAccess');
+const { taskScope } = require("../../services/taskAccess");
 const MeetingHistory = require("../../model/schema/meeting");
 const DocumentSchema = require("../../model/schema/document");
 const { unlinkLead } = require('../../services/relationshipSync');
@@ -19,7 +21,7 @@ const index = async (req, res) => {
     })
     .exec();
 
-  const result = allData.filter((item) => item.createBy !== null);
+  const result = require('../../services/userRoles').isAdmin(req.actor) ? allData : allData.filter((item) => item.createBy !== null);
   res.send(result);
 };
 
@@ -89,7 +91,7 @@ const view = async (req, res) => {
     .populate("associatedListing")
     .populate("contact", "fullName firstName lastName email phoneNumber")
     .populate("partnerCustomer", "fullName companyName phone email")
-    .populate("relatedOpportunities", "opportunityName salesStage amount expectedCloseDate");
+    .populate({ path: 'relatedOpportunities', select: 'opportunityName salesStage amount expectedCloseDate', match: readScope(req, req.actor, 'Opportunities', { deleted: false }) });
 
   if (!lead) return res.status(404).json({ message: "no Data Found." });
 
@@ -100,7 +102,7 @@ const view = async (req, res) => {
   query.createByLead = req.params.id;
 
   let Email = await email.aggregate([
-    { $match: { createByLead: lead._id } },
+    { $match: readScope(req, req.actor, 'Emails', { createByLead: lead._id, deleted: false }) },
     {
       $lookup: {
         from: "Leads", // Assuming this is the collection name for 'leads'
@@ -120,7 +122,7 @@ const view = async (req, res) => {
     { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$createByRef", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true } },
-    { $match: { "users.deleted": false } },
+    { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
     {
       $addFields: {
         senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
@@ -158,7 +160,7 @@ const view = async (req, res) => {
   ]);
 
   let phoneCall = await PhoneCall.aggregate([
-    { $match: { createByLead: lead._id } },
+    { $match: readScope(req, req.actor, 'Calls', { createByLead: lead._id, deleted: false }) },
     {
       $lookup: {
         from: "Leads", // Assuming this is the collection name for 'leads'
@@ -178,7 +180,7 @@ const view = async (req, res) => {
     },
     { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true } },
-    { $match: { "users.deleted": false } },
+    { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
     {
       $addFields: {
         senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
@@ -190,7 +192,7 @@ const view = async (req, res) => {
   ]);
 
   let task = await Task.aggregate([
-    { $match: { assignToLead: lead._id } },
+    { $match: taskScope(readActor(req, req.actor), { assignToLead: lead._id, deleted: false }) },
     {
       $lookup: {
         from: "Leads",
@@ -220,10 +222,11 @@ const view = async (req, res) => {
   ]);
 
   let meeting = await MeetingHistory.aggregate([
+            { $match: readScope(req, req.actor, 'Meetings', { deleted: false }) },
     {
       $match: {
         $expr: {
-          $and: [{ $in: [lead._id, "$attendesLead"] }],
+          $and: [{ $in: [lead._id, { $ifNull: ["$attendesLead", []] }] }],
         },
       },
     },
@@ -257,6 +260,7 @@ const view = async (req, res) => {
     },
   ]);
   const Document = await DocumentSchema.aggregate([
+            { $match: readScope(req, req.actor, 'Documents', { deleted: false }) },
     { $unwind: "$file" },
     { $match: { "file.deleted": false, "file.linkLead": lead._id } },
     {

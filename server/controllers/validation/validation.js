@@ -1,3 +1,4 @@
+const escapeRegExp = require('../../services/escapeRegExp');
 const Validation = require('../../model/schema/validation');
 
 const index = async (req, res) => {
@@ -18,7 +19,7 @@ const add = async (req, res) => {
             return res.status(400).json({ success: false, message: `Validation name is required` });
         }
 
-        let existingValidation = await Validation.findOne({ name: { $regex: new RegExp(`^${req.body.name}$`, 'i') } });
+        let existingValidation = await Validation.findOne({ name: { $regex: new RegExp(`^${escapeRegExp(req.body.name)}$`, 'i') } });
         if (existingValidation) {
             return res.status(400).json({ success: false, message: `Validation name already exist` });
         }

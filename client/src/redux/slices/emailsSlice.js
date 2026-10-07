@@ -1,15 +1,9 @@
-import { isAdmin } from 'roles';
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getApi } from "../../services/api";
 
 export const fetchEmailsData = createAsyncThunk("fetchEmailsData", async () => {
-  const user = JSON.parse(localStorage.getItem("user"));
   try {
-    const response = await getApi(
-      isAdmin(user)
-        ? "api/email/"
-        : `api/email/?sender=${user._id}`,
-    );
+    const response = await getApi("api/email/");
     return response;
   } catch (error) {
     throw error;

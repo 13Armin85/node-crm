@@ -21,6 +21,7 @@ import { fetchRouteData } from "../../redux/slices/routeSlice";
 import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
+import AdminDataFilter from "components/admin/AdminDataFilter";
 import PageHelp from "components/help/PageHelp";
 
 const MainDashboard = React.lazy(() => import("views/admin/default"));
@@ -165,22 +166,13 @@ export default function Dashboard(props) {
 
     let filterData = [...newRoutes, ...apiData];
 
-    const activeModel = modules
-      ?.filter((module) => module?.isActive)
-      ?.map((module) => module?.moduleName);
-
-    const activeRoutes = filterData?.filter(
-      (data) =>
-        activeModel?.includes(data?.name) ||
-        activeModel?.includes(data?.parentName) ||
-        !modules?.some(
-          (module) =>
-            module?.moduleName === data?.name ||
-            module?.moduleName === data?.parentName,
-        ),
-    );
-
-    setRoutes(activeRoutes);
+    const uniquePaths = new Set();
+    setRoutes(filterData.filter(item => {
+      const key = String(item.path || '').toLowerCase();
+      if (!key || uniquePaths.has(key)) return false;
+      uniquePaths.add(key);
+      return true;
+    }));
   };
 
   const getActiveRoute = (routes) => {
@@ -367,7 +359,7 @@ export default function Dashboard(props) {
                 />
               </Box>
             </Portal>
-            <Box pt="100px">
+            <Box className="crm-workspace-body" pt="100px">
               {getRoute() ? (
                 <Box
                   className="crm-content"
@@ -379,7 +371,9 @@ export default function Dashboard(props) {
                     padding: "8px 20px",
                   }}
                 >
+                  <AdminDataFilter />
                   <PageHelp
+                    routes={routes}
                     route={under(routes)}
                     activeRouteName={getActiveRoute(routes)}
                   />
@@ -402,7 +396,7 @@ export default function Dashboard(props) {
                 </Box>
               ) : null}
             </Box>
-            <Box>
+            <Box className="crm-footer-container">
               <Footer />
             </Box>
           </Box>

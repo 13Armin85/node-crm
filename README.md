@@ -47,6 +47,12 @@ npm start
 
 The API listens on `http://localhost:5001` unless `PORT` is changed. Create React App serves the client on its usual development port.
 
+## In-app notifications
+
+The header bell is available to every signed-in user. Task assignment/reassignment, changes, status updates and deletion notify the relevant assignee and creator. CRM record creation, editing, assignment, status changes and deletion, document uploads/links, email template changes, property sales, account creation and profile/role updates also generate personal notifications. Notifications are scoped to the recipient, include a link to the relevant record, and remain available after signing out.
+
+The inbox refreshes every five seconds while the tab is visible, on focus and after a successful local operation. Users can load older notifications, mark individual items as read or mark all current items as read. Delivery failures are logged without undoing a saved operation. In-app notifications use MongoDB and work without SMTP configuration.
+
 ## Email notifications
 
 The server sends an account-created email when a user is registered, and a task-assignment email when a task is assigned or reassigned. Configure SMTP in `server/.env` with `EMAIL_SENDER`, `EMAIL_SENDER_PASSWORD`, `EMAIL_HOST`, `EMAIL_PORT`, and `EMAIL_SECURE`; optionally set `EMAIL_FROM` to customize the displayed sender. The message is sent to the recipient user's email address (`username`). Notifications are logged and do not undo a successful account or task save if SMTP delivery fails.
@@ -106,7 +112,18 @@ npm run lint
 npm run build
 ```
 
-Mongo-backed integration tests use a uniquely named temporary database and are opt-in:
+Only administrators and developers can assign or reassign tasks to other users. Ordinary users create tasks for themselves and can update their assigned tasks without changing the assignee. Both task and generic form mutation routes enforce this rule using the account role stored in MongoDB.
+
+The notification lifecycle test uses a dedicated temporary local MongoDB database, verifies recipient isolation through HTTP, and cleans up only that database:
+
+```powershell
+cd server
+$env:NOTIFICATION_INTEGRATION='1'
+node --test tests/notifications.integration.test.js
+Remove-Item Env:NOTIFICATION_INTEGRATION
+```
+
+Mongo-backed estate integration tests use a uniquely named temporary database and are opt-in:
 
 ```powershell
 cd server
@@ -117,7 +134,7 @@ Remove-Item Env:ESTATE_INTEGRATION
 
 ## Security and storage
 
-All estate endpoints require JWT authentication and enforce module/action permissions. Ordinary users are scoped to their own records; super administrators can access all records. Upload metadata is stored in MongoDB while files are written below `server/uploads`, which is excluded from version control. Use persistent protected storage for that directory in production.
+All estate endpoints require JWT authentication and enforce module/action permissions. Ordinary users can view all shared CRM records, documents, reports and account profiles. Tasks remain private to their assigned user, including across dashboard, calendar and generic form reads. Administrative mutations and task delegation remain restricted; existing record mutation ownership checks are preserved. Upload metadata is stored in MongoDB while files are written below `server/uploads`, which is excluded from version control. Use persistent protected storage for that directory in production.
 
 ## License
 

@@ -1,7 +1,7 @@
 import { LocalizedText, tr } from 'i18n/runtime';
-import React, { useEffect, useState } from "react";
+import React from "react";
 import DynamicFormRenderer from 'components/dynamicForm/DynamicFormRenderer';
-import { getApi } from 'services/api';
+import { useFormDefinition } from './managedForm';
 import { useLanguage } from 'i18n';
 import {
   Grid,
@@ -503,19 +503,10 @@ const CustomForm = ({
 
 export default function ManagedCustomForm(props) {
   const { t } = useLanguage();
-  const [loadedDefinition, setDefinition] = useState(null);
-  const definition = props.definition || loadedDefinition;
-  const [failed, setFailed] = useState(false);
   const moduleName = props.moduleData?.moduleName;
   const hasDefinition = 'definition' in props;
-  useEffect(() => {
-    let active = true;
-    if (!moduleName || hasDefinition) return undefined;
-    getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`).then(r => {
-      if (active) { if (r.status === 200) setDefinition(r.data); else setFailed(true); }
-    });
-    return () => { active = false; };
-  }, [moduleName, hasDefinition]);
+  const { definition: loadedDefinition, definitionError: failed } = useFormDefinition(moduleName, !hasDefinition);
+  const definition = hasDefinition ? props.definition : loadedDefinition;
   if (!moduleName) return <CustomForm {...props} />;
   if (failed || props.definitionError) return <Text color="red.500">{t('estate.serverError')}</Text>;
   if (!definition) return <Text>{t('estate.loading')}</Text>;

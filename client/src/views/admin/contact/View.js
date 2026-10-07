@@ -1,3 +1,4 @@
+import { safeUrl } from 'services/contentSecurity';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -1184,7 +1185,7 @@ const View = () => {
                               textAlign={"center"}
                               colSpan={{ base: 2, md: 1 }}
                             >
-                              <a target="_blank" href={data?.linkedInProfile}>
+                              <a rel="noopener noreferrer" target="_blank" href={safeUrl(data?.linkedInProfile)}>
                                 <IconButton
                                   colorScheme="brand"
                                   aria-label={tr("Call Fred")}
@@ -1263,7 +1264,7 @@ const View = () => {
                               textAlign={"center"}
                               colSpan={{ base: 2, md: 1 }}
                             >
-                              <a target="_blank" href={data?.otherProfiles}>
+                              <a rel="noopener noreferrer" target="_blank" href={safeUrl(data?.otherProfiles)}>
                                 <IconButton
                                   colorScheme="brand"
                                   aria-label={tr("Call Fred")}

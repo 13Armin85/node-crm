@@ -77,11 +77,11 @@ const AddEdit = (props) => {
     data,
   } = props;
 
-  const userId = JSON.parse(localStorage.getItem("user"))?._id;
+  const [user] = useState(() => JSON.parse(localStorage.getItem("user")));
+  const userId = user?._id;
   const [assignToLeadData, setAssignToLeadData] = useState([]);
   const [assignToContactData, setAssignToContactData] = useState([]);
   const [assignees, setAssignees] = useState([]);
-  const user = JSON.parse(localStorage.getItem("user"));
   const [isLoding, setIsLoding] = useState(false);
   const [contactModelOpen, setContactModel] = useState(false);
   const [leadModelOpen, setLeadModel] = useState(false);
@@ -139,6 +139,11 @@ const AddEdit = (props) => {
   } = formik;
 
   const AddData = async () => {
+    const payload = { ...values };
+    if (!isAdmin(user)) {
+      delete payload.assignedToUser;
+      delete payload.delegatedBy;
+    }
     if (userAction === "add") {
       try {
         setIsLoding(true);
@@ -154,7 +159,7 @@ const AddEdit = (props) => {
             : moment(values?.end)?.format("YYYY-MM-DD HH:mm");
         }
 
-        let response = await postApi("api/task/add", values);
+        let response = await postApi("api/task/add", { ...payload, start: values.start, end: values.end });
         if (response?.status === 200) {
           formik.resetForm();
           onClose();
@@ -181,7 +186,7 @@ const AddEdit = (props) => {
             : moment(values?.end)?.format("YYYY-MM-DD HH:mm");
         }
 
-        let response = await putApi(`api/task/edit/${id}`, values);
+        let response = await putApi(`api/task/edit/${id}`, { ...payload, start: values.start, end: values.end });
         if (response?.status === 200) {
           formik.resetForm();
           onClose();
@@ -294,12 +299,13 @@ const AddEdit = (props) => {
   }, [props, values?.category]);
 
   useEffect(() => {
+    if (!isAdmin(user)) return;
     const fetchAssignees = async () => {
       const result = await getApi("api/task/assignees");
       if (result?.status === 200) setAssignees(result.data || []);
     };
     fetchAssignees();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (userAction === "edit" || data) {
@@ -396,7 +402,7 @@ const AddEdit = (props) => {
                   {errors?.category && touched?.category && errors?.category}
                 </Text>
               </GridItem>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
+              {isAdmin(user) && <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel display="flex" ms="4px" fontSize="sm" fontWeight="500" mb="8px">
                   <LocalizedText text="Assigned User" />
                 </FormLabel>
@@ -417,7 +423,7 @@ const AddEdit = (props) => {
                 <Text fontSize="xs" color="gray.500" mt="-6px" mb="10px">
                   <LocalizedText text="Changing the assignee delegates this task to that user." />
                 </Text>
-              </GridItem>
+              </GridItem>}
               <GridItem
                 colSpan={{ base: 12, md: values?.category === "None" ? 12 : 6 }}
               >

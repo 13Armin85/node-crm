@@ -19,6 +19,7 @@ const user = new mongoose.Schema({
         default: 'user',
         required: true,
     },
+    authVersion: { type: Number, default: 0, select: false },
     emailsent: { type: Number, default: 0 },
     textsent: { type: Number, default: 0 },
     outboundcall: { type: Number, default: 0 },

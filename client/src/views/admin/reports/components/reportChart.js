@@ -1,5 +1,5 @@
-import { isAdmin } from 'roles';
 import { Box, Flex, Radio, RadioGroup, Select, Stack, Text, useColorModeValue } from "@chakra-ui/react";
+import { isAdmin } from "roles";
 import Card from "components/card/Card";
 import moment from "moment";
 import { useEffect, useMemo, useState } from "react";
@@ -147,7 +147,7 @@ const ReportChart = (props) => {
   const user = JSON.parse(localStorage.getItem("user"));
   const isEmailsActive = modules?.find((item) => item?.moduleName === "Emails");
   const isCallsActive = modules?.find((item) => item?.moduleName === "Calls");
-  const moduleEnabled = (module) => module?.isActive !== false;
+  const moduleEnabled = (module) => isAdmin(user) || module?.isActive !== false;
 
   const featchChart = async () => {
     const data = {
@@ -156,9 +156,7 @@ const ReportChart = (props) => {
       filter: selection,
     };
     let result = await postApi(
-      isAdmin(user)
-        ? "api/reporting/index"
-        : `api/reporting/index?sender=${user?._id}`,
+      "api/reporting/index",
       data,
     );
     if (result?.status === 200) {

@@ -97,7 +97,7 @@ const View = () => {
   }, []);
 
   const fetchUserDetails = async () => {
-    let result = await getApi("api/task/assignees");
+    let result = await getApi("api/user/options");
     setUserData(result?.data);
   };
 

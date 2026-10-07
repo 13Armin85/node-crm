@@ -7,10 +7,12 @@ const router = express.Router();
 const { loadUser, adminOnly } = require('../../middelwares/permissions');
 router.use(auth, loadUser, (req, res, next) => req.method === 'GET' ? next() : adminOnly(req, res, next));
 
+const metadataSecurity = require('../../middelwares/metadataSecurity');
+router.use((req, res, next) => req.is('multipart/form-data') ? next() : metadataSecurity(req, res, next));
 // module
 router.get('/', auth, customField.index);
-router.post("/add-module", auth, img.upload.single('icon'), customField.createNewModule);
-router.put("/change-icon/:id", auth, img.upload.single('icon'), customField.changeIcon);
+router.post("/add-module", auth, img.upload.single('icon'), img.validateUploads, metadataSecurity, customField.createNewModule);
+router.put("/change-icon/:id", auth, img.upload.single('icon'), img.validateUploads, customField.changeIcon);
 router.put("/change-module-name/:id", auth, customField.changeModuleName);
 router.delete("/module/:id", auth, customField.deletmodule);
 router.post("/deleteMany-Module", auth, customField.deleteManyModule);
@@ -34,6 +36,6 @@ router.put('/change-table-field/:id', auth, customField.changeIsTableField);
 router.put('/change-table-fields', auth, customField.changeIsTableFields);
 router.put('/change-view-fields', auth, customField.changeIsViewFields);
 
-router.use("/icon", express.static('uploads/images'));
+router.use("/icon", require('../../services/secureFiles').publicImageHeaders, express.static(require('path').resolve(__dirname, '../../uploads/images'), { dotfiles: 'deny', index: false }));
 
 module.exports = router;

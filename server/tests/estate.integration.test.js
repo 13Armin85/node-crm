@@ -18,13 +18,13 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     const User = require('../model/schema/user');
     const admin = await User.create({ username: 'integration-admin', password: 'unused-test-hash', role: 'admin' });
     const user = await User.create({ username: 'integration-user', password: 'unused-test-hash', role: 'user' });
-    const token = actor => jwt.sign({ userId: actor._id }, jwtSecret);
+    const token = actor => jwt.sign({ userId: actor._id }, jwtSecret, { expiresIn: '5m' });
     const api = async (method, route, body, actor = admin) => {
       const response = await fetch(base + route, { method, headers: { 'Content-Type': 'application/json', ...(actor ? { Authorization: token(actor) } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
       return { status: response.status, data: await response.json() };
     };
     assert.equal((await api('GET', '/estate/Properties', null, null)).status, 401);
-    assert.equal((await api('GET', '/estate/Properties', null, user)).status, 403);
+    assert.equal((await api('GET', '/estate/Properties', null, user)).status, 200);
     const residence = await api('POST', '/estate/Residences', { name: 'Integration Residence', district: 'District' });
     assert.equal(residence.status, 201, JSON.stringify(residence));
     const partner = await api('POST', '/estate/Partner%20Customers', { customerType: 'COMPANY', companyName: 'Integration Company', phone: '+905551112233', status: 'ACTIVE', createBy: user._id });
@@ -56,7 +56,26 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     assert.equal(await download.text(), 'integration test');
     assert.equal((await api('DELETE', `/estate/Properties/${property.data._id}`)).status, 200);
     assert.equal((await api('GET', '/estate/Properties')).data.total, 0);
-    assert.equal((await api('GET', `/estate/Properties/${property.data._id}`, null, user)).status, 403);
+    assert.equal((await api('GET', `/estate/Properties/${property.data._id}`, null, user)).status, 404);
+    const CustomField = require('../model/schema/customField');
+    await CustomField.create({ moduleName: 'Residences', fields: [{ name: 'legacy_note', label: 'Legacy note', type: 'text' }] });
+    const original = await api('GET', '/estate/definitions/Residences');
+    assert(original.data.fields.some(item => item.name === 'legacy_note'));
+    const saved = await api('PUT', '/estate/definitions/Residences', {
+      ...original.data,
+      fields: original.data.fields.filter(item => item.name !== 'legacy_note').map(item =>
+        item.name === 'notes' ? { ...item, enabled: false, required: true, label: { en: 'Changed notes', fa: 'یادداشت جدید', tr: 'Yeni notlar' } } : item),
+    });
+    assert.equal(saved.status, 200, JSON.stringify(saved));
+    for (const actor of [admin, user]) {
+      const reloaded = await api('GET', '/estate/definitions/Residences', null, actor);
+      assert.equal(reloaded.data.revision, saved.data.revision);
+      assert(!reloaded.data.fields.some(item => item.name === 'legacy_note'));
+      assert.equal(reloaded.data.fields.find(item => item.name === 'notes').enabled, false);
+      assert.equal(reloaded.data.fields.find(item => item.name === 'notes').label.en, 'Changed notes');
+    }
+    assert.equal((await api('PUT', '/estate/definitions/Residences', original.data)).status, 409);
+    assert.equal((await api('POST', '/estate/Residences', { name: 'Hidden required notes do not prevent saving' }, user)).status, 201);
     const storedFiles = await mongoose.model('EstateFile').find().lean();
     const fs = require('fs'); const path = require('path');
     for (const file of storedFiles) await fs.promises.unlink(path.resolve(__dirname, '../uploads/estate', file.storageName));

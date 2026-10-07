@@ -1,7 +1,7 @@
+import { parseImportSpreadsheet } from "utils/importSpreadsheet";
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Papa from "papaparse";
 import {
   Flex,
   useColorModeValue,
@@ -15,7 +15,6 @@ import { useFormik } from "formik";
 import { postApi } from "services/api";
 import { toast } from "react-toastify";
 import moment from "moment";
-import ExcelJS from "exceljs";
 import Card from "components/card/Card";
 
 function PropertyImport() {
@@ -120,59 +119,14 @@ function PropertyImport() {
   };
 
   const parseFileData = async (file) => {
-    const reader = new FileReader();
-    const extension = file?.name?.split(".")?.pop()?.toLowerCase();
-
-    reader.onload = async ({ target }) => {
-      if (extension === "csv") {
-        const csv = Papa?.parse(target?.result, {
-          header: true,
-        });
-        const parsedData = csv?.data;
-
-        if (parsedData && parsedData?.length > 0) {
-          setImportedFileData(parsedData);
-          const fileHeadingFields = Object?.keys(parsedData[0]);
-          setImportedFileFields(fileHeadingFields);
-        } else {
-          toast.error(tr("Empty or invalid CSV file"));
-          navigate("/properties");
-        }
-      } else if (extension === "xlsx") {
-        const data = new Uint8Array(target?.result);
-        const workbook = new ExcelJS.Workbook();
-
-        await workbook?.xlsx?.load(data);
-
-        const worksheet = workbook?.getWorksheet(1);
-        const jsonData = [];
-
-        // Iterate over rows and cells
-        worksheet?.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-          const rowData = {};
-          row?.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-            rowData[worksheet?.getCell(1, colNumber)?.value] = cell?.value;
-          });
-          jsonData?.push(rowData);
-        });
-        jsonData?.splice(0, 1);
-        setImportedFileData(jsonData);
-
-        if (jsonData && jsonData?.length > 0) {
-          const fileHeadingFields = Object?.keys(jsonData[0]);
-          setImportedFileFields(fileHeadingFields);
-        } else {
-          toast.error(tr("Empty or invalid XLSX file"));
-          navigate("/properties");
-        }
-      }
-    };
-
-    if (extension === "csv") {
-      reader?.readAsText(file);
-    } else if (extension === "xlsx") {
-      const blob = new Blob([file]);
-      reader?.readAsArrayBuffer(blob);
+    try {
+      const rows = await parseImportSpreadsheet(file);
+      setImportedFileData(rows);
+      setImportedFileFields(Object.keys(rows[0]));
+    } catch {
+      setImportedFileData([]);
+      setImportedFileFields([]);
+      toast.error(tr("Empty or invalid import file. Maximum 100 rows and 15 MB."));
     }
   };
 

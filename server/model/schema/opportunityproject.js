@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const OpportunityProject = new mongoose.Schema({
+  createBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   name: { type: String, required: true },
   requirement: { type: String, required: true },
   category: String,

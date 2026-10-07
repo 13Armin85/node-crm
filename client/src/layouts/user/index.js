@@ -14,26 +14,19 @@ import Footer from "components/footer/FooterAdmin.js";
 import Navbar from "components/navbar/NavbarAdmin.js";
 import Sidebar from "components/sidebar/Sidebar.js";
 import { SidebarContext } from "contexts/SidebarContext";
-import React, { Suspense, useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ROLE_PATH } from "../../roles";
 import newRoute from "routes.js";
-import { MdHome, MdLock } from "react-icons/md";
 import Spinner from "components/spinner/Spinner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchImage } from "../../redux/slices/imageSlice";
 import { getApi } from "services/api";
 import DynamicPage from "views/admin/dynamicPage";
 import { LuChevronRightCircle } from "react-icons/lu";
-import { FaCalendarAlt } from "react-icons/fa";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
 import PageHelp from "components/help/PageHelp";
-
-const MainDashboard = React.lazy(() => import("views/admin/default"));
-const SignInCentered = React.lazy(() => import("views/auth/signIn"));
-const Calender = React.lazy(() => import("views/admin/calender"));
-const UserView = React.lazy(() => import("views/admin/users/View"));
 
 // Custom Chakra theme
 export default function User(props) {
@@ -46,19 +39,16 @@ export default function User(props) {
     () => typeof window !== "undefined" && window.innerWidth >= 1280,
   );
   const { direction, t } = useLanguage();
+  const location = useLocation();
   const modules = useSelector((state) => state?.modules?.data);
   // functions for changing the states from components
   const getRoute = () => {
-    return window.location.pathname !== "/admin/full-screen-maps";
+    return location.pathname !== "/admin/full-screen-maps";
   };
 
   const fetchRoute = async () => {
     let response = await getApi("api/route/");
     setRoute(response?.data);
-  };
-
-  const pathName = (name) => {
-    return `/${name.toLowerCase().replace(/ /g, "-")}`;
   };
 
   useEffect(() => {
@@ -73,80 +63,45 @@ export default function User(props) {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
 
-  let routes = [
-    {
-      name: "Dashboard",
-      layout: [ROLE_PATH.user],
-      path: "/default",
-      icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
-      component: MainDashboard,
-    },
-    {
-      name: "Sign In",
-      layout: "/auth",
-      path: "/sign-in",
-      icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
-      component: SignInCentered,
-    },
-    {
-      name: "Calender",
-      layout: [ROLE_PATH.user],
-      path: "/calender",
-      icon: (
-        <Icon as={FaCalendarAlt} width="20px" height="20px" color="inherit" />
-      ),
-      component: Calender,
-    },
-    {
-      name: "User View",
-      layout: [ROLE_PATH.admin, ROLE_PATH.user],
-      parentName: "Email",
-      under: "user",
-      path: "/userView/:id",
-      component: UserView,
-    },
-  ];
+  const routes = useMemo(() => {
+    const normalizeName = (name) => String(name || "").trim().toLowerCase();
+    const normalizePath = (path) => String(path || "").replace(/\/+$/, "").toLowerCase();
+    const knownNames = new Set(newRoute.map((item) => normalizeName(item.name)));
+    const knownPaths = new Set(newRoute.map((item) => normalizePath(item.path)));
+    const dynamicRoutes = [];
 
-  route?.map((item, i) => {
-    if (!newRoute.some((route) => route.name === item.moduleName)) {
-      return newRoute.push({
-        name: item?.moduleName,
+    for (const item of Array.isArray(route) ? route : []) {
+      const name = item?.moduleName?.trim();
+      const nameKey = normalizeName(name);
+      const path = "/" + nameKey.replace(/\s+/g, "-");
+      if (!name || knownNames.has(nameKey) || knownPaths.has(path)) continue;
+      knownNames.add(nameKey);
+      knownPaths.add(path);
+      dynamicRoutes.push({
+        name,
         layout: [ROLE_PATH.user],
-        path: pathName(item.moduleName),
-        icon: (
-          <Icon
-            as={LuChevronRightCircle}
-            width="20px"
-            height="20px"
-            color="inherit"
-          />
-        ),
+        path,
+        icon: <Icon as={LuChevronRightCircle} width="20px" height="20px" color="inherit" />,
         component: DynamicPage,
       });
     }
-  });
-  const accessRoute = newRoute?.filter((item) =>
-    Array.isArray(item?.layout) && item.layout.includes(ROLE_PATH.user),
-  );
 
-  // routes.push(...accessRoute)
-  let filterData = [...accessRoute];
-
-  const activeModel = modules
-    ?.filter((module) => module?.isActive)
-    ?.map((module) => module?.moduleName);
-
-  const activeRoutes = filterData?.filter(
-    (data) =>
-      activeModel?.includes(data?.name) ||
-      activeModel?.includes(data?.parentName) ||
-      !modules?.some(
-        (module) =>
-          module?.moduleName === data?.name ||
-          module?.moduleName === data?.parentName,
-      ),
-  );
-  routes.push(...activeRoutes);
+    const configuredModules = new Map(
+      (Array.isArray(modules) ? modules : []).map((item) => [
+        normalizeName(item.moduleName), item.isActive,
+      ]),
+    );
+    const seenPaths = new Set();
+    return [...newRoute, ...dynamicRoutes].filter((item) => {
+      if (!Array.isArray(item?.layout) || !item.layout.includes(ROLE_PATH.user)) return false;
+      const moduleName = normalizeName(item.parentName || item.name);
+      if (configuredModules.has(moduleName) && !configuredModules.get(moduleName)) return false;
+      const pathKey = normalizePath(item.path);
+      if (!pathKey || seenPaths.has(pathKey)) return false;
+      seenPaths.add(pathKey);
+      return true;
+    });
+  }, [modules, route]);
 
   const getActiveRoute = (routes) => {
     let activeRoute = "Dashboard";
@@ -163,7 +118,7 @@ export default function User(props) {
         }
       } else {
         if (
-          window.location.href.indexOf(routes[i].path.replace("/:id", "")) !==
+          location.pathname.indexOf(routes[i].path.replace("/:id", "")) !==
           -1
         ) {
           return routes[i].name;
@@ -187,7 +142,7 @@ export default function User(props) {
         }
       } else {
         if (
-          window.location.href?.indexOf(
+          location.pathname?.indexOf(
             routes[i]?.path?.replace("/:id", ""),
           ) !== -1
         ) {
@@ -212,7 +167,7 @@ export default function User(props) {
           return categoryActiveNavbar;
         }
       } else {
-        if (window.location.href.indexOf(routes[i].path) !== -1) {
+        if (location.pathname.indexOf(routes[i].path) !== -1) {
           return routes[i].secondary;
         }
       }
@@ -233,7 +188,7 @@ export default function User(props) {
           return categoryActiveNavbar;
         }
       } else {
-        if (window.location.href.indexOf(routes[i].path) !== -1) {
+        if (location.pathname.indexOf(routes[i].path) !== -1) {
           return routes[i].messageNavbar;
         }
       }
@@ -242,14 +197,14 @@ export default function User(props) {
   };
 
   const getRoutes = (routes) => {
-    return routes?.map((prop, key) => {
+    return routes?.map((prop) => {
       // if (!prop.under && prop.layout === '/admin') {
       if (!prop?.under && prop?.layout !== "/auth") {
         return (
           <Route
             path={prop?.path}
             element={prop && <prop.component />}
-            key={key}
+            key={prop.path}
           />
         );
       } else if (prop?.under) {
@@ -257,7 +212,7 @@ export default function User(props) {
           <Route
             path={prop?.path}
             element={prop && <prop.component />}
-            key={key}
+            key={prop.path}
           />
         );
       }
@@ -328,7 +283,7 @@ export default function User(props) {
                 />
               </Box>
             </Portal>
-            <Box pt="100px">
+            <Box className="crm-workspace-body" pt="100px">
               {getRoute() ? (
                 <Box
                   className="crm-content"
@@ -341,6 +296,7 @@ export default function User(props) {
                   }}
                 >
                   <PageHelp
+                    routes={routes}
                     route={under(routes)}
                     activeRouteName={getActiveRoute(routes)}
                   />
@@ -363,7 +319,7 @@ export default function User(props) {
                 </Box>
               ) : null}
             </Box>
-            <Box>
+            <Box className="crm-footer-container">
               <Footer />
             </Box>
           </Box>

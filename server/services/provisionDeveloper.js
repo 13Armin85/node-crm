@@ -6,7 +6,7 @@ async function provisionDeveloper(env = process.env) {
   const username = env.INITIAL_DEVELOPER_EMAIL?.trim().toLowerCase();
   const password = env.INITIAL_DEVELOPER_PASSWORD?.trim();
   if (!username || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)
-      || !password || password.length < 8 || password === 'replace-with-a-strong-password') {
+      || !password || password.length < 8 || Buffer.byteLength(password, 'utf8') > 72 || password === 'replace-with-a-strong-password') {
     throw new Error('Set INITIAL_DEVELOPER_EMAIL and INITIAL_DEVELOPER_PASSWORD (at least 8 characters) before provisioning a developer.');
   }
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -19,6 +19,7 @@ async function provisionDeveloper(env = process.env) {
         lastName: env.INITIAL_DEVELOPER_LAST_NAME || 'Developer',
       },
       $setOnInsert: { createdDate: new Date() },
+      $inc: { authVersion: 1 },
     },
     { upsert: true, new: true, runValidators: true },
   );

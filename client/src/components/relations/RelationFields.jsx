@@ -4,6 +4,8 @@ import { getApi } from "services/api";
 import { useLanguage } from 'i18n';
 import { formLabel, formValue } from 'utils/formValue';
 import { formatPriceInput } from 'utils/price';
+import { getIn } from 'formik';
+import { localized } from 'components/dynamicForm/DynamicFormRenderer';
 
 export const labelOf = (item, type) => {
   if (type === "contact") return formLabel(item.fullName) || formLabel(item) || item.email;
@@ -68,8 +70,13 @@ export function PropertyMultiSelect({ value = [], items, setFieldValue, busy }) 
   </GridItem>;
 }
 
-export default function RelationFields({ values, setFieldValue, contact, lead, partner, properties }) {
-  const { t } = useLanguage();
+export default function RelationFields({ values, setFieldValue, contact, lead, partner, properties, definition }) {
+  const { t, language } = useLanguage();
+  const enabled = name => {
+    const field = definition?.fields.find(item => item.name === name);
+    return field?.enabled !== false && Object.entries(field?.condition || {}).every(([key, value]) => getIn(values, key) === value);
+  };
+  const label = (name, fallback) => localized(definition?.fields.find(item => item.name === name)?.label, language) || t(fallback);
   const [options, setOptions] = useState({ contacts: [], leads: [], partners: [], properties: [] });
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -101,10 +108,10 @@ export default function RelationFields({ values, setFieldValue, contact, lead, p
   return (
     <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={3}>
       {failed && <GridItem colSpan={12}><Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert></GridItem>}
-      {contact && <RelationSelect label="مخاطب مرتبط" name="contact" value={values.contact} items={options.contacts} type="contact" setFieldValue={setFieldValue} />}
-      {lead && <RelationSelect label="لید مرتبط" name="lead" value={values.lead} items={options.leads} type="lead" setFieldValue={setFieldValue} />}
-      {partner && <RelationSelect label="مشتری همکار" name="partnerCustomer" value={values.partnerCustomer} items={options.partners} type="partner" setFieldValue={setFieldValue} />}
-      {properties && <PropertyMultiSelect value={values.properties || []} items={options.properties} setFieldValue={setFieldValue} busy={busy} />}
+      {contact && enabled('contact') && <RelationSelect label={label('contact', 'Related Contact')} name="contact" value={values.contact} items={options.contacts} type="contact" setFieldValue={setFieldValue} />}
+      {lead && enabled('lead') && <RelationSelect label={label('lead', 'Lead')} name="lead" value={values.lead} items={options.leads} type="lead" setFieldValue={setFieldValue} />}
+      {partner && enabled('partnerCustomer') && <RelationSelect label={label('partnerCustomer', 'Partner Customer')} name="partnerCustomer" value={values.partnerCustomer} items={options.partners} type="partner" setFieldValue={setFieldValue} />}
+      {properties && enabled('properties') && <PropertyMultiSelect value={values.properties || []} items={options.properties} setFieldValue={setFieldValue} busy={busy} />}
     </Grid>
   );
 }

@@ -223,6 +223,7 @@ const Index = () => {
         {!isLoding && (
           <GridItem colSpan={6}>
             <CommonCheckTable
+              compact
               title={tr("Contacts")}
               isLoding={isLoding}
               columnData={columns ?? []}

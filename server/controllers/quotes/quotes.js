@@ -1,3 +1,4 @@
+const { readScope, readActor } = require('../../services/recordAccess');
 const Quotes = require("../../model/schema/quotes.js");
 const mongoose = require("mongoose");
 const User = require("../../model/schema/user");
@@ -75,7 +76,7 @@ async function getNextAutoIncrementInvoiceValue() {
 //       {
 //         $unwind: { path: "$assignedToData", preserveNullAndEmptyArrays: true },
 //       },
-//       { $match: { "users.deleted": false } },
+//       { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
 //       {
 //         $addFields: {
 //           assignUserName: {
@@ -193,6 +194,7 @@ const view = async (req, res) => {
       {
         $lookup: {
           from: "Opportunities",
+                    pipeline: [{ $match: readScope(req, req.actor, "Opportunities", { deleted: false }) }],
           localField: "oppotunity",
           foreignField: "_id",
           as: "oppotunityData",
@@ -250,7 +252,7 @@ const view = async (req, res) => {
       {
         $unwind: { path: "$oppotunityData", preserveNullAndEmptyArrays: true },
       },
-      { $match: { "users.deleted": false } },
+      { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
       {
         $addFields: {
           assignUserName: {
@@ -295,6 +297,7 @@ const view = async (req, res) => {
       },
     ]);
     let invoiceDetails = await Invoices.aggregate([
+      { $match: readScope(req, req.actor, "Invoices", { deleted: false }) },
       { $match: { quotesId: response._id, deleted: false } },
       {
         $lookup: {
@@ -333,7 +336,8 @@ const view = async (req, res) => {
 
 const convertToInvoice = async (req, res) => {
   try {
-    let quotesData = await Quotes.findOne({ _id: req.body._id });
+    if (!require('../../services/estateValidation').objectId(req.body._id)) return res.status(400).json({ code: 'invalid' });
+    let quotesData = await Quotes.findOne({ _id: req.body._id, deleted: false, ...require('../../middelwares/permissions').scope(req, 'Quotes') });
     if (!quotesData) {
       return res.status(404).json({ message: "Quotes not found" });
     }

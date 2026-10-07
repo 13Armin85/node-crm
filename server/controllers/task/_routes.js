@@ -10,7 +10,7 @@ router.get('/', auth, task.index)
 router.get('/assignees', auth, task.assignees)
 router.post('/add', auth, loadUser, dynamicValues, task.add)
 router.get('/view/:id', auth, task.view)
-// Any assignee may update/delegate their own task; access is enforced in the controller.
+// Assignees may edit their tasks; only admins and developers may change the assignee.
 router.put('/edit/:id', auth, task.edit)
 router.put('/changeStatus/:id', auth, task.changeStatus)
 router.delete('/delete/:id', auth, task.deleteData)

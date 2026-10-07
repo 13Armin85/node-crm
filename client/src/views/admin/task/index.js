@@ -74,7 +74,7 @@ const Task = () => {
   const [advanceSearch, setAdvanceSearch] = useState(false);
   const [getTagValuesOutSide, setGetTagValuesOutside] = useState([]);
   const [searchboxOutside, setSearchboxOutside] = useState("");
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user] = useState(() => JSON.parse(localStorage.getItem("user")));
   const [deleteMany, setDeleteMany] = useState(false);
   const [isImportLead, setIsImportLead] = useState(false);
   const [isLoding, setIsLoding] = useState(false);
@@ -266,6 +266,7 @@ const Task = () => {
     }
   };
   const delegateTask = async (taskId, assignedToUser) => {
+    if (!isAdmin(user)) return;
     const response = await putApi(`api/task/edit/${taskId}`, { assignedToUser });
     if (response?.status === 200) {
       toast.success(tr("Task delegated successfully"));
@@ -326,10 +327,11 @@ const Task = () => {
   }, [action]);
 
   useEffect(() => {
+    if (!isAdmin(user)) return;
     getApi("api/task/assignees").then((result) => {
       if (result?.status === 200) setAssignees(result.data || []);
     });
-  }, []);
+  }, [user]);
 
   const taskSource = displaySearchData ? searchedData : data;
   const visibleData = taskSource
@@ -370,7 +372,7 @@ const Task = () => {
         </Flex>
       )}
       {viewMode === "kanban" ? (
-        <TaskKanban tasks={visibleData} assignees={assignees} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
+        <TaskKanban tasks={visibleData} assignees={assignees} canDelegate={isAdmin(user)} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
       ) : <CommonCheckTable
         pageHeader={false}
         title={tr("Tasks")}

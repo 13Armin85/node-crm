@@ -361,6 +361,7 @@ const Index = () => {
         {!isLoding && (
           <GridItem colSpan={6}>
             <CommonCheckTable
+              compact
               title={title}
               isLoding={isLoding}
               searchDisplay={searchDisplay}

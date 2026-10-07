@@ -13,7 +13,8 @@ export const HasAccess = (actions) => {
 
   const adminModules = ['Users', 'Roles', 'Custom Fields', 'Active Deactive Module'];
   return actions.map(title => {
-    if (!isAdmin(user) && (user?.role !== 'user' || adminModules.includes(title))) return {};
+    if (!isAdmin(user) && user?.role !== 'user') return {};
+    if (!isAdmin(user) && adminModules.includes(title)) return { view: true, export: true };
     return title === 'Users' ? { ...permission, create: isDeveloper(user) } : permission;
   });
 };

@@ -34,11 +34,6 @@ const index = async (req, res) => {
         const query = req.query
         query.deleted = false;
 
-        const user = await User.findById(req.user.userId)
-        if (!isAdmin(user)) {
-            delete query.createBy
-            query.$or = [{ createBy: new mongoose.Types.ObjectId(req.user.userId) }, { assignUser: new mongoose.Types.ObjectId(req.user.userId) }];
-        }
 
         const result = await Opprtunities.aggregate([
             { $match: query },
@@ -83,9 +78,9 @@ const index = async (req, res) => {
             { $unwind: { path: '$accountData', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$contactData', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$leadData', preserveNullAndEmptyArrays: true } },
-            { $match: { 'users.deleted': false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             // { $match: { 'assignUsers.deleted': false } },
-            { $match: { 'modifiedByUser.deleted': false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'modifiedByUser.deleted': { $ne: true } } },
             {
                 $addFields: {
                     createdByName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },
@@ -173,9 +168,9 @@ const view = async (req, res) => {
             { $unwind: { path: '$contactData', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$leadData', preserveNullAndEmptyArrays: true } },
 
-            { $match: { 'users.deleted': false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             // { $match: { 'assignUsers.deleted': false } },
-            { $match: { 'modifiedByUser.deleted': false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'modifiedByUser.deleted': { $ne: true } } },
             {
                 $addFields: {
                     createdByName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },

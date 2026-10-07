@@ -1,3 +1,4 @@
+const { readScope, readActor } = require('../../services/recordAccess');
 const { isAdmin } = require('../../services/userRoles');
 const Invoices = require("../../model/schema/invoices.js");
 const mongoose = require("mongoose");
@@ -12,13 +13,8 @@ async function getNextAutoIncrementValue() {
 }
 
 const index = async (req, res) => {
-    query = req.query;
+    const query = req.query;
     query.deleted = false;
-    const user = await User.findById(req.user.userId)
-    if (!isAdmin(user)) {
-        delete query.createBy
-        query.$or = [{ createBy: new mongoose.Types.ObjectId(req.user.userId) }, { assignUser: new mongoose.Types.ObjectId(req.user.userId) }];
-    }
     try {
         let result = await Invoices.aggregate([
             { $match: query },
@@ -67,7 +63,7 @@ const index = async (req, res) => {
             { $unwind: { path: "$accountData", preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: "$assignedToData", preserveNullAndEmptyArrays: true } },
-            { $match: { "users.deleted": false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     assignUserName: {
@@ -143,6 +139,7 @@ const view = async (req, res) => {
             {
                 $lookup: {
                     from: "Opportunities",
+                    pipeline: [{ $match: readScope(req, req.actor, "Opportunities", { deleted: false }) }],
                     localField: "oppotunity",
                     foreignField: "_id",
                     as: "oppotunityData",
@@ -194,7 +191,7 @@ const view = async (req, res) => {
             { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: "$assignedToData", preserveNullAndEmptyArrays: true } },
             { $unwind: { path: "$oppotunityData", preserveNullAndEmptyArrays: true } },
-            { $match: { "users.deleted": false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     assignUserName: {

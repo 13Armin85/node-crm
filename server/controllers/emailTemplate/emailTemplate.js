@@ -21,7 +21,7 @@ const index = async (req, res) => {
                 }
             },
             { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
-            { $match: { 'users.deleted': false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     createdByName: '$users.username',

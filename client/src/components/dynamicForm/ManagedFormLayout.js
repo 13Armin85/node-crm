@@ -1,26 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, AlertIcon, Box } from '@chakra-ui/react';
-import { getApi } from 'services/api';
+import React from 'react';
+import { Alert, AlertIcon, Box, FormControl, FormLabel, GridItem } from '@chakra-ui/react';
+import { useFormDefinition } from 'utils/managedForm';
 import { translate, useLanguage } from 'i18n';
 import DynamicFormRenderer, { localized } from './DynamicFormRenderer';
 import { formLabel, formValue } from 'utils/formValue';
 
-const findName = node => {
-  if (!React.isValidElement(node)) return null;
-  if (typeof node.props.name === 'string') return node.props.name;
-  return React.Children.toArray(node.props.children).map(findName).find(Boolean);
+const findNames = node => {
+  if (!React.isValidElement(node)) return [];
+  if (typeof node.props.name === 'string') return [node.props.name];
+  return [...new Set(React.Children.toArray(node.props.children).flatMap(findNames))];
 };
 // Keep existing widgets and dependent business flows; configure their surrounding fields.
-export default function ManagedFormLayout({ moduleName, formik, children, definition: providedDefinition, definitionError }) {
+export default function ManagedFormLayout({ moduleName, formik, children, definition: providedDefinition, definitionError, includeCustom = true }) {
   const { language, t } = useLanguage();
-  const [loadedDefinition, setDefinition] = useState(null); const [failed, setFailed] = useState(false);
-  const definition = providedDefinition || loadedDefinition;
-  useEffect(() => {
-    let active = true;
-    if (providedDefinition !== undefined) return undefined;
-    getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`).then(r => { if (active) { if (r.status === 200) setDefinition(r.data); else setFailed(true); } });
-    return () => { active = false; };
-  }, [moduleName, providedDefinition]);
+  const { definition: loadedDefinition, definitionError: failed } = useFormDefinition(moduleName, providedDefinition === undefined);
+  const definition = providedDefinition !== undefined ? providedDefinition : loadedDefinition;
   const fields = definition?.fields || [];
   const optionText = value => {
     if (value == null || typeof value === 'boolean') return '';
@@ -39,12 +33,13 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
       ...(node.props.value !== undefined ? { value: formValue(node.props.value) } : {}),
       children: optionText(node.props.children) || optionText(node.props.label) || formLabel(formValue(node.props.value)),
     });
-    const name = findName(node);
+    const names = findNames(node);
+    const name = names.length === 1 ? names[0] : null;
     const field = fields.find(f => f.name === name && f.kind === 'SYSTEM_FIELD');
-    const isContainer = /GridItem|FormControl/.test(type);
-    if (isContainer && field?.enabled === false) return null;
+    const isContainer = node.type === GridItem || node.type === FormControl || /GridItem|FormControl/.test(type);
+    if (field?.enabled === false && (isContainer || typeof node.props.name === 'string')) return null;
     const activeField = isContainer ? field : currentField;
-    if (/FormLabel/.test(type) && activeField) return React.cloneElement(node, {}, localized(activeField.label, language));
+    if ((node.type === FormLabel || /FormLabel/.test(type)) && activeField) return React.cloneElement(node, {}, localized(activeField.label, language));
     const patch = {};
     if (field && typeof node.props.name === 'string' && field.placeholder) patch.placeholder = localized(field.placeholder, language);
     if (/^(Select|Input|Textarea|select|input|textarea)$/.test(type) && node.props.value != null) {
@@ -57,6 +52,6 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     return React.cloneElement(node, patch);
   };
   return <>{(failed || definitionError) && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
-    {definition && <Box className="crm-managed-fields" mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
+    {includeCustom && definition && <Box className="crm-managed-fields" mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
   </>;
 }

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const CustomField = require("../../model/schema/customField");
 const { syncLead, unlinkLead } = require('../../services/relationshipSync');
+const { notifyRecordActivity } = require('../../services/notifications');
 
 const getFieldType = (field) => {
   if (field?.ref) {
@@ -28,6 +29,7 @@ const getModel = (customField) => {
   });
 
   schemaFields.customFields = { type: mongoose.Schema.Types.Mixed, default: {} };
+  Object.assign(schemaFields, { createBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, deleted: { type: Boolean, default: false }, createdDate: { type: Date, default: Date.now }, updatedDate: { type: Date, default: Date.now } });
   const moduleSchema = new mongoose.Schema(schemaFields);
   return mongoose.model(collectionName, moduleSchema, collectionName);
 };
@@ -126,7 +128,7 @@ const index = async (req, res) => {
         .send({ success: false, message: "Model not found" });
     }
 
-    const allData = await ExistingModel.find({ deleted: false, ...require('../../middelwares/permissions').scope(req) });
+    const allData = await ExistingModel.find({ deleted: false, ...(req.formAccessScope || require('../../middelwares/permissions').scope(req, collectionName)) });
 
     return res.status(200).json({ data: allData });
   } catch (err) {
@@ -178,7 +180,7 @@ const view = async (req, res) => {
         .send({ success: false, message: "Model not found" });
     }
 
-    let allData = await ExistingModel.findOne({ _id: req.params.id });
+    let allData = await ExistingModel.findOne({ _id: req.params.id, deleted: { $ne: true }, ...(req.formAccessScope || {}) });
 
     return res.status(200).json({ data: allData });
   } catch (err) {
@@ -238,6 +240,7 @@ const add = async (req, res) => {
 
     await newDocument.save();
     if (collectionName === 'Leads') await syncLead(newDocument);
+    await notifyRecordActivity({ module: collectionName, record: newDocument, actorId: req.user.userId, type: 'record_created' });
 
     return res
       .status(200)
@@ -292,6 +295,7 @@ const deleteField = async (req, res) => {
       deleted: true,
     });
     if (customField.moduleName === 'Leads' && result) await unlinkLead(result._id);
+    await notifyRecordActivity({ module: customField.moduleName, record: result, actorId: req.user.userId, type: 'record_deleted' });
 
     return res
       .status(200)
@@ -342,11 +346,13 @@ const deleteManyField = async (req, res) => {
       return res.status(500).send({ success: false, message: "Invalid model" });
     }
 
+    const records = await ExistingModel.find({ _id: { $in: req.body.ids }, deleted: false }).lean();
     const result = await ExistingModel.updateMany(
       { _id: { $in: req.body.ids } },
       { $set: { deleted: true } },
     );
     if (customField.moduleName === 'Leads') await Promise.all((req.body.ids || []).map(unlinkLead));
+    if (result.modifiedCount) await Promise.all(records.map(record => notifyRecordActivity({ module: customField.moduleName, record, actorId: req.user.userId, type: 'record_deleted' })));
 
     return res
       .status(200)
@@ -402,6 +408,7 @@ const edit = async (req, res) => {
       return res.status(500).send({ success: false, message: "Invalid model" });
     }
 
+    const previous = await ExistingModel.findOne({ _id: req.params.id }).lean();
     const result = await ExistingModel.findOneAndUpdate(
       { _id: req.params.id },
       buildUpdatePayload(req.body, customField?.fields),
@@ -410,6 +417,7 @@ const edit = async (req, res) => {
 
     if (result) {
       if (collectionName === 'Leads') await syncLead(result);
+      await notifyRecordActivity({ module: collectionName, record: result, previous, actorId: req.user.userId });
       return res
         .status(200)
         .json({
@@ -434,4 +442,4 @@ const edit = async (req, res) => {
   }
 };
 
-module.exports = { index, view, add, edit, deleteField, deleteManyField };
+module.exports = { index, view, add, edit, deleteField, deleteManyField, getModel };

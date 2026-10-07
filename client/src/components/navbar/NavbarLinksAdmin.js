@@ -5,7 +5,6 @@ import {
   Button,
   Flex,
   Icon,
-  IconButton,
   Menu,
   MenuButton,
   MenuDivider,
@@ -17,7 +16,6 @@ import {
 import PropTypes from "prop-types";
 import { useCallback, useEffect } from "react";
 import {
-  FiBell,
   FiChevronDown,
   FiHome,
   FiLogOut,
@@ -26,12 +24,13 @@ import {
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import jwtDecode from "jwt-decode";
+
 import { useDispatch, useSelector } from "react-redux";
 import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect";
 import { useLanguage } from "i18n";
 import { clearUser } from "../../redux/slices/localSlice";
-import { clearAuthSession } from "services/authSession";
+import { clearAuthSession, scheduleSessionExpiry } from "services/authSession";
+import NotificationsMenu from "./NotificationsMenu";
 
 export default function HeaderLinks() {
   const panelBg = useColorModeValue("white", "#121a2b");
@@ -58,19 +57,7 @@ export default function HeaderLinks() {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return undefined;
 
-    try {
-      const decodedToken = jwtDecode(token);
-      const currentTime = Date.now() / 1000;
-      if (decodedToken?.exp < currentTime) {
-        logOut(t("Token has expired"));
-        return undefined;
-      }
-      const timeoutId = setTimeout(() => logOut(t("Token has expired")), (decodedToken.exp - currentTime) * 1000);
-      return () => clearTimeout(timeoutId);
-    } catch (error) {
-      console.error("Error decoding token:", error);
-      return undefined;
-    }
+    return scheduleSessionExpiry(token, () => logOut(t("Token has expired")));
   }, [logOut, t]);
 
   return (
@@ -80,26 +67,7 @@ export default function HeaderLinks() {
         <LanguageSelect compact />
       </Flex>
 
-      <Menu placement="bottom-end" isLazy>
-        <MenuButton
-          as={IconButton}
-          className="crm-header-icon-button"
-          aria-label={t("Notifications")}
-          icon={<FiBell />}
-          variant="ghost"
-        />
-        <MenuList className="crm-notifications-menu" dir={direction} p="10px">
-          <Flex align="center" justify="space-between" px="8px" py="6px">
-            <Text fontSize="sm" fontWeight="800" color={textColor}>{t("Notifications")}</Text>
-            <Box className="crm-live-badge">{t("Live")}</Box>
-          </Flex>
-          <Flex className="crm-notifications-empty" direction="column" align="center" justify="center">
-            <Flex className="crm-notifications-empty__icon" align="center" justify="center"><FiBell /></Flex>
-            <Text fontWeight="700" fontSize="sm">{t("You are all caught up")}</Text>
-            <Text color={mutedColor} fontSize="xs" textAlign="center">{t("New activity will appear here")}</Text>
-          </Flex>
-        </MenuList>
-      </Menu>
+      <NotificationsMenu userId={loginUser?._id} />
 
       <Box className="crm-header-divider" />
 

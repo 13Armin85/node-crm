@@ -19,6 +19,7 @@ import {
   MenuDivider,
   MenuItem,
   MenuList,
+  Portal,
   Grid,
   GridItem,
   Checkbox,
@@ -41,7 +42,7 @@ import {
   useSortBy,
   useTable,
 } from "react-table";
-import * as XLSX from "xlsx";
+import { exportSpreadsheet } from "utils/spreadsheet";
 import Card from "components/card/Card";
 import CountUpComponent from "components/countUpComponent/countUpComponent";
 import Pagination from "components/pagination/Pagination";
@@ -396,17 +397,7 @@ const CommonCheckTable = (props) => {
     fileName,
     extension,
   ) => {
-    const csvHeader = csvColumns?.map((col) => col?.Header);
-
-    const csvContent = [
-      csvHeader,
-      ...jsonArray?.map((row) => csvColumns?.map((col) => row[col?.accessor])),
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet(csvContent);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet 1");
-    XLSX.writeFile(wb, `${fileName}.${extension}`); // .csv, .xlsx
+    exportSpreadsheet({ jsonArray, csvColumns, fileName, extension }).catch(console.error);
     setSelectedValues([]);
   };
 
@@ -569,10 +560,10 @@ const CommonCheckTable = (props) => {
                 <MenuButton p={4}>
                   <BsColumnsGap />
                 </MenuButton>
+                <Portal>
                 <MenuList
                   minW={"fit-content"}
-                  transform={"translate(1670px, 60px)"}
-                  zIndex={2}
+                  zIndex="dropdown"
                 >
                   <MenuItem
                     onClick={() => setManageColumns(true)}
@@ -606,6 +597,7 @@ const CommonCheckTable = (props) => {
                     </>
                   )}
                 </MenuList>
+                </Portal>
               </Menu>
             )}
             {(access?.create || access === true) && (

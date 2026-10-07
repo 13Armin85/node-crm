@@ -1,5 +1,6 @@
 const User = require("../../model/schema/user");
 const bcrypt = require("bcrypt");
+const { createNotification } = require('../../services/notifications');
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require('../../config/auth');
 const { sendEmail } = require("../../middelwares/mail");
@@ -10,6 +11,7 @@ const normalizeEmail = (value) =>
 
 const normalizePassword = (value) =>
   typeof value === "string" ? value.trim() : value;
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(require("crypto").randomBytes(24).toString("hex"), 10);
 const normalizeRole = (value) => USER_ROLES.includes(value) ? value : null;
 const escapeHtml = (value = '') => String(value)
   .replace(/&/g, '&amp;')
@@ -40,7 +42,7 @@ const register = async (req, res) => {
     const role = normalizeRole(req.body.role);
     const normalizedUsername = normalizeEmail(username);
     const normalizedPassword = normalizePassword(password);
-    if (!normalizedUsername || !normalizedPassword || normalizedPassword.length < 8) return res.status(400).json({ code: 'invalid' });
+    if (typeof normalizedUsername !== 'string' || normalizedUsername.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedUsername) || typeof normalizedPassword !== 'string' || normalizedPassword.length < 8 || Buffer.byteLength(normalizedPassword, 'utf8') > 72) return res.status(400).json({ code: 'invalid' });
     if (!role) return res.status(400).json({ code: 'invalidRole', message: 'Role must be developer, admin or user' });
     const user = await User.findOne({ username: normalizedUsername });
 
@@ -63,6 +65,7 @@ const register = async (req, res) => {
       customFields: req.body.customFields,
     });
     await newUser.save();
+    await createNotification({ recipientId: newUser._id, actorId: req.actor._id, type: 'account_created', message: newUser.username, module: 'Users', link: '/default' });
     await sendAccountCreatedEmail(newUser);
     res.status(200).json({ message: "User created successfully" });
   } catch (error) {
@@ -70,12 +73,22 @@ const register = async (req, res) => {
   }
 };
 
+// Minimal staff directory for record relationship selectors, separate from task delegation.
+const options = async (req, res) => {
+  try {
+    const users = await User.find({ deleted: { $ne: true } })
+      .select('_id firstName lastName username role')
+      .sort({ firstName: 1, lastName: 1 }).lean();
+    res.status(200).json(users);
+  } catch (_) { res.status(500).json({ code: 'serverError' }); }
+};
+
 const index = async (req, res) => {
   try {
     // Older accounts may not have the deleted flag stored in MongoDB.
-    const query = { ...req.query, deleted: { $ne: true } };
+    const query = { ...req.query, deleted: { $ne: true }, ...(req.dataSubject ? { _id: req.dataSubject } : {}) };
 
-    let user = await User.find(query).exec();
+    let user = await User.find(query).select('-password -authVersion').exec();
 
     res.status(200).json({ user });
   } catch (error) {
@@ -85,10 +98,7 @@ const index = async (req, res) => {
 
 const view = async (req, res) => {
   try {
-    if (!isAdmin(req.actor) && String(req.actor._id) !== String(req.params.id)) {
-      return res.status(403).json({ code: 'forbidden' });
-    }
-    let user = await User.findOne({ _id: req.params.id });
+    let user = await User.findOne({ _id: req.params.id, deleted: { $ne: true } }).select('-password -authVersion');
     if (!user) return res.status(404).json({ message: "no Data Found." });
     res.status(200).json(user);
   } catch (error) {
@@ -127,6 +137,7 @@ let deleteData = async (req, res) => {
 const deleteMany = async (req, res) => {
   try {
     const userIds = req.body;
+    if (!Array.isArray(userIds) || userIds.length > 100 || userIds.some(id => typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id))) return res.status(400).json({ code: 'invalid' });
     const users = await User.find({ _id: { $in: userIds } });
 
     const defaultUsers = String(process.env.DEFAULT_USERS || '').split(',').map(value => value.trim()).filter(Boolean);
@@ -158,6 +169,10 @@ const deleteMany = async (req, res) => {
 const edit = async (req, res) => {
   try {
     let { username, firstName, lastName, phoneNumber } = req.body;
+    if (username !== undefined) {
+      username = normalizeEmail(username);
+      if (typeof username !== 'string' || username.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) return res.status(400).json({ code: 'invalid', field: 'username' });
+    }
     const target = await User.findById(req.params.id);
     if (!target) return res.status(404).json({ code: 'notFound' });
     if (!canEditUser(req.actor, target)) {
@@ -174,6 +189,7 @@ const edit = async (req, res) => {
       return res.status(400).json({ code: 'adminSelfDemotion', message: 'You cannot change your own role' });
     }
 
+    const roleChanged = role && role !== target.role;
     let result = await User.updateOne(
       { _id: req.params.id },
       {
@@ -185,10 +201,12 @@ const edit = async (req, res) => {
           customFields: req.body.customFields,
           ...(role ? { role } : {}),
         },
+        ...(roleChanged ? { $inc: { authVersion: 1 } } : {}),
       },
       { runValidators: true },
     );
 
+    if (result.modifiedCount) await createNotification({ recipientId: target._id, actorId: req.actor._id, type: roleChanged ? 'role_changed' : 'account_updated', message: username || target.username, status: roleChanged ? role : undefined, module: 'Users', link: '/default' });
     res.status(200).json(result);
   } catch (err) {
     console.error("Failed to Update User:", err);
@@ -201,16 +219,17 @@ const login = async (req, res) => {
     const { username, password } = req.body;
     const normalizedUsername = normalizeEmail(username);
     const normalizedPassword = normalizePassword(password);
-    if (!normalizedUsername || !normalizedPassword) return res.status(400).json({ code: 'invalid' });
+    if (typeof normalizedUsername !== 'string' || !normalizedUsername || normalizedUsername.length > 254 || typeof normalizedPassword !== 'string' || !normalizedPassword || Buffer.byteLength(normalizedPassword, 'utf8') > 72) return res.status(400).json({ code: 'invalid' });
     // Find the user by username
     const user = await User.findOne({
       username: normalizedUsername,
       deleted: false,
-    }).select('+password');
+    }).select('+password +authVersion');
     if (!user) {
+      await bcrypt.compare(normalizedPassword, DUMMY_PASSWORD_HASH);
       res
         .status(401)
-        .json({ error: "Authentication failed, invalid username" });
+        .json({ code: 'invalidCredentials', message: 'Invalid username or password' });
       return;
     }
     // Compare the provided password with the hashed password stored in the database
@@ -221,16 +240,17 @@ const login = async (req, res) => {
     if (!passwordMatch) {
       res
         .status(401)
-        .json({ error: "Authentication failed,password does not match" });
+        .json({ code: 'invalidCredentials', message: 'Invalid username or password' });
       return;
     }
     // Create a JWT token
-    const token = jwt.sign({ userId: user._id }, jwtSecret, {
-      expiresIn: "1d",
+    const token = jwt.sign({ userId: user._id, sv: Number(user.authVersion || 0) }, jwtSecret, {
+      expiresIn: req.body.rememberMe === true ? "30d" : "1d",
     });
 
     const safeUser = user.toObject();
     delete safeUser.password;
+    delete safeUser.authVersion;
     res
       .status(200)
       .setHeader("Authorization", `Bearer ${token}`)
@@ -244,6 +264,7 @@ module.exports = {
   register,
   login,
   index,
+  options,
   deleteMany,
   view,
   deleteData,

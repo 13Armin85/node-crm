@@ -21,7 +21,7 @@ test('only developer receives the create-user UI permission', () => {
   localStorage.setItem('user', JSON.stringify(admin));
   expect(HasAccess(['Users'])[0]).toMatchObject({ create: false, view: true });
   localStorage.setItem('user', JSON.stringify(user));
-  expect(HasAccess(['Users'])[0]).toEqual({});
+  expect(HasAccess(['Users'])[0]).toEqual({ view: true, export: true });
 });
 
 test('admin cannot edit or delete developer accounts in the UI', () => {

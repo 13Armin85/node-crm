@@ -1,4 +1,3 @@
-const { isAdmin } = require('../../services/userRoles');
 const { sendEmail } = require('../../middelwares/mail');
 const Email = require('../../model/schema/email');
 const User = require('../../model/schema/user');
@@ -9,13 +8,13 @@ const add = async (req, res) => {
         const { sender, recipient, property, subject, message, startDate, createByContact, createBy, createByLead, html, type, salesAgent } = req.body;
 
         if (createByContact && !mongoose.Types.ObjectId.isValid(createByContact)) {
-            res.status(400).json({ error: 'Invalid createByContact value' });
+            return res.status(400).json({ error: 'Invalid createByContact value' });
         }
         if (createByLead && !mongoose.Types.ObjectId.isValid(createByLead)) {
-            res.status(400).json({ error: 'Invalid createByLead value' });
+            return res.status(400).json({ error: 'Invalid createByLead value' });
         }
         if (salesAgent && !mongoose.Types.ObjectId.isValid(salesAgent)) {
-            res.status(400).json({ error: 'Invalid salesAgent value' });
+            return res.status(400).json({ error: 'Invalid salesAgent value' });
         }
 
         const email = { sender, recipient, subject, message, startDate, createBy, html, property, type, salesAgent: new mongoose.Types.ObjectId(salesAgent) || null }
@@ -48,13 +47,7 @@ const index = async (req, res) => {
             query.sender = new mongoose.Types.ObjectId(query.sender);
         }
 
-        const user = await User.findById(req.user.userId);
-
-        if (!isAdmin(user)) {
-            delete query.sender;
-            query.deleted = false;
-            query.$or = [{ sender: new mongoose.Types.ObjectId(req.user.userId) }, { salesAgent: new mongoose.Types.ObjectId(req.user.userId) }];
-        }
+        query.deleted = false;
 
         let result = await Email.aggregate([
             { $match: query },
@@ -85,7 +78,7 @@ const index = async (req, res) => {
             { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$createByRef', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$createByrefLead', preserveNullAndEmptyArrays: true } },
-            { $match: { 'users.deleted': false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     senderName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },
@@ -173,7 +166,7 @@ const view = async (req, res) => {
             { $unwind: { path: '$createByRef', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$createByrefLead', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$salesAgent', preserveNullAndEmptyArrays: true } },
-            { $match: { 'users.deleted': false } },
+            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     senderEmail: '$users.username',

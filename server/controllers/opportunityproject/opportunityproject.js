@@ -13,12 +13,13 @@ const add = async (req, res) => {
   try {
     const { name, requirement, category, property, contact, lead } = req.body;
     if (contact && !mongoose.Types.ObjectId.isValid(contact)) {
-      res.status(400).json({ error: "Invalid contact value" });
+      return res.status(400).json({ error: "Invalid contact value" });
     }
     if (lead && !mongoose.Types.ObjectId.isValid(lead)) {
-      res.status(400).json({ error: "Invalid lead value" });
+      return res.status(400).json({ error: "Invalid lead value" });
     }
     const oppotunityDataBody = {
+      createBy: req.actor._id,
       name,
       requirement,
       category,
@@ -133,10 +134,10 @@ const edit = async (req, res) => {
   const { name, requirement, category, property, contact, lead } = req.body;
 
   if (contact && !mongoose.Types.ObjectId.isValid(contact)) {
-    res.status(400).json({ error: "Invalid Assign To value" });
+    return res.status(400).json({ error: "Invalid Assign To value" });
   }
   if (lead && !mongoose.Types.ObjectId.isValid(lead)) {
-    res.status(400).json({ error: "Invalid Assign To Lead value" });
+    return res.status(400).json({ error: "Invalid Assign To Lead value" });
   }
 
   const oppotunityDataBody = {

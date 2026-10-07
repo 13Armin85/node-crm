@@ -28,6 +28,7 @@ import { postApi } from "services/api";
 import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
 import { toast } from 'react-toastify';
 import CustomForm from "utils/customForm";
+import ManagedFormLayout from "components/dynamicForm/ManagedFormLayout";
 import RelationFields from "components/relations/RelationFields";
 
 const Add = (props) => {
@@ -72,7 +73,7 @@ const Add = (props) => {
 
   const fetchData = async () => {
     setIsLoding(true);
-    let result = await getApi("api/task/assignees");
+    let result = await getApi("api/user/options");
     setData(result?.data);
     setIsLoding(false);
   };
@@ -145,7 +146,8 @@ const Add = (props) => {
               errors={errors}
               touched={touched}
             />
-            <RelationFields values={values} setFieldValue={setFieldValue} contact partner />
+            <RelationFields definition={definition} values={values} setFieldValue={setFieldValue} contact partner />
+            <ManagedFormLayout moduleName="Leads" definition={definition} formik={formik} includeCustom={false}>
             <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
               <GridItem colSpan={{ base: 12 }}>
                 <FormLabel
@@ -244,6 +246,7 @@ const Add = (props) => {
                 </Text>
               </GridItem>
             </Grid>
+            </ManagedFormLayout>
           </DrawerBody>
           <DrawerFooter>
             <Button

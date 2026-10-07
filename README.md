@@ -47,6 +47,10 @@ npm start
 
 The API listens on `http://localhost:5001` unless `PORT` is changed. Create React App serves the client on its usual development port.
 
+## Email notifications
+
+The server sends an account-created email when a user is registered, and a task-assignment email when a task is assigned or reassigned. Configure SMTP in `server/.env` with `EMAIL_SENDER`, `EMAIL_SENDER_PASSWORD`, `EMAIL_HOST`, `EMAIL_PORT`, and `EMAIL_SECURE`; optionally set `EMAIL_FROM` to customize the displayed sender. The message is sent to the recipient user's email address (`username`). Notifications are logged and do not undo a successful account or task save if SMTP delivery fails.
+
 For a local development database, create/reset the two local login accounts with:
 
 ```powershell
@@ -55,6 +59,15 @@ npm run seed:local-users
 ```
 
 This command is disabled when `NODE_ENV=production`. Its defaults are `admin@gmail.com` / `admin123` and `user@gmail.com` / `user123`; override them with `LOCAL_ADMIN_EMAIL`, `LOCAL_ADMIN_PASSWORD`, `LOCAL_USER_EMAIL`, and `LOCAL_USER_PASSWORD` environment variables.
+
+To populate the CRM modules with demo records, first make sure an active administrator already exists, then run:
+
+```powershell
+cd server
+npm run seed:demo
+```
+
+This development-only command creates 30 demo records per supported data module and does not create or modify users. It upserts records with stable demo IDs, so rerunning it refreshes those demo records.
 
 ## Estate data migration
 

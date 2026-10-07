@@ -22,9 +22,9 @@ const sendAccountCreatedEmail = async (user) => {
   try {
     if (!user?.username) return;
     const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'User';
-    const subject = 'Your CRM account has been created';
-    const text = `Hello ${fullName},\n\nYour CRM account has been created.\nEmail: ${user.username}\n\nYou can now sign in to the CRM and start using your account.`;
-    const html = `<p>Hello ${escapeHtml(fullName)},</p><p>Your CRM account has been created.</p><p><strong>Email:</strong> ${escapeHtml(user.username)}</p><p>You can now sign in to the CRM and start using your account.</p>`;
+    const subject = 'An account has been created for you';
+    const text = `Hello ${fullName},\n\nAn account has been created for you.\nEmail: ${user.username}\n\nYou can now sign in to the CRM and start using your account.`;
+    const html = `<p>Hello ${escapeHtml(fullName)},</p><p>An account has been created for you.</p><p><strong>Email:</strong> ${escapeHtml(user.username)}</p><p>You can now sign in to the CRM and start using your account.</p>`;
     await sendEmail(user.username, subject, text, html);
   } catch (error) {
     console.error('Account creation email failed:', error.message);

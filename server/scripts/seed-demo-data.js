@@ -2,17 +2,14 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 if (process.env.NODE_ENV === 'production') {
   throw new Error('Demo data seeding is disabled in production.');
 }
-
 const SEED_NAMESPACE = 'crm-demo-v1';
-const RECORD_COUNT = 10;
-const demoPassword = process.env.DEMO_USER_PASSWORD || 'Test@123456';
+const RECORD_COUNT = 30;
 
 const objectId = (collection, index) => {
   const hex = crypto
@@ -63,25 +60,10 @@ const faNames = [
   ['پرهام', 'قاسمی'], ['یلدا', 'اکبری'],
 ];
 
-async function seedUsers(db, adminId) {
-  const password = await bcrypt.hash(demoPassword, 10);
-  const users = rows('User', (index) => ({
-    username: `demo.user${index}@crm.test`,
-    password,
-    role: index === 1 ? 'admin' : 'user',
-    firstName: faNames[index - 1][0],
-    lastName: faNames[index - 1][1],
-    phoneNumber: Number(`90555010${String(index).padStart(2, '0')}`),
-    emailsent: index * 2,
-    textsent: index * 3,
-    outboundcall: index * 4,
-    customFields: { department: index % 2 ? 'فروش' : 'پشتیبانی', seededBy: String(adminId) },
-    createdDate: dateFor(-index),
-    updatedDate: new Date(),
-    deleted: false,
-  }));
-  return replaceSeedRows(db, 'User', users);
-}
+const nameAt = (index) => {
+  const [firstName, lastName] = faNames[(index - 1) % faNames.length];
+  return [index > faNames.length ? `${firstName} ${index}` : firstName, lastName];
+};
 
 function staticData(adminId, userIds) {
   const residences = rows('Residences', (index) => ({
@@ -99,9 +81,9 @@ function staticData(adminId, userIds) {
 
   const partners = rows('PartnerCustomers', (index) => ({
     customerType: index % 3 === 0 ? 'COMPANY' : 'INDIVIDUAL',
-    fullName: `${faNames[index - 1][0]} ${faNames[index - 1][1]}`,
+    fullName: nameAt(index).join(' '),
     companyName: index % 3 === 0 ? `شرکت سرمایه‌گذاری نمونه ${index}` : '',
-    contactPerson: `${faNames[index - 1][0]} ${faNames[index - 1][1]}`,
+    contactPerson: nameAt(index).join(' '),
     phone: `+90 555 200 ${String(index).padStart(4, '0')}`,
     whatsapp: `+90 555 200 ${String(index).padStart(4, '0')}`,
     email: `customer${index}@crm.test`,
@@ -124,9 +106,9 @@ function staticData(adminId, userIds) {
   }));
 
   const contacts = rows('Contacts', (index) => ({
-    fullName: `${faNames[index - 1][0]} ${faNames[index - 1][1]}`,
-    firstName: faNames[index - 1][0],
-    lastName: faNames[index - 1][1],
+    fullName: nameAt(index).join(' '),
+    firstName: nameAt(index)[0],
+    lastName: nameAt(index)[1],
     email: `contact${index}@crm.test`,
     phoneNumber: Number(`90555300${String(index).padStart(2, '0')}`),
     mobileNumber: Number(`90555400${String(index).padStart(2, '0')}`),
@@ -198,7 +180,7 @@ function staticData(adminId, userIds) {
   });
 
   const leads = rows('Leads', (index) => ({
-    leadName: `سرنخ ${faNames[index - 1][0]} ${faNames[index - 1][1]}`,
+    leadName: `سرنخ ${nameAt(index).join(' ')}`,
     leadEmail: `lead${index}@crm.test`,
     leadMobile: `+90 555 500 ${String(index).padStart(4, '0')}`,
     leadPhoneNumber: `+90 555 500 ${String(index).padStart(4, '0')}`,
@@ -333,27 +315,15 @@ async function run() {
   });
   const db = mongoose.connection.db;
 
-  let admin = await db.collection('User').findOne({ role: 'admin', deleted: false });
+  const admin = await db.collection('User').findOne({ role: 'admin', deleted: { $ne: true } });
   if (!admin) {
-    const password = process.env.INITIAL_ADMIN_PASSWORD || demoPassword;
-    const adminDocument = {
-      _id: objectId('Admin', 1),
-      username: (process.env.INITIAL_ADMIN_EMAIL || 'admin@crm.test').toLowerCase(),
-      password: await bcrypt.hash(password, 10),
-      role: 'admin', firstName: 'System', lastName: 'Administrator',
-      createdDate: new Date(), updatedDate: new Date(), deleted: false,
-    };
-    await replaceSeedRows(db, 'User', [adminDocument]);
-    admin = adminDocument;
+    throw new Error('Demo data seeding requires an existing active administrator; no users were created or changed.');
   }
 
-  const users = await seedUsers(db, admin._id);
-  const userIds = users.map((item) => item._id);
-  // The first known demo account is an administrator and owns all demo rows,
-  // so a tester can inspect every seeded tab with one login.
-  const seedActorId = userIds[0];
+  const userIds = [admin._id];
+  const seedActorId = admin._id;
   const data = staticData(seedActorId, userIds);
-  const summary = { Users: users.length };
+  const summary = {};
 
   for (const [collectionName, documents] of Object.entries({
     Residences: data.residences,
@@ -421,7 +391,7 @@ async function run() {
     createBy: seedActorId, timestamp: dateFor(-index), deleted: false,
   }));
   const calls = rows('Calls', (index) => ({
-    sender: seedActorId, recipient: `${faNames[index - 1][0]} ${faNames[index - 1][1]}`,
+    sender: seedActorId, recipient: nameAt(index).join(' '),
     callDuration: `${5 + index}:00`, callNotes: `نتیجه تماس آزمایشی شماره ${index}`,
     phoneNumber: `+90 555 600 ${String(index).padStart(4, '0')}`,
     property: [idAt('Properties', index)], startDate: dateFor(index, 13).toISOString(),
@@ -484,7 +454,6 @@ async function run() {
     success: true,
     namespace: SEED_NAMESPACE,
     recordsPerModule: RECORD_COUNT,
-    demoUserPassword: demoPassword,
     summary,
   }, null, 2));
   await mongoose.disconnect();

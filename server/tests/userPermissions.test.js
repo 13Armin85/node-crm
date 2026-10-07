@@ -58,7 +58,7 @@ test('authenticated user routes enforce the developer hierarchy with database ad
   });
   t.mock.method(CustomField, 'findOne', () => query(null));
   t.mock.method(FormDefinition, 'findOne', () => query(null));
-  t.mock.method(require('../middelwares/mail'), 'sendEmail', async () => null);
+  const sendEmail = t.mock.method(require('../middelwares/mail'), 'sendEmail', async () => null);
   const app = express();
   app.use(express.json());
   app.use('/api/user', require('../controllers/user/_routes'));
@@ -100,6 +100,7 @@ test('authenticated user routes enforce the developer hierarchy with database ad
     assert.equal([...records.values()].some(record => record.username === registration.username), false);
   });
   await t.test('developer registers all roles and stores hashed passwords', async () => {
+    const emailCallsBeforeRegistration = sendEmail.mock.callCount();
     for (const role of ['user', 'admin', 'developer']) {
       const username = `created-${role}@example.com`;
       assert.equal((await api('POST', '/user/register', { ...registration, username, role })).status, 200);
@@ -108,6 +109,15 @@ test('authenticated user routes enforce the developer hierarchy with database ad
       assert.notEqual(created.password, registration.password);
       assert.equal(await bcrypt.compare(registration.password, created.password), true);
     }
+    const registrationEmails = sendEmail.mock.calls.slice(emailCallsBeforeRegistration);
+    assert.equal(registrationEmails.length, 3);
+    assert.deepEqual(registrationEmails.map(call => call.arguments[0]), [
+      'created-user@example.com',
+      'created-admin@example.com',
+      'created-developer@example.com',
+    ]);
+    assert.match(registrationEmails[0].arguments[1], /An account has been created for you/i);
+    assert.match(registrationEmails[0].arguments[2], /An account has been created for you/i);
     const response = await api('GET', '/user/');
     assert.equal(response.status, 200);
     for (const role of ['user', 'admin', 'developer']) {

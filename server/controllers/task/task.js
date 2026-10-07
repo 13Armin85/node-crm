@@ -30,9 +30,9 @@ const sendTaskAssignmentEmail = async (task, actor) => {
         const assigneeName = [assignee.firstName, assignee.lastName].filter(Boolean).join(' ') || 'User';
         const assignerName = [actor?.firstName, actor?.lastName].filter(Boolean).join(' ') || actor?.username || 'an administrator';
         const title = task.title || 'Untitled task';
-        const subject = 'New task received';
-        const text = `Hello ${assigneeName},\n\nYou have received a new task from ${assignerName}.\nTask: ${title}${task.end ? `\nDue date: ${task.end}` : ''}\n\nPlease sign in to the CRM to view the task details.`;
-        const html = `<p>Hello ${escapeHtml(assigneeName)},</p><p>You have received a new task from <strong>${escapeHtml(assignerName)}</strong>.</p><p><strong>Task:</strong> ${escapeHtml(title)}${task.end ? `<br><strong>Due date:</strong> ${escapeHtml(task.end)}` : ''}</p><p>Please sign in to the CRM to view the task details.</p>`;
+        const subject = 'A new task has been sent to you';
+        const text = `Hello ${assigneeName},\n\nA new task has been sent to you by ${assignerName}.\nTask: ${title}${task.end ? `\nDue date: ${task.end}` : ''}\n\nPlease sign in to the CRM to view the task details.`;
+        const html = `<p>Hello ${escapeHtml(assigneeName)},</p><p>A new task has been sent to you by <strong>${escapeHtml(assignerName)}</strong>.</p><p><strong>Task:</strong> ${escapeHtml(title)}${task.end ? `<br><strong>Due date:</strong> ${escapeHtml(task.end)}` : ''}</p><p>Please sign in to the CRM to view the task details.</p>`;
         await sendEmail(assignee.username, subject, text, html);
     } catch (error) {
         console.error('Task assignment email failed:', error.message);

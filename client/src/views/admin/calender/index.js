@@ -2,7 +2,8 @@ import { isAdmin } from 'roles';
 import { useEffect, useState } from "react";
 import { getApi } from "services/api";
 import Calender from "./components/calender";
-import { Box, Heading, Text } from "@chakra-ui/react";
+import { Box, Flex, Heading, Text } from "@chakra-ui/react";
+import { FiCalendar } from "react-icons/fi";
 import { useLanguage } from "i18n";
 
 const Index = () => {
@@ -27,7 +28,14 @@ const Index = () => {
 
   return (
     <Box className="crm-calendar-page">
-      <Box className="crm-page-hero crm-section-heading"><Text className="crm-section-heading__eyebrow">{t("Schedule")}</Text><Heading>{t("Calendar")}</Heading><Text>{t("Plan and review team activities")}</Text></Box>
+      <Flex className="crm-page-hero crm-section-heading" align="center" gap="14px">
+        <Flex className="crm-page-hero__icon" align="center" justify="center" aria-hidden="true"><FiCalendar /></Flex>
+        <Box minW={0}>
+          <Text className="crm-section-heading__eyebrow">{t("Schedule")}</Text>
+          <Heading className="crm-page-hero__title">{t("Calendar")}</Heading>
+          <Text className="crm-page-hero__subtitle">{t("Plan and review team activities")}</Text>
+        </Box>
+      </Flex>
       <Calender fetchData={fetchData} data={data} />
     </Box>
   );

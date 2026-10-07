@@ -1,7 +1,8 @@
 import { isAdmin } from 'roles';
 import { tr, withLocalization } from 'i18n/runtime';
 import Card from "components/card/Card";
-import { Box, Heading, SimpleGrid, Stat, StatLabel, StatNumber, Text } from "@chakra-ui/react";
+import { Box, Flex, Heading, SimpleGrid, Stat, StatLabel, StatNumber, Text } from "@chakra-ui/react";
+import { FiBarChart2 } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { getApi } from "services/api";
@@ -76,7 +77,14 @@ const Report = () => {
 
   return (
     <Box className="crm-reports-page">
-      <Box className="crm-page-hero crm-section-heading"><Text className="crm-section-heading__eyebrow">{t("Analytics")}</Text><Heading>{t("Reports")}</Heading><Text>{t("Monitor team activity and performance")}</Text></Box>
+      <Flex className="crm-page-hero crm-section-heading" align="center" gap="14px">
+        <Flex className="crm-page-hero__icon" align="center" justify="center" aria-hidden="true"><FiBarChart2 /></Flex>
+        <Box minW={0}>
+          <Text className="crm-section-heading__eyebrow">{t("Analytics")}</Text>
+          <Heading className="crm-page-hero__title">{t("Reports")}</Heading>
+          <Text className="crm-page-hero__subtitle">{t("Monitor team activity and performance")}</Text>
+        </Box>
+      </Flex>
       <SimpleGrid className="crm-report-stats" columns={{ base: 2, md: 4, xl: 7 }} spacing={3} mb={4}>
         {summary.map((item) => (
           <Card key={item.name} py={4}>

@@ -35,6 +35,7 @@ import {
   FiChevronLeft,
   FiDownload,
   FiFile,
+  FiFileText,
   FiFolder,
   FiFolderPlus,
   FiImage,
@@ -228,12 +229,15 @@ const DocumentPage = () => {
         gap={3}
         mb={5}
       >
-        <Box minW={0}>
-          <Heading className="crm-page-hero__title" size={{ base: "md", md: "lg" }}>{t("Document Center")}</Heading>
-          <Text className="crm-page-hero__subtitle" mt={1} fontSize={{ base: "sm", md: "md" }}>
-            {t("Store documents in folders or without a folder and filter them by section.")}
-          </Text>
-        </Box>
+        <Flex align="center" gap="14px" minW={0}>
+          <Flex className="crm-page-hero__icon" align="center" justify="center" aria-hidden="true"><FiFileText /></Flex>
+          <Box minW={0}>
+            <Heading className="crm-page-hero__title" size={{ base: "md", md: "lg" }}>{t("Document Center")}</Heading>
+            <Text className="crm-page-hero__subtitle" mt={1} fontSize={{ base: "sm", md: "md" }}>
+              {t("Store documents in folders or without a folder and filter them by section.")}
+            </Text>
+          </Box>
+        </Flex>
         <Flex gap={2} wrap="wrap">
           <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiFolderPlus />} variant="outline" onClick={folderModal.onOpen}>
             {t("New folder")}

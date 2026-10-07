@@ -935,6 +935,7 @@ const View = (props) => {
         </Card>
       )}
       <AddEdit
+        onSaved={fetchViewData}
         isOpen={edit}
         size="lg"
         onClose={() => setEdit(false)}

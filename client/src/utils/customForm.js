@@ -503,19 +503,21 @@ const CustomForm = ({
 
 export default function ManagedCustomForm(props) {
   const { t } = useLanguage();
-  const [definition, setDefinition] = useState(null);
+  const [loadedDefinition, setDefinition] = useState(null);
+  const definition = props.definition || loadedDefinition;
   const [failed, setFailed] = useState(false);
   const moduleName = props.moduleData?.moduleName;
+  const hasDefinition = 'definition' in props;
   useEffect(() => {
     let active = true;
-    if (!moduleName) return undefined;
+    if (!moduleName || hasDefinition) return undefined;
     getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`).then(r => {
       if (active) { if (r.status === 200) setDefinition(r.data); else setFailed(true); }
     });
     return () => { active = false; };
-  }, [moduleName]);
+  }, [moduleName, hasDefinition]);
   if (!moduleName) return <CustomForm {...props} />;
-  if (failed) return <Text color="red.500">{t('estate.serverError')}</Text>;
+  if (failed || props.definitionError) return <Text color="red.500">{t('estate.serverError')}</Text>;
   if (!definition) return <Text>{t('estate.loading')}</Text>;
   return <>
     <DynamicFormRenderer definition={definition} formik={{ values: props.values, errors: props.errors, touched: props.touched, setFieldValue: props.setFieldValue, handleBlur: props.handleBlur }} />

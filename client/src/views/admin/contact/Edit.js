@@ -16,11 +16,12 @@ import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getApi, putApi } from "services/api";
-import { generateValidationSchema } from "../../../utils";
-import * as yup from "yup";
+import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
+import { toast } from 'react-toastify';
 import CustomForm from "utils/customForm";
 
 const Edit = (props) => {
+  const { definition, definitionError } = useFormDefinition('Contacts');
   const { data } = props;
   const [isLoding, setIsLoding] = useState(false);
   const initialFieldValues = Object?.fromEntries(
@@ -79,9 +80,7 @@ const Edit = (props) => {
   const formik = useFormik({
     initialValues: initialValues,
     enableReinitialize: true,
-    validationSchema: yup
-      ?.object()
-      ?.shape(generateValidationSchema(props?.contactData?.fields)),
+    validate: values => validateFormValues(definition, values),
     onSubmit: (values, { resetForm }) => {
       EditData();
     },
@@ -102,11 +101,14 @@ const Edit = (props) => {
       setIsLoding(true);
       let response = await putApi(
         `api/form/edit/${props?.selectedId || param?.id}`,
-        { ...values, moduleId: props?.moduleId },
+        { ...normalizeFormValues(definition, values), moduleId: props?.moduleId || props?.contactData?._id },
       );
       if (response?.status === 200) {
         props?.onClose();
         props?.setAction((pre) => !pre);
+      } else {
+        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
+        toast.error(response?.data?.message || tr('estate.serverError'));
       }
     } catch (e) {
       console.log(e);
@@ -165,6 +167,8 @@ const Edit = (props) => {
               </Flex>
             ) : (
               <CustomForm
+                definition={definition}
+                definitionError={definitionError}
                 moduleData={props?.contactData}
                 values={values}
                 setFieldValue={setFieldValue}
@@ -182,7 +186,7 @@ const Edit = (props) => {
               variant="brand"
               type="submit"
               size="sm"
-              disabled={isLoding ? true : false}
+              disabled={isLoding || !definition}
               onClick={handleSubmit}
             >
               {isLoding ? <Spinner /> : tr("Update")}

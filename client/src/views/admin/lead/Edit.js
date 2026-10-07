@@ -23,9 +23,10 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { putApi } from "services/api";
 import { getApi } from "services/api";
-import { generateValidationSchema } from "../../../utils";
+import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
+import { formValue } from 'utils/formValue';
+import { toast } from 'react-toastify';
 import CustomForm from "../../../utils/customForm";
-import * as yup from "yup";
 import UserModel from "components/commonTableModel/UserModel";
 import { LiaMousePointerSolid } from "react-icons/lia";
 import SelectPorpertyModel from "components/commonTableModel/SelectPorpertyModel";
@@ -35,6 +36,7 @@ import { useDispatch } from "react-redux";
 import RelationFields from "components/relations/RelationFields";
 
 const Edit = (props) => {
+  const { definition, definitionError } = useFormDefinition('Leads');
   const { data } = props;
   const user = JSON.parse(localStorage.getItem("user"));
   const dispatch = useDispatch();
@@ -55,9 +57,7 @@ const Edit = (props) => {
   const formik = useFormik({
     initialValues: initialValues,
     enableReinitialize: true,
-    validationSchema: yup
-      .object()
-      .shape(generateValidationSchema(props?.leadData?.fields)),
+    validate: values => validateFormValues(definition, values),
     onSubmit: (values, { resetForm }) => {
       EditData();
     },
@@ -77,13 +77,16 @@ const Edit = (props) => {
     try {
       setIsLoding(true);
       let response = await putApi(
-        `api/form/edit/${param?.id || props?.selectedId}`,
-        { ...values, moduleId: props?.moduleId }
+        `api/form/edit/${props?.selectedId || param?.id || data?._id}`,
+        { ...normalizeFormValues(definition, values), moduleId: props?.moduleId || props?.leadData?._id }
       );
       if (response?.status === 200) {
         props.onClose();
         props.setAction((pre) => !pre);
         dispatch(fetchLeadData());
+      } else {
+        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
+        toast.error(response?.data?.message || tr('estate.serverError'));
       }
     } catch (e) {
       console.log(e);
@@ -118,17 +121,23 @@ const Edit = (props) => {
       setInitialValues((prev) => ({
         ...prev,
         ...data,
-        associatedListing: data?.associatedListing?._id,
+        associatedListing: formValue(data?.associatedListing),
+        contact: formValue(data?.contact) || null,
+        partnerCustomer: formValue(data?.partnerCustomer) || null,
+        assignUser: formValue(data?.assignUser),
       }));
-    } else if (props?.selectedId) {
+    } else if (props?.selectedId || param?.id) {
       try {
         setIsLoding(true);
-        response = await getApi("api/lead/view/", props?.selectedId);
+        response = await getApi("api/lead/view/", props?.selectedId || param?.id);
         let editData = response?.data?.lead;
         setInitialValues((prev) => ({
           ...prev,
           ...editData,
-          associatedListing: editData?.associatedListing?._id,
+          associatedListing: formValue(editData?.associatedListing),
+          contact: formValue(editData?.contact) || null,
+          partnerCustomer: formValue(editData?.partnerCustomer) || null,
+          assignUser: formValue(editData?.assignUser),
         }));
       } catch (e) {
         console.error(e);
@@ -174,6 +183,8 @@ const Edit = (props) => {
               </Flex>
             ) : (
               <CustomForm
+                definition={definition}
+                definitionError={definitionError}
                 moduleData={props?.leadData}
                 values={values}
                 setFieldValue={setFieldValue}
@@ -278,7 +289,7 @@ const Edit = (props) => {
               variant="brand"
               size="sm"
               type="submit"
-              disabled={isLoding ? true : false}
+              disabled={isLoding || !definition}
               onClick={handleSubmit}
             >
               {isLoding ? <Spinner /> : tr("Update")}

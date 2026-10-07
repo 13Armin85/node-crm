@@ -5,6 +5,17 @@ const { defaults } = require('../services/formDefinitions');
 const { mapProperty } = require('../scripts/migrate-estate');
 const { can } = require('../middelwares/permissions');
 const id = '64d33173fd7ff3fa0924a109';
+test('loaded lead relations validate and survive an edit payload', () => {
+  const body = { leadName: 'Lead', leadEmail: 'lead@example.com', contact: id, partnerCustomer: id, relatedOpportunities: [id] };
+  const result = validateFields({ fields: defaults.Leads }, body);
+  assert.equal(result.contact, id);
+  assert.equal(result.partnerCustomer, id);
+  assert.deepEqual(result.relatedOpportunities, [id]);
+  assert.throws(() => validateFields({ fields: defaults.Leads }, { ...body, relatedOpportunities: ['invalid-id'] }));
+  const cleared = validateFields({ fields: defaults.Leads }, { ...body, contact: null, partnerCustomer: null, relatedOpportunities: [] });
+  assert.equal(cleared.contact, null);
+  assert.equal(cleared.partnerCustomer, null);
+});
 const base = () => ({ title: 'Test', category: 'RESIDENTIAL', subtype: 'APARTMENT', transactionType: 'SALE', price: { amount: 0, currency: 'TRY' }, area: { value: 50, type: 'NET' }, sale: { status: 'AVAILABLE' } });
 for (const [category, subtype, valid] of [['RESIDENTIAL', 'APARTMENT', true], ['RESIDENTIAL', 'VILLA', true], ['RESIDENTIAL', 'SHOP', false], ['COMMERCIAL', 'SHOP', true], ['COMMERCIAL', 'OFFICE', true], ['COMMERCIAL', 'APARTMENT', false]]) {
   test(`${category} / ${subtype}`, () => valid ? assert.equal(normalizeProperty({ ...base(), category, subtype }).subtype, subtype) : assert.throws(() => normalizeProperty({ ...base(), category, subtype })));

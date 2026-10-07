@@ -12,7 +12,9 @@ const oneOf = (value, allowed, field, optional = false) => { if (!(optional && e
 const objectId = value => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value);
 function validateValue(field, value) {
   if (empty(value)) { if (field.required) fail(field.name, 'required'); return; }
-  if (['number', 'currency'].includes(field.type)) {
+  if (field.external && field.relation && field.type === 'text') {
+    if (!Array.isArray(value) || value.some(id => !objectId(id))) fail(field.name);
+  } else if (['number', 'currency'].includes(field.type)) {
     if (typeof value !== 'number' || !Number.isFinite(value) || (field.min != null && value < field.min) || (field.max != null && value > field.max)) fail(field.name);
   } else if (field.type === 'checkbox') {
     if (typeof value !== 'boolean' || (field.required && !value)) fail(field.name);

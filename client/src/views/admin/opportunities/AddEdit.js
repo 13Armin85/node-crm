@@ -27,18 +27,17 @@ import { useFormik } from "formik";
 import { useState, useEffect } from "react";
 import { LiaMousePointerSolid } from "react-icons/lia";
 import { postApi, getApi, putApi } from "services/api";
-import { generateValidationSchema } from "utils";
-import CustomForm from "utils/customForm";
-import * as yup from "yup";
-import { opprtunitiesSchema } from "../../../schema/opprtunitiesSchema";
 import UserModel from "../../../components/commonTableModel/UserModel";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import AccountModel from "../../../components/commonTableModel/AccountModel";
 import { HasAccess } from "../../../redux/accessUtils";
 import RelationFields from "components/relations/RelationFields";
+import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
+import { formValue } from 'utils/formValue';
 
 const AddEdit = (props) => {
+  const { definition, definitionError } = useFormDefinition('Opportunities');
   const { isOpen, size, onClose, type, setAction, selectedId } = props;
   const [isLoding, setIsLoding] = useState(false);
   const [userModel, setUserModel] = useState(false);
@@ -52,8 +51,8 @@ const AddEdit = (props) => {
   const initialValues = {
     customFields: opprtunityDetails?.customFields || {},
     opportunityName: type === "edit" ? opprtunityDetails?.opportunityName : "",
-    accountName: type === "edit" ? opprtunityDetails?.accountName : null,
-    assignUser: type === "edit" ? opprtunityDetails?.assignUser : null,
+    accountName: type === "edit" ? formValue(opprtunityDetails?.accountName) || null : null,
+    assignUser: type === "edit" ? formValue(opprtunityDetails?.assignUser) || null : null,
     type: type === "edit" ? opprtunityDetails?.type : "",
     leadSource: type === "edit" ? opprtunityDetails?.leadSource : "",
     currency: type === "edit" ? (opprtunityDetails?.currency === "$" ? "USD" : opprtunityDetails?.currency) : "TRY",
@@ -61,14 +60,14 @@ const AddEdit = (props) => {
       type === "edit" ? opprtunityDetails?.opportunityAmount : "",
     amount: type === "edit" ? opprtunityDetails?.amount : "",
     expectedCloseDate:
-      type === "edit" ? opprtunityDetails?.expectedCloseDate : "",
+      type === "edit" ? (opprtunityDetails?.expectedCloseDate || '').slice(0, 10) : "",
     nextStep: type === "edit" ? opprtunityDetails?.nextStep : "",
     salesStage: type === "edit" ? opprtunityDetails?.salesStage : "",
     probability: type === "edit" ? opprtunityDetails?.probability : "",
     description: type === "edit" ? opprtunityDetails?.description : "",
-    contact: type === "edit" ? opprtunityDetails?.contact : "",
-    lead: type === "edit" ? opprtunityDetails?.lead : "",
-    properties: type === "edit" ? (opprtunityDetails?.properties || []) : [],
+    contact: type === "edit" ? formValue(opprtunityDetails?.contact) || null : null,
+    lead: type === "edit" ? formValue(opprtunityDetails?.lead) || null : null,
+    properties: type === "edit" ? (opprtunityDetails?.properties || []).map(formValue) : [],
     createBy: JSON.parse(localStorage.getItem("user"))._id,
     modifiedBy: JSON.parse(localStorage.getItem("user"))._id,
   };
@@ -81,7 +80,11 @@ const AddEdit = (props) => {
         onClose();
         toast.success(`Opprtunities Save successfully`);
         formik.resetForm();
-        setAction((pre) => !pre);
+        setAction?.((pre) => !pre);
+        props.onSaved?.();
+      } else {
+        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
+        toast.error(response?.data?.message || tr('estate.serverError'));
       }
     } catch (e) {
       console.log(e);
@@ -98,7 +101,11 @@ const AddEdit = (props) => {
         onClose();
         toast.success(`Opprtunities Update successfully`);
         formik.resetForm();
-        // setAction((pre) => !pre)
+        setAction?.((pre) => !pre);
+        props.onSaved?.();
+      } else {
+        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
+        toast.error(response?.data?.message || tr('estate.serverError'));
       }
     } catch (e) {
       console.log(e);
@@ -115,13 +122,13 @@ const AddEdit = (props) => {
 
   const formik = useFormik({
     initialValues: initialValues,
-    validationSchema: opprtunitiesSchema,
+    validate: values => validateFormValues(definition, values),
     enableReinitialize: true,
     onSubmit: (values, { resetForm }) => {
       if (type === "add") {
-        addData(values);
+        addData(normalizeFormValues(definition, values));
       } else {
-        const payload = { ...values, modifiedDate: new Date() };
+        const payload = { ...normalizeFormValues(definition, values), modifiedDate: new Date() };
         editData(payload);
       }
     },
@@ -200,7 +207,7 @@ const AddEdit = (props) => {
           >
             {type === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="Opportunities" /><IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
           </DrawerHeader>
-          <DrawerBody><ManagedFormLayout moduleName="Opportunities" formik={formik}>
+          <DrawerBody><ManagedFormLayout moduleName="Opportunities" definition={definition} definitionError={definitionError} formik={formik}>
             <RelationFields values={values} setFieldValue={setFieldValue} contact lead properties />
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
@@ -658,7 +665,7 @@ const AddEdit = (props) => {
             <Button
               sx={{ textTransform: "capitalize" }}
               size="sm"
-              disabled={isLoding ? true : false}
+              disabled={isLoding || !definition}
               variant="brand"
               type="submit"
               onClick={handleSubmit}

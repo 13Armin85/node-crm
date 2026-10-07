@@ -8,6 +8,7 @@ import { constant } from 'constant';
 import CalendarDateInput from 'components/date/CalendarDateInput';
 import CurrencyAmount from 'components/CurrencyAmount';
 import { formLabel, formValue } from 'utils/formValue';
+import PriceInput from 'components/PriceInput';
 
 export const fieldPath = field => field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
 export const isVisible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => getIn(values, key) === expected);
@@ -99,6 +100,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       if (field.relation) control = <AsyncRelationSelect id={id} moduleName={field.relation} value={value} onChange={v => change(field, v)} disabled={readOnly} />;
       else if (field.type === 'file') control = <FileInput value={value || []} onChange={v => change(field, v)} disabled={readOnly} />;
       else if (field.type === 'currency' && readOnly) control = <CurrencyAmount amount={value} currency={getIn(formik.values, field.name === 'price.amount' ? 'price.currency' : 'currency') || 'TRY'} />;
+      else if (field.type === 'currency') control = <PriceInput {...common} value={value} onValueChange={v => change(field, v)} />;
       else if (field.type === 'textarea') control = <Textarea {...common} />;
       else if (field.type === 'checkbox') control = <Checkbox id={id} isChecked={Boolean(value)} isDisabled={readOnly} onChange={e => change(field, e.target.checked)}>{label}</Checkbox>;
       else if (field.type === 'radio') control = <RadioGroup id={id} value={value || ''} onChange={v => change(field, v)}><Stack direction="row" flexWrap="wrap">{options.map(o => <Radio isDisabled={readOnly} key={o.value} value={o.value}>{localized(o.label, language)}</Radio>)}</Stack></RadioGroup>;

@@ -7,6 +7,8 @@ const messages = {
   Validations: ['Validations', 'اعتبارسنجی‌ها', 'Doğrulamalar'],
   'Partner Customers': ['Partner Customers', 'مشتریان همکار', 'İş Ortağı Müşterileri'],
   'Partner Customer': ['Partner Customer', 'مشتری همکار', 'İş Ortağı Müşterisi'],
+  'Related Contact': ['Related Contact', 'مخاطب مرتبط', 'İlgili Kişi'],
+  'Related Properties': ['Related Properties', 'املاک مرتبط', 'İlgili Gayrimenkuller'],
   'Bank Account Holder': ['Bank Account Holder', 'نام صاحب حساب بانکی', 'Banka Hesabı Sahibi'],
   'Bank Details Not Found': ['Bank Details Not Found', 'اطلاعات بانکی یافت نشد', 'Banka bilgileri bulunamadı'],
   'Updated Date': ['Updated Date', 'تاریخ به‌روزرسانی', 'Güncellenme Tarihi'],

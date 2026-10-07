@@ -11,14 +11,16 @@ const findName = node => {
   return React.Children.toArray(node.props.children).map(findName).find(Boolean);
 };
 // Keep existing widgets and dependent business flows; configure their surrounding fields.
-export default function ManagedFormLayout({ moduleName, formik, children }) {
+export default function ManagedFormLayout({ moduleName, formik, children, definition: providedDefinition, definitionError }) {
   const { language, t } = useLanguage();
-  const [definition, setDefinition] = useState(null); const [failed, setFailed] = useState(false);
+  const [loadedDefinition, setDefinition] = useState(null); const [failed, setFailed] = useState(false);
+  const definition = providedDefinition || loadedDefinition;
   useEffect(() => {
     let active = true;
+    if (providedDefinition !== undefined) return undefined;
     getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`).then(r => { if (active) { if (r.status === 200) setDefinition(r.data); else setFailed(true); } });
     return () => { active = false; };
-  }, [moduleName]);
+  }, [moduleName, providedDefinition]);
   const fields = definition?.fields || [];
   const optionText = value => {
     if (value == null || typeof value === 'boolean') return '';
@@ -54,7 +56,7 @@ export default function ManagedFormLayout({ moduleName, formik, children }) {
     if (node.props.children) patch.children = React.Children.map(node.props.children, child => configure(child, activeField));
     return React.cloneElement(node, patch);
   };
-  return <>{failed && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
+  return <>{(failed || definitionError) && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
     {definition && <Box className="crm-managed-fields" mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
   </>;
 }

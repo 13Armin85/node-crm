@@ -14,11 +14,12 @@ import Spinner from "components/spinner/Spinner";
 import { useFormik } from "formik";
 import { useState } from "react";
 import { postApi } from "services/api";
-import { generateValidationSchema } from "utils";
+import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
+import { toast } from 'react-toastify';
 import CustomForm from "utils/customForm";
-import * as yup from "yup";
 
 const Add = (props) => {
+  const { definition, definitionError } = useFormDefinition('Contacts');
   const [isLoding, setIsLoding] = useState(false);
 
   const initialFieldValues = Object?.fromEntries(
@@ -31,12 +32,9 @@ const Add = (props) => {
 
   const formik = useFormik({
     initialValues: initialValues,
-    validationSchema: yup
-      .object()
-      .shape(generateValidationSchema(props?.contactData?.fields)),
+    validate: values => validateFormValues(definition, values),
     onSubmit: (values, { resetForm }) => {
       AddData();
-      resetForm();
     },
   });
 
@@ -54,12 +52,16 @@ const Add = (props) => {
     try {
       setIsLoding(true);
       let response = await postApi("api/form/add", {
-        ...values,
+        ...normalizeFormValues(definition, values),
         moduleId: props?.contactData?._id,
       });
       if (response?.status === 200) {
         props.onClose();
         props.setAction((pre) => !pre);
+        formik.resetForm();
+      } else {
+        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
+        toast.error(response?.data?.message || tr('estate.serverError'));
       }
     } catch (e) {
       console.log(e);
@@ -86,6 +88,8 @@ const Add = (props) => {
           </DrawerHeader>
           <DrawerBody>
             <CustomForm
+              definition={definition}
+              definitionError={definitionError}
               moduleData={props?.contactData}
               values={values}
               setFieldValue={setFieldValue}
@@ -100,7 +104,7 @@ const Add = (props) => {
             <Button
               sx={{ textTransform: "capitalize" }}
               variant="brand"
-              disabled={isLoding ? true : false}
+              disabled={isLoding || !definition}
               type="submit"
               size="sm"
               onClick={handleSubmit}

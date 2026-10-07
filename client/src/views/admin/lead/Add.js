@@ -25,13 +25,13 @@ import { useEffect, useState } from "react";
 import { LiaMousePointerSolid } from "react-icons/lia";
 import { getApi } from "services/api";
 import { postApi } from "services/api";
-import { generateValidationSchema } from "utils";
+import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
+import { toast } from 'react-toastify';
 import CustomForm from "utils/customForm";
-import * as yup from "yup";
-import Edit from "./Edit";
 import RelationFields from "components/relations/RelationFields";
 
 const Add = (props) => {
+  const { definition, definitionError } = useFormDefinition('Leads');
   const [isLoding, setIsLoding] = useState(false);
   const [propertyModel, setPropertyModel] = useState(false);
   const [propertyList, setPropertyList] = useState([]);
@@ -47,16 +47,14 @@ const Add = (props) => {
     ...initialFieldValues,
     associatedListing: "",
     assignUser: "",
-    contact: "",
-    partnerCustomer: "",
+    contact: null,
+    partnerCustomer: null,
     createBy: JSON.parse(localStorage.getItem("user"))?._id,
   };
 
   const formik = useFormik({
     initialValues: initialValues,
-    validationSchema: yup
-      .object()
-      .shape(generateValidationSchema(props?.leadData?.fields)),
+    validate: values => validateFormValues(definition, values),
     onSubmit: (values, { resetForm }) => {
       AddData();
     },
@@ -87,13 +85,16 @@ const Add = (props) => {
     try {
       setIsLoding(true);
       let response = await postApi("api/form/add", {
-        ...values,
+        ...normalizeFormValues(definition, values),
         moduleId: props?.leadData?._id,
       });
       if (response?.status === 200) {
         props.onClose();
         formik.resetForm();
         props.setAction((pre) => !pre);
+      } else {
+        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
+        toast.error(response?.data?.message || tr('estate.serverError'));
       }
     } catch (e) {
       console.log(e);
@@ -134,6 +135,8 @@ const Add = (props) => {
           </DrawerHeader>
           <DrawerBody>
             <CustomForm
+              definition={definition}
+              definitionError={definitionError}
               moduleData={props?.leadData}
               values={values}
               setFieldValue={setFieldValue}
@@ -246,7 +249,7 @@ const Add = (props) => {
             <Button
               sx={{ textTransform: "capitalize" }}
               size="sm"
-              disabled={isLoding ? true : false}
+              disabled={isLoding || !definition}
               variant="brand"
               type="submit"
               onClick={handleSubmit}

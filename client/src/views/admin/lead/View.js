@@ -42,6 +42,7 @@ import AddMeeting from "../meeting/components/Addmeeting";
 import AddPhoneCall from "../phoneCall/components/AddPhoneCall";
 import Add from "./Add";
 import Edit from "./Edit";
+import { formLabel } from 'utils/formValue';
 import { HasAccess } from "../../../redux/accessUtils";
 import DataNotFound from "components/notFoundData";
 import CustomView from "utils/customView";
@@ -549,6 +550,14 @@ const View = () => {
                 />
                 <Card mt={3}>
                   <Grid templateColumns="repeat(12, 1fr)">
+                    <GridItem colSpan={{ base: 12, md: 6 }} mb={3}>
+                      <Text fontSize="sm" fontWeight="bold"><LocalizedText text="Related Contact" /></Text>
+                      <Text data-no-translate>{formLabel(data?.contact) || ' - '}</Text>
+                    </GridItem>
+                    <GridItem colSpan={{ base: 12, md: 6 }} mb={3}>
+                      <Text fontSize="sm" fontWeight="bold"><LocalizedText text="Partner Customer" /></Text>
+                      <Text data-no-translate>{formLabel(data?.partnerCustomer) || ' - '}</Text>
+                    </GridItem>
                     <GridItem colSpan={{ base: 6 }}>
                       <Text
                         fontSize="sm"

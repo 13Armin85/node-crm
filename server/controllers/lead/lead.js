@@ -87,7 +87,7 @@ const edit = async (req, res) => {
 const view = async (req, res) => {
   let lead = await Lead.findOne({ _id: req.params.id })
     .populate("associatedListing")
-    .populate("contact", "firstName lastName email phoneNumber")
+    .populate("contact", "fullName firstName lastName email phoneNumber")
     .populate("partnerCustomer", "fullName companyName phone email")
     .populate("relatedOpportunities", "opportunityName salesStage amount expectedCloseDate");
 

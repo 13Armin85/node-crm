@@ -99,7 +99,7 @@ const index = async (req, res) => {
                     },
                     modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
                     accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] },
-                    contactName: { $trim: { input: { $concat: [{ $ifNull: ['$contactData.firstName', ''] }, ' ', { $ifNull: ['$contactData.lastName', ''] }] } } },
+                    contactName: { $ifNull: ['$contactData.fullName', { $trim: { input: { $concat: [{ $ifNull: ['$contactData.firstName', ''] }, ' ', { $ifNull: ['$contactData.lastName', ''] }] } } }] },
                     leadName: '$leadData.leadName',
                     propertyNames: '$propertyData.title'
                 }
@@ -189,7 +189,7 @@ const view = async (req, res) => {
                     },
                     modifiedUserName: { $concat: ['$modifiedByUser.firstName', ' ', '$modifiedByUser.lastName'] },
                     accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] },
-                    contactName: { $trim: { input: { $concat: [{ $ifNull: ['$contactData.firstName', ''] }, ' ', { $ifNull: ['$contactData.lastName', ''] }] } } },
+                    contactName: { $ifNull: ['$contactData.fullName', { $trim: { input: { $concat: [{ $ifNull: ['$contactData.firstName', ''] }, ' ', { $ifNull: ['$contactData.lastName', ''] }] } } }] },
                     leadName: '$leadData.leadName',
                     propertyNames: '$propertyData.title'
                 }

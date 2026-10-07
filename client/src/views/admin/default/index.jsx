@@ -259,9 +259,7 @@ export default function UserReports() {
     Property: '/properties',
   };
   const maxStatisticLength = Math.max(...(data || []).map((item) => item?.length || 0), 1);
-  const moneyValues = values => values?.length
-    ? values.map(value => <CurrencyAmount key={value.currency} amount={value.amount} currency={value.currency} compact fontSize={{ base: 'lg', md: 'xl' }} fontWeight="900" lineHeight="1.3" />)
-    : <CurrencyAmount amount={0} currency="TRY" compact fontSize="xl" fontWeight="900" />;
+  const moneyValues = values => <CurrencyAmount values={values || []} compact fontSize={{ base: 'lg', md: 'xl' }} fontWeight="900" lineHeight="1.3" />;
 
   useEffect(() => {
     fetchData();

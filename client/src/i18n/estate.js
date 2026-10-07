@@ -66,7 +66,7 @@ const messages = {
   'estate.descending': ['Descending', 'نزولی', 'Azalan'],
   'estate.createdBy': ['Created by', 'ایجادکننده', 'Oluşturan'],
   'dashboard.salesPerformance': ['Property sales performance', 'عملکرد مالی فروش املاک', 'Gayrimenkul satış performansı'],
-  'dashboard.salesPerformanceHint': ['Realized and potential sales values are kept separate by currency.', 'ارزش فروش قطعی و ظرفیت فروش‌نشده به تفکیک ارز نمایش داده می‌شود.', 'Gerçekleşen ve potansiyel satış değerleri para birimine göre ayrı gösterilir.'],
+  'dashboard.salesPerformanceHint': ['Realized and potential sales totals are shown in Turkish lira with their US dollar equivalent.', 'جمع ارزش فروش قطعی و ظرفیت فروش‌نشده به لیر و معادل دلاری نمایش داده می‌شود.', 'Gerçekleşen ve potansiyel satış toplamları Türk lirası ve ABD doları karşılığıyla gösterilir.'],
   'dashboard.realizedSales': ['Realized sales value', 'ارزش فروش‌های انجام‌شده', 'Gerçekleşen satış değeri'],
   'dashboard.unsoldOpportunity': ['Unsold opportunity value', 'ارزش فرصت‌های فروش‌نشده', 'Satılmamış fırsat değeri'],
   'dashboard.soldProperties': ['Sold properties', 'املاک فروخته‌شده', 'Satılan gayrimenkuller'],

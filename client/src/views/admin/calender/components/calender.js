@@ -40,6 +40,7 @@ const Calender = (props) => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const handleDateClick = (arg) => {
+    if (!taskAccess?.create) return;
     setTaskModel(true);
     setDate(arg?.dateStr);
   };
@@ -72,7 +73,7 @@ const Calender = (props) => {
   return (
     <div>
       <Card>
-        {(taskAccess?.view || isAdmin(user)) && (
+        {(taskAccess?.create || isAdmin(user)) && (
           <AddEdit
             isOpen={taskModel}
             onClose={setTaskModel}

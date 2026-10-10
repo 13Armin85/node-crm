@@ -1,5 +1,6 @@
 import { Box, Flex, Radio, RadioGroup, Select, Stack, Text, useColorModeValue } from "@chakra-ui/react";
 import { isAdmin } from "roles";
+import { canViewModule } from "services/moduleVisibility";
 import Card from "components/card/Card";
 import moment from "moment";
 import { useEffect, useMemo, useState } from "react";
@@ -145,8 +146,8 @@ const ReportChart = (props) => {
   const [selection, setSelection] = useState("day");
   const modules = useSelector((state) => state?.modules?.data);
   const user = JSON.parse(localStorage.getItem("user"));
-  const isEmailsActive = modules?.find((item) => item?.moduleName === "Emails");
-  const isCallsActive = modules?.find((item) => item?.moduleName === "Calls");
+  const isEmailsActive = { isActive: canViewModule('Emails', user) && modules?.find((item) => item?.moduleName === 'Emails')?.isActive !== false };
+  const isCallsActive = { isActive: canViewModule('Calls', user) && modules?.find((item) => item?.moduleName === 'Calls')?.isActive !== false };
   const moduleEnabled = (module) => isAdmin(user) || module?.isActive !== false;
 
   const featchChart = async () => {

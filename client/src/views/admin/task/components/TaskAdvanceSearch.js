@@ -24,7 +24,8 @@ import {
   setGetTagValues,
   getSearchData,
 } from "../../../../redux/slices/advanceSearchSlice";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { filterTasks } from "services/taskSearch";
 
 const TaskAdvanceSearch = (props) => {
   const {
@@ -38,9 +39,6 @@ const TaskAdvanceSearch = (props) => {
     setSearchbox,
   } = props;
   const dispatch = useDispatch();
-  const searchResult = useSelector(
-    (state) => state?.advanceSearchData?.searchResult,
-  );
   const initialValues = {
     title: "",
     category: "",
@@ -104,7 +102,7 @@ const TaskAdvanceSearch = (props) => {
 
       dispatch(setGetTagValues(getValue?.filter((item) => item?.value)));
 
-      setSearchedData(searchResult);
+      setSearchedData?.(filterTasks(allData, "", values));
       setDisplaySearchData(true);
       setAdvanceSearch(false);
       resetForm();

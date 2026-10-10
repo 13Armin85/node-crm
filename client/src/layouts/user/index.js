@@ -27,6 +27,7 @@ import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
 import PageHelp from "components/help/PageHelp";
+import { canViewModule, useModuleVisibility } from "services/moduleVisibility";
 
 // Custom Chakra theme
 export default function User(props) {
@@ -40,6 +41,7 @@ export default function User(props) {
   );
   const { direction, t } = useLanguage();
   const location = useLocation();
+  const visibilityState = useModuleVisibility();
   const modules = useSelector((state) => state?.modules?.data);
   // functions for changing the states from components
   const getRoute = () => {
@@ -86,22 +88,16 @@ export default function User(props) {
       });
     }
 
-    const configuredModules = new Map(
-      (Array.isArray(modules) ? modules : []).map((item) => [
-        normalizeName(item.moduleName), item.isActive,
-      ]),
-    );
     const seenPaths = new Set();
     return [...newRoute, ...dynamicRoutes].filter((item) => {
-      if (!Array.isArray(item?.layout) || !item.layout.includes(ROLE_PATH.user)) return false;
-      const moduleName = normalizeName(item.parentName || item.name);
-      if (configuredModules.has(moduleName) && !configuredModules.get(moduleName)) return false;
       const pathKey = normalizePath(item.path);
       if (!pathKey || seenPaths.has(pathKey)) return false;
       seenPaths.add(pathKey);
+      if (!Array.isArray(item?.layout) || !item.layout.includes(ROLE_PATH.user)) return false;
+      if (!canViewModule(item.parentName || item.name)) return false;
       return true;
     });
-  }, [modules, route]);
+  }, [modules, route, visibilityState.visibility, visibilityState.accessibleModules]);
 
   const getActiveRoute = (routes) => {
     let activeRoute = "Dashboard";
@@ -240,6 +236,8 @@ export default function User(props) {
     state?.images?.images?.filter((item) => item?.isActive === true),
   );
 
+  if (!visibilityState.ready) return <Flex minH="100vh" align="center" justify="center">{visibilityState.error ? <Button onClick={() => window.location.reload()}>{t('Retry')}</Button> : <Spinner />}</Flex>;
+
   return (
     <Box className="crm-shell" dir={direction} data-sidebar-open={openSidebar ? "true" : "false"}>
       <Box>
@@ -311,9 +309,9 @@ export default function User(props) {
                       </Flex>
                     }
                   >
-                    <Routes>
+                    <Routes key={JSON.stringify([visibilityState.visibility, visibilityState.accessibleModules])}>
                       {getRoutes(routes)}
-                      <Route path="/*" element={<Navigate to="/default" />} />
+                      <Route path="/*" element={routes.length ? <Navigate to={(routes.find(item => !item.under) || routes[0]).path} replace /> : <Text>{t("estate.forbidden")}</Text>} />
                     </Routes>
                   </Suspense>
                 </Box>

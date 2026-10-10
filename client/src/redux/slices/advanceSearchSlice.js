@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import moment from "moment";
+import { filterTasks } from "services/taskSearch";
 
 const initialState = {
   searchValue: {},
@@ -20,55 +21,7 @@ const advanceSearchSlice = createSlice({
     getSearchData(state, action) {
       switch (action.payload.type) {
         case "Tasks":
-          state.searchResult = action.payload.allData?.filter((item) => {
-            return (
-              (!action.payload.values?.title ||
-                (item?.title &&
-                  item?.title
-                    .toLowerCase()
-                    .includes(action.payload.values?.title?.toLowerCase()))) &&
-              (!action.payload.values.status ||
-                (item?.status &&
-                  item?.status
-                    .toLowerCase()
-                    .includes(action.payload.values.status?.toLowerCase()))) &&
-              (!action.payload.values?.category ||
-                (item?.category &&
-                  item?.category
-                    .toLowerCase()
-                    .includes(
-                      action.payload.values?.category?.toLowerCase(),
-                    ))) &&
-              (!action.payload.values?.start ||
-                (item?.start &&
-                  item?.start
-                    .toLowerCase()
-                    .includes(action.payload.values?.start?.toLowerCase()))) &&
-              (!action.payload.values?.end ||
-                (item?.end &&
-                  item?.end.toString().includes(action.payload.values?.end))) &&
-              (!action.payload.values?.assignToName ||
-                (item?.assignToName &&
-                  item?.assignToName
-                    .toLowerCase()
-                    .includes(
-                      action.payload.values?.assignToName?.toLowerCase(),
-                    ))) &&
-              ([null, undefined, ""].includes(
-                action.payload.values?.fromLeadScore,
-              ) ||
-                [null, undefined, ""].includes(
-                  action.payload.values?.toLeadScore,
-                ) ||
-                ((item?.leadScore || item?.leadScore === 0) &&
-                  (parseInt(item?.leadScore, 10) >=
-                    parseInt(action.payload.values.fromLeadScore, 10) ||
-                    0) &&
-                  (parseInt(item?.leadScore, 10) <=
-                    parseInt(action.payload.values.toLeadScore, 10) ||
-                    0)))
-            );
-          });
+          state.searchResult = filterTasks(action.payload.allData || [], "", action.payload.values || {});
           break;
         case "TasksSearch":
           state.searchResult = action.payload.searchData;

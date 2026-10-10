@@ -6,7 +6,7 @@ const subject = '64d33173fd7ff3fa0924a103';
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(() => { localStorage.clear(); sessionStorage.clear(); });
 
-test.each(['task', 'task/assignees', 'contact', 'lead', 'property', 'opportunity', 'invoices', 'meeting', 'phoneCall', 'email', 'email-temp', 'calendar', 'status', 'document', 'reporting', 'quotes', 'text-msg', 'bank-details', 'opportunityproject', 'estate/Properties', 'form?moduleId=module', 'user'])('admin can switch all %s records to an individual', path => {
+test.each(['lead', 'opportunity', 'invoices', 'meeting', 'phoneCall', 'email', 'email-temp', 'document', 'reporting', 'quotes', 'text-msg', 'bank-details', 'opportunityproject', 'form?moduleId=module'])('admin can switch all %s records to an individual', path => {
   expect(dataScopeHeaders('api/' + path, 'get', admin)).toEqual({});
   setDataUser(subject, admin);
   expect(dataScopeHeaders('api/' + path, 'get', admin)).toEqual({ 'X-CRM-Data-User': subject });
@@ -34,4 +34,9 @@ test('malformed saved selections never reach an API header', () => {
   sessionStorage.setItem('crm:data-user:' + admin._id, 'invalid');
   expect(getDataUser(admin)).toBe('');
   expect(dataScopeHeaders('api/invoices', 'get', admin)).toEqual({});
+});
+
+test.each(['task', 'contact', 'property', 'calendar', 'status', 'user', 'estate/Properties', 'estate/Residences', 'estate/Partner%20Customers', 'reporting/line-chart'])('public %s pages always show all users despite an old saved person filter', path => {
+  setDataUser(subject, admin);
+  expect(dataScopeHeaders('api/' + path, 'get', admin)).toEqual({});
 });

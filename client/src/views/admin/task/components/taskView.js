@@ -1,5 +1,6 @@
 import { safeUrl } from 'services/contentSecurity';
 import { isAdmin } from 'roles';
+import { canManageTask } from 'services/taskAccess';
 import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
@@ -50,13 +51,14 @@ const TaskView = (props) => {
   const { id } = params;
   const user = JSON.parse(localStorage.getItem("user"));
 
-  const [permission, contactAccess, leadAccess] = HasAccess([
+  const [taskPermission, contactAccess, leadAccess] = HasAccess([
     "Tasks",
     "Contacts",
     "Leads",
   ]);
 
   const [data, setData] = useState();
+  const permission = canManageTask(data, user) ? taskPermission : { view: taskPermission?.view };
   const { onOpen, onClose } = useDisclosure();
   const [edit, setEdit] = useState(false);
   const [deleteModel, setDelete] = useState(false);
@@ -135,6 +137,7 @@ const TaskView = (props) => {
     },
   });
   const handleDoubleClick = (fieldName, value) => {
+    if (!canManageTask(data, user)) return;
     formik.setFieldValue(fieldName, value);
     setEditableField(fieldName);
   };

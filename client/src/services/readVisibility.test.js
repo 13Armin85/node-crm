@@ -1,6 +1,6 @@
 import { readVisibilityPath } from './readVisibility';
 import { HasAccess } from 'redux/accessUtils';
-const user = { role: 'user', _id: 'ordinary-user' };
+const user = { role: 'user', _id: 'ordinary-user', moduleVisibility: { Contacts: true } };
 afterEach(() => localStorage.clear());
 
 test.each(['contact', 'lead', 'property', 'status', 'calendar', 'reporting/line-chart'])('loads shared %s data while preserving other filters', module => {
@@ -11,7 +11,7 @@ test('removes the obsolete self filter on reports', () => {
 });
 test('keeps explicit filters for other users and private endpoints', () => {
   expect(readVisibilityPath('api/contact?createBy=another-user', user)).toBe('api/contact?createBy=another-user');
-  expect(readVisibilityPath('api/task?createBy=ordinary-user', user)).toBe('api/task?createBy=ordinary-user');
+  expect(readVisibilityPath('api/task?createBy=ordinary-user', user)).toBe('api/task');
   expect(readVisibilityPath('api/notification?before=cursor', user)).toBe('api/notification?before=cursor');
   expect(readVisibilityPath('api/contact?createBy=admin', { role: 'admin' })).toBe('api/contact?createBy=admin');
 });

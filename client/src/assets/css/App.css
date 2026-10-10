@@ -1464,7 +1464,7 @@ body {
   border-radius: 12px !important;
 }
 
-.crm-header-icon-button::after {
+.crm-header-icon-button[data-unread="true"]::after {
   content: "";
   position: absolute;
   top: 8px;
@@ -1512,21 +1512,6 @@ body {
   width: min(360px, calc(100vw - 24px));
   min-width: 300px !important;
   border-radius: 16px !important;
-}
-
-.crm-notifications-count {
-  position: absolute;
-  top: -9px;
-  right: -12px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
-  color: white !important;
-  border: 2px solid var(--chakra-colors-chakra-body-bg, white);
-  border-radius: 999px;
-  background: #ef4444 !important;
-  font-size: 9px !important;
-  line-height: 13px !important;
 }
 
 .crm-notifications-list {
@@ -1649,18 +1634,14 @@ body {
   height: 42px;
   overflow: hidden;
   color: white;
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 14px;
-  background: linear-gradient(145deg, #4f7af2, #14b8a6);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, .22);
   font-size: 20px;
 }
 
 .crm-sidebar-brand__mark img {
   width: 100%;
   height: 100%;
-  padding: 4px;
-  object-fit: contain;
+  padding: 0;
+  object-fit: cover;
 }
 
 .crm-sidebar-brand__name {

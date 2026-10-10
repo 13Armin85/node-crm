@@ -1,4 +1,5 @@
 import { isAdmin } from 'roles';
+import BrandLogo from "components/BrandLogo";
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { AsyncRelationSelect } from 'components/dynamicForm/DynamicFormRenderer';
@@ -21,7 +22,6 @@ import {
   GridItem,
   Heading,
   IconButton,
-  Image,
   Input,
   Select,
   Table,
@@ -90,9 +90,6 @@ const AddEdit = (props) => {
   );
   const accountList = useSelector((state) => state?.accountData?.data?.data);
   const contactList = useSelector((state) => state?.contactData?.data);
-  const largeLogo = useSelector((state) =>
-    state?.images?.images?.filter((item) => item?.isActive === true),
-  );
 
   const initialValues = {
     customFields: invoiceDetails?.customFields || {},
@@ -1450,10 +1447,8 @@ const AddEdit = (props) => {
               <div className="invoice-container">
                 <div className="invoice-header">
                   <div className="">
-                    <Image
-                      style={{ width: "100%", height: "52px" }}
-                      src={largeLogo[0]?.logoLgImg}
-                      alt="Logo"
+                    <BrandLogo
+                      style={{ width: "100%", height: "90px", objectFit: "contain" }}
                       cursor="pointer"
                       userSelect="none"
                       my={2}

@@ -2,15 +2,16 @@ import {
   Badge,
   Box,
   Flex,
-  Select,
   SimpleGrid,
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
+import { canManageTask } from 'services/taskAccess';
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { useLanguage } from "i18n";
 import { FiCalendar, FiUser } from "react-icons/fi";
 import { createPortal } from "react-dom";
+import AssigneeSelect from "./AssigneeSelect";
 
 const columns = [
   { id: "todo", title: "Todo", color: "gray" },
@@ -110,7 +111,7 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
                       const priority = taskPriority(task);
                       const priorityStyle = priorityStyles[priority];
                       return (
-                        <Draggable draggableId={String(task._id)} index={index} key={task._id}>
+                        <Draggable isDragDisabled={!canManageTask(task)} draggableId={String(task._id)} index={index} key={task._id}>
                           {(dragProvided, dragSnapshot) => {
                             const card = (
                               <Box
@@ -127,7 +128,7 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
                                 borderRadius="14px"
                                 p={3.5}
                                 mb={3}
-                                cursor={dragSnapshot.isDragging ? "grabbing" : "grab"}
+                                cursor={canManageTask(task) ? (dragSnapshot.isDragging ? "grabbing" : "grab") : "pointer"}
                                 minW={0}
                                 onDoubleClick={() => onView(task._id)}
                               >
@@ -140,22 +141,14 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
                                   <Flex align="center" gap={1.5} minW={0}><FiUser /><Text noOfLines={1}>{task.assignedToUserName || t("Unassigned")}</Text></Flex>
                                   {(task.end || task.start) && <Flex align="center" gap={1.5}><FiCalendar /><Text noOfLines={1}>{task.end || task.start}</Text></Flex>}
                                 </Flex>
-                                {canDelegate && <Select
-                                  mt={3}
+                                {canDelegate && <Box mt={3}><AssigneeSelect
+                                  searchable={false}
                                   size="xs"
                                   borderRadius="8px"
-                                  aria-label={t("Assigned User")}
+                                  assignees={assignees}
                                   value={String(objectValue(task.assignedToUser) || objectValue(task.createBy) || "")}
-                                  onMouseDown={(event) => event.stopPropagation()}
-                                  onClick={(event) => event.stopPropagation()}
-                                  onChange={(event) => onDelegate(task._id, event.target.value)}
-                                >
-                                  {assignees.map((item) => (
-                                    <option key={item._id} value={item._id}>
-                                      {[item.firstName, item.lastName].filter(Boolean).join(" ") || item.username}
-                                    </option>
-                                  ))}
-                                </Select>}
+                                  onChange={event => onDelegate(task._id, event.target.value)}
+                                /></Box>}
                                 {task.category && task.category !== "None" && (
                                   <Badge mt={3} colorScheme="brand" variant="subtle" borderRadius="full">
                                     {task.assignToName || t(objectValue(task.category))}

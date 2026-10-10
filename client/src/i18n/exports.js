@@ -1,0 +1,5 @@
+export default {
+  en: {"Count": "Count", "Property Statistics": "Property Statistics", "Property amounts": "Property amounts", "Sales amounts": "Sales amounts", 'Failed to export data': 'Failed to export data', 'Export chart as Excel': 'Export chart as Excel', 'Size (KB)': 'Size (KB)', 'File type': 'File type', 'Summary': 'Summary' },
+  fa: {"Count": "تعداد", "Property Statistics": "آمار املاک", "Property amounts": "مبالغ املاک", "Sales amounts": "مبالغ فروش", 'Failed to export data': 'خروجی اکسل ساخته نشد. دوباره تلاش کنید.', 'Export chart as Excel': 'خروجی اکسل نمودار', 'Size (KB)': 'حجم (کیلوبایت)', 'File type': 'نوع فایل', 'Summary': 'خلاصه' },
+  tr: {"Count": "Adet", "Property Statistics": "Gayrimenkul istatistikleri", "Property amounts": "Gayrimenkul tutarları", "Sales amounts": "Satış tutarları", 'Failed to export data': 'Veriler dışa aktarılamadı. Tekrar deneyin.', 'Export chart as Excel': 'Grafiği Excel olarak dışa aktar', 'Size (KB)': 'Boyut (KB)', 'File type': 'Dosya türü', 'Summary': 'Özet' },
+};

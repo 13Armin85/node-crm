@@ -18,6 +18,10 @@ import { getApi, postApi, putApi, deleteApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CurrencyAmount from "components/CurrencyAmount";
 import { useFormDefinition } from "utils/managedForm";
+import ExcelExportButton from "components/ExcelExportButton";
+import ShareRecordButton from "components/ShareRecordButton";
+import SharedRecordBadge from "components/SharedRecordBadge";
+import { entityExportColumns, loadAllExportRows } from "utils/exportRecords";
 
 const propertySections = [
   ["estate.section.basic", (name) => ["title", "description", "category", "subtype", "transactionType"].includes(name)],
@@ -169,9 +173,12 @@ export function EntityPage({ moduleName }) {
             <Text className="crm-page-hero__subtitle">{t("Manage business records from one place")}</Text>
           </Box>
         </Flex>
-        {permissions?.create && (
-          <Button variant="brand" leftIcon={<FiPlus />} onClick={() => open({}, false)}>{t("Add New")}</Button>
-        )}
+        <Flex gap={2} wrap="wrap">
+          {permissions?.export !== false && <ExcelExportButton fileName={t(moduleName)} columns={entityExportColumns(definition, language, t)}
+            isDisabled={busy || !definition || !total}
+            loadRows={() => loadAllExportRows(getApi, base, { q: search, sort, order, ...filters })} />}
+          {permissions?.create && <Button variant="brand" leftIcon={<FiPlus />} onClick={() => open({}, false)}>{t("Add New")}</Button>}
+        </Flex>
       </Flex>
 
       {error && <Alert status="error" className="crm-page-alert"><AlertIcon />{t(`estate.${error}`)}</Alert>}
@@ -233,11 +240,12 @@ export function EntityPage({ moduleName }) {
               <Tbody>
                 {items.map((item) => (
                   <Tr key={item._id}>
-                    <Td><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Text fontWeight="800" data-no-translate>{name(item)}</Text></Flex></Td>
+                    <Td><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge record={item} /></Box></Flex></Td>
                     <Td data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : item.phone || item.district || "-"}</Td>
                     <Td>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(dateLocale) : "-"}</Td>
                     <Td>
                       <Flex className="crm-row-actions" gap="5px">
+                        <ShareRecordButton module={moduleName} record={item} />
                         <Tooltip label={t("Details")}><IconButton size="sm" variant="ghost" colorScheme="blue" aria-label={t("Details")} icon={<FiEye />} onClick={() => open(item, true)} /></Tooltip>
                         {permissions?.update && <Tooltip label={t("Edit")}><IconButton size="sm" variant="ghost" colorScheme="teal" aria-label={t("Edit")} icon={<FiEdit3 />} onClick={() => open(item, false)} /></Tooltip>}
                         {permissions?.delete && <Tooltip label={t("Delete")}><IconButton size="sm" variant="ghost" colorScheme="red" aria-label={t("Delete")} icon={<FiTrash2 />} onClick={() => setDeleting(item)} /></Tooltip>}

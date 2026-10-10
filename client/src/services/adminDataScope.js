@@ -17,6 +17,7 @@ export const dataScopeHeaders = (path, method = 'get', user = getStoredUser()) =
   if (!subject) return {};
   const url = new URL(path, 'http://crm.local/');
   if (!/^\/api\/(?:task|contact|lead|property|opportunity|invoices|meeting|email|email-temp|phoneCall|calendar|status|document|form|reporting|quotes|text-msg|bank-details|opportunityproject|estate|user)(?:\/|$)/.test(url.pathname)) return {};
+  if (/^\/api\/(?:task|contact|property|calendar|status|user)(?:\/|$)/.test(url.pathname) || /^\/api\/estate\//.test(url.pathname) || url.pathname === '/api/reporting/line-chart') return {};
   if (method !== 'get' && !(method === 'post' && url.pathname === '/api/reporting/index')) return {};
   if (/^\/api\/estate\/(?:definitions|dashboard\/exchange-rate)(?:\/|$)/.test(url.pathname)) return {};
   return { 'X-CRM-Data-User': subject };

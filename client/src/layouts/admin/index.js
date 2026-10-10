@@ -371,7 +371,7 @@ export default function Dashboard(props) {
                     padding: "8px 20px",
                   }}
                 >
-                  <AdminDataFilter />
+                  {["Leads", "Opportunities", "Invoices", "Meetings", "Calls", "Emails", "Documents", "Reporting and Analytics", "Email Template", "Quotes", "Texts", "Bank Details", "Opportunity Project"].includes((under(routes)?.parentName || getActiveRoute(routes)).trim()) && <AdminDataFilter />}
                   <PageHelp
                     routes={routes}
                     route={under(routes)}

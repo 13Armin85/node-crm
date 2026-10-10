@@ -1,3 +1,4 @@
+import BrandLogo from "components/BrandLogo";
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
@@ -8,7 +9,6 @@ import {
   DrawerFooter,
   DrawerHeader,
   IconButton,
-  Image,
   Modal,
   ModalBody,
   ModalContent,
@@ -18,7 +18,6 @@ import {
 } from "@chakra-ui/react";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import { getApi } from "services/api";
 import CurrencyAmount from "components/CurrencyAmount";
 
@@ -26,9 +25,6 @@ const Preview = (props) => {
   const { onClose, isOpen, id, generatePDF, selectedId, isLoading } = props;
   const [invoiceDetails, setInvoiceDetails] = useState({});
   const [isLoding, setIsLoding] = useState(false);
-  const largeLogo = useSelector((state) =>
-    state?.images?.images?.filter((item) => item?.isActive === true),
-  );
 
   const fetchInvoiceDetails = async () => {
     try {
@@ -66,10 +62,8 @@ const Preview = (props) => {
                 </div>
                 <div className="invoice-header">
                   <div>
-                    <Image
-                      style={{ width: "100%", height: "52px" }}
-                      src={largeLogo[0]?.logoLgImg}
-                      alt="Logo"
+                    <BrandLogo
+                      style={{ width: "100%", height: "90px", objectFit: "contain" }}
                       cursor="pointer"
                       userSelect="none"
                       my={2}

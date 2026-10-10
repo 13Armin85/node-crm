@@ -1,3 +1,4 @@
+import AssigneeSelect from "./AssigneeSelect";
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
@@ -315,7 +316,7 @@ const AddEdit = (props) => {
   }, [userAction, id, data]);
 
   return (
-    <Modal isOpen={isOpen} size={"xl"} isCentered scrollBehavior="inside">
+    <Modal isOpen={isOpen && isAdmin(user)} size={"xl"} isCentered scrollBehavior="inside">
       {!props.from && <ModalOverlay />}
       <ModalContent maxH={{ base: "calc(100vh - 24px)", md: "calc(100vh - 64px)" }} mx={{ base: 3, md: 0 }}>
         <ModalHeader justifyContent="space-between" display="flex">
@@ -406,20 +407,15 @@ const AddEdit = (props) => {
                 <FormLabel display="flex" ms="4px" fontSize="sm" fontWeight="500" mb="8px">
                   <LocalizedText text="Assigned User" />
                 </FormLabel>
-                <Select
+                <AssigneeSelect
+                  assignees={assignees}
                   value={selectionValue(values?.assignedToUser)}
                   name="assignedToUser"
                   onChange={handleChange}
                   fontWeight="500"
                   placeholder={tr("Select user")}
                   mb="10px"
-                >
-                  {assignees.map((item) => (
-                    <option value={item._id} key={item._id}>
-                      {[item.firstName, item.lastName].filter(Boolean).join(" ") || item.username}
-                    </option>
-                  ))}
-                </Select>
+                />
                 <Text fontSize="xs" color="gray.500" mt="-6px" mb="10px">
                   <LocalizedText text="Changing the assignee delegates this task to that user." />
                 </Text>

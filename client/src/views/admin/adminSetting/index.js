@@ -1,4 +1,4 @@
-import { Box, Flex, Heading, Icon, SimpleGrid, Text } from "@chakra-ui/react";
+import { Button, Box, Flex, Heading, Icon, SimpleGrid, Text } from "@chakra-ui/react";
 import MiniStatistics from "components/card/MiniStatistics";
 import IconBox from "components/icons/IconBox";
 import { FaWpforms } from "react-icons/fa";
@@ -16,6 +16,7 @@ const Index = () => {
   const { t } = useLanguage();
   return (
     <Box className="crm-settings-page">
+      <Button mb={4} colorScheme="blue" onClick={() => navigate("/data-visibility")}>{t("User data visibility")}</Button>
       <SimpleGrid className="crm-settings-grid" templateColumns="repeat(auto-fit, minmax(min(100%, 220px), 1fr))" gap="16px" mb="20px">
         <MiniStatistics
           fontsize="md"
@@ -45,7 +46,7 @@ const Index = () => {
         />
         <MiniStatistics
           fontsize="md"
-          onClick={() => navigate("/custom-Fields")}
+          onClick={() => navigate("/form-builder")}
           startContent={
             <IconBox
               w="56px"
@@ -54,7 +55,7 @@ const Index = () => {
               icon={<Icon w="28px" h="28px" as={FaWpforms} color="white" />}
             />
           }
-          name="Custom Fields"
+          name="estate.formBuilder"
         />
         <MiniStatistics
           fontsize="md"

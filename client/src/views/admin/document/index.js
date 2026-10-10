@@ -44,6 +44,12 @@ import {
 } from "react-icons/fi";
 import { deleteApi, getApi, getApiBlob, postApi } from "services/api";
 import Upload from "./component/Upload";
+import ExcelExportButton from "components/ExcelExportButton";
+import ShareRecordButton from "components/ShareRecordButton";
+import SharedRecordBadge from "components/SharedRecordBadge";
+import { HasAccess } from "../../../redux/accessUtils";
+import { getStoredUser } from "services/authSession";
+import { isAdmin } from "roles";
 
 const categories = [
   { value: "GENERAL", label: "General" },
@@ -86,6 +92,7 @@ const categoryOf = (file) => file.category || ({
 
 const DocumentPage = () => {
   const { t } = useLanguage();
+  const canEditDocuments = !!HasAccess(["Documents"])[0]?.create;
   const [folders, setFolders] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
   const [targetFolder, setTargetFolder] = useState("");
@@ -103,7 +110,9 @@ const DocumentPage = () => {
   const subtle = useColorModeValue("gray.50", "navy.800");
   const border = useColorModeValue("gray.200", "whiteAlpha.200");
 
-  const rootFiles = folders.filter((item) => item.isRoot).flatMap((item) => item.files || []);
+  const actor = getStoredUser();
+  const ownsFolder = folder => !!folder && (isAdmin(actor) || String(folder.createBy?._id || folder.createBy) === String(actor?._id));
+  const rootFiles = folders.filter((item) => item.isRoot).flatMap((item) => (item.files || []).map(file => ({ ...file, _canDelete: ownsFolder(item) })));
   const realFolders = folders.filter((item) => !item.isRoot);
   const selectedCategory = categories.find((item) => item.value === category);
   const entityType = selectedCategory?.entityType || "";
@@ -113,6 +122,11 @@ const DocumentPage = () => {
     const result = await getApi("api/document");
     if (result?.status === 200) {
       setFolders(result.data || []);
+      const requestedFile = new URLSearchParams(window.location.search).get("file");
+      if (requestedFile && !currentFolder) {
+        const folder = result.data.find(item => item.files?.some(file => file._id === requestedFile));
+        if (folder && !folder.isRoot) setCurrentFolder(folder);
+      }
       if (currentFolder) {
         const refreshed = result.data.find((item) => item._id === currentFolder._id);
         if (refreshed) setCurrentFolder(refreshed);
@@ -153,7 +167,7 @@ const DocumentPage = () => {
     : null;
 
   const openUpload = () => {
-    setTargetFolder(currentFolder?._id || "");
+    setTargetFolder(ownsFolder(currentFolder) ? currentFolder._id : "");
     uploadModal.onOpen();
   };
 
@@ -162,7 +176,7 @@ const DocumentPage = () => {
     setLoading(true);
     const result = await postApi("api/document/folder", {
       folderName: folderName.trim(),
-      parentFolder: currentFolder?._id || null,
+      parentFolder: ownsFolder(currentFolder) ? currentFolder._id : null,
     });
     setLoading(false);
     if ([200, 201].includes(result?.status)) {
@@ -239,12 +253,21 @@ const DocumentPage = () => {
           </Box>
         </Flex>
         <Flex gap={2} wrap="wrap">
-          <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiFolderPlus />} variant="outline" onClick={folderModal.onOpen}>
+          <ExcelExportButton fileName={t("Documents")} rows={visibleFiles} isDisabled={loading}
+            columns={[
+              { Header: t("Name"), accessor: "fileName" },
+              { Header: t("Folder name"), accessor: () => currentFolder?.folderName || t("Files without folder") },
+              { Header: t("Category"), accessor: file => t(categories.find(category => category.value === categoryOf(file))?.label || "General") },
+              { Header: t("Size (KB)"), accessor: file => file.size ? Math.ceil(file.size / 1024) : 0 },
+              { Header: t("File type"), accessor: "mimeType" },
+              { Header: t("Created Date"), accessor: file => file.createdDate || file.uploadedAt || "" },
+            ]} />
+          {canEditDocuments && <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiFolderPlus />} variant="outline" onClick={folderModal.onOpen}>
             {t("New folder")}
-          </Button>
-          <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiPlus />} variant="brand" onClick={openUpload}>
+          </Button>}
+          {canEditDocuments && <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiPlus />} variant="brand" onClick={openUpload}>
             {t("Upload document")}
-          </Button>
+          </Button>}
         </Flex>
       </Flex>
 
@@ -329,7 +352,7 @@ const DocumentPage = () => {
                   <Flex minH="300px" px={4} textAlign="center" direction="column" align="center" justify="center" bg={subtle} borderRadius="20px">
                     <Icon as={FiFile} boxSize={12} color="gray.300" />
                     <Text fontWeight="800" mt={3}>{t("No documents are available in this section")}</Text>
-                    <Button size="sm" variant="brand" mt={3} onClick={openUpload}>{t("Upload the first document")}</Button>
+                    {canEditDocuments && <Button size="sm" variant="brand" mt={3} onClick={openUpload}>{t("Upload the first document")}</Button>}
                   </Flex>
                 ) : (
                   <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={3}>
@@ -343,14 +366,15 @@ const DocumentPage = () => {
                               <Icon as={isImage ? FiImage : FiFile} color={isImage ? "purple.500" : "blue.500"} boxSize={5} />
                             </Flex>
                             <Box minW={0}>
-                              <Text fontWeight="800" noOfLines={1}>{file.fileName}</Text>
+                              <Text fontWeight="800" noOfLines={1}>{file.fileName}</Text><SharedRecordBadge record={file} />
                               <Text fontSize="xs" color="gray.500">{file.size ? `${Math.ceil(file.size / 1024)} KB` : t("File")}</Text>
                             </Box>
                           </Flex>
                           <Badge mt={3} colorScheme="brand" borderRadius="full">{t(fileCategory?.label || "General")}</Badge>
                           <Flex mt={4} gap={2} justify="flex-end">
+                            <ShareRecordButton module="Documents" record={file} />
                             <IconButton aria-label={t("Download")} icon={<FiDownload />} size="sm" variant="ghost" onClick={() => download(file)} />
-                            <IconButton aria-label={t("Delete")} icon={<FiTrash2 />} size="sm" variant="ghost" colorScheme="red" onClick={() => removeFile(file)} />
+                            {canEditDocuments && (currentFolder ? ownsFolder(currentFolder) : file._canDelete) && <IconButton aria-label={t("Delete")} icon={<FiTrash2 />} size="sm" variant="ghost" colorScheme="red" onClick={() => removeFile(file)} />}
                           </Flex>
                         </Box>
                       );
@@ -422,7 +446,7 @@ const DocumentPage = () => {
                   <FormLabel fontSize="sm" fontWeight="800">{t("Storage location")}</FormLabel>
                   <Select value={targetFolder} onChange={(event) => setTargetFolder(event.target.value)} borderRadius="12px">
                     <option value="">{t("No folder — publish directly")}</option>
-                    {realFolders.map((folder) => <option key={folder._id} value={folder._id}>{folder.folderName}</option>)}
+                    {realFolders.filter(ownsFolder).map((folder) => <option key={folder._id} value={folder._id}>{folder.folderName}</option>)}
                   </Select>
                 </Box>
                 <Box>

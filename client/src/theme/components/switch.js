@@ -8,7 +8,10 @@ export const switchStyles = {
           borderRadius: "50%",
           w: "16px",
           h: "16px",
-          _checked: { transform: "translate(20px, 0px)" },
+          _checked: {
+            transform: "translateX(20px)",
+            _rtl: { transform: "translateX(-20px)" },
+          },
         },
         track: {
           display: "flex",

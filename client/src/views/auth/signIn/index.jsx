@@ -23,6 +23,7 @@ import {
 
 // Custom components
 import DefaultAuth from "layouts/auth/Default";
+import BrandLogo from "components/BrandLogo";
 // Assets
 
 import { MdOutlineRemoveRedEye } from "react-icons/md";
@@ -146,6 +147,7 @@ function SignIn() {
           <LanguageSelect />
         </HStack>
         <Box w="100%" textAlign="center">
+          <BrandLogo w="180px" maxW="100%" mx="auto" mb="20px" borderRadius="16px" />
           <Heading color={textColor} fontSize="36px" mb="10px">
             {t("Sign In")}
           </Heading>

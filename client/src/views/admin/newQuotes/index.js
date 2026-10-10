@@ -608,7 +608,7 @@ const Index = (props) => {
         // isOpen={isOpen}
         onClose={onclose}
         addBtn={false}
-        exportColumn={false}
+        exportColumn={true}
         setIsImport={setIsImport}
         // onOpen={handleOpenAdd}
         selectedValues={selectedValues}

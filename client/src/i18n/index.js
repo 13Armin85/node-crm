@@ -8,6 +8,9 @@ import React, {
 } from "react";
 import estate from './estate';
 import notificationMessages from './notifications';
+import taskSearchMessages from './taskSearch';
+import exportMessages from './exports';
+import sharingMessages from './recordSharing';
 import legacy, { aliases } from './legacy';
 
 export const LANGUAGES = {
@@ -593,7 +596,8 @@ const tr = {
   "Failed to delete file": "Dosya silinemedi",
 };
 
-const dictionaries = { en: { ...legacy.en, ...estate.en, ...notificationMessages.en }, fa: { ...fa, ...legacy.fa, ...estate.fa, ...notificationMessages.fa }, tr: { ...tr, ...legacy.tr, ...estate.tr, ...notificationMessages.tr } };
+const visibilityLabels = { en: { 'User data visibility': 'User data visibility' }, fa: { 'User data visibility': 'کنترل نمایش اطلاعات کاربران' }, tr: { 'User data visibility': 'Kullanıcı veri görünürlüğü' } };
+const dictionaries = { en: { ...legacy.en, ...estate.en, ...notificationMessages.en, ...taskSearchMessages.en, ...exportMessages.en, ...sharingMessages.en, ...visibilityLabels.en }, fa: { ...fa, ...legacy.fa, ...estate.fa, ...notificationMessages.fa, ...taskSearchMessages.fa, ...exportMessages.fa, ...sharingMessages.fa, ...visibilityLabels.fa }, tr: { ...tr, ...legacy.tr, ...estate.tr, ...notificationMessages.tr, ...taskSearchMessages.tr, ...exportMessages.tr, ...sharingMessages.tr, ...visibilityLabels.tr } };
 
 const LanguageContext = createContext({
   language: "en",

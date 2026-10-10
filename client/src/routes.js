@@ -32,6 +32,7 @@ import { BsBlockquoteRight } from "react-icons/bs";
 import { RiAccountCircleFill } from "react-icons/ri";
 import { TbFileInvoice } from "react-icons/tb";
 // Admin Imports
+const DataVisibility = React.lazy(() => import('views/admin/adminSetting/DataVisibility'));
 const MainDashboard = React.lazy(() => import("views/admin/default"));
 
 // My component
@@ -500,12 +501,21 @@ const routes = [
   {
     name: "estate.formBuilder",
     layout: [ROLE_PATH.admin],
+    under: "Admin Setting",
+    parentName: "Admin Setting",
     path: "/form-builder",
     icon: <Icon as={FaWpforms} width="20px" height="20px" color="inherit" />,
     component: FormBuilder,
   },
 
   // -----------------------------Admin setting-------------------------------------
+  {
+    name: "User data visibility",
+    layout: [ROLE_PATH.admin],
+    path: "/data-visibility",
+    under: "Admin Setting",
+    component: DataVisibility,
+  },
   {
     name: "Admin Setting",
     layout: [ROLE_PATH.admin],

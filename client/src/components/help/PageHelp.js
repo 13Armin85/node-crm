@@ -16,6 +16,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import React from "react";
+import { visibilityCopy } from "views/admin/adminSetting/dataVisibilityCopy";
 import { matchRoutes, useLocation } from "react-router-dom";
 import { getStoredUser } from "services/authSession";
 import { MdHelpOutline } from "react-icons/md";
@@ -581,17 +582,18 @@ helpContent.Residences = {
   fa: { title: "راهنمای مجتمع‌ها", purpose: "این صفحه برای ثبت پروژه‌ها و مجتمع‌های مسکونی و موقعیت آن‌ها و ارتباط دادن ملک‌ها به مجتمع مربوطه است.", actions: "مجتمع‌ها را جستجو کنید، مجتمع جدید بسازید یا اطلاعات آن را ویرایش کنید و آدرس و ملک‌های مرتبط را با گزینه‌های مجاز حساب خود بررسی کنید." },
   tr: { title: "Siteler rehberi", purpose: "Konut projelerini, binaları ve konumlarını düzenleyin; mülkleri ilgili siteye bağlayın.", actions: "Siteleri arayın, yeni site oluşturun veya düzenleyin; adres ve ilişkili mülkleri rolünüze sunulan işlemlerle inceleyin." },
 };
+helpContent["User data visibility"] = Object.fromEntries(Object.entries(visibilityCopy).map(([language, copy]) => [language, { title: copy.title, purpose: copy.hint, actions: copy.choose + ". " + copy.save + "." }]));
 const buttonLabels = { en: "Page description", fa: "توضیحات صفحه", tr: "Sayfa açıklaması" };
 const personalPages = new Set(["Opportunities", "Invoices", "Meetings", "Calls", "Emails", "Calender", "Documents", "Reporting and Analytics", "Tasks", "Dashboard"]);
 const privacyNote = {
-  en: "Your account shows only your own or assigned records in personal sections. Reports and analytics summarize your activity.",
-  fa: "در بخش‌های شخصی، فقط اطلاعات متعلق به شما یا واگذارشده به شما نمایش داده می‌شود. گزارش‌ها و تحلیل‌ها مربوط به فعالیت خودتان است.",
-  tr: "Kişisel bölümlerde yalnızca size ait veya size atanmış kayıtlar gösterilir. Raporlar ve analizler kendi etkinliklerinizi özetler.",
+  en: "Shared information is visible by default. Your administrator controls which sections you can view; dashboard totals, reports and calendar entries follow those settings.",
+  fa: "اطلاعات عمومی به‌صورت پیش‌فرض نمایش داده می‌شود. ادمین بخش‌های قابل مشاهده برای شما را تعیین می‌کند و آمار داشبورد، گزارش‌ها و تقویم هم تابع همین تنظیمات هستند.",
+  tr: "Paylaşılan bilgiler varsayılan olarak görünür. Yöneticiniz görebileceğiniz bölümleri belirler; panel toplamları, raporlar ve takvim kayıtları bu ayarlara uyar.",
 };
 const userTaskActions = {
-  en: "Review tasks assigned to you, create a task for yourself, update its status, add comments and track progress. Only admins and developers can assign or delegate tasks to another colleague.",
-  fa: "تسک‌های واگذارشده به خودتان را ببینید، برای خودتان تسک بسازید، وضعیت را تغییر دهید، توضیح اضافه کنید و پیشرفت را پیگیری کنید. فقط ادمین و دولوپر می‌توانند تسک را به همکار دیگری واگذار کنند.",
-  tr: "Size atanan görevleri inceleyin, kendiniz için görev oluşturun, durumu güncelleyin, yorum ekleyin ve ilerlemeyi takip edin. Yalnızca yöneticiler ve geliştiriciler görevleri başka bir çalışana atayabilir.",
+  en: "View shared tasks and manage your own or assigned tasks: create a task for yourself, update its status, add comments and track progress. Only admins and developers can assign or delegate tasks to another colleague.",
+  fa: "تسک‌های عمومی را ببینید و تسک‌های خودتان یا واگذارشده به خودتان را مدیریت کنید: برای خودتان تسک بسازید، وضعیت را تغییر دهید و توضیح اضافه کنید. فقط ادمین و دولوپر می‌توانند تسک را به همکار دیگری واگذار کنند.",
+  tr: "Paylaşılan görevleri görün; kendi veya size atanan görevleri yönetin, durumlarını güncelleyin ve yorum ekleyin. Yalnızca yöneticiler ve geliştiriciler görevleri başka bir çalışana atayabilir.",
 };
 
 const fallbackContent = {

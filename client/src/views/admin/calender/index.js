@@ -5,6 +5,7 @@ import Calender from "./components/calender";
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 import { FiCalendar } from "react-icons/fi";
 import { useLanguage } from "i18n";
+import ExcelExportButton from "components/ExcelExportButton";
 
 const Index = () => {
   const [data, setData] = useState([]);
@@ -35,6 +36,14 @@ const Index = () => {
           <Heading className="crm-page-hero__title">{t("Calendar")}</Heading>
           <Text className="crm-page-hero__subtitle">{t("Plan and review team activities")}</Text>
         </Box>
+        <ExcelExportButton ms={{ md: "auto" }} fileName={t("Calendar")} rows={data}
+          columns={[
+            { Header: t("Title"), accessor: "title" },
+            { Header: t("Module"), accessor: event => t({ task: "Tasks", meeting: "Meetings", call: "Calls", email: "Emails" }[event.groupId] || event.groupId) },
+            { Header: t("Start Date"), accessor: "start" },
+            { Header: t("End Date"), accessor: "end" },
+            { Header: t("All Day"), accessor: event => t(event.allDay ? "Yes" : "No") },
+          ]} />
       </Flex>
       <Calender fetchData={fetchData} data={data} />
     </Box>

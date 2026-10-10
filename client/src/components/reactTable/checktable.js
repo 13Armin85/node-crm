@@ -59,6 +59,11 @@ import {
   setSearchValue,
 } from "../../redux/slices/advanceSearchSlice";
 import { commonUtils } from "utils/utils";
+import ShareRecordButton from "components/ShareRecordButton";
+import SharedRecordBadge from "components/SharedRecordBadge";
+import { canSendRecord, shareModuleForTitle } from "services/recordSharing";
+import { exportColumns, selectedExportRows } from "utils/exportRecords";
+import { toast } from "react-toastify";
 import { normalizeSearchFields, optionText } from "components/search/searchFields";
 
 const CommonCheckTable = (props) => {
@@ -96,6 +101,8 @@ const CommonCheckTable = (props) => {
     exportColumn,
     pageHeader = true,
   } = props;
+  const sharingModule = shareModuleForTitle(title, tr);
+  const showSharing = canSendRecord(sharingModule);
   const { dataLength } = props;
   const { handleSearchType } = props;
 
@@ -119,12 +126,13 @@ const CommonCheckTable = (props) => {
   );
   const data = useMemo(
     () =>
-      (AdvanceSearch ? searchDisplay : displaySearchData)
+      props.filteredData ?? ((AdvanceSearch ? searchDisplay : displaySearchData)
         ? AdvanceSearch
           ? searchedDataOut
           : searchedData
-        : allData,
+        : allData),
     [
+      props.filteredData,
       searchDisplay,
       displaySearchData,
       AdvanceSearch,
@@ -139,7 +147,6 @@ const CommonCheckTable = (props) => {
   );
 
   const [manageColumnsModel, setManageColumnsModel] = useState(false);
-  const [csvColumns, setCsvColumns] = useState([]);
   const [searchbox, setSearchbox] = useState("");
   const [advaceSearch, setAdvaceSearch] = useState(false);
   // const [column, setColumn] = useState('');
@@ -163,6 +170,7 @@ const CommonCheckTable = (props) => {
     getTableBodyProps,
     headerGroups,
     prepareRow,
+    rows,
     page,
     canPreviousPage,
     canNextPage,
@@ -197,7 +205,7 @@ const CommonCheckTable = (props) => {
     dispatch(setSearchValue(values));
     const searchResult = AdvanceSearch
       ? dispatch(
-          getSearchData({ values: values, allData: allData, type: title })
+          getSearchData({ values: values, allData: allData, type: props.searchFilterType || title })
         )
       : allData?.filter((item) => {
           return searchFields?.every((field) => {
@@ -364,42 +372,18 @@ const CommonCheckTable = (props) => {
       : downloadCsvOrExcel(extension);
   };
 
-  const downloadCsvOrExcel = async (extension, selectedIds) => {
+  const recordsToExport = selectedExportRows(rows.map(row => row.original), selectedValues);
+  const csvColumns = exportColumns(columns, tr);
+  const canExport = ManageGrid !== false && exportColumn !== false && access?.export !== false;
+
+  const downloadCsvOrExcel = async (extension) => {
     try {
-      if (selectedIds && selectedIds?.length > 0) {
-        const selectedRecordsWithSpecificFileds = allData
-          ?.filter((rec) => selectedIds?.includes(rec?._id))
-          ?.map((rec) => {
-            const selectedFieldsData = {};
-            csvColumns?.forEach((property) => {
-              selectedFieldsData[property?.accessor] = rec[property?.accessor];
-            });
-            return selectedFieldsData;
-          });
-        commonUtils?.convertJsonToCsvOrExcel({
-          jsonArray: selectedRecordsWithSpecificFileds,
-          csvColumns: csvColumns,
-          fileName: title || "data",
-          extension: extension,
-        });
-      } else {
-        const AllRecordsWithSpecificFileds = allData?.map((rec) => {
-          const selectedFieldsData = {};
-          csvColumns?.forEach((property) => {
-            selectedFieldsData[property?.accessor] = rec[property?.accessor];
-          });
-          return selectedFieldsData;
-        });
-        commonUtils?.convertJsonToCsvOrExcel({
-          jsonArray: AllRecordsWithSpecificFileds,
-          csvColumns: csvColumns,
-          fileName: title || "data",
-          extension: extension,
-        });
-      }
-      setSelectedValues([]);
-    } catch (e) {
-      console.error(e);
+      await commonUtils.convertJsonToCsvOrExcel({
+        jsonArray: recordsToExport, csvColumns, fileName: title || "data", extension,
+        rightToLeft: localStorage.getItem("crm-language") === "fa",
+      });
+    } catch {
+      toast.error(tr("Failed to export data"));
     }
   };
 
@@ -439,18 +423,6 @@ const CommonCheckTable = (props) => {
   useEffect(() => {
     setColumns(columnData);
   }, [columnData]);
-
-  useEffect(() => {
-    if (columns) {
-      let tempCsvColumns = columns
-        ?.filter((col) => col?.Header !== "#" && col?.Header !== "Action")
-        ?.map((field) => ({
-          Header: field?.Header,
-          accessor: field?.accessor,
-        }));
-      setCsvColumns([...tempCsvColumns]);
-    }
-  }, [columns]);
 
   const showPageHero = pageHeader !== false && Boolean(title) && ManageGrid !== false && !size;
 
@@ -593,7 +565,7 @@ const CommonCheckTable = (props) => {
                       {" "}<LocalizedText text="Import" /> <LocalizedText text={title} />
                     </MenuItem>
                   )}
-                  {exportColumn !== false && allData && allData?.length > 0 && (
+                  {canExport && recordsToExport.length > 0 && (
                     <>
                       <MenuDivider />
                       <MenuItem
@@ -695,13 +667,14 @@ const CommonCheckTable = (props) => {
                       </Flex>
                     </Th>
                   ))}
+                  {showSharing && <Th>{tr("Send to user")}</Th>}
                 </Tr>
               ))}
             </Thead>
             <Tbody {...getTableBodyProps()}>
               {isLoding ? (
                 <Tr>
-                  <Td colSpan={columns?.length}>
+                  <Td colSpan={(columns?.length || 0) + (showSharing ? 1 : 0)}>
                     <Flex
                       justifyContent={"center"}
                       alignItems={"center"}
@@ -716,7 +689,7 @@ const CommonCheckTable = (props) => {
                 </Tr>
               ) : (data && data?.length === 0) || data === undefined ? (
                 <Tr>
-                  <Td colSpan={columns?.length}>
+                  <Td colSpan={(columns?.length || 0) + (showSharing ? 1 : 0)}>
                     <Box
                       textAlign={"center"}
                       width="100%"
@@ -806,9 +779,11 @@ const CommonCheckTable = (props) => {
                             borderColor="transparent"
                           >
                             {data}
+                            {index === row.cells.findIndex(item => !["_id", "action"].includes(item.column.id)) && <SharedRecordBadge record={row.original} />}
                           </Td>
                         );
                       })}
+                      {showSharing && <Td><ShareRecordButton module={sharingModule} record={row.original} /></Td>}
                     </Tr>
                   );
                 })

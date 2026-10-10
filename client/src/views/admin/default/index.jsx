@@ -1,4 +1,5 @@
 import { isAdmin } from 'roles';
+import { canViewModule } from "services/moduleVisibility";
 import { LocalizedText } from 'i18n/runtime';
 // Chakra imports
 import {
@@ -170,14 +171,14 @@ export default function UserReports() {
   const [contactsView, taskView, leadView, proprtyView] = HasAccess(["Contacts", "Tasks", "Leads", "Properties"]);
 
   const fetchData = async () => {
-    let responseData = await getApi(isAdmin(user) ? `api/status/` : `api/status/?createBy=${user?._id}`);
+    let responseData = await getApi('api/status/');
     setAllData(responseData?.data?.data);
   };
 
 
   const fetchProgressChart = async () => {
     setIsLoding(true);
-    let result = await getApi(isAdmin(user) ? 'api/reporting/line-chart' : `api/reporting/line-chart?createBy=${user?._id}`);
+    let result = await getApi('api/reporting/line-chart');
     if (result && result?.status === 200) {
       setData(result?.data)
     }
@@ -209,13 +210,13 @@ export default function UserReports() {
     return filterData?.length || 0
   }
 
-  const leadModule = modules?.find(({ moduleName }) => moduleName === "Leads")
-  const contactModule = modules?.find(({ moduleName }) => moduleName === "Contacts")
-  const propertiesModule = modules?.find(({ moduleName }) => moduleName === "Properties")
-  const tasksModule = modules?.find(({ moduleName }) => moduleName === "Tasks")
-  const reportModule = modules?.find(({ moduleName }) => moduleName === "Reporting and Analytics")
-  const emailModule = modules?.find(({ moduleName }) => moduleName === "Emails")
-  const callModule = modules?.find(({ moduleName }) => moduleName === "Calls")
+  const leadModule = { isActive: canViewModule("Leads", user) && modules?.find(({ moduleName }) => moduleName === "Leads")?.isActive !== false }
+  const contactModule = { isActive: canViewModule("Contacts", user) && modules?.find(({ moduleName }) => moduleName === "Contacts")?.isActive !== false }
+  const propertiesModule = { isActive: canViewModule("Properties", user) && modules?.find(({ moduleName }) => moduleName === "Properties")?.isActive !== false }
+  const tasksModule = { isActive: canViewModule("Tasks", user) && modules?.find(({ moduleName }) => moduleName === "Tasks")?.isActive !== false }
+  const reportModule = { isActive: canViewModule("Reporting and Analytics", user) && modules?.find(({ moduleName }) => moduleName === "Reporting and Analytics")?.isActive !== false }
+  const emailModule = { isActive: canViewModule("Emails", user) && modules?.find(({ moduleName }) => moduleName === "Emails")?.isActive !== false }
+  const callModule = { isActive: canViewModule("Calls", user) && modules?.find(({ moduleName }) => moduleName === "Calls")?.isActive !== false }
 
   const taskStatus = [
     {
@@ -293,6 +294,7 @@ export default function UserReports() {
           <Text className="crm-dashboard-hero__subtitle">{t("Your business overview is ready")}</Text>
         </Box>
         <Flex className="crm-dashboard-hero__actions" position="relative" zIndex="1" gap="10px" wrap="wrap">
+
           {(isAdmin(user) || propertiesModule?.isActive) && (
             <Button className="crm-dashboard-hero__primary" leftIcon={<LuBuilding2 />} onClick={() => navigate("/properties")}>{t("Browse properties")}</Button>
           )}
@@ -417,7 +419,7 @@ export default function UserReports() {
 
       <Grid className="crm-dashboard-charts" templateColumns="repeat(12, 1fr)" gap={4}>
         {
-          ((isAdmin(user) || emailModule?.isActive) || (isAdmin(user) || callModule?.isActive)) &&
+          (isAdmin(user) || reportModule?.isActive) && ((isAdmin(user) || emailModule?.isActive) || (isAdmin(user) || callModule?.isActive)) &&
           <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
             <Card>
               <DashboardCardHeader

@@ -1,10 +1,11 @@
 import { safeInternalPath } from 'services/contentSecurity';
-import { Badge, Box, Button, Flex, IconButton, Menu, MenuButton, MenuItem, MenuList, Spinner, Text, useColorModeValue } from '@chakra-ui/react';
+import { Box, Button, Flex, IconButton, Menu, MenuButton, MenuItem, MenuList, Spinner, Text, useColorModeValue } from '@chakra-ui/react';
 import { FiBell } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useLanguage } from 'i18n';
 import useNotifications from './useNotifications';
+import { refreshModuleAccess } from 'services/moduleVisibility';
 
 export const notificationTitles = {
   task_assigned: 'Task assigned to you',
@@ -17,6 +18,7 @@ export const notificationTitles = {
   record_deleted: 'Record deleted',
   record_status_changed: 'Record status changed',
   record_assigned: 'Record assigned to you',
+  record_shared: 'An administrator sent you an item',
   property_sold: 'Property marked as sold',
   account_created: 'Your account was created',
   account_updated: 'Your account was updated',
@@ -36,6 +38,7 @@ export default function NotificationsMenu({ userId }) {
   const open = async notification => {
     const success = await markRead(notification);
     if (!success) toast.error(t('Failed to update notifications'));
+    if (notification.type === 'record_shared') await refreshModuleAccess();
     const link = notification.link;
     navigate(safeInternalPath(link));
   };
@@ -45,12 +48,10 @@ export default function NotificationsMenu({ userId }) {
       <MenuButton
         as={IconButton}
         className="crm-header-icon-button"
-        aria-label={t('Notifications')}
+        data-unread={unreadCount > 0 ? "true" : "false"}
+        aria-label={t('Notifications') + (unreadCount > 0 ? ': ' + unreadCount + ' ' + t('unread') : '')}
         icon={<Box position="relative" display="flex">
           <FiBell />
-          {unreadCount > 0 && <Badge className="crm-notifications-count" aria-label={unreadCount + ' ' + t('unread')}>
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </Badge>}
         </Box>}
         variant="ghost"
       />

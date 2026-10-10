@@ -40,7 +40,7 @@ beforeEach(() => {
   localStorage.setItem('user', JSON.stringify({ _id: 'ordinary-user', role: 'user' }));
   mockState = { modules: { data: [] }, images: { images: [] } };
   Object.defineProperty(window, 'innerWidth', { value: 1440, configurable: true, writable: true });
-  getApi.mockResolvedValue({ status: 200, data: [
+  getApi.mockImplementation(async path => path === 'api/visibility/me' ? { status: 200, data: { visibility: { Tasks: true } } } : { status: 200, data: [
     { moduleName: 'Custom Module' }, { moduleName: ' custom  module ' },
     { moduleName: 'Dashboard' }, { moduleName: 'default' },
   ] });
@@ -89,7 +89,8 @@ test('repeated navigation keeps the item count fixed and selects exactly the cli
     expect(selected[0].getAttribute('href')).toBe(path);
     expect(container.querySelectorAll('#crm-sidebar .is-active')).toHaveLength(1);
   }
-  expect(getApi).toHaveBeenCalledTimes(1);
+  expect(getApi.mock.calls.filter(([path]) => path === 'api/route/')).toHaveLength(1);
+  expect(getApi.mock.calls.filter(([path]) => path === 'api/visibility/me')).toHaveLength(1);
   expect(configuredRoutes).toHaveLength(7);
 });
 
@@ -100,11 +101,11 @@ test('opening a task detail keeps the Tasks sidebar item selected', async () => 
   expect(container.querySelectorAll('#crm-sidebar .is-active')).toHaveLength(1);
 });
 
-test('module availability updates rebuild the list without accumulating links', async () => {
+test('global module availability does not disable ordinary user tabs or duplicate links', async () => {
   await render();
   mockState = { ...mockState, modules: { data: [{ moduleName: 'Tasks', isActive: false }] } };
   await render();
-  expect(sidebarLinks().map(item => item.getAttribute('href'))).toEqual(['/default', '/calender', '/custom-module']);
+  expect(sidebarLinks().map(item => item.getAttribute('href'))).toEqual(['/default', '/task', '/calender', '/custom-module']);
   mockState = { ...mockState, modules: { data: [{ moduleName: 'Tasks', isActive: true }] } };
   await render();
   expect(sidebarLinks().map(item => item.getAttribute('href'))).toEqual(['/default', '/task', '/calender', '/custom-module']);
@@ -117,4 +118,26 @@ test('a mobile click selects the item and closes the sidebar once', async () => 
   expect(container.querySelector('.crm-shell').getAttribute('data-sidebar-open')).toBe('false');
   expect(container.querySelector('#crm-sidebar a[aria-current="page"]').getAttribute('href')).toBe('/task');
   expect(sidebarLinks()).toHaveLength(4);
+});
+
+test('per-user visibility updates data restrictions without removing sidebar tabs', async () => {
+  let visibility = { Tasks: false };
+  getApi.mockImplementation(async path => path === 'api/visibility/me'
+    ? { status: 200, data: { visibility } }
+    : { status: 200, data: [] });
+  await render();
+  expect(sidebarLinks().map(link => link.getAttribute('href'))).toEqual(['/default', '/task', '/calender']);
+  visibility = { Tasks: true, Calender: false };
+  await act(async () => { window.dispatchEvent(new Event('focus')); });
+  expect(sidebarLinks().map(link => link.getAttribute('href'))).toEqual(['/default', '/task', '/calender']);
+});
+
+test('tabs stay available even when no own or sent records exist', async () => {
+  let accessibleModules = [];
+  getApi.mockImplementation(async path => path === 'api/visibility/me' ? { status: 200, data: { visibility: { Tasks: false }, accessibleModules } } : { status: 200, data: [] });
+  await render(); expect(sidebarLinks().map(link => link.getAttribute('href'))).toContain('/task');
+  accessibleModules = ['Tasks']; await act(async () => window.dispatchEvent(new Event('focus')));
+  expect(sidebarLinks().map(link => link.getAttribute('href'))).toContain('/task');
+  accessibleModules = []; await act(async () => window.dispatchEvent(new Event('focus')));
+  expect(sidebarLinks().map(link => link.getAttribute('href'))).toContain('/task');
 });

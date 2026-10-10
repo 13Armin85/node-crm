@@ -1,4 +1,5 @@
 import { isAdmin } from 'roles';
+import { canManageTask } from 'services/taskAccess';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
@@ -23,7 +24,6 @@ import { getApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import TaskAdvanceSearch from "./components/TaskAdvanceSearch";
-import { SearchIcon } from "@chakra-ui/icons";
 import { CiMenuKebab } from "react-icons/ci";
 import ImportModal from "../lead/components/ImportModal";
 import { putApi } from "services/api";
@@ -32,11 +32,15 @@ import CommonDeleteModel from "components/commonDeleteModel";
 import { deleteManyApi } from "services/api";
 import AddEdit from "./components/AddEdit";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { filterTasks } from "services/taskSearch";
+import { setGetTagValues, setSearchValue } from "../../../redux/slices/advanceSearchSlice";
 import { fetchTaskData } from "../../../redux/slices/taskSlice";
 import { toast } from "react-toastify";
 import { FiColumns, FiFilter, FiList, FiPlus, FiSearch } from "react-icons/fi";
 import TaskKanban from "./components/TaskKanban";
+import ExcelExportButton from "components/ExcelExportButton";
+import { exportColumns } from "utils/exportRecords";
 
 const selectionValue = (value) => {
   if (!value || typeof value !== "object") return value || "";
@@ -72,7 +76,6 @@ const Task = () => {
   const [selectedId, setSelectedId] = useState();
   const [selectedValues, setSelectedValues] = useState([]);
   const [advanceSearch, setAdvanceSearch] = useState(false);
-  const [getTagValuesOutSide, setGetTagValuesOutside] = useState([]);
   const [searchboxOutside, setSearchboxOutside] = useState("");
   const [user] = useState(() => JSON.parse(localStorage.getItem("user")));
   const [deleteMany, setDeleteMany] = useState(false);
@@ -80,10 +83,9 @@ const Task = () => {
   const [isLoding, setIsLoding] = useState(false);
   const [data, setData] = useState([]);
   const [displaySearchData, setDisplaySearchData] = useState(false);
-  const [searchedData, setSearchedData] = useState([]);
+  const searchFilters = useSelector(state => state?.advanceSearchData?.searchValue) || {};
   const [userAction, setUserAction] = useState("");
   const [viewMode, setViewMode] = useState("kanban");
-  const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [assignees, setAssignees] = useState([]);
   const [permission] = HasAccess(["Tasks"]);
   const location = useLocation();
@@ -110,7 +112,7 @@ const Task = () => {
             minW={"fit-content"}
             transform={"translate(1520px, 173px);"}
           >
-            {(permission?.update || !isAdmin(user)) && (
+            {permission?.update && canManageTask(row.original, user) && (
               <MenuItem
                 py={2.5}
                 icon={<EditIcon fontSize={15} mb={1} />}
@@ -127,7 +129,7 @@ const Task = () => {
                 }}
               ><LocalizedText text="View" /></MenuItem>
             )}
-            {permission?.delete && (
+            {permission?.delete && canManageTask(row.original, user) && (
               <MenuItem
                 py={2.5}
                 color={"red"}
@@ -189,6 +191,7 @@ const Task = () => {
         <div className="selectOpt">
           <Select
             data-task-select="status"
+            isDisabled={!canManageTask(cell?.row?.original, user)}
             className={changeStatus(cell)}
             onChange={(e) => setStatusData(cell, e)}
             height={7}
@@ -257,6 +260,7 @@ const Task = () => {
     }
   };
   const updateKanbanStatus = async (taskId, status) => {
+    if (!canManageTask(data.find(task => task._id === taskId), user)) return;
     const previous = data;
     setData((items) => items.map((item) => item._id === taskId ? { ...item, status } : item));
     const response = await putApi(`api/task/changeStatus/${taskId}`, { status });
@@ -333,16 +337,7 @@ const Task = () => {
     });
   }, [user]);
 
-  const taskSource = displaySearchData ? searchedData : data;
-  const visibleData = taskSource
-    .filter((item) => assigneeFilter === "all" || String(selectionValue(item.assignedToUser) || selectionValue(item.createBy)) === assigneeFilter)
-    .filter((item) => {
-      const needle = searchboxOutside.trim().toLowerCase();
-      if (!needle) return true;
-      return [item.title, item.description, item.notes, item.category]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(needle));
-    });
+  const visibleData = filterTasks(data, searchboxOutside, displaySearchData ? searchFilters : {});
 
   return (
     <Box width="100%" minW={0}>
@@ -352,25 +347,23 @@ const Task = () => {
           <Text className="crm-page-hero__subtitle" fontSize="sm"><LocalizedText text="Assign tasks to users and change work status with drag and drop." /></Text>
         </Box>
         <Flex gap={2} wrap="wrap" width={{ base: "100%", md: "auto" }}>
-          {isAdmin(user) && (
-            <Select size="sm" w={{ base: "100%", sm: "190px" }} value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)}>
-              <option value="all">{tr("All users")}</option>
-              {assignees.map((item) => <option key={item._id} value={item._id}>{[item.firstName, item.lastName].filter(Boolean).join(" ") || item.username}</option>)}
-            </Select>
-          )}
+
           <ButtonGroup size="sm" isAttached variant="outline" flex={{ base: "1 1 auto", sm: "initial" }}>
             <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiColumns />} colorScheme={viewMode === "kanban" ? "brand" : "gray"} onClick={() => setViewMode("kanban")}><LocalizedText text="Kanban" /></Button>
             <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiList />} colorScheme={viewMode === "list" ? "brand" : "gray"} onClick={() => setViewMode("list")}><LocalizedText text="List" /></Button>
           </ButtonGroup>
+          {viewMode === "kanban" && permission?.export !== false && <ExcelExportButton rows={visibleData} columns={exportColumns(tableColumns, tr)} fileName={tr("Tasks")} isDisabled={isLoding} />}
           {permission?.create && <Button flex={{ base: "1 1 auto", sm: "initial" }} size="sm" variant="brand" leftIcon={<FiPlus />} onClick={addBtn}><LocalizedText text="New Task" /></Button>}
         </Flex>
       </Flex>
-      {viewMode === "kanban" && (
-        <Flex className="crm-task-searchbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
-          <InputGroup><InputLeftElement h="100%" pointerEvents="none"><FiSearch /></InputLeftElement><Input value={searchboxOutside} onChange={(event) => setSearchboxOutside(event.target.value)} placeholder={tr("Search...")} /></InputGroup>
+      <Flex className="crm-task-searchbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
+          <InputGroup><InputLeftElement h="100%" pointerEvents="none"><FiSearch /></InputLeftElement><Input value={searchboxOutside} onChange={(event) => setSearchboxOutside(event.target.value)} placeholder={tr("Search tasks or names...")} aria-label={tr("Search tasks or names...")} /></InputGroup>
           <Button variant="outline" colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setAdvanceSearch(true)}><LocalizedText text="Filters" /></Button>
+          {(searchboxOutside || displaySearchData) && <Button variant="ghost" onClick={() => {
+            setSearchboxOutside(""); setDisplaySearchData(false);
+            dispatch(setSearchValue({})); dispatch(setGetTagValues([]));
+          }}><LocalizedText text="Clear" /></Button>}
         </Flex>
-      )}
       {viewMode === "kanban" ? (
         <TaskKanban tasks={visibleData} assignees={assignees} canDelegate={isAdmin(user)} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
       ) : <CommonCheckTable
@@ -379,11 +372,12 @@ const Task = () => {
         isLoding={isLoding}
         columnData={tableColumns ?? []}
         // dataColumn={dataColumn ?? []}
-        allData={visibleData ?? []}
+        allData={data ?? []}
+        filteredData={visibleData}
+        customSearch={false}
+        searchFilterType="Tasks"
         searchDisplay={displaySearchData}
         setSearchDisplay={setDisplaySearchData}
-        searchedDataOut={searchedData}
-        setSearchedDataOut={setSearchedData}
         tableCustomFields={[]}
         access={permission}
         // selectedColumns={selectedColumns}
@@ -393,19 +387,8 @@ const Task = () => {
         selectedValues={selectedValues}
         setSelectedValues={setSelectedValues}
         setDelete={setDeleteMany}
-        AdvanceSearch={
-          <Button
-            variant="outline"
-            colorScheme="brand"
-            leftIcon={<SearchIcon />}
-            mt={{ sm: "5px", md: "0" }}
-            size="sm"
-            onClick={() => setAdvanceSearch(true)}
-          ><LocalizedText text="Advance Search" /></Button>
-        }
-        getTagValuesOutSide={getTagValuesOutSide}
+        AdvanceSearch={true}
         searchboxOutside={searchboxOutside}
-        setGetTagValuesOutside={setGetTagValuesOutside}
         setSearchboxOutside={setSearchboxOutside}
         handleSearchType="TasksSearch"
       />}
@@ -414,11 +397,9 @@ const Task = () => {
         advanceSearch={advanceSearch}
         setAdvanceSearch={setAdvanceSearch}
         state={state}
-        setSearchedData={setSearchedData}
         setDisplaySearchData={setDisplaySearchData}
         allData={data ?? []}
         setAction={setAction}
-        setGetTagValues={setGetTagValuesOutside}
         setSearchbox={setSearchboxOutside}
       />
       <AddEdit

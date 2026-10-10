@@ -13,7 +13,7 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['task_assigned', 'task_status_changed', 'task_updated', 'task_unassigned', 'task_deleted', 'record_created', 'record_updated', 'record_deleted', 'record_status_changed', 'record_assigned', 'property_sold', 'account_created', 'account_updated', 'role_changed', 'document_uploaded', 'document_linked'],
+        enum: ['task_assigned', 'task_status_changed', 'task_updated', 'task_unassigned', 'task_deleted', 'record_created', 'record_updated', 'record_deleted', 'record_status_changed', 'record_assigned', 'record_shared', 'property_sold', 'account_created', 'account_updated', 'role_changed', 'document_uploaded', 'document_linked'],
         required: true,
     },
     message: {

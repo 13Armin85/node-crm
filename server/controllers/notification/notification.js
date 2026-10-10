@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 const Notification = require('../../model/schema/notification');
+const { notificationScope } = require('../../services/recordSharing');
 
 const index = async (req, res) => {
     try {
         const recipient = req.user.userId;
-        const query = { recipient };
+        const baseQuery = { recipient, ...await notificationScope(req) };
+        const query = { ...baseQuery };
         const limit = Math.max(1, Math.min(100, parseInt(req.query?.limit, 10) || 30));
         if (req.query?.before) {
             if (!/^[a-f\d]{24}$/i.test(req.query.before)) return res.status(400).json({ message: 'Invalid notification cursor' });
@@ -16,7 +18,7 @@ const index = async (req, res) => {
                 .sort({ _id: -1 })
                 .limit(limit + 1)
                 .lean(),
-            Notification.countDocuments({ recipient, readAt: null }),
+            Notification.countDocuments({ ...baseQuery, readAt: null }),
         ]);
         const notifications = rows.slice(0, limit);
         const hasMore = rows.length > limit;
@@ -34,7 +36,7 @@ const markRead = async (req, res) => {
     try {
         if (!/^[a-f\d]{24}$/i.test(req.params.id)) return res.status(400).json({ message: 'Invalid notification ID' });
         const notification = await Notification.findOneAndUpdate(
-            { _id: req.params.id, recipient: req.user.userId },
+            { _id: req.params.id, recipient: req.user.userId, ...await notificationScope(req) },
             [{ $set: { readAt: { $ifNull: ['$readAt', new Date()] } } }],
             { new: true },
         );
@@ -50,11 +52,12 @@ const markAllRead = async (req, res) => {
     try {
         const readAt = new Date();
         const recipient = req.user.userId;
+        const access = await notificationScope(req);
         const result = await Notification.updateMany(
-            { recipient, readAt: null, createdAt: { $lte: readAt } },
+            { recipient, readAt: null, createdAt: { $lte: readAt }, ...access },
             { $set: { readAt } },
         );
-        const unreadCount = await Notification.countDocuments({ recipient, readAt: null });
+        const unreadCount = await Notification.countDocuments({ recipient, readAt: null, ...access });
         return res.status(200).json({ updatedCount: result.modifiedCount, readAt, unreadCount });
     } catch (error) {
         console.error('Failed to mark notifications as read:', error.message);

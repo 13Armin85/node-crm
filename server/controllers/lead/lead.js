@@ -2,8 +2,7 @@ const { Lead } = require("../../model/schema/lead");
 const email = require("../../model/schema/email");
 const PhoneCall = require("../../model/schema/phoneCall");
 const Task = require("../../model/schema/task");
-const { readScope, readActor } = require('../../services/recordAccess');
-const { taskScope } = require("../../services/taskAccess");
+const { readScope } = require('../../services/recordAccess');
 const MeetingHistory = require("../../model/schema/meeting");
 const DocumentSchema = require("../../model/schema/document");
 const { unlinkLead } = require('../../services/relationshipSync');
@@ -21,7 +20,7 @@ const index = async (req, res) => {
     })
     .exec();
 
-  const result = require('../../services/userRoles').isAdmin(req.actor) ? allData : allData.filter((item) => item.createBy !== null);
+  const result = allData;
   res.send(result);
 };
 
@@ -89,8 +88,8 @@ const edit = async (req, res) => {
 const view = async (req, res) => {
   let lead = await Lead.findOne({ _id: req.params.id })
     .populate("associatedListing")
-    .populate("contact", "fullName firstName lastName email phoneNumber")
-    .populate("partnerCustomer", "fullName companyName phone email")
+    .populate({ path: 'contact', select: 'fullName firstName lastName email phoneNumber', match: readScope(req, req.actor, 'Contacts', { deleted: false }) })
+    .populate({ path: 'partnerCustomer', select: 'fullName companyName phone email', match: readScope(req, req.actor, 'Partner Customers', { deleted: false }) })
     .populate({ path: 'relatedOpportunities', select: 'opportunityName salesStage amount expectedCloseDate', match: readScope(req, req.actor, 'Opportunities', { deleted: false }) });
 
   if (!lead) return res.status(404).json({ message: "no Data Found." });
@@ -105,7 +104,7 @@ const view = async (req, res) => {
     { $match: readScope(req, req.actor, 'Emails', { createByLead: lead._id, deleted: false }) },
     {
       $lookup: {
-        from: "Leads", // Assuming this is the collection name for 'leads'
+        from: "Leads", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }], // Assuming this is the collection name for 'leads'
         localField: "createByLead",
         foreignField: "_id",
         as: "createByrefLead",
@@ -122,7 +121,6 @@ const view = async (req, res) => {
     { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$createByRef", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true } },
-    { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
     {
       $addFields: {
         senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
@@ -163,7 +161,7 @@ const view = async (req, res) => {
     { $match: readScope(req, req.actor, 'Calls', { createByLead: lead._id, deleted: false }) },
     {
       $lookup: {
-        from: "Leads", // Assuming this is the collection name for 'leads'
+        from: "Leads", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }], // Assuming this is the collection name for 'leads'
         localField: "createByLead",
         foreignField: "_id",
         as: "createByrefLead",
@@ -180,7 +178,6 @@ const view = async (req, res) => {
     },
     { $unwind: { path: "$users", preserveNullAndEmptyArrays: true } },
     { $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true } },
-    { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
     {
       $addFields: {
         senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
@@ -192,10 +189,10 @@ const view = async (req, res) => {
   ]);
 
   let task = await Task.aggregate([
-    { $match: taskScope(readActor(req, req.actor), { assignToLead: lead._id, deleted: false }) },
+    { $match: readScope(req, req.actor, 'Tasks', { assignToLead: lead._id, deleted: false }) },
     {
       $lookup: {
-        from: "Leads",
+        from: "Leads", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }],
         localField: "assignToLead",
         foreignField: "_id",
         as: "lead",
@@ -232,7 +229,7 @@ const view = async (req, res) => {
     },
     {
       $lookup: {
-        from: "Leads",
+        from: "Leads", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }],
         localField: "assignToLead",
         foreignField: "_id",
         as: "lead",
@@ -262,7 +259,7 @@ const view = async (req, res) => {
   const Document = await DocumentSchema.aggregate([
             { $match: readScope(req, req.actor, 'Documents', { deleted: false }) },
     { $unwind: "$file" },
-    { $match: { "file.deleted": false, "file.linkLead": lead._id } },
+    { $match: { 'file.deleted': false, 'file.linkLead': lead._id, ...require('../../services/recordSharing').documentFileScope(req) } },
     {
       $lookup: {
         from: "User", // Replace 'users' with the actual name of your users collection
@@ -285,7 +282,7 @@ const view = async (req, res) => {
         files: { $push: "$file" }, // Push the matching files back into an array
       },
     },
-    { $project: { creatorInfo: 0 } },
+    { $project: { creatorInfo: 0, 'files.path': 0 } },
   ]);
 
   res.status(200).json({ lead, Email, phoneCall, task, meeting, Document });

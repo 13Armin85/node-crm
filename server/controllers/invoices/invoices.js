@@ -20,7 +20,7 @@ const index = async (req, res) => {
             { $match: query },
             {
                 $lookup: {
-                    from: "Contacts",
+                    from: "Contacts", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: "contact",
                     foreignField: "_id",
                     as: "contactData",
@@ -28,7 +28,7 @@ const index = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "PartnerCustomers",
+                    from: "PartnerCustomers", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
                     localField: "account",
                     foreignField: "_id",
                     as: "accountData",
@@ -63,7 +63,6 @@ const index = async (req, res) => {
             { $unwind: { path: "$accountData", preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: "$assignedToData", preserveNullAndEmptyArrays: true } },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     assignUserName: {
@@ -147,7 +146,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "Contacts",
+                    from: "Contacts", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: "contact",
                     foreignField: "_id",
                     as: "contactData",
@@ -155,7 +154,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "PartnerCustomers",
+                    from: "PartnerCustomers", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
                     localField: "account",
                     foreignField: "_id",
                     as: "accountData",
@@ -191,7 +190,6 @@ const view = async (req, res) => {
             { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: "$assignedToData", preserveNullAndEmptyArrays: true } },
             { $unwind: { path: "$oppotunityData", preserveNullAndEmptyArrays: true } },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     assignUserName: {
@@ -211,10 +209,10 @@ const view = async (req, res) => {
             { $project: { users: 0, contactData: 0, accountData: 0, modifiedByUser: 0, oppotunityData: 0, assignedToData: 0 } },
         ]);
         let quotesDetails = await Quotes.aggregate([
-            { $match: { _id: response.quotesId, deleted: false } },
+            { $match: readScope(req, req.actor, 'Quotes', { _id: response.quotesId, deleted: false }) },
             {
                 $lookup: {
-                    from: "Contacts",
+                    from: "Contacts", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: "contact",
                     foreignField: "_id",
                     as: "contactData",
@@ -222,7 +220,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "PartnerCustomers",
+                    from: "PartnerCustomers", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
                     localField: "account",
                     foreignField: "_id",
                     as: "accountData",

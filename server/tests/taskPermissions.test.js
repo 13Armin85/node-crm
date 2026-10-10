@@ -10,9 +10,10 @@ const CustomField = require('../model/schema/customField');
 const FormDefinition = require('../model/schema/formDefinition');
 const { jwtSecret } = require('../config/auth');
 
-test('only persisted admin and developer roles may delegate through task and generic form APIs', async t => {
+test('ordinary tasks are read-only across direct and generic APIs; persisted administrative roles retain management', async t => {
+  t.mock.method(require('../services/recordSharing'), 'loadShares', async () => []);
   const users = ['user', 'user', 'admin', 'developer'].map(role => ({
-    _id: new mongoose.Types.ObjectId(), role, deleted: false,
+    _id: new mongoose.Types.ObjectId(), role, deleted: false, moduleVisibility: { Tasks: true },
   }));
   const [ordinary, recipient, admin, developer] = users;
   const module = { _id: new mongoose.Types.ObjectId(), moduleName: 'Tasks', fields: [] };
@@ -44,6 +45,7 @@ test('only persisted admin and developer roles may delegate through task and gen
         : !task.assignedToUser && String(task.createBy) === String(clause.createBy)));
     return query(allowed ? task : null);
   });
+  t.mock.method(Task, 'aggregate', async pipeline => { const match = pipeline[0].$match; return [...records.values()].filter(task => !match._id || String(task._id) === String(match._id)); });
   const update = t.mock.method(Task, 'findByIdAndUpdate', async (id, values) => {
     const task = records.get(String(id));
     task.set(values.$set);
@@ -69,55 +71,50 @@ test('only persisted admin and developer roles may delegate through task and gen
   assert.equal((await api('GET', '/task/assignees')).status, 403);
   for (const actor of [admin, developer]) assert.equal((await api('GET', '/task/assignees', null, actor)).status, 200);
 
+
   for (const prefix of ['/task', '/form']) {
     const metadata = prefix === '/form' ? { moduleId: String(module._id) } : {};
     const unwrap = data => prefix === '/form' ? data.data : data;
     const before = notifications.mock.callCount();
-    for (const role of ['user', 'admin', 'developer']) {
-      const denied = await api('POST', prefix + '/add', { ...metadata, title: 'Forbidden', assignedToUser: String(recipient._id) }, ordinary, role);
-      assert.equal(denied.status, 403, JSON.stringify(denied));
+    for (const claimedRole of ['user', 'admin', 'developer']) {
+      for (const assignedToUser of [String(ordinary._id), String(recipient._id)]) {
+        const denied = await api('POST', prefix + '/add', { ...metadata, title: 'Forbidden', assignedToUser }, ordinary, claimedRole);
+        assert.equal(denied.status, 403, JSON.stringify(denied));
+      }
     }
     assert.equal(notifications.mock.callCount(), before);
-    const created = await api('POST', prefix + '/add', { ...metadata, title: 'Own task', delegatedBy: String(admin._id) });
+    const created = await api('POST', prefix + '/add', { ...metadata, title: 'Admin assignment', assignedToUser: String(ordinary._id) }, admin);
     assert.equal(created.status, 200, JSON.stringify(created));
     const task = unwrap(created.data);
     assert.equal(task.assignedToUser, String(ordinary._id));
-    assert.equal(task.createBy, String(ordinary._id));
-    assert.equal(task.delegatedBy, undefined);
-    const blockedNotifications = notifications.mock.callCount();
-    const blockedUpdates = update.mock.callCount();
-    for (const assignedToUser of [String(recipient._id), null, '']) {
-      const denied = await api('PUT', prefix + '/edit/' + task._id, { ...metadata, assignedToUser }, ordinary, 'developer');
-      assert.equal(denied.status, 403, JSON.stringify(denied));
+    assert.equal(task.createBy, String(admin._id));
+    assert.equal(task.delegatedBy, String(admin._id));
+    const detailPath = prefix + '/view/' + task._id + (prefix === '/form' ? '?moduleId=' + module._id : '');
+    assert.equal((await api('GET', detailPath)).status, 200);
+    const blockedNotifications = notifications.mock.callCount(), blockedUpdates = update.mock.callCount();
+    for (const claimedRole of ['user', 'admin', 'developer']) {
+      assert.equal((await api('PUT', prefix + '/edit/' + task._id, { ...metadata, description: 'Denied own edit' }, ordinary, claimedRole)).status, 403);
+      assert.equal((await api('DELETE', prefix + '/delete/' + task._id + (prefix === '/form' ? '?moduleId=' + module._id : ''), null, ordinary, claimedRole)).status, 403);
+      const bulkBody = prefix === '/form' ? { ...metadata, ids: [task._id] } : [task._id];
+      assert.equal((await api('POST', prefix + '/deleteMany', bulkBody, ordinary, claimedRole)).status, 403);
+      if (prefix === '/task') assert.equal((await api('PUT', '/task/changeStatus/' + task._id, { status: 'completed' }, ordinary, claimedRole)).status, 403);
     }
     assert.equal(notifications.mock.callCount(), blockedNotifications);
     assert.equal(update.mock.callCount(), blockedUpdates);
-    const edited = await api('PUT', prefix + '/edit/' + task._id, { ...metadata, description: 'Still editable', assignedToUser: String(ordinary._id) });
-    assert.equal(edited.status, 200, JSON.stringify(edited));
-    assert.equal(unwrap(edited.data).description, 'Still editable');
-    const ownEdit = update.mock.calls[update.mock.callCount() - 1].arguments[1].$set;
-    assert.equal(Object.hasOwn(ownEdit, 'assignedToUser'), false);
-    assert.equal(Object.hasOwn(ownEdit, 'delegatedBy'), false);
-
     for (const actor of [admin, developer]) {
       const target = actor === admin ? recipient : ordinary;
-      const other = actor === admin ? ordinary : recipient;
-      const assigned = await api('PUT', prefix + '/edit/' + task._id, { ...metadata, assignedToUser: String(target._id), delegatedBy: String(ordinary._id) }, actor);
+      const assigned = await api('PUT', prefix + '/edit/' + task._id, { ...metadata, assignedToUser: String(target._id), notes: 'Admin edit' }, actor);
       assert.equal(assigned.status, 200, JSON.stringify(assigned));
       assert.equal(unwrap(assigned.data).assignedToUser, String(target._id));
       assert.equal(unwrap(assigned.data).delegatedBy, String(actor._id));
-      const updatedByAssignee = await api('PUT', prefix + '/edit/' + task._id, { ...metadata, notes: 'Assignee update' }, target);
-      assert.equal(updatedByAssignee.status, 200, JSON.stringify(updatedByAssignee));
-      assert.equal(unwrap(updatedByAssignee.data).assignedToUser, String(target._id));
-      assert.equal((await api('PUT', prefix + '/edit/' + task._id, { ...metadata, assignedToUser: String(other._id) }, target)).status, 403);
+      assert.equal((await api('PUT', prefix + '/edit/' + task._id, { ...metadata, notes: 'Denied assignee edit' }, target)).status, 403);
       const assignedAtCreate = await api('POST', prefix + '/add', { ...metadata, title: 'Admin assignment', assignedToUser: String(ordinary._id) }, actor);
       assert.equal(assignedAtCreate.status, 200, JSON.stringify(assignedAtCreate));
-      assert.equal(unwrap(assignedAtCreate.data).delegatedBy, String(actor._id));
     }
     const legacy = new Task({ title: 'Legacy unassigned task', createBy: ordinary._id });
     records.set(String(legacy._id), legacy);
-    const legacyEdit = await api('PUT', prefix + '/edit/' + legacy._id, { ...metadata, description: 'Legacy edit' });
-    assert.equal(legacyEdit.status, 200, JSON.stringify(legacyEdit));
-    assert.equal(unwrap(legacyEdit.data).assignedToUser, undefined);
+    assert.equal((await api('PUT', prefix + '/edit/' + legacy._id, { ...metadata, description: 'Denied legacy edit' })).status, 403);
+    assert.equal((await api('GET', prefix + '/view/' + legacy._id + (prefix === '/form' ? '?moduleId=' + module._id : ''))).status, 200);
   }
+
 });

@@ -1,4 +1,4 @@
-const { readActor } = require('../../services/recordAccess');
+const { readScope } = require('../../services/recordAccess');
 const { isAdmin } = require('../../services/userRoles');
 const Task = require('../../model/schema/task');
 const User = require('../../model/schema/user');
@@ -104,10 +104,10 @@ const validateReferences = async (data) => {
     return null;
 };
 
-const taskPipeline = (match) => [
+const taskPipeline = (match, req) => [
     { $match: match },
-    { $lookup: { from: 'Contacts', localField: 'assignTo', foreignField: '_id', as: 'contact' } },
-    { $lookup: { from: 'Leads', localField: 'assignToLead', foreignField: '_id', as: 'lead' } },
+    { $lookup: { from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }], localField: 'assignTo', foreignField: '_id', as: 'contact' } },
+    { $lookup: { from: 'Leads', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }], localField: 'assignToLead', foreignField: '_id', as: 'lead' } },
     { $lookup: { from: 'User', localField: 'createBy', foreignField: '_id', as: 'creator' } },
     { $lookup: { from: 'User', localField: 'assignedToUser', foreignField: '_id', as: 'assignee' } },
     { $unwind: { path: '$contact', preserveNullAndEmptyArrays: true } },
@@ -142,7 +142,7 @@ const index = async (req, res) => {
         if (req.query.assignedToUser && isAdmin(user) && isValidId(req.query.assignedToUser)) {
             query.assignedToUser = new mongoose.Types.ObjectId(req.query.assignedToUser);
         }
-        const result = await Task.aggregate(taskPipeline(accessFilter(readActor(req, user), query)));
+        const result = await Task.aggregate(taskPipeline(readScope(req, user, 'Tasks', query), req));
         res.status(200).json(result);
     } catch (error) {
         res.status(500).json({ message: 'Failed to load tasks', error: error.message });
@@ -186,7 +186,7 @@ const findAccessible = async (req, id) => {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
     const user = await currentUser(req);
     if (!user) return null;
-    return { user, task: await Task.findOne(accessFilter(user, { _id: id, deleted: false })) };
+    return { user, task: await Task.findOne(req.method === 'GET' ? readScope(req, user, 'Tasks', { _id: id, deleted: false }) : accessFilter(user, { _id: id, deleted: false })) };
 };
 
 const edit = async (req, res) => {
@@ -249,7 +249,7 @@ const view = async (req, res) => {
     try {
         const access = await findAccessible(req, req.params.id);
         if (!access?.task) return res.status(404).json({ message: 'Task not found or access denied' });
-        const [result] = await Task.aggregate(taskPipeline({ _id: access.task._id }));
+        const [result] = await Task.aggregate(taskPipeline({ _id: access.task._id }, req));
         res.status(200).json(result);
     } catch (error) {
         res.status(400).json({ message: 'Failed to load task', error: error.message });

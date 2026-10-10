@@ -22,7 +22,7 @@ const index = async (req, res) => {
     })
     .exec();
 
-  const result = require('../../services/userRoles').isAdmin(req.actor) ? allData : allData.filter((item) => item.createBy !== null);
+  const result = allData;
   res.send(result);
 };
 

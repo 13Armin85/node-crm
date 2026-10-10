@@ -3,8 +3,7 @@ const email = require('../../model/schema/email')
 const MeetingHistory = require('../../model/schema/meeting')
 const phoneCall = require('../../model/schema/phoneCall')
 const Task = require('../../model/schema/task')
-const { readScope, readActor } = require('../../services/recordAccess');
-const { taskScope } = require('../../services/taskAccess');
+const { readScope } = require('../../services/recordAccess');
 const TextMsg = require('../../model/schema/textMsg')
 const DocumentSchema = require('../../model/schema/document')
 const Quotes = require("../../model/schema/quotes.js");
@@ -19,7 +18,7 @@ const index = async (req, res) => {
         match: { deleted: false } // Populate only if createBy.deleted is false
     }).exec()
 
-    const result = require('../../services/userRoles').isAdmin(req.actor) ? allData : allData.filter(item => item.createBy !== null);
+    const result = allData;
 
     try {
         res.send(result)
@@ -78,10 +77,10 @@ const edit = async (req, res) => {
 const view = async (req, res) => {
     try {
         let contact = await Contact.findOne({ _id: req.params.id })
-            .populate('relatedLeads', 'leadName leadStatus leadEmail')
+            .populate({ path: 'relatedLeads', select: 'leadName leadStatus leadEmail', match: readScope(req, req.actor, 'Leads', { deleted: false }) })
             .populate({ path: 'relatedOpportunities', select: 'opportunityName salesStage amount', match: readScope(req, req.actor, 'Opportunities', { deleted: false }) })
             .populate('relatedProperties', 'title name status price')
-            .populate('partnerCustomer', 'fullName companyName phone email');
+            .populate({ path: 'partnerCustomer', select: 'fullName companyName phone email', match: readScope(req, req.actor, 'Partner Customers', { deleted: false }) });
         let interestProperty = await Contact.findOne({ _id: req.params.id }).populate("interestProperty")
 
         if (!contact) return res.status(404).json({ message: 'No data found.' })
@@ -89,7 +88,7 @@ const view = async (req, res) => {
             { $match: readScope(req, req.actor, 'Emails', { createByContact: contact._id, deleted: false }) },
             {
                 $lookup: {
-                    from: 'Contacts', // Assuming this is the collection name for 'contacts'
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }], // Assuming this is the collection name for 'contacts'
                     localField: 'createByContact',
                     foreignField: '_id',
                     as: 'createByRef'
@@ -106,7 +105,6 @@ const view = async (req, res) => {
             { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$createByRef', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$createByrefLead', preserveNullAndEmptyArrays: true } },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     senderName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },
@@ -140,7 +138,7 @@ const view = async (req, res) => {
             { $match: readScope(req, req.actor, 'Calls', { createByContact: contact._id, deleted: false }) },
             {
                 $lookup: {
-                    from: 'Contacts',
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: 'createByContact',
                     foreignField: '_id',
                     as: 'contact'
@@ -181,7 +179,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'Contacts',
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: 'attendes',
                     foreignField: '_id',
                     as: 'contact'
@@ -213,7 +211,7 @@ const view = async (req, res) => {
             { $match: readScope(req, req.actor, 'Texts', { createFor: contact._id }) },
             {
                 $lookup: {
-                    from: 'Contacts',
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: 'createFor',
                     foreignField: '_id',
                     as: 'contact'
@@ -243,10 +241,10 @@ const view = async (req, res) => {
         ]);
 
         let task = await Task.aggregate([
-            { $match: taskScope(readActor(req, req.actor), { assignTo: contact._id, deleted: false }) },
+            { $match: readScope(req, req.actor, 'Tasks', { assignTo: contact._id, deleted: false }) },
             {
                 $lookup: {
-                    from: 'Contacts',
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: 'assignTo',
                     foreignField: '_id',
                     as: 'contact'
@@ -271,10 +269,10 @@ const view = async (req, res) => {
             { $project: { contact: 0, users: 0 } },
         ])
         let quotes = await Quotes.aggregate([
-            { $match: { contact: contact._id, deleted: false } },
+            { $match: readScope(req, req.actor, 'Quotes', { contact: contact._id, deleted: false }) },
             {
                 $lookup: {
-                    from: 'Contacts',
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: 'contact',
                     foreignField: '_id',
                     as: 'contactData'
@@ -282,7 +280,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'PartnerCustomers',
+                    from: 'PartnerCustomers', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
                     localField: 'account',
                     foreignField: '_id',
                     as: 'accountData'
@@ -300,11 +298,10 @@ const view = async (req, res) => {
             { $project: { contactData: 0, accountData: 0 } },
         ])
         let invoice = await Invoices.aggregate([
-            { $match: readScope(req, req.actor, 'Invoices') },
-            { $match: { contact: contact._id, deleted: false } },
+            { $match: readScope(req, req.actor, 'Invoices', { contact: contact._id, deleted: false }) },
             {
                 $lookup: {
-                    from: 'Contacts',
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: 'contact',
                     foreignField: '_id',
                     as: 'contactData'
@@ -312,7 +309,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'PartnerCustomers',
+                    from: 'PartnerCustomers', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
                     localField: 'account',
                     foreignField: '_id',
                     as: 'accountData'
@@ -333,7 +330,7 @@ const view = async (req, res) => {
         const Document = await DocumentSchema.aggregate([
             { $match: readScope(req, req.actor, 'Documents', { deleted: false }) },
             { $unwind: '$file' },
-            { $match: { 'file.deleted': false, 'file.linkContact': contact._id } },
+            { $match: { 'file.deleted': false, 'file.linkContact': contact._id, ...require('../../services/recordSharing').documentFileScope(req) } },
             {
                 $lookup: {
                     from: 'User', // Replace 'users' with the actual name of your users collection
@@ -352,7 +349,7 @@ const view = async (req, res) => {
                     files: { $push: '$file' }, // Push the matching files back into an array
                 }
             },
-            { $project: { creatorInfo: 0 } },
+            { $project: { creatorInfo: 0, 'files.path': 0 } },
         ]);
 
         res.status(200).json({ interestProperty, contact, EmailHistory, phoneCallHistory, meetingHistory, textMsg, task, Document, quotes, invoice });

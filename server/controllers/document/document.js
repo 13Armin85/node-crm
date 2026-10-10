@@ -20,9 +20,9 @@ const categoryForEntity = {
 };
 
 const actorScope = async (req) => {
-    const actor = await User.findOne({ _id: req.user.userId, deleted: false });
+    const actor = req.actor || await User.findOne({ _id: req.user.userId, deleted: false });
     if (!actor) return null;
-    return { actor, query: req.method === 'GET' && !req.params?.id && !req.params?.filename ? readScope(req, actor, 'Documents') : isAdmin(actor) ? {} : { createBy: actor._id } };
+    return { actor, query: req.method === 'GET' ? readScope(req, actor, 'Documents') : isAdmin(actor) ? {} : { createBy: actor._id } };
 };
 
 const index = async (req, res) => {
@@ -37,7 +37,7 @@ const index = async (req, res) => {
         const entityId = req.query.entityId;
         const category = categories.has(req.query.category) ? req.query.category : null;
         const result = folders.map((folder) => {
-            let files = (folder.file || []).filter((item) => !item.deleted).map((item) => {
+            let files = require('../../services/recordSharing').readableDocumentFiles(req, folder).map((item) => {
                 if (item.entityType) return item;
                 if (item.linkContact) return { ...item, entityType: 'Contact', entityId: item.linkContact };
                 if (item.linkLead) return { ...item, entityType: 'Lead', entityId: item.linkLead };
@@ -49,7 +49,8 @@ const index = async (req, res) => {
             files = files.map(({ path: ignoredPath, ...item }) => item);
             return {
                 ...folder,
-                file: (folder.file || []).map(({ path: ignoredPath, ...item }) => item),
+                file: files,
+                parentFolder: !require('../../services/moduleVisibility').canView(req.actor, 'Documents') && !require('../../services/recordSharing').isOwnDocument(folder, req.actor) ? null : folder.parentFolder,
                 createByName: [folder.createBy?.firstName, folder.createBy?.lastName].filter(Boolean).join(' ') || folder.createBy?.username,
                 files,
             };
@@ -165,6 +166,7 @@ const findFile = async (req, id) => {
     if (!access) return null;
     const folder = await Document.findOne({ 'file._id': id, ...access.query, deleted: false });
     const found = folder?.file.id(id);
+    if (found && req.method === 'GET' && !require('../../services/recordSharing').readableDocumentFiles(req, folder).some(file => String(file._id) === String(id))) return null;
     return found ? { folder, found } : null;
 };
 
@@ -191,7 +193,7 @@ const previewFile = async (req, res) => {
         const folder = await Document.findOne({ ...access.query, deleted: false,
             file: { $elemMatch: { img: { $regex: '/' + escaped + '$' }, deleted: false } },
         });
-        if (!folder) return res.status(404).json({ message: 'File not found' });
+        if (!folder || !require('../../services/recordSharing').readableDocumentFiles(req, folder).some(file => path.basename(file.img || '') === filename)) return res.status(404).json({ message: 'File not found' });
         fileResponseHeaders(res, filename, true);
         res.sendFile(path.join(uploadRoot, filename));
     } catch (error) {

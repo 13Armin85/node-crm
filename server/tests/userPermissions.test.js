@@ -22,6 +22,7 @@ test('developer inherits administrative permissions and exclusively registers us
 });
 
 test('authenticated user routes enforce the developer hierarchy with database adapters mocked', async t => {
+  t.mock.method(require('../services/recordSharing'), 'loadShares', async () => []);
   const developer = { _id: '64d33173fd7ff3fa0924a101', username: 'developer@example.com', role: 'developer', deleted: false };
   const admin = { _id: '64d33173fd7ff3fa0924a102', username: 'admin@example.com', role: 'admin', deleted: false };
   const user = { _id: '64d33173fd7ff3fa0924a103', username: 'user@example.com', role: 'user', deleted: false };

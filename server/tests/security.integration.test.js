@@ -31,8 +31,8 @@ test('security boundaries withstand unauthorized records, injection, uploads and
   const User = require('../model/schema/user');
   const password = await bcrypt.hash('test-password-123', 10);
   const admin = await User.create({ username: 'admin@example.test', password, role: 'admin' });
-  const first = await User.create({ username: 'first@example.test', password, role: 'user' });
-  const second = await User.create({ username: 'second@example.test', password, role: 'user' });
+  const first = await User.create({ username: 'first@example.test', password, role: 'user', moduleVisibility: Object.fromEntries([...require('../services/moduleVisibility').defaultHidden].map(name => [name, true])) });
+  const second = await User.create({ username: 'second@example.test', password, role: 'user', moduleVisibility: Object.fromEntries([...require('../services/moduleVisibility').defaultHidden].map(name => [name, true])) });
   const removed = await User.create({ username: 'removed@example.test', password, role: 'user', deleted: true });
   server = await new Promise(resolve => { const instance = app.listen(0, '127.0.0.1', () => resolve(instance)); });
   const base = 'http://127.0.0.1:' + server.address().port + '/api';
@@ -96,7 +96,7 @@ test('security boundaries withstand unauthorized records, injection, uploads and
     ];
     for (const [route, Model, fields, edits] of models) {
       const foreign = await Model.create({ ...fields, createBy: second._id });
-      assert.equal((await api('GET', '/' + route + '/view/' + foreign._id)).status, 404);
+      assert.equal((await api('GET', '/' + route + '/view/' + foreign._id)).status, 200);
       assert.equal((await api('PUT', '/' + route + '/edit/' + foreign._id, edits)).status, 404);
       assert.equal((await api('DELETE', '/' + route + '/delete/' + foreign._id)).status, 404);
       assert([200, 404].includes((await api('POST', '/' + route + '/deleteMany', [String(foreign._id)])).status));
@@ -124,7 +124,7 @@ test('security boundaries withstand unauthorized records, injection, uploads and
     assert.equal((await api('PUT', '/custom-field/change-fields/' + metadata._id, [{ name: 'password', type: 'text' }], admin)).status, 400);
     assert.equal((await api('PUT', '/custom-field/change-single-field/' + metadata._id, { moduleId: String(metadata._id), updatedField: { name: 'authVersion' } }, admin)).status, 400);
   });
-  await t.test('custom modules retain ownership on list, view, edit and bulk deletion', async () => {
+  await t.test('custom modules share reads and retain ownership on edit and bulk deletion', async () => {
     const CustomField = require('../model/schema/customField');
     const module = await CustomField.create({ moduleName: 'SecurityCustom', fields: [{ name: 'title', type: 'text', backendType: 'String' }] });
     const Model = require('../controllers/form/form').getModel(module);
@@ -133,8 +133,8 @@ test('security boundaries withstand unauthorized records, injection, uploads and
     assert.equal(own.status, 200, JSON.stringify(own.data));
     assert.equal(own.data.data.createBy, String(first._id));
     const list = await api('GET', '/form?moduleId=' + module._id);
-    assert.equal(list.status, 200); assert.deepEqual(list.data.data.map(record => record._id), [own.data.data._id]);
-    assert.equal((await api('GET', '/form/view/' + foreign._id + '?moduleId=' + module._id)).status, 404);
+    assert.equal(list.status, 200); assert.deepEqual(list.data.data.map(record => record._id).sort(), [own.data.data._id, String(foreign._id)].sort());
+    assert.equal((await api('GET', '/form/view/' + foreign._id + '?moduleId=' + module._id)).status, 200);
     assert.equal((await api('PUT', '/form/edit/' + foreign._id, { moduleId: String(module._id), title: 'stolen' })).status, 404);
     assert.equal((await api('POST', '/form/deleteMany', { moduleId: String(module._id), ids: [String(foreign._id)] })).status, 403);
     assert.equal((await Model.findById(foreign._id)).deleted, false);
@@ -152,7 +152,7 @@ test('security boundaries withstand unauthorized records, injection, uploads and
     const file = upload.data.folder.file[0];
     assert.equal(file.path, undefined);
     assert.equal((await api('GET', '/document/download/' + file._id)).status, 200);
-    assert.equal((await api('GET', '/document/download/' + file._id, null, second)).status, 404);
+    assert.equal((await api('GET', '/document/download/' + file._id, null, second)).status, 200);
     const listed = await api('GET', '/document');
     assert(!JSON.stringify(listed.data).includes(uploadRoot));
     const unsafe = await Document.create({ folderName: 'Path fixture', createBy: first._id, file: [{ fileName: '.env', path: path.resolve(__dirname, '../.env') }] });

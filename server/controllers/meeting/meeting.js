@@ -25,7 +25,7 @@ const index = async (req, res) => {
             { $match: query },
             {
                 $lookup: {
-                    from: 'Contacts',
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: 'attendes',
                     foreignField: '_id',
                     as: 'contact'
@@ -40,7 +40,6 @@ const index = async (req, res) => {
                 }
             },
             { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     attendesArray: '$contact.email',
@@ -71,7 +70,7 @@ const view = async (req, res) => {
             { $match: { _id: result._id } },
             {
                 $lookup: {
-                    from: 'Contacts',
+                    from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: 'attendes',
                     foreignField: '_id',
                     as: 'attendes'
@@ -79,7 +78,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'Leads',
+                    from: 'Leads', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }],
                     localField: 'attendesLead',
                     foreignField: '_id',
                     as: 'attendesLead'

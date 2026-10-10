@@ -31,6 +31,8 @@ const bankDetailsRoute = require("./bankDetails/_routes")
 const notificationRoute = require("./notification/_routes")
 
 //Api`s
+router.use('/record-sharing', require('./recordSharing'));
+router.use('/visibility', require('./visibility'));
 router.use('/contact', contactRoute);
 router.use('/property', propertyRoute)
 router.use('/lead', leadRoute)

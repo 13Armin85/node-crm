@@ -12,7 +12,7 @@ const auth = async (req, res, next) => {
         const decode = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
         if (!decode || typeof decode !== 'object' || !Number.isFinite(decode.exp) || !/^[a-f\d]{24}$/i.test(String(decode.userId || ''))) return res.status(401).json({ code: 'unauthorized' });
         const User = require('../model/schema/user');
-        req.actor = await User.findOne({ _id: decode.userId, deleted: false }).select('-password +authVersion');
+        req.actor = await User.findOne({ _id: decode.userId, deleted: false }).select('-password +authVersion +moduleVisibility');
         if (!req.actor || Number(decode.sv || 0) !== Number(req.actor.authVersion || 0)) return res.status(401).json({ code: 'unauthorized' });
         req.user = decode;
         const subjectId = req.headers['x-crm-data-user'];
@@ -25,6 +25,12 @@ const auth = async (req, res, next) => {
             if (!await User.exists({ _id: subjectId, deleted: { $ne: true } })) return res.status(404).json({ code: 'notFound', field: 'dataUser' });
             req.dataSubject = new (require('mongoose').Types.ObjectId)(subjectId);
         }
+        const sharing = require('../services/recordSharing');
+        req.recordShares = await sharing.loadShares(req.actor);
+        sharing.annotateReads(req, res);
+        const { requestViewModule, canRead } = require('../services/moduleVisibility');
+        const viewModule = requestViewModule(req);
+        if (viewModule && !canRead(req.actor, viewModule)) return res.status(403).json({ code: 'forbidden', module: viewModule });
         next();
     } catch (err) {
         return res.status(401).json({ code: 'unauthorized', message: 'Authentication failed. Invalid token.' })

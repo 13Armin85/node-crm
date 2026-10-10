@@ -1,6 +1,4 @@
-const { isAdmin } = require('../../services/userRoles');
 const mongoose = require("mongoose");
-const User = require("../../model/schema/user");
 const BankDetails = require("../../model/schema/bankDetails");
 
 const index = async (req, res) => {
@@ -8,10 +6,7 @@ const index = async (req, res) => {
         const query = { ...req.query };
         query.deleted = false;
 
-        const user = await User.findById(req.user.userId);
-        if (!isAdmin(user)) {
-            query.createBy = new mongoose.Types.ObjectId(req.user.userId)
-        }
+
 
         let result = await BankDetails.find(query);
 

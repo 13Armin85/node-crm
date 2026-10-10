@@ -202,7 +202,7 @@ const view = async (req, res) => {
       },
       {
         $lookup: {
-          from: "Contacts",
+          from: "Contacts", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
           localField: "contact",
           foreignField: "_id",
           as: "contactData",
@@ -210,7 +210,7 @@ const view = async (req, res) => {
       },
       {
         $lookup: {
-          from: "PartnerCustomers",
+          from: "PartnerCustomers", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
           localField: "account",
           foreignField: "_id",
           as: "accountData",
@@ -252,7 +252,6 @@ const view = async (req, res) => {
       {
         $unwind: { path: "$oppotunityData", preserveNullAndEmptyArrays: true },
       },
-      { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
       {
         $addFields: {
           assignUserName: {
@@ -301,7 +300,7 @@ const view = async (req, res) => {
       { $match: { quotesId: response._id, deleted: false } },
       {
         $lookup: {
-          from: "Contacts",
+          from: "Contacts", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
           localField: "contact",
           foreignField: "_id",
           as: "contactData",
@@ -309,7 +308,7 @@ const view = async (req, res) => {
       },
       {
         $lookup: {
-          from: "PartnerCustomers",
+          from: "PartnerCustomers", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
           localField: "account",
           foreignField: "_id",
           as: "accountData",

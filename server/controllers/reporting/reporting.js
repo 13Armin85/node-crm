@@ -1,6 +1,4 @@
-const { isAdmin } = require('../../services/userRoles');
-const { recordScope, readActor } = require('../../services/recordAccess');
-const { taskScope } = require('../../services/taskAccess');
+const { readScope } = require('../../services/recordAccess');
 const mongoose = require('mongoose');
 const { Lead } = require('../../model/schema/lead');
 const { Contact } = require('../../model/schema/contact');
@@ -13,21 +11,20 @@ const Task = require('../../model/schema/task');
 const PartnerCustomer = require('../../model/schema/partnerCustomer');
 const Opportunity = require('../../model/schema/opprtunity');
 
-const getActor = (req) => User.findOne({ _id: req.user.userId, deleted: false });
+const getActor = (req) => req.actor || User.findOne({ _id: req.user.userId, deleted: false });
 
 const index = async (req, res) => {
     try {
         const actor = await getActor(req);
         if (!actor) return res.status(401).json({ message: 'Authentication failed' });
-        const subject = readActor(req, actor);
-        const users = await User.find({ deleted: false, ...(isAdmin(subject) ? {} : { _id: subject._id }) })
+        const users = await User.find({ deleted: false, ...(req.dataSubject ? { _id: req.dataSubject } : readScope(req, actor, 'Users')) })
             .select('_id firstName lastName username role').lean();
         const ids = users.map((user) => user._id);
         const [emails, calls, texts, tasks] = await Promise.all([
-            Email.aggregate([{ $match: { sender: { $in: ids }, deleted: { $ne: true } } }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
-            Call.aggregate([{ $match: { sender: { $in: ids }, deleted: { $ne: true } } }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
-            TextMsg.aggregate([{ $match: { sender: { $in: ids } } }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
-            Task.aggregate([{ $match: taskScope(subject, { deleted: false }) }, { $group: { _id: { $ifNull: ['$assignedToUser', '$createBy'] }, total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } } } }]),
+            Email.aggregate([{ $match: readScope(req, actor, 'Emails', { sender: { $in: ids }, deleted: { $ne: true } }) }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
+            Call.aggregate([{ $match: readScope(req, actor, 'Calls', { sender: { $in: ids }, deleted: { $ne: true } }) }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
+            TextMsg.aggregate([{ $match: readScope(req, actor, 'Texts', { sender: { $in: ids } }) }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
+            Task.aggregate([{ $match: readScope(req, actor, 'Tasks', { deleted: false }) }, { $group: { _id: { $ifNull: ['$assignedToUser', '$createBy'] }, total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } } } }]),
         ]);
         const countFor = (rows, id, key = 'count') => rows.find((row) => String(row._id) === String(id))?.[key] || 0;
         res.status(200).json(users.map((user) => ({
@@ -48,17 +45,14 @@ const lineChart = async (req, res) => {
     try {
         const actor = await getActor(req);
         if (!actor) return res.status(401).json({ message: 'Authentication failed' });
-        const subject = readActor(req, actor);
-        const own = isAdmin(subject) ? {} : { createBy: subject._id };
-        const privateTasks = taskScope(subject);
         const [leads, contacts, properties, opportunities, partners, tasks, completed] = await Promise.all([
-            Lead.countDocuments({ ...own, deleted: false }),
-            Contact.countDocuments({ ...own, deleted: false }),
-            Property.countDocuments({ ...own, deleted: false }),
-            Opportunity.countDocuments(recordScope(subject, 'Opportunities', { deleted: false })),
-            PartnerCustomer.countDocuments({ ...own, deleted: false }),
-            Task.countDocuments({ ...privateTasks, deleted: false }),
-            Task.countDocuments({ ...privateTasks, deleted: false, status: 'completed' }),
+            Lead.countDocuments(readScope(req, actor, 'Leads', { deleted: false })),
+            Contact.countDocuments(readScope(req, actor, 'Contacts', { deleted: false })),
+            Property.countDocuments(readScope(req, actor, 'Properties', { deleted: false })),
+            Opportunity.countDocuments(readScope(req, actor, 'Opportunities', { deleted: false })),
+            PartnerCustomer.countDocuments(readScope(req, actor, 'Partner Customers', { deleted: false })),
+            Task.countDocuments(readScope(req, actor, 'Tasks', { deleted: false })),
+            Task.countDocuments(readScope(req, actor, 'Tasks', { deleted: false, status: 'completed' })),
         ]);
         res.status(200).json([
             { name: 'Leads', length: leads, color: 'orange' },
@@ -116,18 +110,16 @@ const data = async (req, res) => {
         if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
             return res.status(400).json({ message: 'Invalid date range' });
         }
-        const subject = readActor(req, actor);
-        const requestedSender = !isAdmin(subject) ? subject._id : mongoose.Types.ObjectId.isValid(req.query.sender)
-            ? new mongoose.Types.ObjectId(req.query.sender)
-            : null;
+        const requestedSender = req.dataSubject || (mongoose.Types.ObjectId.isValid(req.query.sender)
+            ? new mongoose.Types.ObjectId(req.query.sender) : null);
         const match = { timestamp: { $gte: start, $lte: end }, deleted: { $ne: true } };
         if (requestedSender) match.sender = requestedSender;
         const textMatch = { timestamp: match.timestamp };
         if (requestedSender) textMatch.sender = requestedSender;
         const [emails, calls, texts] = await Promise.all([
-            Email.find(match).select('timestamp').lean(),
-            Call.find(match).select('timestamp').lean(),
-            TextMsg.find(textMatch).select('timestamp').lean(),
+            Email.find(readScope(req, actor, 'Emails', match)).select('timestamp').lean(),
+            Call.find(readScope(req, actor, 'Calls', match)).select('timestamp').lean(),
+            TextMsg.find(readScope(req, actor, 'Texts', textMatch)).select('timestamp').lean(),
         ]);
         const weekly = req.body.filter === 'week';
         const buckets = buildBuckets(start, end, weekly);

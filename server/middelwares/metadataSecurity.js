@@ -1,5 +1,5 @@
 const protectedNames = new Set(['__proto__', 'prototype', 'constructor', 'password', 'passwordHash', 'authVersion', 'roles', 'role']);
-const protectedModules = new Set(['User', 'Users', 'Notification', 'Notifications', 'Images', 'EstateFile', 'AuthSession', 'AuthSessions', 'CustomField', 'FormDefinition']);
+const protectedModules = new Set(['User', 'Users', 'Notification', 'Notifications', 'Images', 'EstateFile', 'RecordShare', 'RecordShares', 'AuthSession', 'AuthSessions', 'CustomField', 'FormDefinition']);
 module.exports = async (req, res, next) => {
   if (['GET', 'HEAD'].includes(req.method)) return next();
   const body = req.body || {};

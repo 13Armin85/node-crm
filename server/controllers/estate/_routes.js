@@ -83,8 +83,7 @@ router.get('/files/:id', asyncRoute(async (req, res) => {
 }));
 router.get('/dashboard/sales-summary', asyncRoute(async (req, res) => {
   if (!can(req.actor, 'Properties', 'view')) return res.status(403).json({ code: 'forbidden' });
-  const subject = readActor(req, req.actor);
-  const match = { deleted: false, transactionType: 'SALE', ...(require('../../services/userRoles').isAdmin(subject) ? {} : { $or: [{ 'sale.soldBy': subject._id }, { 'sale.soldBy': null, createBy: subject._id }] }) };
+  const match = readScope(req, req.actor, 'Properties', { deleted: false, transactionType: 'SALE' });
   const [summary] = await Property.aggregate([
     { $match: match },
     { $project: {

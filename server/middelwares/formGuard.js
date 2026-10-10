@@ -8,11 +8,12 @@ module.exports = async (req, res, next) => {
     const moduleId = req.body?.moduleId || req.query.moduleId;
     if (!objectId(moduleId)) return res.status(400).json({ code: 'invalid', field: 'moduleId' });
     const module = await CustomField.findById(moduleId).lean();
-    if (!module || ['Accounts', 'Account', 'Payments', 'Notification', 'Notifications', 'Images', 'EstateFile', 'AuthSession', 'AuthSessions', 'CustomField', 'FormDefinition', 'Validation'].includes(module.moduleName)) return res.status(404).json({ code: 'notFound' });
+    if (!module || ['Accounts', 'Account', 'Payments', 'Notification', 'Notifications', 'Images', 'EstateFile', 'RecordShare', 'RecordShares', 'AuthSession', 'AuthSessions', 'CustomField', 'FormDefinition', 'Validation'].includes(module.moduleName)) return res.status(404).json({ code: 'notFound' });
     const action = req.method === 'GET' ? 'view' : req.method === 'DELETE' || req.path.includes('delete') ? 'delete' : req.method === 'PUT' ? 'update' : 'create';
     // Account mutations must use the user controller's role and password safeguards.
     if (['User', 'Users'].includes(module.moduleName) && action !== 'view') return res.status(403).json({ code: 'forbidden' });
-    if (!can(req.actor, module.moduleName, action)) return res.status(403).json({ code: 'forbidden' });
+    req.readModuleName = require('../services/moduleVisibility').canonicalModule(module.moduleName);
+    if (!(action === 'view' ? require('../services/moduleVisibility').canRead(req.actor, module.moduleName) : can(req.actor, module.moduleName, action))) return res.status(403).json({ code: 'forbidden' });
     // Task mutations share assignment authorization and recipient notifications.
     if (module.moduleName === 'Tasks' && ['create', 'update', 'view'].includes(action)) {
       const task = require('../controllers/task/task');
@@ -35,7 +36,7 @@ module.exports = async (req, res, next) => {
     const shared = ['Users', 'User', 'Leads', 'Contacts', 'Properties', 'Partner Customers', 'PartnerCustomers', 'Residences'];
     const known = require('../services/recordAccess').personalFields;
     req.formAccessScope = scope(req, module.moduleName);
-    if (req.actor.role === 'user' && module.moduleName !== 'Tasks' && !shared.includes(module.moduleName) && !known[module.moduleName]) req.formAccessScope = { createBy: req.actor._id };
+    if (req.method !== 'GET' && req.actor.role === 'user' && module.moduleName !== 'Tasks' && !shared.includes(module.moduleName) && !known[module.moduleName]) req.formAccessScope = { createBy: req.actor._id };
     if (!shared.includes(module.moduleName) && !model.schema.path('createBy')) model.schema.add({ createBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, deleted: { type: Boolean, default: false } });
     if (req.params.id) {
       if (!objectId(req.params.id)) return res.status(400).json({ code: 'invalid', field: 'id' });

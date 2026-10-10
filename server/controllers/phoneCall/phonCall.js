@@ -71,7 +71,7 @@ const index = async (req, res) => {
             { $match: query },
             {
                 $lookup: {
-                    from: "Leads", // Assuming this is the collection name for 'leads'
+                    from: "Leads", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }], // Assuming this is the collection name for 'leads'
                     localField: "createByLead",
                     foreignField: "_id",
                     as: "createByrefLead",
@@ -79,7 +79,7 @@ const index = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "Contacts",
+                    from: "Contacts", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: "createByContact",
                     foreignField: "_id",
                     as: "contact",
@@ -98,7 +98,6 @@ const index = async (req, res) => {
             {
                 $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true },
             },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },
@@ -146,7 +145,7 @@ const view = async (req, res) => {
             { $match: { _id: result._id } },
             {
                 $lookup: {
-                    from: "Contacts",
+                    from: "Contacts", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
                     localField: "createByContact",
                     foreignField: "_id",
                     as: "contact",
@@ -154,7 +153,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "Leads", // Assuming this is the collection name for 'leads'
+                    from: "Leads", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }], // Assuming this is the collection name for 'leads'
                     localField: "createByLead",
                     foreignField: "_id",
                     as: "createByrefLead",
@@ -178,7 +177,7 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "Properties",
+                    from: "Properties", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Properties') }],
                     localField: "property",
                     foreignField: "_id",
                     as: "properties",
@@ -190,7 +189,6 @@ const view = async (req, res) => {
                 $unwind: { path: "$createByrefLead", preserveNullAndEmptyArrays: true },
             },
             { $unwind: { path: "$salesAgent", preserveNullAndEmptyArrays: true } },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
             {
                 $addFields: {
                     senderName: { $concat: ["$users.firstName", " ", "$users.lastName"] },

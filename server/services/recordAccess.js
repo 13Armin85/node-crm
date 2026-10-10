@@ -1,8 +1,13 @@
 const { isAdmin } = require('./userRoles');
 const { taskScope } = require('./taskAccess');
 
-// Personal records stay private on every read surface, including related records.
+// Ownership scopes are retained for mutations and administrator person-specific views.
 const personalFields = {
+    Contacts: ['createBy'],
+    Properties: ['createBy'],
+    Residences: ['createBy'],
+    'Partner Customers': ['createBy'],
+    Leads: ['createBy'],
     Opportunities: ['createBy', 'assignUser'],
     Invoices: ['createBy', 'assignedTo'],
     Meetings: ['createBy'],
@@ -30,10 +35,24 @@ const recordScope = (actor, moduleName, extra = {}) => {
 };
 const readActor = (req, actor) => isAdmin(actor) && req.dataSubject ? { _id: req.dataSubject, role: 'user' } : actor;
 const readScope = (req, actor, moduleName, extra = {}) => {
+    const { canView, publicModules, canonicalModule, requestViewModule } = require('./moduleVisibility');
+    moduleName = canonicalModule(moduleName);
+    const currentActor = req.actor || actor;
+    const page = requestViewModule(req);
+    const restrictedSummary = ['Dashboard', 'Reporting and Analytics'].includes(page) && !canView(currentActor, page);
+    if (!canView(currentActor, moduleName) || restrictedSummary) {
+        const { idsFor } = require('./recordSharing');
+        if (currentActor?.role !== 'user' || !currentActor._id || (!personalFields[moduleName] && moduleName !== 'Tasks' && moduleName !== 'Users')) return { $and: [{ ...extra }, { _id: { $exists: false } }] };
+        const own = moduleName === 'Users' ? { _id: currentActor._id } : recordScope(currentActor, moduleName);
+        const ids = idsFor(req, moduleName);
+        const shared = moduleName === 'Documents' ? { file: { $elemMatch: { _id: { $in: ids }, deleted: { $ne: true } } } } : { _id: { $in: ids } };
+        const access = ids.length ? { $or: [own, shared] } : own;
+        return Object.keys(extra).length ? { $and: [{ ...extra }, access] } : access;
+    }
+    if (!isAdmin(actor) || !req.dataSubject || publicModules.has(moduleName)) return { ...extra };
     const subject = readActor(req, actor);
-    if (subject === actor) return recordScope(actor, moduleName, extra);
     if (moduleName === 'Users' || moduleName === 'User') return { ...extra, _id: subject._id };
-    if (moduleName === 'Leads' || moduleName === 'Contacts') return recordScope(subject, 'Opportunities', extra);
+    if (moduleName === 'Contacts') return recordScope(subject, 'Opportunities', extra);
     if (moduleName === 'Properties') return { $and: [{ ...extra }, { $or: [{ createBy: subject._id }, { 'sale.soldBy': subject._id }] }] };
     return recordScope(subject, personalFields[moduleName] || moduleName === 'Tasks' ? moduleName : 'Documents', extra);
 };

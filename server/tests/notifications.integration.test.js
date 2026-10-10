@@ -24,8 +24,8 @@ test('task notifications persist and enforce recipient isolation through authent
     const User = require('../model/schema/user');
     const Notification = require('../model/schema/notification');
     const admin = await User.create({ username: 'admin@example.test', password: 'test-only', firstName: 'Manager', role: 'admin' });
-    const first = await User.create({ username: 'first@example.test', password: 'test-only', role: 'user' });
-    const second = await User.create({ username: 'second@example.test', password: 'test-only', role: 'user' });
+    const first = await User.create({ username: 'first@example.test', password: 'test-only', role: 'user', moduleVisibility: Object.fromEntries([...require('../services/moduleVisibility').defaultHidden].map(name => [name, true])) });
+    const second = await User.create({ username: 'second@example.test', password: 'test-only', role: 'user', moduleVisibility: Object.fromEntries([...require('../services/moduleVisibility').defaultHidden].map(name => [name, true])) });
     server = await new Promise(resolve => { const instance = app.listen(0, '127.0.0.1', () => resolve(instance)); });
     const base = 'http://127.0.0.1:' + server.address().port + '/api';
     const api = async (method, route, body, actor = admin) => {
@@ -54,9 +54,9 @@ test('task notifications persist and enforce recipient isolation through authent
     const readAgain = await api('PUT', '/notification/' + ownNotification + '/read', {}, first);
     assert.equal(readAgain.data.readAt, read.data.readAt);
     assert.equal((await inbox(first)).data.unreadCount, 0);
-    assert.equal((await api('PUT', '/task/changeStatus/' + taskId, { status: 'completed' }, first)).status, 200);
-    const managerInbox = (await inbox(admin)).data;
-    assert.equal(managerInbox.notifications[0].type, 'task_status_changed');
+    assert.equal((await api('PUT', '/task/changeStatus/' + taskId, { status: 'completed' }, first)).status, 403);
+    assert.equal((await api('PUT', '/task/changeStatus/' + taskId, { status: 'completed' }, admin)).status, 200);
+    assert.equal((await inbox(first)).data.notifications[0].type, 'task_status_changed');
     assert.equal((await api('PUT', '/task/edit/' + taskId, { assignedToUser: String(second._id) })).status, 200);
     assert.equal((await inbox(first)).data.notifications[0].type, 'task_unassigned');
     assert.equal((await inbox(second)).data.notifications[0].type, 'task_assigned');
@@ -112,7 +112,8 @@ test('task notifications persist and enforce recipient isolation through authent
         const forbiddenCreate = await api('POST', prefix + '/add', { ...metadata, title: 'Unauthorized assignment', assignedToUser: String(second._id) }, first);
         assert.equal(forbiddenCreate.status, 403, JSON.stringify(forbiddenCreate));
         assert.equal(await Notification.countDocuments({}), countBefore);
-        const own = await api('POST', prefix + '/add', { ...metadata, title: 'Own task' }, first);
+        assert.equal((await api('POST', prefix + '/add', { ...metadata, title: 'Denied self creation' }, first)).status, 403);
+        const own = await api('POST', prefix + '/add', { ...metadata, title: 'Assigned task', assignedToUser: String(first._id) }, admin);
         assert.equal(own.status, 200, JSON.stringify(own));
         const ownTask = unwrap(own.data);
         assert.equal(ownTask.assignedToUser, String(first._id));
@@ -120,7 +121,7 @@ test('task notifications persist and enforce recipient isolation through authent
             assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, assignedToUser }, first)).status, 403);
         }
         assert.equal(String((await Task.findById(ownTask._id)).assignedToUser), String(first._id));
-        assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, description: 'Own edit' }, first)).status, 200);
+        assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, description: 'Own edit' }, first)).status, 403);
         for (const actor of [admin, developer]) {
             const assignedToUser = actor === admin ? String(second._id) : String(first._id);
             const delegated = await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, assignedToUser }, actor);
@@ -128,10 +129,10 @@ test('task notifications persist and enforce recipient isolation through authent
             assert.equal(unwrap(delegated.data).assignedToUser, assignedToUser);
             assert.equal(unwrap(delegated.data).delegatedBy, String(actor._id));
             const target = actor === admin ? second : first;
-            assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, notes: 'Assigned user can edit' }, target)).status, 200);
+            assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, notes: 'Denied assignee edit' }, target)).status, 403);
         }
         const legacy = await Task.create({ title: 'Legacy', createBy: first._id });
-        assert.equal((await api('PUT', prefix + '/edit/' + legacy._id, { ...metadata, description: 'Legacy edit' }, first)).status, 200);
+        assert.equal((await api('PUT', prefix + '/edit/' + legacy._id, { ...metadata, description: 'Denied legacy edit' }, first)).status, 403);
         assert.equal((await Task.findById(legacy._id)).assignedToUser, undefined);
     }
     const firstNotifications = (await inbox(first)).data.notifications;

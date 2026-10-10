@@ -63,24 +63,24 @@ const index = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "PartnerCustomers",
+                    from: "PartnerCustomers", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
                     localField: 'accountName',
                     foreignField: '_id',
                     as: 'accountData'
                 }
             },
-            { $lookup: { from: 'Contacts', localField: 'contact', foreignField: '_id', as: 'contactData' } },
-            { $lookup: { from: 'Leads', localField: 'lead', foreignField: '_id', as: 'leadData' } },
-            { $lookup: { from: 'Properties', localField: 'properties', foreignField: '_id', as: 'propertyData' } },
+            { $lookup: { from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }], localField: 'contact', foreignField: '_id', as: 'contactData' } },
+            { $lookup: { from: 'Leads', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }], localField: 'lead', foreignField: '_id', as: 'leadData' } },
+            { $lookup: { from: 'Properties', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Properties') }], localField: 'properties', foreignField: '_id', as: 'propertyData' } },
             { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$assignUsers', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$accountData', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$contactData', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$leadData', preserveNullAndEmptyArrays: true } },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
+
             // { $match: { 'assignUsers.deleted': false } },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'modifiedByUser.deleted': { $ne: true } } },
+
             {
                 $addFields: {
                     createdByName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },
@@ -152,15 +152,15 @@ const view = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "PartnerCustomers",
+                    from: "PartnerCustomers", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Partner Customers') }],
                     localField: 'accountName',
                     foreignField: '_id',
                     as: 'accountData'
                 }
             },
-            { $lookup: { from: 'Contacts', localField: 'contact', foreignField: '_id', as: 'contactData' } },
-            { $lookup: { from: 'Leads', localField: 'lead', foreignField: '_id', as: 'leadData' } },
-            { $lookup: { from: 'Properties', localField: 'properties', foreignField: '_id', as: 'propertyData' } },
+            { $lookup: { from: 'Contacts', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }], localField: 'contact', foreignField: '_id', as: 'contactData' } },
+            { $lookup: { from: 'Leads', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Leads') }], localField: 'lead', foreignField: '_id', as: 'leadData' } },
+            { $lookup: { from: 'Properties', pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Properties') }], localField: 'properties', foreignField: '_id', as: 'propertyData' } },
             { $unwind: { path: '$users', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$assignUsers', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$modifiedByUser', preserveNullAndEmptyArrays: true } },
@@ -168,9 +168,9 @@ const view = async (req, res) => {
             { $unwind: { path: '$contactData', preserveNullAndEmptyArrays: true } },
             { $unwind: { path: '$leadData', preserveNullAndEmptyArrays: true } },
 
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'users.deleted': false } },
+
             // { $match: { 'assignUsers.deleted': false } },
-            { $match: require('../../services/userRoles').isAdmin(req.actor) ? {} : { 'modifiedByUser.deleted': { $ne: true } } },
+
             {
                 $addFields: {
                     createdByName: { $concat: ['$users.firstName', ' ', '$users.lastName'] },

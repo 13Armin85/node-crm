@@ -2,20 +2,17 @@ const mongoose = require('mongoose');
 const Task = require('../../model/schema/task')
 const { Lead } = require('../../model/schema/lead');
 const User = require('../../model/schema/user');
-const { readActor } = require('../../services/recordAccess');
-const { isAdmin } = require('../../services/userRoles');
-const { taskScope } = require('../../services/taskAccess');
+const { readScope } = require('../../services/recordAccess');
 
 const index = async (req, res) => {
     try {
-        const actor = await User.findOne({ _id: req.user.userId, deleted: false });
+        const actor = req.actor || await User.findOne({ _id: req.user.userId, deleted: false });
         if (!actor) return res.status(401).json({ code: 'unauthorized' });
-        const subject = readActor(req, actor);
         const query = { ...req.query, deleted: false };
 
         const [taskData, leadData] = await Promise.all([
-            Task.find(taskScope(subject, query)),
-            Lead.find({ ...query, ...(isAdmin(subject) ? {} : { createBy: subject._id }) })
+            Task.find(readScope(req, actor, 'Tasks', query)),
+            Lead.find(readScope(req, actor, 'Leads', query))
         ]);
         res.json({ data: { taskData, leadData } });
     } catch (error) {

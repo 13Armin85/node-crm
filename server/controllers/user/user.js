@@ -86,7 +86,7 @@ const options = async (req, res) => {
 const index = async (req, res) => {
   try {
     // Older accounts may not have the deleted flag stored in MongoDB.
-    const query = { ...req.query, deleted: { $ne: true }, ...(req.dataSubject ? { _id: req.dataSubject } : {}) };
+    const query = { ...req.query, deleted: { $ne: true },  };
 
     let user = await User.find(query).select('-password -authVersion').exec();
 
@@ -224,7 +224,7 @@ const login = async (req, res) => {
     const user = await User.findOne({
       username: normalizedUsername,
       deleted: false,
-    }).select('+password +authVersion');
+    }).select('+password +authVersion +moduleVisibility');
     if (!user) {
       await bcrypt.compare(normalizedPassword, DUMMY_PASSWORD_HASH);
       res
@@ -251,6 +251,7 @@ const login = async (req, res) => {
     const safeUser = user.toObject();
     delete safeUser.password;
     delete safeUser.authVersion;
+    safeUser.moduleVisibility = require('../../services/moduleVisibility').effectiveVisibility(user);
     res
       .status(200)
       .setHeader("Authorization", `Bearer ${token}`)

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getIn, setIn } from 'formik';
 import { getApi } from 'services/api';
 import { formValue } from './formValue';
@@ -65,17 +65,17 @@ export function validateFormValues(definition, values) {
   const normalized = normalizeFormValues(definition, values);
   let errors = {};
   for (const field of definition?.fields || []) {
-    if (field.enabled === false || !Object.entries(field.condition || {}).every(([key, expected]) => getIn(values, key) === expected)) continue;
+    if (field.enabled === false || !Object.entries(field.condition || {}).every(([key, expected]) => (Array.isArray(expected) ? expected.includes(getIn(values, key)) : getIn(values, key) === expected))) continue;
     const path = field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
     const value = getIn(normalized, path);
-    const empty = value == null || value === '' || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && !value.length);
+    const empty = (field.type === 'checkbox' && value !== true) || value == null || value === '' || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && !value.length);
     if (empty) {
       if (field.required) errors = setIn(errors, path, 'required');
       continue;
     }
     let invalid = false;
     if (field.relation) invalid = (Array.isArray(value) ? value : [value]).some(id => !/^[a-f\d]{24}$/i.test(id));
-    else if (['number', 'currency'].includes(field.type)) invalid = !Number.isFinite(value) || (field.min != null && value < field.min) || (field.max != null && value > field.max);
+    else if (['number', 'currency'].includes(field.type)) invalid = !Number.isFinite(value) || (field.min != null && value < field.min) || (field.max != null && value > field.max) || (field.integer && !Number.isInteger(value));
     else if (field.type === 'email') invalid = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     else if (field.type === 'phone') invalid = !/^[+\d\s().-]{3,30}$/.test(value);
     else if (['date', 'datetime'].includes(field.type)) invalid = !Number.isFinite(Date.parse(value));
@@ -83,4 +83,31 @@ export function validateFormValues(definition, values) {
     if (invalid) errors = setIn(errors, path, 'invalid');
   }
   return errors;
+}
+
+export const missingRequiredValue = (field, value) => value == null || value === ''
+  || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && !value.length)
+  || (field.type === 'checkbox' && value !== true);
+
+// Formik runs registered field validators on submit even when the field was never touched.
+export function useRequiredFields(fields, formik) {
+  const current = useRef(formik);
+  current.current = formik;
+  const register = formik?.registerField, unregister = formik?.unregisterField;
+  const signature = JSON.stringify((fields || []).filter(field => field.enabled !== false && field.required)
+    .map(({ name, kind, type, condition }) => ({ name, kind, type, condition })));
+  useEffect(() => {
+    if (!register || !unregister) return undefined;
+    const required = JSON.parse(signature);
+    const paths = required.map(field => {
+      const path = field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
+      register(path, { validate: value => {
+        const visible = Object.entries(field.condition || {}).every(([key, expected]) =>
+          Array.isArray(expected) ? expected.includes(getIn(current.current.values, key)) : getIn(current.current.values, key) === expected);
+        return visible && missingRequiredValue(field, value) ? 'required' : undefined;
+      } });
+      return path;
+    });
+    return () => paths.forEach(unregister);
+  }, [signature, register, unregister]);
 }

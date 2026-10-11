@@ -120,7 +120,7 @@ const Edit = (props) => {
                 <Spinner />
               </Flex>
             ) : (
-              <CustomForm
+              <CustomForm formik={formik}
                 moduleData={props.moduleData}
                 values={values}
                 setFieldValue={setFieldValue}

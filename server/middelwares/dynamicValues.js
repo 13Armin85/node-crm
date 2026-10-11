@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { getDefinition } = require('../services/formDefinitions');
-const { validateFields, normalizeProperty, objectId } = require('../services/estateValidation');
+const { validateFields, validateRequiredFields, normalizeProperty, objectId } = require('../services/estateValidation');
 const { can, scope, isAdmin } = require('./permissions');
 // Extend existing controllers without changing their response contracts.
 module.exports = moduleName => async (req, res, next) => {
@@ -29,6 +29,11 @@ module.exports = moduleName => async (req, res, next) => {
       if (!previous) return res.status(404).json({ code: 'notFound' });
     }
     if (typeof req.body.customFields === 'string') req.body.customFields = JSON.parse(req.body.customFields);
+    // Legacy controllers retain their fixed-field contracts; enforce requirements
+    // configured by administrators and every custom field here.
+    const configuredFields = definition.fields.filter(field => field.kind === 'CUSTOM_FIELD' || (!field.locked && moduleName !== 'Documents'));
+    validateRequiredFields({ ...definition, fields: configuredFields }, req.body, previous);
+    if (moduleName === 'Invoices') await require('../services/invoiceProperty').validateInvoiceProperty(req, req.body, previous);
     const values = validateFields({ ...definition, fields: definition.fields.filter(f => f.kind === 'CUSTOM_FIELD') }, req.body, previous);
     for (const field of definition.fields.filter(f => f.kind === 'CUSTOM_FIELD' && f.type === 'file')) for (const file of values.customFields[field.name] || []) {
       if (!await mongoose.model('EstateFile').exists({ _id: file.id, ...scope(req) })) return res.status(400).json({ code: 'relationNotFound', field: field.name });

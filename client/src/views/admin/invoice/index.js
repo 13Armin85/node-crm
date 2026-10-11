@@ -120,6 +120,8 @@ const Index = (props) => {
     ),
   };
   const tableColumns = [
+    { Header: tr('Property'), accessor: 'propertyName' },
+    { Header: tr('Transaction Type'), accessor: 'transactionType', exportValue: value => value ? tr(value === 'SALE' ? 'Purchased' : 'Rented') : '', cell: ({ value }) => value ? tr(value === 'SALE' ? 'Purchased' : 'Rented') : '-' },
     { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
       Header: tr("Invoice Number"),

@@ -779,7 +779,7 @@ const CommonCheckTable = (props) => {
                             borderColor="transparent"
                           >
                             {data}
-                            {index === row.cells.findIndex(item => !["_id", "action"].includes(item.column.id)) && <SharedRecordBadge record={row.original} />}
+                            {index === row.cells.findIndex(item => !["_id", "action"].includes(item.column.id)) && <SharedRecordBadge module={sharingModule} record={row.original} />}
                           </Td>
                         );
                       })}

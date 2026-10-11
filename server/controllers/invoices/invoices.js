@@ -18,6 +18,9 @@ const index = async (req, res) => {
     try {
         let result = await Invoices.aggregate([
             { $match: query },
+            { $lookup: { from: "Properties", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Properties') }], localField: "property", foreignField: "_id", as: "propertyData" } },
+            { $addFields: { propertyName: { $ifNull: [{ $arrayElemAt: ['$propertyData.title', 0] }, { $arrayElemAt: ['$propertyData.name', 0] }] } } },
+            { $project: { propertyData: 0 } },
             {
                 $lookup: {
                     from: "Contacts", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Contacts') }],
@@ -121,6 +124,7 @@ const addMany = async (req, res) => {
             account: item.account ? item.account : null,
             contact: item.contact ? item.contact : null,
         }))
+        for (const item of data) await require('../../services/invoiceProperty').validateInvoiceProperty(req, item);
         const inserted = await Invoices.insertMany(data);
 
         res.status(200).json(inserted);
@@ -135,6 +139,9 @@ const view = async (req, res) => {
         if (!response) return res.status(404).json({ message: "no Data Found." });
         let result = await Invoices.aggregate([
             { $match: { _id: response._id } },
+            { $lookup: { from: "Properties", pipeline: [{ $match: require('../../services/moduleVisibility').lookupScope(req, 'Properties') }], localField: "property", foreignField: "_id", as: "propertyData" } },
+            { $addFields: { propertyName: { $ifNull: [{ $arrayElemAt: ['$propertyData.title', 0] }, { $arrayElemAt: ['$propertyData.name', 0] }] } } },
+            { $project: { propertyData: 0 } },
             {
                 $lookup: {
                     from: "Opportunities",

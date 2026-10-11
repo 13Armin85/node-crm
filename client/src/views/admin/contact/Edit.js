@@ -166,7 +166,7 @@ const Edit = (props) => {
                 <Spinner />
               </Flex>
             ) : (
-              <CustomForm
+              <CustomForm formik={formik}
                 definition={definition}
                 definitionError={definitionError}
                 moduleData={props?.contactData}

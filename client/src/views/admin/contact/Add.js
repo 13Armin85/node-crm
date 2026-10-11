@@ -87,7 +87,7 @@ const Add = (props) => {
           ><LocalizedText text="Add Contact" /><IconButton onClick={props?.onClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
-            <CustomForm
+            <CustomForm formik={formik}
               definition={definition}
               definitionError={definitionError}
               moduleData={props?.contactData}

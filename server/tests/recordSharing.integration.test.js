@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { jwtSecret } = require('../config/auth');
 
-test('individual grants expose only own and explicitly sent records across all nine modules', { skip: process.env.SHARING_INTEGRATION !== '1' }, async t => {
+test('individual grants expose only own and explicitly sent records with sending limited to leads, opportunities and documents', { skip: process.env.SHARING_INTEGRATION !== '1' }, async t => {
   const dbName = 'crm_sharing_test_' + crypto.randomUUID().replace(/-/g, '');
   await mongoose.connect('mongodb://127.0.0.1:27017', { dbName, serverSelectionTimeoutMS: 5000 });
   mongoose.set('strictQuery', false);
@@ -83,6 +83,12 @@ test('individual grants expose only own and explicitly sent records across all n
     for (const [module, route] of Object.entries(routes)) {
       const { own, sent, foreign } = fixtures[module];
       assert.equal((await send(module, sent._id, user)).status, 403);
+      if (!sharing.shareableModules.includes(module)) {
+        assert.equal((await send(module, sent._id)).status, 400, module);
+        await Share.create({ module, recordId: sent._id, recipient: user._id, sharedBy: admin._id }); // Old grants in removed modules no longer expose records.
+        assert.deepEqual(ids(rows(await api('GET', route))), ids([own]), module);
+        continue;
+      }
       assert.equal((await send(module, sent._id)).status, 201, module);
       assert.equal((await send(module, sent._id)).data.created, false);
       assert.equal(await Share.countDocuments({ module, recipient: user._id }), 1);
@@ -100,7 +106,7 @@ test('individual grants expose only own and explicitly sent records across all n
         assert.equal((await api('DELETE', route + '/delete/' + sent._id)).status, 404, module);
       }
     }
-    assert.equal(await Notification.countDocuments({ recipient: user._id, type: 'record_shared' }), 8);
+    assert.equal(await Notification.countDocuments({ recipient: user._id, type: 'record_shared' }), 2);
     const metadata = await CustomField.create({ moduleName: 'Leads', fields: [] });
     const generic = await api('GET', '/form?moduleId=' + metadata._id);
     assert.deepEqual(ids(generic.data.data), ids([fixtures.Leads.own, fixtures.Leads.sent]));
@@ -131,7 +137,7 @@ test('individual grants expose only own and explicitly sent records across all n
     assert.deepEqual(ids(sharedFolder.file), ids([sentFile])); assert.deepEqual(ids(sharedFolder.files), ids([sentFile]));
     assert.equal(sharedFolder.files[0]._receivedFromAdmin, true); assert.equal(sharedFolder.parentFolder, null);
     assert(!JSON.stringify(listed).includes(uploadRoot));
-    for (const [module, item] of [['Contacts', fixtures.Contacts.sent], ['Leads', fixtures.Leads.sent]]) {
+    for (const [module, item] of [['Leads', fixtures.Leads.sent]]) {
       const related = (await api('GET', detailPath(module, item._id))).data.Document.flatMap(row => row.files);
       assert.deepEqual(ids(related), ids([sentFile, ownFile]), module);
       assert(!ids(related).includes(String(neighbor._id)));
@@ -142,13 +148,13 @@ test('individual grants expose only own and explicitly sent records across all n
     const invisible = await Notification.create({ recipient: user._id, module: 'Leads', entityId: fixtures.Leads.foreign._id, type: 'record_created', message: 'Private' });
     await Notification.create({ recipient: other._id, module: 'Leads', entityId: fixtures.Leads.sent._id, type: 'record_shared', message: 'Other inbox' });
     const inbox = (await api('GET', '/notification')).data;
-    assert.equal(inbox.unreadCount, 9); assert.equal(inbox.notifications.length, 9);
+    assert.equal(inbox.unreadCount, 3); assert.equal(inbox.notifications.length, 3);
     assert(inbox.notifications.every(row => row.type === 'record_shared'));
     assert.equal((await api('PUT', '/notification/' + invisible._id + '/read')).status, 404);
     const item = inbox.notifications[0];
     assert.equal((await api('PUT', '/notification/' + item._id + '/read', null, other)).status, 404);
     assert.equal((await api('PUT', '/notification/' + item._id + '/read')).status, 200);
-    assert.equal((await api('GET', '/notification')).data.unreadCount, 8);
+    assert.equal((await api('GET', '/notification')).data.unreadCount, 2);
     const all = await api('PUT', '/notification/read-all'); assert.equal(all.status, 200, JSON.stringify(all));
     assert.equal(all.data.unreadCount, 0);
     assert.equal((await Notification.findById(invisible._id)).readAt, null);
@@ -223,7 +229,13 @@ test('individual grants expose only own and explicitly sent records across all n
     assert.equal(newFolder.status, 201, JSON.stringify(newFolder));
     assert.equal(newFolder.data.createBy, String(actor._id));
     assert((await api('GET', '/document', null, actor)).data.some(row => row._id === newFolder.data._id));
+    const documentDefinition = (await api('GET', '/estate/definitions/Documents', null, admin)).data;
+    const savedDefinition = await api('PUT', '/estate/definitions/Documents', { ...documentDefinition, fields: [...documentDefinition.fields,
+      { name: 'reference', kind: 'CUSTOM_FIELD', type: 'text', required: true, enabled: true, label: { en: 'Reference', fa: 'مرجع', tr: 'Referans' } },
+    ] }, admin);
+    assert.equal(savedDefinition.status, 200, JSON.stringify(savedDefinition));
     const formData = new FormData();
+    formData.append('customFields', JSON.stringify({ reference: 'DOC-1' }));
     formData.append('folderId', newFolder.data._id);
     formData.append('files', new Blob(['Own test document'], { type: 'text/plain' }), 'own-data-entry.txt');
     const uploadResponse = await fetch('http://127.0.0.1:' + server.address().port + '/api/document/add', {
@@ -234,6 +246,7 @@ test('individual grants expose only own and explicitly sent records across all n
     if (storedUpload?.file) for (const item of storedUpload.file) files.push(item.path);
     assert.equal(uploadResponse.status, 200, JSON.stringify(uploaded));
     const uploadedFile = uploaded.folder.file[0];
+    assert.equal(uploadedFile.customFields.reference, 'DOC-1');
     assert.equal((await api('GET', '/document/download/' + uploadedFile._id, null, actor)).status, 200);
     assert.equal((await api('GET', '/document/download/' + uploadedFile._id, null, other)).status, 404);
 

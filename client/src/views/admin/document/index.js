@@ -26,6 +26,9 @@ import {
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
+import { setIn } from 'formik';
+import DynamicFormRenderer from 'components/dynamicForm/DynamicFormRenderer';
+import { useFormDefinition, validateFormValues } from 'utils/managedForm';
 import Card from "components/card/Card";
 import Spinner from "components/spinner/Spinner";
 import { useLanguage } from "i18n";
@@ -96,6 +99,12 @@ const DocumentPage = () => {
   const [folders, setFolders] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
   const [targetFolder, setTargetFolder] = useState("");
+  const { definition } = useFormDefinition('Documents');
+  const [folderError, setFolderError] = useState(false);
+  const [documentValues, setDocumentValues] = useState({ customFields: {} });
+  const [documentErrors, setDocumentErrors] = useState({});
+  const customDefinition = definition && { ...definition, fields: definition.fields.filter(field => field.kind === 'CUSTOM_FIELD') };
+  const documentFormik = { values: documentValues, errors: documentErrors, setFieldValue: (path, value) => setDocumentValues(previous => setIn(previous, path, value)) };
   const [folderName, setFolderName] = useState("");
   const [files, setFiles] = useState([]);
   const [fileName, setFileName] = useState("");
@@ -172,7 +181,8 @@ const DocumentPage = () => {
   };
 
   const createFolder = async () => {
-    if (!folderName.trim()) return;
+    if (!folderName.trim()) { setFolderError(true); return; }
+    setFolderError(false);
     setLoading(true);
     const result = await postApi("api/document/folder", {
       folderName: folderName.trim(),
@@ -190,7 +200,12 @@ const DocumentPage = () => {
 
   const uploadFiles = async () => {
     if (!files.length) return toast.error(t("Select at least one file"));
+    if (!customDefinition) return;
+    const errors = validateFormValues(customDefinition, documentValues);
+    setDocumentErrors(errors);
+    if (Object.keys(errors).length) return;
     const body = new FormData();
+    body.append("customFields", JSON.stringify(documentValues.customFields || {}));
     if (targetFolder) body.append("folderId", targetFolder);
     if (fileName.trim()) body.append("filename", fileName.trim());
     body.append("category", category);
@@ -204,6 +219,8 @@ const DocumentPage = () => {
     setLoading(false);
     if (result?.status === 200) {
       setFiles([]);
+      setDocumentValues({ customFields: {} });
+      setDocumentErrors({});
       setFileName("");
       setCategory("GENERAL");
       setEntityId("");
@@ -211,6 +228,7 @@ const DocumentPage = () => {
       await fetchFolders();
       toast.success(t("Files uploaded successfully"));
     } else {
+      if (result?.data?.field) setDocumentErrors(previous => setIn(previous, result.data.field, result.data.code || "invalid"));
       toast.error(result?.data?.message || t("File upload failed"));
     }
   };
@@ -366,7 +384,7 @@ const DocumentPage = () => {
                               <Icon as={isImage ? FiImage : FiFile} color={isImage ? "purple.500" : "blue.500"} boxSize={5} />
                             </Flex>
                             <Box minW={0}>
-                              <Text fontWeight="800" noOfLines={1}>{file.fileName}</Text><SharedRecordBadge record={file} />
+                              <Text fontWeight="800" noOfLines={1}>{file.fileName}</Text><SharedRecordBadge module="Documents" record={file} />
                               <Text fontSize="xs" color="gray.500">{file.size ? `${Math.ceil(file.size / 1024)} KB` : t("File")}</Text>
                             </Box>
                           </Flex>
@@ -394,7 +412,8 @@ const DocumentPage = () => {
           <ModalCloseButton />
           <ModalBody>
             <FormLabel>{t("Folder name")}</FormLabel>
-            <Input value={folderName} onChange={(event) => setFolderName(event.target.value)} autoFocus />
+            <Input value={folderName} isInvalid={folderError} borderColor={folderError ? "red.300" : undefined} onChange={(event) => { setFolderName(event.target.value); setFolderError(false); }} autoFocus />
+            {folderError && <Text color="red.500" fontSize="sm" mt={1}>{t("estate.required")}</Text>}
             {currentFolder && <Text fontSize="xs" color="gray.500" mt={2}>{t("This folder will be created inside")} “{currentFolder.folderName}”.</Text>}
           </ModalBody>
           <ModalFooter><Button width={{ base: "100%", sm: "auto" }} variant="brand" onClick={createFolder} isLoading={loading}>{t("Create folder")}</Button></ModalFooter>
@@ -470,6 +489,7 @@ const DocumentPage = () => {
                   <Box p={3} bg={subtle} borderRadius="12px"><Text fontSize="sm" color="gray.500">{t("This category does not need a related record.")}</Text></Box>
                 )}
               </SimpleGrid>
+              <Box mt={4}><DynamicFormRenderer definition={customDefinition} formik={documentFormik} customOnly /></Box>
             </Box>
           </ModalBody>
           <ModalFooter bg={surface} borderTop="1px solid" borderColor={border} gap={2} flexWrap="wrap" px={{ base: 3, md: 6 }}>
@@ -477,7 +497,7 @@ const DocumentPage = () => {
               {t(targetFolder ? "Files will be saved in the selected folder." : "Files will be published without a folder.")}
             </Text>
             <Button flex={{ base: 1, sm: "initial" }} variant="ghost" onClick={uploadModal.onClose}>{t("Cancel")}</Button>
-            <Button flex={{ base: 1, sm: "initial" }} variant="brand" minW={{ sm: "140px" }} onClick={uploadFiles} isLoading={loading} isDisabled={!files.length}>
+            <Button flex={{ base: 1, sm: "initial" }} variant="brand" minW={{ sm: "140px" }} onClick={uploadFiles} isLoading={loading} isDisabled={!files.length || !definition}>
               {t("Upload")} {files.length ? `${files.length} ${t("Files")}` : t("Document")}
             </Button>
           </ModalFooter>

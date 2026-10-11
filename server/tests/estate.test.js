@@ -5,6 +5,23 @@ const { defaults } = require('../services/formDefinitions');
 const { mapProperty } = require('../scripts/migrate-estate');
 const { can } = require('../middelwares/permissions');
 const id = '64d33173fd7ff3fa0924a109';
+
+test('lead and partner customer statuses share the customer follow-up stages', () => {
+  const leadOptions = defaults.Leads.find(field => field.name === 'leadStatus').options;
+  const partnerOptions = defaults['Partner Customers'].find(field => field.name === 'status').options;
+  assert.deepEqual(leadOptions.map(option => option.value), ['active', 'pending', 'contacted', 'qualified', 'viewing', 'negotiating', 'lost']);
+  assert.deepEqual(partnerOptions.filter(option => option.value !== 'INACTIVE').map(option => option.label), leadOptions.map(option => option.label));
+  const PartnerCustomer = require('../model/schema/partnerCustomer');
+  for (const option of partnerOptions) {
+    const customer = { customerType: 'INDIVIDUAL', fullName: 'Customer', status: option.value, createBy: id };
+    assert.equal(validateFields({ fields: defaults['Partner Customers'] }, customer).status, option.value);
+    assert.equal(new PartnerCustomer(customer).validateSync(), undefined);
+  }
+  for (const status of ['sold', 'rented']) {
+    assert.throws(() => validateFields({ fields: defaults.Leads }, { leadName: 'Lead', leadEmail: 'lead@example.com', leadStatus: status }), { field: 'leadStatus', code: 'invalid' });
+    assert.throws(() => validateFields({ fields: defaults['Partner Customers'] }, { customerType: 'INDIVIDUAL', fullName: 'Customer', status: status.toUpperCase() }), { field: 'status', code: 'invalid' });
+  }
+});
 test('loaded lead relations validate and survive an edit payload', () => {
   const body = { leadName: 'Lead', leadEmail: 'lead@example.com', contact: id, partnerCustomer: id, relatedOpportunities: [id] };
   const result = validateFields({ fields: defaults.Leads }, body);
@@ -83,4 +100,25 @@ test('fixed admin and user roles govern modules', () => {
   assert.equal(can({ role: 'user' }, 'Properties', 'create'), true);
   assert.equal(can({ role: 'user' }, 'Users', 'view'), true);
   assert.equal(can({ role: 'admin' }, 'Residences', 'delete'), true);
+});
+
+test('rented properties retain tenant details and reject sale/rental status mismatches', () => {
+  const rented = { ...base(), transactionType: 'RENT', sale: { status: 'RENTED', buyerType: 'LEAD', lead: id } };
+  assert.equal(normalizeProperty(rented).sale.status, 'RENTED');
+  assert.equal(validateFields({ fields: defaults.Properties }, rented).sale.lead, id);
+  assert.throws(() => validateFields({ fields: defaults.Properties }, { ...rented, sale: { status: 'RENTED' } }), { field: 'sale.buyerType' });
+  assert.throws(() => normalizeProperty({ ...rented, transactionType: 'SALE' }));
+  assert.equal(normalizeProperty({ ...rented, sale: { ...rented.sale, status: 'SOLD' } }).sale.status, 'RENTED');
+});
+test('required fields reject whitespace, unchecked boxes and empty lists but accept zero', () => {
+  const { validateRequiredFields } = require('../services/estateValidation');
+  const fields = [
+    { name: 'description', kind: 'SYSTEM_FIELD', type: 'text', required: true },
+    { name: 'consent', kind: 'CUSTOM_FIELD', type: 'checkbox', required: true },
+  ];
+  assert.throws(() => validateRequiredFields({ fields }, { description: '   ' }), { field: 'description', code: 'required' });
+  assert.throws(() => validateRequiredFields({ fields }, { description: 'Valid', customFields: { consent: false } }), { field: 'customFields.consent', code: 'required' });
+  assert.doesNotThrow(() => validateRequiredFields({ fields }, { description: 'Valid', customFields: { consent: true } }));
+  assert.doesNotThrow(() => validateRequiredFields({ fields: [{ name: 'amount', type: 'number', required: true }] }, { amount: 0 }));
+  assert.doesNotThrow(() => validateRequiredFields({ fields: [{ ...fields[0], enabled: false }] }, {}));
 });

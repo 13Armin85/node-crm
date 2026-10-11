@@ -46,6 +46,7 @@ module.exports = async (req, res, next) => {
       const definition = await getDefinition(module.moduleName);
       const previous = action === 'update' && model ? await model.findById(req.params.id).lean() : {};
       const values = validateFields(definition, req.body, previous || {});
+      if (module.moduleName === 'Invoices') await require('../services/invoiceProperty').validateInvoiceProperty(req, values, previous || {});
       for (const field of (definition?.fields || []).filter(field => field.type === 'file')) {
         for (const file of values.customFields?.[field.name] || []) {
           if (!await mongoose.model('EstateFile').exists({ _id: file.id, ...scope(req, 'Documents') })) return res.status(400).json({ code: 'relationNotFound', field: field.name });

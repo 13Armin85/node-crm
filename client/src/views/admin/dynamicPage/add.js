@@ -87,7 +87,7 @@ const Add = (props) => {
             <IconButton onClick={props.onClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
-            <CustomForm
+            <CustomForm formik={formik}
               moduleData={props.moduleData}
               values={values}
               setFieldValue={setFieldValue}

@@ -53,7 +53,7 @@ const propertySchema = new mongoose.Schema({
     floor: { type: String, enum: require('../../services/estateCatalog').floors },
     area: { value: { type: Number, min: 0 }, type: { type: String, enum: ['NET', 'GROSS'] }, unit: { type: String, default: 'M2', enum: ['M2'] } },
     sale: {
-        status: { type: String, enum: ['AVAILABLE', 'SOLD'], default: 'AVAILABLE' },
+        status: { type: String, enum: ['AVAILABLE', 'SOLD', 'RENTED'], default: 'AVAILABLE' },
         buyerType: { type: String, enum: ['LEAD', 'PARTNER_CUSTOMER', null], default: null },
         lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Leads', default: null },
         partnerCustomer: { type: mongoose.Schema.Types.ObjectId, ref: 'PartnerCustomers', default: null },

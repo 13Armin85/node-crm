@@ -5,6 +5,7 @@ import { useLanguage } from 'i18n';
 import { formLabel, formValue } from 'utils/formValue';
 import { formatPriceInput } from 'utils/price';
 import { getIn } from 'formik';
+import { useRequiredFields } from 'utils/managedForm';
 import { localized } from 'components/dynamicForm/DynamicFormRenderer';
 
 export const labelOf = (item, type) => {
@@ -14,12 +15,12 @@ export const labelOf = (item, type) => {
   return formLabel(item.companyName) || formLabel(item.fullName) || formLabel(item.name) || item.email;
 };
 
-const RelationSelect = ({ label, name, value, items, type, setFieldValue }) => {
+const RelationSelect = ({ label, name, value, items, type, setFieldValue, error, required }) => {
   const { t } = useLanguage();
   const selected = formValue(value);
   return (
   <GridItem colSpan={{ base: 12, md: 6 }}>
-    <FormLabel htmlFor={`relation-${name}`} fontSize="sm" fontWeight="600">{label}</FormLabel>
+    <FormLabel htmlFor={`relation-${name}`} fontSize="sm" fontWeight="600">{label}{required && <Box as="span" ms={1} color="red.500">*</Box>}</FormLabel>
     <Select
       id={`relation-${name}`}
       name={name}
@@ -30,11 +31,12 @@ const RelationSelect = ({ label, name, value, items, type, setFieldValue }) => {
       {selected && !items.some(item => item._id === selected) && <option value={selected}>{labelOf(value, type) || selected}</option>}
       {items.map((item) => <option value={item._id} key={item._id}>{labelOf(item, type)}</option>)}
     </Select>
+    {error && <Text role="alert" fontSize="sm" color="red.500" mt={1}>{error}</Text>}
   </GridItem>
 );
 };
 
-export function PropertyMultiSelect({ value = [], items, setFieldValue, busy }) {
+export function PropertyMultiSelect({ value = [], items, setFieldValue, busy, error }) {
   const { t, language } = useLanguage();
   const [query, setQuery] = useState('');
   const selected = Array.isArray(value) ? [...new Set(value.map(formValue).filter(Boolean))] : [];
@@ -67,14 +69,24 @@ export function PropertyMultiSelect({ value = [], items, setFieldValue, busy }) 
         </Checkbox>) : <Text p={4} fontSize="sm" color="gray.500">{t('No Data Found')}</Text>}
       </Stack>
     </Box>
+    {error && <Text role="alert" fontSize="sm" color="red.500" mt={1}>{error}</Text>}
   </GridItem>;
 }
 
-export default function RelationFields({ values, setFieldValue, contact, lead, partner, properties, definition }) {
+export default function RelationFields({ values, setFieldValue, contact, lead, partner, properties, definition, formik }) {
   const { t, language } = useLanguage();
+  const relationNames = [contact && 'contact', lead && 'lead', partner && 'partnerCustomer', properties && 'properties'].filter(Boolean);
+  useRequiredFields((definition?.fields || []).filter(field => relationNames.includes(field.name)), formik);
+  const errorFor = name => {
+    const error = getIn(formik?.errors, name);
+    if (!error || !(formik?.submitCount > 0 || getIn(formik?.touched, name))) return undefined;
+    return localized(definition?.fields.find(field => field.name === name)?.validationMessage, language)
+      || (['required', 'invalid', 'relationNotFound'].includes(error) ? t(`estate.${error}`) : error);
+  };
+  const required = name => Boolean(definition?.fields.find(field => field.name === name)?.required);
   const enabled = name => {
     const field = definition?.fields.find(item => item.name === name);
-    return field?.enabled !== false && Object.entries(field?.condition || {}).every(([key, value]) => getIn(values, key) === value);
+    return field?.enabled !== false && Object.entries(field?.condition || {}).every(([key, value]) => (Array.isArray(value) ? value.includes(getIn(values, key)) : getIn(values, key) === value));
   };
   const label = (name, fallback) => localized(definition?.fields.find(item => item.name === name)?.label, language) || t(fallback);
   const [options, setOptions] = useState({ contacts: [], leads: [], partners: [], properties: [] });
@@ -108,10 +120,10 @@ export default function RelationFields({ values, setFieldValue, contact, lead, p
   return (
     <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={3}>
       {failed && <GridItem colSpan={12}><Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert></GridItem>}
-      {contact && enabled('contact') && <RelationSelect label={label('contact', 'Related Contact')} name="contact" value={values.contact} items={options.contacts} type="contact" setFieldValue={setFieldValue} />}
-      {lead && enabled('lead') && <RelationSelect label={label('lead', 'Lead')} name="lead" value={values.lead} items={options.leads} type="lead" setFieldValue={setFieldValue} />}
-      {partner && enabled('partnerCustomer') && <RelationSelect label={label('partnerCustomer', 'Partner Customer')} name="partnerCustomer" value={values.partnerCustomer} items={options.partners} type="partner" setFieldValue={setFieldValue} />}
-      {properties && enabled('properties') && <PropertyMultiSelect value={values.properties || []} items={options.properties} setFieldValue={setFieldValue} busy={busy} />}
+      {contact && enabled('contact') && <RelationSelect label={label('contact', 'Related Contact')} name="contact" error={errorFor("contact")} required={required("contact")} value={values.contact} items={options.contacts} type="contact" setFieldValue={setFieldValue} />}
+      {lead && enabled('lead') && <RelationSelect label={label('lead', 'Lead')} name="lead" error={errorFor("lead")} required={required("lead")} value={values.lead} items={options.leads} type="lead" setFieldValue={setFieldValue} />}
+      {partner && enabled('partnerCustomer') && <RelationSelect label={label('partnerCustomer', 'Partner Customer')} name="partnerCustomer" error={errorFor("partnerCustomer")} required={required("partnerCustomer")} value={values.partnerCustomer} items={options.partners} type="partner" setFieldValue={setFieldValue} />}
+      {properties && enabled('properties') && <PropertyMultiSelect error={errorFor("properties")} value={values.properties || []} items={options.properties} setFieldValue={setFieldValue} busy={busy} />}
     </Grid>
   );
 }

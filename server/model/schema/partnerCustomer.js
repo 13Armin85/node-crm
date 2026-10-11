@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
+const { partnerCustomerStatuses } = require('../../services/customerStatuses');
 const schema = new mongoose.Schema({
   customerType: { type: String, enum: ['INDIVIDUAL', 'COMPANY'], default: 'INDIVIDUAL' },
   fullName: { type: String, trim: true }, companyName: { type: String, trim: true },
   contactPerson: String, phone: String, whatsapp: String, email: String, nationality: String,
   address: String, district: String, neighborhood: String, taxNumber: String, notes: String,
-  status: { type: String, enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE' },
+  status: { type: String, enum: partnerCustomerStatuses, default: 'ACTIVE' },
   customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
   contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contacts' }],
   leads: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Leads' }],

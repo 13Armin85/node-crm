@@ -32,3 +32,13 @@ test('numeric legacy phone values and amount strings can be saved', () => {
   expect(normalizeFormValues(definition, values)).toEqual({ phoneNumber: '905551112233', price: { amount: 1500000 } });
   expect(validateFormValues(definition, { price: { amount: -1 } })).toEqual({ price: { amount: 'invalid' } });
 });
+
+test('required booleans and whitespace fail while zero and hidden conditional fields remain valid', () => {
+  const definition = { fields: [
+    { name: 'consent', kind: 'CUSTOM_FIELD', type: 'checkbox', required: true },
+    { name: 'amount', type: 'number', required: true },
+    { name: 'notes', type: 'text', required: true, condition: { status: ['SOLD', 'RENTED'] } },
+  ] };
+  expect(validateFormValues(definition, { amount: 0, customFields: { consent: false } })).toEqual({ customFields: { consent: 'required' } });
+  expect(validateFormValues(definition, { amount: 0, status: 'RENTED', notes: ' ', customFields: { consent: true } })).toEqual({ notes: 'required' });
+});

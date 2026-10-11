@@ -17,10 +17,11 @@ import { useLanguage } from "i18n";
 import { getApi, postApi, putApi, deleteApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CurrencyAmount from "components/CurrencyAmount";
-import { useFormDefinition } from "utils/managedForm";
+import { useFormDefinition, validateFormValues } from "utils/managedForm";
 import ExcelExportButton from "components/ExcelExportButton";
 import ShareRecordButton from "components/ShareRecordButton";
 import SharedRecordBadge from "components/SharedRecordBadge";
+import PropertyStatusBadge from "components/PropertyStatusBadge";
 import { entityExportColumns, loadAllExportRows } from "utils/exportRecords";
 
 const propertySections = [
@@ -31,6 +32,16 @@ const propertySections = [
   ["estate.section.files", (name) => name === "files"],
   ["estate.section.sale", (name) => name.startsWith("sale.")],
   ["estate.section.additional", (name, field) => field.kind === "CUSTOM_FIELD"],
+];
+
+const residenceSections = [
+  ['estate.section.basic', name => ['name', 'description', 'developer', 'constructionStatus'].includes(name)],
+  ['estate.section.location', name => ['country', 'city', 'district', 'neighborhood', 'address', 'postalCode', 'mapUrl'].includes(name)],
+  ['estate.section.building', name => ['constructionYear', 'buildingAge', 'completionDate', 'blockCount', 'floorCount', 'unitCount', 'totalArea', 'unitTypes'].includes(name)],
+  ['estate.section.amenities', name => ['amenities', 'heatingType', 'parkingCapacity'].includes(name)],
+  ['estate.section.management', name => ['managementCompany', 'contactPerson', 'phone', 'email', 'website'].includes(name) || name.startsWith('maintenanceFee.')],
+  ['estate.section.files', name => name === 'files'],
+  ['estate.section.additional', (name, field) => name === 'notes' || field.kind === 'CUSTOM_FIELD'],
 ];
 
 const PAGE_SIZE = 20;
@@ -51,6 +62,7 @@ export function EntityPage({ moduleName }) {
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [statusSaving, setStatusSaving] = useState(null);
   const [record, setRecord] = useState(null);
   const [readOnly, setReadOnly] = useState(false);
   const [deleting, setDeleting] = useState(null);
@@ -102,16 +114,7 @@ export function EntityPage({ moduleName }) {
   const formik = useFormik({
     initialValues,
     enableReinitialize: true,
-    validate(values) {
-      let errors = {};
-      for (const field of definition?.fields || []) {
-        if (!isVisible(field, values)) continue;
-        const value = getIn(values, fieldPath(field));
-        if (field.required && (value === "" || value == null || (Array.isArray(value) && !value.length))) errors = setIn(errors, fieldPath(field), "required");
-        if (value !== "" && value != null && ["number", "currency"].includes(field.type) && (!Number.isFinite(value) || (field.min != null && value < field.min) || (field.max != null && value > field.max))) errors = setIn(errors, fieldPath(field), "invalid");
-      }
-      return errors;
-    },
+    validate: values => validateFormValues(definition, values),
     async onSubmit(values, helpers) {
       setError("");
       const result = record?._id ? await putApi(`${base}/${record._id}`, values) : await postApi(base, values);
@@ -129,7 +132,7 @@ export function EntityPage({ moduleName }) {
   const open = (item, view) => { setError(""); setRecord(item); setReadOnly(view); };
   const filterNames = moduleName === "Properties"
     ? ["category", "subtype", "transactionType", "district", "neighborhood", "residence", "bedroom", "buildingAge", "occupancyStatus", "floor", "area.type", "sale.status"]
-    : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["district", "neighborhood"];
+    : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["city", "district", "neighborhood", "constructionStatus"];
   const name = (item) => item.title || item.fullName || item.companyName || item.name || item.propertyType || item._id;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const dateLocale = language === "fa" ? "fa-IR" : language === "tr" ? "tr-TR" : "en-US";
@@ -141,9 +144,22 @@ export function EntityPage({ moduleName }) {
     else { setError(result.data?.code || "serverError"); setDeleting(null); }
   };
 
-  const form = definition && moduleName === "Properties" ? (
+  const partnerStatusField = definition?.fields.find(field => field.name === 'status');
+  const updatePartnerStatus = async (item, status) => {
+    if (!permissions?.update || statusSaving || status === item.status) return;
+    setStatusSaving(item._id); setError(''); setNotice('');
+    try {
+      const response = await putApi(`${base}/${item._id}`, { status });
+      const result = response?.response || response;
+      if (result?.status === 200) { setNotice('Success'); await fetchData(); }
+      else setError(result?.data?.code || 'serverError');
+    } catch { setError('serverError'); }
+    finally { setStatusSaving(null); }
+  };
+  const formSections = moduleName === 'Properties' ? propertySections : moduleName === 'Residences' ? residenceSections : null;
+  const form = definition && formSections ? (
     <Stack spacing={5}>
-      {propertySections.map(([title, matches]) => {
+      {formSections.map(([title, matches]) => {
         const fields = definition.fields.filter((field) => matches(field.name, field));
         return fields.some((field) => isVisible(field, formik.values)) ? (
           <Box className="crm-entity-form-section" key={title}>
@@ -236,12 +252,20 @@ export function EntityPage({ moduleName }) {
             <Flex minH="360px" align="center" justify="center"><Spinner /></Flex>
           ) : (
             <Table className="crm-entity-table">
-              <Thead><Tr><Th>{t("Name")}</Th><Th>{t(moduleName === "Properties" ? "Price" : "Phone")}</Th><Th>{t("Created Date")}</Th><Th>{t("Actions")}</Th></Tr></Thead>
+              <Thead><Tr><Th>{t("Name")}</Th><Th>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Partner Customers" && <Th>{localized(partnerStatusField?.label || "Status", language)}</Th>}<Th>{t("Created Date")}</Th><Th>{t("Actions")}</Th></Tr></Thead>
               <Tbody>
                 {items.map((item) => (
                   <Tr key={item._id}>
-                    <Td><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge record={item} /></Box></Flex></Td>
-                    <Td data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : item.phone || item.district || "-"}</Td>
+                    <Td><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge module={moduleName} record={item} />{moduleName === "Properties" && <PropertyStatusBadge property={item} />}</Box></Flex></Td>
+                    <Td data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : moduleName === "Residences" ? [item.city, item.district].filter(Boolean).join(" · ") || "-" : item.phone || "-"}</Td>
+                    {moduleName === "Partner Customers" && <Td><Box className="selectOpt"><Select size="sm" minW="170px"
+                      aria-label={`${localized(partnerStatusField?.label || "Status", language)} · ${name(item)}`}
+                      className={item.status === "PENDING" ? "pending" : item.status === "ACTIVE" ? "completed" : ["LOST", "INACTIVE"].includes(item.status) ? "onHold" : "inProgress"}
+                      value={item.status || ""} isDisabled={!permissions?.update || Boolean(statusSaving) || !partnerStatusField?.options?.length}
+                      onChange={event => updatePartnerStatus(item, event.target.value)}>
+                      <option value="" disabled>{t("Select")}</option>
+                      {(partnerStatusField?.options || []).map(option => <option key={option.value} value={option.value}>{localized(option.label, language)}</option>)}
+                    </Select></Box></Td>}
                     <Td>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(dateLocale) : "-"}</Td>
                     <Td>
                       <Flex className="crm-row-actions" gap="5px">

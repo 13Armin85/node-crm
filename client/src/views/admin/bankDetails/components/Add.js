@@ -1,3 +1,4 @@
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
@@ -89,7 +90,7 @@ const Add = (props) => {
             display="flex"
           ><LocalizedText text="Add BankDetails" /><IconButton onClick={props?.onClose} icon={<CloseIcon />} />
           </DrawerHeader>
-          <DrawerBody>
+          <DrawerBody><ManagedFormLayout moduleName="Bank Details" formik={formik}>
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 6 }}>
                 <FormLabel
@@ -255,7 +256,7 @@ const Add = (props) => {
                 </Text>
               </GridItem>
             </Grid>
-          </DrawerBody>
+          </ManagedFormLayout></DrawerBody>
 
           <DrawerFooter>
             <Button

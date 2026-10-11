@@ -131,7 +131,8 @@ const file = async (req, res) => {
         const category = categories.has(req.body.category)
             ? req.body.category
             : (categoryForEntity[relation.entityType] || 'GENERAL');
-        const customFields = (() => { try { return JSON.parse(req.body.customFields || '{}'); } catch { return {}; } })();
+        const customFields = typeof req.body.customFields === 'string'
+            ? JSON.parse(req.body.customFields || '{}') : req.body.customFields || {};
         require('../../middelwares/requestSecurity').assertSafeInput(customFields);
         const baseUrl = `${req.protocol}://${req.get('host')}`;
         const files = req.files.map((item) => ({

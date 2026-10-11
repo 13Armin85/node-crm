@@ -511,6 +511,6 @@ export default function ManagedCustomForm(props) {
   if (failed || props.definitionError) return <Text color="red.500">{t('estate.serverError')}</Text>;
   if (!definition) return <Text>{t('estate.loading')}</Text>;
   return <>
-    <DynamicFormRenderer definition={definition} formik={{ values: props.values, errors: props.errors, touched: props.touched, setFieldValue: props.setFieldValue, handleBlur: props.handleBlur }} />
+    <DynamicFormRenderer definition={definition} formik={props.formik || { values: props.values, errors: props.errors, touched: props.touched, setFieldValue: props.setFieldValue, handleBlur: props.handleBlur }} />
   </>;
 }

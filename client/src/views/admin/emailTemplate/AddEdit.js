@@ -1,4 +1,5 @@
 import { setIn } from 'formik';
+import { useFormDefinition, validateFormValues } from 'utils/managedForm';
 import FormExtension from 'components/dynamicForm/FormExtension';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -49,8 +50,10 @@ const AddEdit = () => {
   const [permission] = HasAccess(["Email Template"]);
   const emailEditorRef = useRef(null);
   const [preview, setPreview] = useState(false);
+  const { definition } = useFormDefinition('Email Template');
+  const [formErrors, setFormErrors] = useState({});
   const [extraValues, setExtraValues] = useState({ customFields: {} });
-  const customFormik = { values: extraValues, errors: {}, setFieldValue: (key, value) => setExtraValues(previous => setIn(previous, key, value)) };
+  const customFormik = { values: extraValues, errors: formErrors, setFieldValue: (key, value) => setExtraValues(previous => setIn(previous, key, value)) };
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
@@ -74,59 +77,22 @@ const AddEdit = () => {
     }
   };
 
-  const saveDesign = () => {
-    if (name !== "") {
-      emailEditorRef?.current?.editor?.exportHtml(async (allData) => {
-        const { html } = allData;
-        const { design } = allData;
-
-        const data = {
-          html: html,
-          design: design,
-          templateName: name,
-          description: description,
-          createBy: user?._id,
-          customFields: extraValues.customFields,
-        };
-        const result = await postApi("api/email-temp/add", data);
-        if (result && result?.status === 200) {
-          toast.success(result?.data?.message);
-          setName("");
-        }
-        navigate("/email-template");
-      });
-    } else {
-      toast.error(tr("Template Name is required"));
-    }
-  };
-
-  const editDesign = () => {
-    if (name !== "") {
-      emailEditorRef?.current?.editor?.exportHtml(async (allData) => {
-        const { html } = allData;
-        const { design } = allData;
-
-        const data = {
-          html: html,
-          design: design,
-          templateName: name,
-          description: description,
-          createBy: user?._id,
-          customFields: extraValues.customFields,
-        };
-        const result = await putApi(`api/email-temp/edit/${id}`, data);
-        if (result && result?.status === 200) {
-          toast.success(result?.data?.message);
-          navigate("/email-template");
-        }
-      });
-    } else {
-      toast.error(tr("Template Name is required"));
-    }
-  };
-
   const handleSave = () => {
-    type === "add" ? saveDesign() : editDesign();
+    if (!definition) return;
+    emailEditorRef?.current?.editor?.exportHtml(async ({ html, design }) => {
+      const data = { html, design, templateName: name, description, customFields: extraValues.customFields };
+      const errors = validateFormValues(definition, data);
+      setFormErrors(errors);
+      if (Object.keys(errors).length) return;
+      const result = type === 'add' ? await postApi('api/email-temp/add', data) : await putApi(`api/email-temp/edit/${id}`, data);
+      if (result?.status === 200) {
+        toast.success(result.data?.message || tr('Success'));
+        navigate('/email-template');
+      } else {
+        if (result?.data?.field) setFormErrors(previous => setIn(previous, result.data.field, result.data.code || 'invalid'));
+        toast.error(tr(`estate.${result?.data?.code || 'serverError'}`));
+      }
+    });
   };
 
   useEffect(() => {
@@ -159,6 +125,7 @@ const AddEdit = () => {
                 variant="brand"
                 style={{ marginLeft: "10px" }}
                 onClick={handleSave}
+                isDisabled={!definition}
               ><LocalizedText text="Save" /></Button>
               <Link to="/email-template" style={{ marginLeft: "10px" }}>
                 <Button size="sm" leftIcon={<IoIosArrowBack />} variant="brand"><LocalizedText text="Back" /></Button>
@@ -178,6 +145,7 @@ const AddEdit = () => {
                 value={name}
                 onChange={(e) => setName(e?.target?.value)}
               />
+              {formErrors.templateName && <Text color="red.500" fontSize="sm">{tr('estate.required')}</Text>}
             </GridItem>
             <GridItem colSpan={{ base: 12, md: 6 }}>
               <Input
@@ -188,9 +156,11 @@ const AddEdit = () => {
                 value={description}
                 onChange={(e) => setDescription(e?.target?.value)}
               />
+              {formErrors.description && <Text color="red.500" fontSize="sm">{tr('estate.required')}</Text>}
             </GridItem>
             <GridItem colSpan={{ base: 12, md: 12 }} mt={2}>
               <FormExtension moduleName="Email Template" formik={customFormik} /><EmailEditor ref={emailEditorRef} />
+              {(formErrors.html || formErrors.design) && <Text color="red.500" fontSize="sm">{tr('estate.required')}</Text>}
             </GridItem>
           </Grid>
         </div>

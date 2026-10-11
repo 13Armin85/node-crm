@@ -11,11 +11,12 @@ const modelLoaders = {
   Documents: () => require('../model/schema/document'),
   'Partner Customers': () => require('../model/schema/partnerCustomer'),
 };
-const shareableModules = Object.keys(modelLoaders);
-const limitedModules = new Set([...shareableModules, 'Tasks']);
+const shareableModules = ['Leads', 'Opportunities', 'Documents'];
+// Visibility and ownership scopes still cover all existing modules.
+const limitedModules = new Set([...Object.keys(modelLoaders), 'Tasks']);
 const modelFor = name => modelLoaders[name]?.() || (name === 'Tasks' ? require('../model/schema/task') : null);
 const idsFor = (req, name) => (req.recordShares || []).filter(share => share.module === name).map(share => share.recordId);
-const loadShares = actor => actor?.role === 'user' ? RecordShare.find({ recipient: actor._id }).select('module recordId').lean() : Promise.resolve([]);
+const loadShares = actor => actor?.role === 'user' ? RecordShare.find({ recipient: actor._id, module: { $in: shareableModules } }).select('module recordId').lean() : Promise.resolve([]);
 const isOwnDocument = (folder, actor) => String(folder.createBy?._id || folder.createBy) === String(actor._id);
 const readableDocumentFiles = (req, folder) => {
   const { canView } = require('./moduleVisibility');

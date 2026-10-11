@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 import { act, Simulate } from 'react-dom/test-utils';
 import { ChakraProvider } from '@chakra-ui/react';
 import ShareRecordButton from './ShareRecordButton';
+import SharedRecordBadge from './SharedRecordBadge';
 import { getApi, postApi, deleteApi } from 'services/api';
 import { toast } from 'react-toastify';
 jest.mock('services/api', () => ({ getApi: jest.fn(), postApi: jest.fn(), deleteApi: jest.fn() }));
@@ -21,10 +22,10 @@ beforeEach(() => {
   deleteApi.mockResolvedValue({ status: 200, data: { shared: false } });
   container = document.createElement('div'); document.body.appendChild(container);
 });
-afterEach(() => { act(() => ReactDOM.unmountComponentAtNode(container)); container.remove(); localStorage.clear(); });
+afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.clear(); });
 const modal = () => document.querySelector('.crm-share-record-modal');
 const button = name => [...modal().querySelectorAll('button')].find(item => item.textContent === name);
-const render = () => act(() => ReactDOM.render(<ChakraProvider><ShareRecordButton module="Leads" record={{ _id: 'record' }} /></ChakraProvider>, container));
+const render = () => act(() => { ReactDOM.render(<ChakraProvider><ShareRecordButton module="Leads" record={{ _id: 'record' }} /></ChakraProvider>, container); });
 const open = () => act(async () => Simulate.click(container.querySelector('.crm-share-record-button')));
 const choose = value => act(async () => Simulate.change(modal().querySelector('select'), { target: { value } }));
 
@@ -60,4 +61,22 @@ test('ordinary users have no sending action or recipient directory request', () 
   render();
   expect(container.querySelector('.crm-share-record-button')).toBeNull();
   expect(getApi).not.toHaveBeenCalled();
+});
+
+test.each(['Contacts', 'Invoices', 'Meetings', 'Calls', 'Emails', 'Properties', 'Partner Customers'])('administrators cannot send records in %s', module => {
+  act(() => { ReactDOM.render(<ShareRecordButton module={module} record={{ _id: 'record' }} />, container); });
+  expect(container.querySelector('.crm-share-record-button')).toBeNull();
+  expect(getApi).not.toHaveBeenCalled();
+});
+
+test('recipient names load below the item and update immediately after sending and revoking', async () => {
+  getApi.mockImplementation(async path => ({ status: 200, data: path.endsWith('/users') ? users : [{ user: users[0] }] }));
+  await act(async () => { ReactDOM.render(<ChakraProvider><div data-testid="item"><SharedRecordBadge module="Leads" record={{ _id: 'record' }} />
+    <ShareRecordButton module="Leads" record={{ _id: 'record' }} /></div></ChakraProvider>, container); });
+  expect(container.querySelector('.crm-sent-record-label').textContent).toContain('علی کریمی');
+  await open(); await choose('two'); await act(async () => Simulate.click(button('Send')));
+  expect(container.querySelector('.crm-sent-record-label').textContent).toContain('İpek Yılmaz');
+  await act(async () => Simulate.click(button('Revoke access')));
+  expect(container.querySelector('.crm-sent-record-label').textContent).not.toContain('İpek Yılmaz');
+  expect(container.querySelector('.crm-sent-record-label').textContent).toContain('علی کریمی');
 });

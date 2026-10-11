@@ -4,7 +4,7 @@ import { FiSend } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { useLanguage } from 'i18n';
 import { getApi, postApi, deleteApi } from 'services/api';
-import { canSendRecord } from 'services/recordSharing';
+import { canSendRecord, announceRecordSharing } from 'services/recordSharing';
 import { matchesAssignee, userDisplayName } from 'services/taskSearch';
 export default function ShareRecordButton({ module, record }) {
   const { t, direction } = useLanguage();
@@ -20,6 +20,7 @@ export default function ShareRecordButton({ module, record }) {
       const [directory, recipients] = await Promise.all([getApi('api/record-sharing/users'), getApi(endpoint)]);
       if (directory?.status !== 200 || recipients?.status !== 200 || !Array.isArray(directory.data) || !Array.isArray(recipients.data)) throw new Error();
       setUsers(directory.data); setShares(recipients.data);
+      announceRecordSharing(module, record._id, recipients.data);
     } catch { setFailed(true); } finally { setLoading(false); }
   };
   const open = () => { setSelected(''); setQuery(''); modal.onOpen(); load(); };
@@ -28,7 +29,8 @@ export default function ShareRecordButton({ module, record }) {
     try {
       const result = await postApi('api/record-sharing', { module, recordId: record._id, recipientId: selected });
       if (![200, 201].includes(result?.status)) throw new Error();
-      setShares(previous => [...previous.filter(share => share.user?._id !== selected), { user: users.find(user => user._id === selected) }]);
+      const next = [...shares.filter(share => share.user?._id !== selected), { user: users.find(user => user._id === selected) }];
+      setShares(next); announceRecordSharing(module, record._id, next);
       toast.success(t('Item sent to user'));
     } catch { toast.error(t('Failed to send item')); } finally { setSaving(false); }
   };
@@ -37,7 +39,8 @@ export default function ShareRecordButton({ module, record }) {
     try {
       const result = await deleteApi(endpoint + '/', selected);
       if (result?.status !== 200) throw new Error();
-      setShares(previous => previous.filter(share => share.user?._id !== selected));
+      const next = shares.filter(share => share.user?._id !== selected);
+      setShares(next); announceRecordSharing(module, record._id, next);
       toast.success(t('Item access revoked'));
     } catch { toast.error(t('Failed to send item')); } finally { setSaving(false); }
   };

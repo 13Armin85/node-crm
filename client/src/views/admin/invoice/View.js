@@ -389,6 +389,14 @@ const View = (props) => {
               </GridItem>
 
               <GridItem colSpan={{ base: 2, md: 1 }}>
+                <Text fontSize="sm" fontWeight="bold">{tr('Property')}</Text>
+                <Text data-no-translate>{data?.propertyName || data?.property || '-'}</Text>
+              </GridItem>
+              <GridItem colSpan={{ base: 2, md: 1 }}>
+                <Text fontSize="sm" fontWeight="bold">{tr('Transaction Type')}</Text>
+                <Text>{data?.transactionType ? tr(data.transactionType === 'SALE' ? 'Purchased' : 'Rented') : '-'}</Text>
+              </GridItem>
+              <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
                   {" "}<LocalizedText text="Invoice Number" />{" "}
                 </Text>

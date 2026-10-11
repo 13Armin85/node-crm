@@ -41,9 +41,17 @@ import { fetchLeadData } from "../../../redux/slices/leadSlice";
 import { fetchLeadCustomFiled } from "../../../redux/slices/leadCustomFiledSlice";
 import { toast } from "react-toastify";
 import View from "./View";
+import { useFormDefinition } from "utils/managedForm";
 
 const Index = () => {
   const title = "Leads";
+  const { definition } = useFormDefinition("Leads");
+  const statuses = definition?.fields.find(field => field.name === "leadStatus")?.options || [
+    { value: "active", label: "Active" }, { value: "pending", label: "Pending" },
+    { value: "contacted", label: "Contacted" }, { value: "qualified", label: "Qualified" },
+    { value: "viewing", label: "Property Viewing" }, { value: "negotiating", label: "Negotiating" },
+    { value: "lost", label: "Lost" },
+  ];
   const size = "lg";
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
@@ -130,8 +138,13 @@ const Index = () => {
         return "pending";
       case "active":
         return "completed";
-      case "sold":
+      case "lost":
         return "onHold";
+      case "contacted":
+      case "qualified":
+      case "viewing":
+      case "negotiating":
+        return "inProgress";
       default:
         return "completed";
     }
@@ -242,9 +255,7 @@ const Index = () => {
                 value={leadStatusValue(row?.original?.leadStatus)}
                 style={{ fontSize: "14px" }}
               >
-                <option value="active">{tr("Active")}</option>
-                <option value="sold">{tr("Sold")}</option>
-                <option value="pending">{tr("Pending")}</option>
+                {statuses.map(status => <option key={status.value} value={status.value}>{tr(status.label)}</option>)}
               </Select>
             </div>
           ),
@@ -329,7 +340,7 @@ const Index = () => {
       dispatch(fetchLeadData());
     }
     fetchCustomDataFields();
-  }, [action]);
+  }, [action, definition]);
 
   useEffect(() => {
     setDataColumn(

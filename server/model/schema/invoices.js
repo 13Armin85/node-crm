@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const Invoices = new mongoose.Schema({
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     title: String,
+    property: { type: mongoose.Schema.Types.ObjectId, ref: 'Properties', default: null },
+    transactionType: { type: String, enum: ['SALE', 'RENT', '', null], default: '' },
     description: String,
     quoteNumber: String,
     quoteDate: Date,

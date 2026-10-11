@@ -1,12 +1,17 @@
 const FormDefinition = require('../model/schema/formDefinition');
 const CustomField = require('../model/schema/customField');
 const { categories, ages, bedrooms, floors } = require('./estateCatalog');
+const { partnerCustomerStatuses } = require('./customerStatuses');
+const { constructionStatuses, amenities } = require('./residenceCatalog');
 const labels = {
+  ...constructionStatuses, ...amenities,
   RESIDENTIAL: ['Residential', 'مسکونی', 'Konut'], COMMERCIAL: ['Commercial', 'تجاری', 'Ticari'],
   APARTMENT: ['Apartment', 'آپارتمان', 'Daire'], RESIDENCE: ['Residence', 'رزیدانس', 'Rezidans'], VILLA: ['Villa', 'ویلا', 'Villa'],
   SHOP: ['Shop', 'مغازه', 'Dükkan'], OFFICE: ['Office', 'دفتر', 'Ofis'], SALE: ['For Sale', 'فروش', 'Satılık'], RENT: ['For Rent', 'اجاره', 'Kiralık'],
   EMPTY: ['Empty', 'خالی', 'Boş'], TENANTED: ['Tenant Occupied', 'ملک با مستأجر', 'Kiracılı'], OWNER_OCCUPIED: ['Owner Occupied', 'مالک ساکن', 'Mülk Sahibi Kullanıyor'],
   NET: ['Net', 'خالص', 'Net'], GROSS: ['Gross', 'ناخالص', 'Brüt'], AVAILABLE: ['Available', 'موجود', 'Müsait'], SOLD: ['Sold', 'فروخته‌شده', 'Satıldı'],
+  RENTED: ['Rented', 'اجاره‌شده', 'Kiralandı'],
+  active: ['Active', 'فعال', 'Aktif'], pending: ['Pending', 'در انتظار', 'Beklemede'], contacted: ['Contacted', 'تماس گرفته‌شده', 'İletişime geçildi'], qualified: ['Qualified', 'واجد شرایط', 'Nitelikli'], viewing: ['Property Viewing', 'بازدید ملک', 'Gayrimenkul ziyareti'], negotiating: ['Negotiating', 'در حال مذاکره', 'Müzakere'], sold: ['Sold', 'خرید انجام‌شده', 'Satıldı'], rented: ['Rented', 'اجاره‌شده', 'Kiralandı'], lost: ['Lost', 'ناموفق', 'Kaybedildi'],
   LEAD: ['Lead', 'لید', 'Müşteri Adayı'], PARTNER_CUSTOMER: ['Partner Customer', 'مشتری همکار', 'İş Ortağı Müşterisi'],
   INDIVIDUAL: ['Individual', 'شخص حقیقی', 'Bireysel'], COMPANY: ['Company', 'شرکت', 'Şirket'], ACTIVE: ['Active', 'فعال', 'Aktif'], INACTIVE: ['Inactive', 'غیرفعال', 'Pasif'],
   AGE_0_1: ['0–1 year', '۰ تا ۱ سال', '0–1 yıl'], AGE_1_2: ['1–2 years', '۱ تا ۲ سال', '1–2 yıl'], AGE_2_5: ['2–5 years', '۲ تا ۵ سال', '2–5 yıl'],
@@ -15,7 +20,7 @@ const labels = {
   '0': ['Ground / 0', 'همکف / ۰', 'Zemin / 0'],
 };
 const localized = (en, fa, tr) => ({ en, fa, tr });
-const options = values => values.map(value => ({ value, label: localized(...(labels[value] || [value, value, value])) }));
+const options = values => values.map(value => ({ value, label: localized(...(labels[value] || labels[value.toLowerCase()] || [value, value, value])) }));
 const field = (name, type, en, fa, tr, extra = {}) => ({ name, type, kind: 'SYSTEM_FIELD', enabled: true, required: false, label: localized(en, fa, tr), ...extra });
 const required = { required: true, locked: true };
 const company = { condition: { customerType: 'COMPANY' } };
@@ -36,11 +41,11 @@ const defaults = {
     field('floor', 'select', 'Floor', 'طبقه', 'Kat', { options: options(floors) }),
     field('area.value', 'number', 'Area (m²)', 'متراژ (متر مربع)', 'Alan (m²)', { ...required, min: 0.01 }),
     field('area.type', 'select', 'Area Type', 'نوع متراژ', 'Alan Türü', { ...required, options: options(['NET', 'GROSS']), defaultValue: 'NET' }),
-    field('sale.status', 'select', 'Sale Status', 'وضعیت فروش', 'Satış Durumu', { ...required, options: options(['AVAILABLE', 'SOLD']), defaultValue: 'AVAILABLE' }),
-    field('sale.buyerType', 'radio', 'Buyer Type', 'نوع خریدار', 'Alıcı Türü', { ...required, options: options(['LEAD', 'PARTNER_CUSTOMER']), condition: { 'sale.status': 'SOLD' } }),
-    field('sale.lead', 'select', 'Lead Buyer', 'لید خریدار', 'Alıcı Adayı', { ...required, relation: 'Leads', condition: { 'sale.status': 'SOLD', 'sale.buyerType': 'LEAD' } }),
-    field('sale.partnerCustomer', 'select', 'Partner Customer Buyer', 'مشتری همکار خریدار', 'İş Ortağı Alıcı', { ...required, relation: 'Partner Customers', condition: { 'sale.status': 'SOLD', 'sale.buyerType': 'PARTNER_CUSTOMER' } }),
-    field('sale.soldAt', 'date', 'Sale Date', 'تاریخ فروش', 'Satış Tarihi', { condition: { 'sale.status': 'SOLD' } }),
+    field('sale.status', 'select', 'Transaction Status', 'وضعیت معامله', 'İşlem Durumu', { ...required, options: options(['AVAILABLE', 'SOLD', 'RENTED']), defaultValue: 'AVAILABLE' }),
+    field('sale.buyerType', 'radio', 'Customer Type', 'نوع مشتری', 'Müşteri Türü', { ...required, options: options(['LEAD', 'PARTNER_CUSTOMER']), condition: { 'sale.status': ['SOLD', 'RENTED'] } }),
+    field('sale.lead', 'select', 'Lead Customer', 'لید مشتری', 'Müşteri Adayı', { ...required, relation: 'Leads', condition: { 'sale.status': ['SOLD', 'RENTED'], 'sale.buyerType': 'LEAD' } }),
+    field('sale.partnerCustomer', 'select', 'Partner Customer', 'مشتری همکار', 'İş Ortağı Müşterisi', { ...required, relation: 'Partner Customers', condition: { 'sale.status': ['SOLD', 'RENTED'], 'sale.buyerType': 'PARTNER_CUSTOMER' } }),
+    field('sale.soldAt', 'date', 'Transaction Date', 'تاریخ معامله', 'İşlem Tarihi', { condition: { 'sale.status': ['SOLD', 'RENTED'] } }),
     field('files', 'file', 'Property Files', 'فایل‌های ملک', 'Gayrimenkul Dosyaları'),
   ],
   'Partner Customers': [
@@ -51,9 +56,9 @@ const defaults = {
     field('phone', 'phone', 'Phone', 'تلفن', 'Telefon'), field('whatsapp', 'phone', 'WhatsApp', 'واتس‌اپ', 'WhatsApp'),
     field('email', 'email', 'Email', 'ایمیل', 'E-posta'), field('nationality', 'text', 'Nationality', 'ملیت', 'Uyruk'),
     field('address', 'textarea', 'Address', 'آدرس', 'Adres'), ...address(), field('taxNumber', 'text', 'Tax Number', 'شماره مالیاتی', 'Vergi Numarası', company),
-    field('notes', 'textarea', 'Notes', 'یادداشت‌ها', 'Notlar'), field('status', 'select', 'Status', 'وضعیت', 'Durum', { ...required, options: options(['ACTIVE', 'INACTIVE']), defaultValue: 'ACTIVE' }),
+    field('notes', 'textarea', 'Notes', 'یادداشت‌ها', 'Notlar'), field('status', 'select', 'Status', 'وضعیت', 'Durum', { ...required, options: options(partnerCustomerStatuses), defaultValue: 'ACTIVE' }),
   ],
-  Residences: [field('name', 'text', 'Name', 'نام', 'Ad', required), ...address(), field('address', 'textarea', 'Address', 'آدرس', 'Adres'), field('notes', 'textarea', 'Notes', 'یادداشت‌ها', 'Notlar')],
+  Residences: require('./residenceFormDefinition')({ field, options, required }),
 };
 Object.assign(defaults, require('./completeFormDefinitions')({ field, options, required }));
 defaults.Properties.push(
@@ -104,6 +109,10 @@ async function getDefinition(moduleName) {
       return system ? {
         ...item,
         type: system.type,
+        integer: Boolean(system.integer),
+        ...(system.options ? { options: system.options.map(option => ({ ...option, label: item.options?.find(saved => saved.value === option.value)?.label || option.label })) } : {}),
+        ...(system.options && ['select', 'radio'].includes(system.type) && item.defaultValue != null && item.defaultValue !== '' && !system.options.some(option => option.value === item.defaultValue)
+          ? { defaultValue: system.defaultValue ?? '' } : {}),
         relation: system.relation,
         condition: system.condition,
         external: Boolean(system.external),

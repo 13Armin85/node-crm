@@ -342,7 +342,13 @@ const convertToInvoice = async (req, res) => {
     }
     const nextAutoIncrementValue = await getNextAutoIncrementInvoiceValue();
 
+    const property = quotesData.property ? await require('../../model/schema/property').Property.findOne(
+      require('../../services/recordAccess').readScope(req, req.actor, 'Properties', { _id: quotesData.property, deleted: false })
+    ).lean() : null;
+    if (quotesData.property && !property) return res.status(400).json({ code: 'relationNotFound', field: 'property' });
     const invoiceDetails = {
+      property: property?._id || null,
+      transactionType: property?.transactionType || '',
       invoiceNumber: nextAutoIncrementValue,
       quotesId: quotesData?._id,
       title: quotesData?.title,
@@ -379,7 +385,7 @@ const convertToInvoice = async (req, res) => {
       items: quotesData?.items,
       invoiceConvertDate: new Date(),
       createBy: quotesData?.createBy,
-      modifiedBy: quotesData?.modifiedBy,
+      modifiedBy: req.actor._id,
     };
 
     const invoiceData = new Invoices(invoiceDetails);

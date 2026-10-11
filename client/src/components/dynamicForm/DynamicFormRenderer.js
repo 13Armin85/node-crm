@@ -10,9 +10,10 @@ import CurrencyAmount from 'components/CurrencyAmount';
 import { formLabel, formValue } from 'utils/formValue';
 import PriceInput from 'components/PriceInput';
 import { isAdmin } from 'roles';
+import { useRequiredFields } from 'utils/managedForm';
 
 export const fieldPath = field => field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
-export const isVisible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => getIn(values, key) === expected);
+export const isVisible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => (Array.isArray(expected) ? expected.includes(getIn(values, key)) : getIn(values, key) === expected));
 export const localized = (value, language) => translate(typeof value === 'object' && value !== null ? value[language] || value.en || '' : value || '', language);
 export async function downloadFile(file) {
   const response = await axios.get(`${constant.baseUrl}api/estate/files/${file.id || file._id}`, { headers: { Authorization: localStorage.getItem('token') || sessionStorage.getItem('token') }, responseType: 'blob' });
@@ -41,7 +42,7 @@ export function FileInput({ value = [], onChange, disabled }) {
     </Stack>)}
   </Stack>;
 }
-export function AsyncRelationSelect({ moduleName, value, onChange, id, disabled }) {
+export function AsyncRelationSelect({ moduleName, value, onChange, id, name, disabled }) {
   const { t } = useLanguage();
   const selectedValue = formValue(value);
   const [query, setQuery] = useState('');
@@ -69,7 +70,7 @@ export function AsyncRelationSelect({ moduleName, value, onChange, id, disabled 
   const all = selected && !options.some(o => o.value === selected.value) ? [selected, ...options] : options;
   return <Stack spacing={1}>
     {!disabled && <Input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('Search...')} aria-label={t('Search...')} />}
-    <Select id={id} value={selectedValue} onChange={e => onChange(e.target.value)} disabled={disabled}>
+    <Select id={id} name={name} value={selectedValue} onChange={e => onChange(e.target.value)} disabled={disabled}>
       <option value="">{t(busy ? 'estate.loading' : 'Select')}</option>
       {all.map(option => <option key={formValue(option.value)} value={formValue(option.value)} data-no-translate>{formLabel(option.label, formValue(option.value))}</option>)}
     </Select>
@@ -80,11 +81,13 @@ export function AsyncRelationSelect({ moduleName, value, onChange, id, disabled 
 export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false }) {
   const { language, t } = useLanguage();
   const [user] = useState(() => JSON.parse(localStorage.getItem('user')));
+  useRequiredFields(readOnly ? [] : (definition?.fields || []).filter(field => !field.external && (!customOnly || field.kind === 'CUSTOM_FIELD')), formik);
   if (!definition) return null;
   const change = (field, value) => {
     formik.setFieldValue(fieldPath(field), value);
     const resets = {
-      category: { subtype: '', bedroom: null }, isInsideResidence: { residence: null },
+      category: { subtype: '', bedroom: null },
+      transactionType: { 'sale.status': 'AVAILABLE', 'sale.buyerType': null, 'sale.lead': null, 'sale.partnerCustomer': null, 'sale.soldAt': null }, isInsideResidence: { residence: null },
       'sale.status': { 'sale.buyerType': null, 'sale.lead': null, 'sale.partnerCustomer': null, 'sale.soldAt': null },
       'sale.buyerType': { 'sale.lead': null, 'sale.partnerCustomer': null },
       customerType: { companyName: '', contactPerson: '', taxNumber: '' },
@@ -102,11 +105,12 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       const label = localized(field.label, language); const id = `field-${path}`;
       let options = field.options || [];
       if (field.name === 'subtype') options = options.filter(o => (formik.values.category === 'COMMERCIAL' ? ['SHOP', 'OFFICE'] : ['APARTMENT', 'RESIDENCE', 'VILLA']).includes(o.value));
+      if (field.name === 'sale.status') options = options.filter(o => o.value === 'AVAILABLE' || o.value === (formik.values.transactionType === 'RENT' ? 'RENTED' : 'SOLD'));
       const common = { id, name: path, value: formValue(value) || formLabel(value), onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly };
       let control;
-      if (field.relation) control = <AsyncRelationSelect id={id} moduleName={field.relation} value={value} onChange={v => change(field, v)} disabled={readOnly} />;
+      if (field.relation) control = <AsyncRelationSelect id={id} name={path} moduleName={field.relation} value={value} onChange={v => change(field, v)} disabled={readOnly} />;
       else if (field.type === 'file') control = <FileInput value={value || []} onChange={v => change(field, v)} disabled={readOnly} />;
-      else if (field.type === 'currency' && readOnly) control = <CurrencyAmount amount={value} currency={getIn(formik.values, field.name === 'price.amount' ? 'price.currency' : 'currency') || 'TRY'} />;
+      else if (field.type === 'currency' && readOnly) control = <CurrencyAmount amount={value} currency={getIn(formik.values, field.name.endsWith('.amount') ? field.name.replace(/\.amount$/, '.currency') : 'currency') || 'TRY'} />;
       else if (field.type === 'currency') control = <PriceInput {...common} value={value} onValueChange={v => change(field, v)} />;
       else if (field.type === 'textarea') control = <Textarea {...common} />;
       else if (field.type === 'checkbox') control = <Checkbox id={id} isChecked={Boolean(value)} isDisabled={readOnly} onChange={e => change(field, e.target.checked)}>{label}</Checkbox>;
@@ -124,7 +128,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       />;
       else {
         const type = ({ currency: 'number', phone: 'tel', datetime: 'datetime-local' })[field.type] || field.type;
-        control = <Input {...common} type={type} min={field.min} max={field.max} step={type === 'number' ? 'any' : undefined}
+        control = <Input {...common} type={type} min={field.min} max={field.max} step={type === 'number' ? field.integer ? 1 : 'any' : undefined}
           value={value ?? ''}
           onChange={e => change(field, type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)} />;
       }

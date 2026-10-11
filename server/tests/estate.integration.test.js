@@ -29,6 +29,28 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     assert.equal(residence.status, 201, JSON.stringify(residence));
     const partner = await api('POST', '/estate/Partner%20Customers', { customerType: 'COMPANY', companyName: 'Integration Company', phone: '+905551112233', status: 'ACTIVE', createBy: user._id });
     assert.equal(partner.status, 201, JSON.stringify(partner)); assert.equal(partner.data.createBy, String(admin._id));
+    const { defaults } = require('../services/formDefinitions');
+    const FormDefinition = require('../model/schema/formDefinition');
+    // Older saved definitions must pick up new statuses and discard removed defaults.
+    await FormDefinition.create({ moduleName: 'Leads', fields: defaults.Leads.map(field => field.name === 'leadStatus'
+      ? { ...field, defaultValue: 'rented', options: [...field.options, { value: 'sold', label: { en: 'Sold', fa: 'Sold', tr: 'Sold' } }, { value: 'rented', label: { en: 'Rented', fa: 'Rented', tr: 'Rented' } }] } : field) });
+    const leadDefinition = await api('GET', '/estate/definitions/Leads');
+    const leadStatus = leadDefinition.data.fields.find(field => field.name === 'leadStatus');
+    assert.equal(leadStatus.defaultValue, '');
+    assert.deepEqual(leadStatus.options, defaults.Leads.find(field => field.name === 'leadStatus').options);
+    await FormDefinition.create({ moduleName: 'Partner Customers', fields: defaults['Partner Customers'].map(field => field.name === 'status'
+      ? { ...field, options: field.options.filter(option => ['ACTIVE', 'INACTIVE'].includes(option.value)) } : field) });
+    const partnerDefinition = await api('GET', '/estate/definitions/Partner%20Customers');
+    const partnerStatuses = partnerDefinition.data.fields.find(field => field.name === 'status').options;
+    assert.deepEqual(partnerStatuses, defaults['Partner Customers'].find(field => field.name === 'status').options);
+    for (const option of partnerStatuses) {
+      const changed = await api('PUT', `/estate/Partner%20Customers/${partner.data._id}`, { status: option.value });
+      assert.equal(changed.status, 200, JSON.stringify(changed));
+      assert.equal(changed.data.status, option.value);
+      assert.equal((await api('GET', '/estate/Partner%20Customers?status=' + option.value)).data.total, 1);
+    }
+    assert.equal((await api('PUT', `/estate/Partner%20Customers/${partner.data._id}`, { status: 'RENTED' })).status, 400);
+    assert.equal((await api('PUT', `/estate/Partner%20Customers/${partner.data._id}`, { status: 'SOLD' })).status, 400);
     const definition = await api('GET', '/estate/definitions/Properties');
     const field = { name: 'field_reference', kind: 'CUSTOM_FIELD', type: 'text', enabled: true, required: true, label: { en: 'Reference', fa: 'مرجع', tr: 'Referans' } };
     const updated = await api('PUT', '/estate/definitions/Properties', { ...definition.data, fields: [...definition.data.fields, field] });
@@ -42,6 +64,27 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     assert.equal(property.data.sale.partnerCustomer, partner.data._id);
     assert.equal((await api('DELETE', `/estate/Partner%20Customers/${partner.data._id}`)).status, 409);
     assert.equal((await api('POST', '/estate/Properties', { ...payload, residence: String(new mongoose.Types.ObjectId()) })).status, 400);
+    const rented = await api('POST', '/estate/Properties', { ...payload, title: 'Rented home', transactionType: 'RENT', sale: { status: 'RENTED', buyerType: 'PARTNER_CUSTOMER', partnerCustomer: partner.data._id } });
+    assert.equal(rented.status, 201, JSON.stringify(rented)); assert.equal(rented.data.status, 'Rented');
+    assert.equal((await api('GET', '/estate/Properties?sale.status=RENTED')).data.total, 1);
+    const invalidInvoice = await api('POST', '/invoices/add', { title: 'Incomplete', property: rented.data._id });
+    assert.equal(invalidInvoice.status, 400); assert.equal(invalidInvoice.data.field, 'transactionType');
+    const invoice = await api('POST', '/invoices/add', { title: 'Rent invoice', property: rented.data._id, transactionType: 'RENT' });
+    assert.equal(invoice.status, 200, JSON.stringify(invoice));
+    const invoiceView = await api('GET', '/invoices/view/' + invoice.data._id);
+    assert.equal(invoiceView.data.result.propertyName, 'Rented home'); assert.equal(invoiceView.data.result.transactionType, 'RENT');
+    const invoiceList = await api('GET', '/invoices');
+    assert.equal(invoiceList.data.find(item => item._id === invoice.data._id).propertyName, 'Rented home');
+    assert.equal((await api('PUT', '/invoices/edit/' + invoice.data._id, { description: 'Updated' })).status, 200);
+    assert.equal((await api('GET', '/invoices/view/' + invoice.data._id)).data.result.property, rented.data._id);
+    const quote = await require('../model/schema/quotes').create({ property: rented.data._id, createBy: admin._id });
+    const converted = await api('POST', '/quotes/convertToInvoice', { _id: String(quote._id) });
+    assert.equal(converted.status, 200, JSON.stringify(converted));
+    const convertedInvoice = await require('../model/schema/invoices').findOne({ quotesId: quote._id }).lean();
+    assert.equal(String(convertedInvoice.property), rented.data._id); assert.equal(convertedInvoice.transactionType, 'RENT');
+    const released = await api('PUT', '/estate/Properties/' + rented.data._id, { sale: { status: 'AVAILABLE' } });
+    assert.equal(released.data.sale.partnerCustomer, null);
+    await api('DELETE', '/estate/Properties/' + rented.data._id);
     const cleared = await api('PUT', `/estate/Properties/${property.data._id}`, { isInsideResidence: false, sale: { status: 'AVAILABLE' }, category: 'COMMERCIAL', subtype: 'SHOP', bedroom: '1+1' });
     assert.equal(cleared.status, 200, JSON.stringify(cleared)); assert.equal(cleared.data.residence, null); assert.equal(cleared.data.sale.partnerCustomer, null); assert.equal(cleared.data.bedroom, null);
     const list = await api('GET', '/estate/Properties?category=COMMERCIAL&priceMin=100&limit=1');

@@ -6,7 +6,7 @@ class InputError extends Error {
 const fail = (field, code = 'invalid') => { throw new InputError(code, field); };
 const get = (object, path) => path.split('.').reduce((value, key) => value?.[key], object);
 const set = (object, path, value) => { const keys = path.split('.'); const last = keys.pop(); let parent = object; for (const key of keys) parent = parent[key] ||= {}; parent[last] = value; };
-const visible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => get(values, key) === expected);
+const visible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => (Array.isArray(expected) ? expected.includes(get(values, key)) : get(values, key) === expected));
 const empty = value => value === undefined || value === null || value === '' || (Array.isArray(value) && !value.length);
 const oneOf = (value, allowed, field, optional = false) => { if (!(optional && empty(value)) && !allowed.includes(value)) fail(field); };
 const objectId = value => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value);
@@ -15,7 +15,7 @@ function validateValue(field, value) {
   if (field.external && field.relation && field.type === 'text') {
     if (!Array.isArray(value) || value.some(id => !objectId(id))) fail(field.name);
   } else if (['number', 'currency'].includes(field.type)) {
-    if (typeof value !== 'number' || !Number.isFinite(value) || (field.min != null && value < field.min) || (field.max != null && value > field.max)) fail(field.name);
+    if (typeof value !== 'number' || !Number.isFinite(value) || (field.min != null && value < field.min) || (field.max != null && value > field.max) || (field.integer && !Number.isInteger(value))) fail(field.name);
   } else if (field.type === 'checkbox') {
     if (typeof value !== 'boolean' || (field.required && !value)) fail(field.name);
   } else if (field.type === 'multiselect') {
@@ -33,6 +33,15 @@ function validateValue(field, value) {
     if (field.type === 'url') { try { if (!['https:', 'http:'].includes(new URL(value).protocol)) fail(field.name); } catch { fail(field.name); } }
   }
 }
+function validateRequiredFields(definition, body, existing = {}) {
+  const values = { ...existing, ...body };
+  for (const field of definition.fields) {
+    if (!field.required || !visible(field, values)) continue;
+    const path = field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
+    const value = get(body, path) !== undefined ? get(body, path) : get(existing, path) ?? field.defaultValue;
+    if (empty(value) || (typeof value === 'string' && !value.trim()) || (field.type === 'checkbox' && value !== true)) fail(path, 'required');
+  }
+}
 function validateFields(definition, body, existing = {}) {
   const output = { customFields: { ...(existing.customFields || {}) } };
   const values = { ...existing, ...body };
@@ -43,7 +52,10 @@ function validateFields(definition, body, existing = {}) {
     if (value === undefined) value = get(existing, path);
     if (value === undefined) value = field.defaultValue;
     if (!visible(field, values)) continue;
-    validateValue(field, value);
+    try { validateValue(field, value); } catch (error) {
+      if (error instanceof InputError) error.field = path;
+      throw error;
+    }
     if (value !== undefined) set(output, path, value);
   }
   return output;
@@ -65,8 +77,10 @@ function normalizeProperty(input) {
   if (p.isInsideResidence !== true) { p.isInsideResidence = false; p.residence = null; }
   else if (!objectId(p.residence)) fail('residence', 'required');
   p.sale ||= { status: 'AVAILABLE' };
-  oneOf(p.sale.status, ['AVAILABLE', 'SOLD'], 'sale.status');
-  if (p.sale.status !== 'SOLD') p.sale = { status: 'AVAILABLE', buyerType: null, lead: null, partnerCustomer: null, soldAt: null };
+  // Older rentals may have been recorded using the sold status.
+  if (p.transactionType === 'RENT' && p.sale.status === 'SOLD') p.sale.status = 'RENTED';
+  oneOf(p.sale.status, p.transactionType === 'RENT' ? ['AVAILABLE', 'RENTED'] : ['AVAILABLE', 'SOLD'], 'sale.status');
+  if (p.sale.status === 'AVAILABLE') p.sale = { status: 'AVAILABLE', buyerType: null, lead: null, partnerCustomer: null, soldAt: null };
   else {
     oneOf(p.sale.buyerType, ['LEAD', 'PARTNER_CUSTOMER'], 'sale.buyerType');
     const key = p.sale.buyerType === 'LEAD' ? 'lead' : 'partnerCustomer';
@@ -103,7 +117,7 @@ function validateDefinition(input, current, baseline) {
       result.kind = 'SYSTEM_FIELD'; result.type = system.type;
       if (system.options) result.options = system.options.map(option => ({ ...option, label: field.options?.find(o => o.value === option.value)?.label || option.label }));
       if (system.locked) { result.enabled = true; result.required = system.required; }
-      result.min = system.min; result.max = system.max;
+      result.min = system.min; result.max = system.max; result.integer = Boolean(system.integer);
     }
     const previous = current.fields.find(f => f.name === field.name);
     if (previous && previous.type !== result.type) fail(field.name, 'fieldTypeImmutable');
@@ -120,4 +134,4 @@ function validateDefinition(input, current, baseline) {
   for (const system of baseline.fields.filter(f => f.kind === 'SYSTEM_FIELD')) if (!names.has(system.name)) fail(system.name, 'systemFieldProtected');
   return fields;
 }
-module.exports = { InputError, fail, get, set, visible, empty, objectId, validateValue, validateFields, normalizeProperty, validateDefinition };
+module.exports = { InputError, fail, get, set, visible, empty, objectId, validateValue, validateRequiredFields, validateFields, normalizeProperty, validateDefinition };

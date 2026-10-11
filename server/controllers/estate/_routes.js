@@ -21,7 +21,7 @@ const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res, next))
 const modules = {
   Properties: { model: Property, search: ['title', 'district', 'neighborhood', 'propertyType', 'propertyAddress'], sort: ['title', 'price.amount', 'createdDate'], filters: ['category', 'subtype', 'transactionType', 'district', 'neighborhood', 'residence', 'bedroom', 'buildingAge', 'occupancyStatus', 'floor', 'area.type', 'sale.status'] },
   'Partner Customers': { model: PartnerCustomer, search: ['fullName', 'companyName', 'phone', 'email'], sort: ['fullName', 'companyName', 'createdDate'], filters: ['customerType', 'status', 'district'] },
-  Residences: { model: Residence, search: ['name', 'district', 'neighborhood'], sort: ['name', 'createdDate'], filters: ['district', 'neighborhood'] },
+  Residences: { model: Residence, search: ['name', 'developer', 'city', 'district', 'neighborhood', 'address'], sort: ['name', 'createdDate'], filters: ['city', 'district', 'neighborhood', 'constructionStatus'] },
   Leads: { model: Lead, search: ['leadName', 'leadEmail', 'leadPhoneNumber'], sort: ['leadName', 'createdDate'], filters: [] },
 };
 const fileSchema = new mongoose.Schema({ name: String, storageName: String, mimeType: String, size: Number, uploadedAt: Date, createBy: mongoose.Schema.Types.ObjectId });
@@ -181,15 +181,17 @@ async function payload(req, previous = {}) {
   const definition = await getDefinition(req.params.module);
   // Merge nested objects for PATCH-like updates while validating the entire result.
   const body = { ...previous, ...req.body };
-  for (const key of ['price', 'area', 'sale', 'customFields']) body[key] = { ...previous[key], ...req.body[key] };
+  for (const key of ['price', 'area', 'sale', 'maintenanceFee', 'customFields']) body[key] = { ...previous[key], ...req.body[key] };
   let values = validateFields(definition, body, previous);
   if (req.params.module === 'Properties') {
     values = normalizeProperty(values);
     values.name = values.title;
-    values.status = values.sale.status === 'SOLD' ? 'Sold' : 'Available';
+    values.status = values.sale.status === 'SOLD' ? 'Sold' : values.sale.status === 'RENTED' ? 'Rented' : 'Available';
     if (values.residence) await related(req, 'Residences', values.residence, 'residence');
     if (values.sale.lead) await related(req, 'Leads', values.sale.lead, 'sale.lead');
     if (values.sale.partnerCustomer) await related(req, 'Partner Customers', values.sale.partnerCustomer, 'sale.partnerCustomer');
+  }
+  if (['Properties', 'Residences'].includes(req.params.module)) {
     if (req.body.files) {
       if (!Array.isArray(req.body.files) || req.body.files.length > 100) fail('files');
       values.files = [];

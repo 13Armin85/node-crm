@@ -84,6 +84,7 @@ const AddEdit = (props) => {
   const user = JSON.parse(localStorage.getItem("user"));
   const [accountAccess, contactAccess] = HasAccess(["Account", "Contacts"]);
   const [isOpenPreview, setIsOpenPreview] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState(null);
 
   const opportunityList = useSelector(
     (state) => state?.opportunityData?.data?.data,
@@ -94,6 +95,8 @@ const AddEdit = (props) => {
   const initialValues = {
     customFields: invoiceDetails?.customFields || {},
     title: type === "edit" ? invoiceDetails?.title : "",
+    property: type === "edit" ? formValue(invoiceDetails?.property) : "",
+    transactionType: type === "edit" ? invoiceDetails?.transactionType || "" : "",
     quoteNumber: type === "edit" ? invoiceDetails?.quoteNumber : null,
     quoteDate: type === "edit" ? invoiceDetails?.quoteDate : "",
     dueDate: type === "edit" ? invoiceDetails?.dueDate : "",
@@ -140,6 +143,9 @@ const AddEdit = (props) => {
         toast.success(`Invoice Save successfully`);
         formik.resetForm();
         setAction((pre) => !pre);
+      } else {
+        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
+        toast.error(tr(`estate.${response?.data?.code || 'serverError'}`));
       }
     } catch (e) {
       console.log(e);
@@ -157,6 +163,9 @@ const AddEdit = (props) => {
         toast.success(`Invoice Update successfully`);
         formik.resetForm();
         setAction((pre) => !pre);
+      } else {
+        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
+        toast.error(tr(`estate.${response?.data?.code || 'serverError'}`));
       }
     } catch (e) {
       console.log(e);
@@ -194,6 +203,18 @@ const AddEdit = (props) => {
     handleSubmit,
     setFieldValue,
   } = formik;
+
+  useEffect(() => {
+    let active = true;
+    setSelectedProperty(null);
+    if (!values.property) return undefined;
+    getApi(`api/estate/Properties/${values.property}`).then(result => {
+      if (!active || result?.status !== 200) return;
+      setSelectedProperty(result.data);
+      if (!values.transactionType && result.data.transactionType) setFieldValue('transactionType', result.data.transactionType);
+    });
+    return () => { active = false; };
+  }, [values.property, values.transactionType, setFieldValue]);
 
   const handleCheck = (e) => {
     setFieldValue("isCheck", e?.target?.checked);
@@ -384,6 +405,17 @@ const AddEdit = (props) => {
               <Grid templateColumns="repeat(12, 1fr)" gap={3}>
                 <GridItem colSpan={{ base: 12 }}>
                   <Heading as="h1" size="md" mt="10px"><LocalizedText text="Overview" /></Heading>
+                </GridItem>
+                <GridItem colSpan={{ base: 12, md: 6 }}>
+                  <FormLabel>{tr('Property')}</FormLabel>
+                  <AsyncRelationSelect name="property" moduleName="Properties" value={values.property}
+                    onChange={value => { setFieldValue('property', value || null); setFieldValue('transactionType', ''); }} />
+                </GridItem>
+                <GridItem colSpan={{ base: 12, md: 6 }}>
+                  <FormLabel>{tr('Transaction Type')}</FormLabel>
+                  <Select name="transactionType" value={values.transactionType} onChange={handleChange} onBlur={handleBlur}>
+                    <option value="">{tr('Select')}</option><option value="SALE">{tr('Purchased')}</option><option value="RENT">{tr('Rented')}</option>
+                  </Select>
                 </GridItem>
                 <GridItem colSpan={{ base: 12, md: 6 }}>
                   <FormLabel
@@ -1476,6 +1508,10 @@ const AddEdit = (props) => {
                         <td>:</td>
                         <td style={{ textAlign: "start" }}>{values?.title}</td>
                       </tr>
+                      <tr>
+                        <th style={{ textAlign: "start" }}>{tr('Property')}</th><td>:</td><td data-no-translate>{selectedProperty?.title || selectedProperty?.name || invoiceDetails?.propertyName || values.property || '-'}</td>
+                      </tr>
+                      <tr><th style={{ textAlign: "start" }}>{tr('Transaction Type')}</th><td>:</td><td>{values.transactionType ? tr(values.transactionType === 'SALE' ? 'Purchased' : 'Rented') : '-'}</td></tr>
                       <tr>
                         <th style={{ textAlign: "start" }}><LocalizedText text="Status" /></th>
                         <td>:</td>

@@ -1,6 +1,7 @@
 // Complete system-field catalog for the legacy CRM forms. These fields are
 // rendered by the existing form widgets; Form Builder controls their label,
 // order, visibility and required state and appends custom fields separately.
+const { leadStatuses } = require('./customerStatuses');
 module.exports = ({ field, options, required }) => {
   const f = (name, type, en, fa, extra = {}) => field(name, type, en, fa, en, extra);
   const choice = (name, en, fa, values, extra = {}) =>
@@ -17,7 +18,7 @@ module.exports = ({ field, options, required }) => {
   return {
     Leads: [
       f('leadName', 'text', 'Lead Name', 'نام سرنخ', required),
-      choice('leadStatus', 'Lead Status', 'وضعیت سرنخ', ['active', 'pending', 'sold']),
+      choice('leadStatus', 'Lead Status', 'وضعیت سرنخ', leadStatuses),
       f('leadEmail', 'email', 'Lead Email', 'ایمیل سرنخ', required),
       f('leadMobile', 'phone', 'Lead Mobile', 'موبایل سرنخ'),
       choice('leadCampaign', 'Lead Campaign', 'کمپین سرنخ', ['Referral', 'Online', 'Billboard', 'Activation', 'Agent']),
@@ -121,6 +122,8 @@ module.exports = ({ field, options, required }) => {
       relation('salesAgent', 'Sales Agent', 'کارشناس فروش', 'Users'),
     ],
     Invoices: [
+      relation('property', 'Property', 'ملک', 'Properties'),
+      choice('transactionType', 'Transaction Type', 'نوع معامله', ['SALE', 'RENT']),
       f('title', 'text', 'Title', 'عنوان', required),
       f('invoiceNumber', 'text', 'Invoice Number', 'شماره فاکتور'),
       f('quoteNumber', 'text', 'Quote Number', 'شماره پیشنهاد'),

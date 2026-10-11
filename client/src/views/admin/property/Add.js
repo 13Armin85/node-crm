@@ -83,7 +83,7 @@ const Add = (props) => {
           ><LocalizedText text="Add Property" /><IconButton onClick={props?.onClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
-            <CustomForm
+            <CustomForm formik={formik}
               moduleData={props?.propertyData}
               values={values}
               setFieldValue={setFieldValue}

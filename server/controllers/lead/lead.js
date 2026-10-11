@@ -39,6 +39,8 @@ const addMany = async (req, res) => {
 const changeStatus = async (req, res) => {
   try {
     const { leadStatus } = req.body;
+    const allowed = require('../../services/formDefinitions').defaults.Leads.find(field => field.name === 'leadStatus').options.map(option => option.value);
+    if (!allowed.includes(leadStatus)) return res.status(400).json({ code: 'invalid', field: 'leadStatus' });
     let result = await Lead.findOneAndUpdate(
       { _id: req.params.id },
       { $set: { leadStatus: leadStatus } },

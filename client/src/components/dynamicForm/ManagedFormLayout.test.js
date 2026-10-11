@@ -41,3 +41,13 @@ test('a container with several fields keeps its visible children', () => {
   expect(view).not.toContain('name="hidden"');
   expect(view).toContain('name="visible"');
 });
+
+test('a required managed field shows its configured error below the input after submit', () => {
+  const definition = { fields: [{ name: 'title', kind: 'SYSTEM_FIELD', required: true, label: { en: 'Title' }, validationMessage: { en: 'Please enter a title' } }] };
+  const view = renderToStaticMarkup(<ManagedFormLayout moduleName="Invoices" definition={definition} formik={{ values: {}, errors: { title: 'required' }, touched: {}, submitCount: 1 }}>
+    <Grid><GridItem><FormLabel>Title</FormLabel><Input name="title" /></GridItem></Grid>
+  </ManagedFormLayout>);
+  expect(view).toContain('Please enter a title');
+  expect(view.indexOf('name="title"')).toBeLessThan(view.indexOf('Please enter a title'));
+  expect(view).toContain('aria-invalid="true"');
+});

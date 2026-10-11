@@ -1,3 +1,4 @@
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { formLabel } from 'utils/formValue';
@@ -377,7 +378,7 @@ const AddEdit = (props) => {
           >
             {type === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="Quotes" /><IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
           </DrawerHeader>
-          <DrawerBody>
+          <DrawerBody><ManagedFormLayout moduleName="Quotes" formik={formik}>
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 12 }}>
                 <Heading as="h1" size="md" mt="10px"><LocalizedText text="Overview" /></Heading>
@@ -1549,7 +1550,7 @@ const AddEdit = (props) => {
                 </Text>
               </GridItem>
             </Grid>
-          </DrawerBody>
+          </ManagedFormLayout></DrawerBody>
           <DrawerFooter>
             <Button
               sx={{ textTransform: "capitalize" }}

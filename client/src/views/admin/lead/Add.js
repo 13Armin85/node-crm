@@ -135,7 +135,7 @@ const Add = (props) => {
           ><LocalizedText text="Add Lead" /><IconButton onClick={props?.onClose} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody>
-            <CustomForm
+            <CustomForm formik={formik}
               definition={definition}
               definitionError={definitionError}
               moduleData={props?.leadData}
@@ -146,7 +146,7 @@ const Add = (props) => {
               errors={errors}
               touched={touched}
             />
-            <RelationFields definition={definition} values={values} setFieldValue={setFieldValue} contact partner />
+            <RelationFields formik={formik} definition={definition} values={values} setFieldValue={setFieldValue} contact partner />
             <ManagedFormLayout moduleName="Leads" definition={definition} formik={formik} includeCustom={false}>
             <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
               <GridItem colSpan={{ base: 12 }}>

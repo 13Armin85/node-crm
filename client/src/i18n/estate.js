@@ -1,4 +1,7 @@
 const messages = {
+  'Customer unavailable': ['Customer unavailable', 'اطلاعات مشتری در دسترس نیست', 'Müşteri bilgisi mevcut değil'],
+  'Sold to': ['Sold to', 'فروخته‌شده به', 'Satın alan'],
+  'Rented to': ['Rented to', 'اجاره‌داده‌شده به', 'Kiracı'],
   'estate.section.building': ['Building and Units', 'ساختمان و واحدها', 'Bina ve daireler'],
   'estate.section.amenities': ['Amenities', 'امکانات مجموعه', 'Sosyal olanaklar'],
   'estate.section.management': ['Management and Maintenance', 'مدیریت و شارژ', 'Yönetim ve aidat'],

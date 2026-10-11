@@ -22,6 +22,45 @@ test('lead and partner customer statuses share the customer follow-up stages', (
     assert.throws(() => validateFields({ fields: defaults['Partner Customers'] }, { customerType: 'INDIVIDUAL', fullName: 'Customer', status: status.toUpperCase() }), { field: 'status', code: 'invalid' });
   }
 });
+test('residence details validate counts, amenities, fees and optional legacy fields', () => {
+  const fields = defaults.Residences;
+  const values = { name: 'Residence', city: 'Istanbul', constructionStatus: 'READY', constructionYear: 2020,
+    blockCount: 2, floorCount: 10, unitCount: 100, parkingCapacity: 0, totalArea: 2500,
+    amenities: ['POOL', 'SECURITY'], unitTypes: ['1+1', '1+3'], maintenanceFee: { amount: 0, currency: 'USD' },
+    phone: '+905551112233', email: 'management@example.com', mapUrl: 'https://example.com/map' };
+  const validated = validateFields({ fields }, values);
+  assert.equal(validated.unitCount, 100); assert.deepEqual(validated.amenities, ['POOL', 'SECURITY']);
+  assert.deepEqual(validated.maintenanceFee, { amount: 0, currency: 'USD' });
+  const Residence = require('../model/schema/residence');
+  assert.equal(new Residence({ ...validated, createBy: id }).validateSync(), undefined);
+  assert.doesNotThrow(() => validateFields({ fields }, { name: 'Legacy Residence' }));
+  for (const [field, value] of [['blockCount', -1], ['floorCount', 1.5], ['unitCount', 0], ['constructionYear', 2300], ['amenities', ['UNKNOWN']], ['totalArea', -10], ['email', 'invalid'], ['mapUrl', 'javascript:alert(1)']]) {
+    assert.throws(() => validateFields({ fields }, { ...values, [field]: value }), { code: 'invalid', field });
+  }
+  const baseline = { fields };
+  const saved = validateDefinition({ fields: fields.map(field => field.name === 'unitCount' ? { ...field, integer: false } : field) }, baseline, baseline);
+  assert.equal(saved.find(field => field.name === 'unitCount').integer, true);
+});
+
+test('residences require the selected customer for a completed transaction and clear stale buyers', () => {
+  const { normalizeSale } = require('../services/estateValidation');
+  const fields = defaults.Residences;
+  for (const [transactionType, status] of [['SALE', 'SOLD'], ['RENT', 'RENTED']]) {
+    assert.throws(() => validateFields({ fields }, { name: 'Residence', transactionType, sale: { status } }), { field: 'sale.buyerType', code: 'required' });
+    for (const buyerType of ['LEAD', 'PARTNER_CUSTOMER']) {
+      const input = { name: 'Residence', transactionType, sale: { status, buyerType, lead: id, partnerCustomer: id } };
+      const result = normalizeSale(validateFields({ fields }, input).sale, transactionType);
+      assert.equal(result.status, status);
+      assert.equal(result[buyerType === 'LEAD' ? 'lead' : 'partnerCustomer'], id);
+      assert.equal(result[buyerType === 'LEAD' ? 'partnerCustomer' : 'lead'], null);
+      assert.ok(result.soldAt);
+    }
+  }
+  assert.throws(() => normalizeSale({ status: 'RENTED', buyerType: 'LEAD', lead: id }, 'SALE'), { field: 'sale.status' });
+  const released = normalizeSale({ status: 'AVAILABLE', buyerType: 'LEAD', lead: id, soldAt: '2026-01-01' }, 'RENT');
+  assert.equal(released.lead, null); assert.equal(released.soldAt, null);
+});
+
 test('loaded lead relations validate and survive an edit payload', () => {
   const body = { leadName: 'Lead', leadEmail: 'lead@example.com', contact: id, partnerCustomer: id, relatedOpportunities: [id] };
   const result = validateFields({ fields: defaults.Leads }, body);

@@ -12,7 +12,8 @@ const Residence = require('../../model/schema/residence');
 const { Lead } = require('../../model/schema/lead');
 const FormDefinition = require('../../model/schema/formDefinition');
 const { defaults, legacyModules, getDefinition } = require('../../services/formDefinitions');
-const { validateFields, normalizeProperty, validateDefinition, objectId, fail, InputError } = require('../../services/estateValidation');
+const { validateFields, normalizeProperty, normalizeSale, validateDefinition, objectId, fail, InputError } = require('../../services/estateValidation');
+const { withCustomerNames } = require('../../services/estateCustomerNames');
 const { getTryUsdRate } = require('../../services/exchangeRate');
 const { readScope, readActor } = require('../../services/recordAccess');
 const { notifyRecordActivity } = require('../../services/notifications');
@@ -21,7 +22,7 @@ const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res, next))
 const modules = {
   Properties: { model: Property, search: ['title', 'district', 'neighborhood', 'propertyType', 'propertyAddress'], sort: ['title', 'price.amount', 'createdDate'], filters: ['category', 'subtype', 'transactionType', 'district', 'neighborhood', 'residence', 'bedroom', 'buildingAge', 'occupancyStatus', 'floor', 'area.type', 'sale.status'] },
   'Partner Customers': { model: PartnerCustomer, search: ['fullName', 'companyName', 'phone', 'email'], sort: ['fullName', 'companyName', 'createdDate'], filters: ['customerType', 'status', 'district'] },
-  Residences: { model: Residence, search: ['name', 'developer', 'city', 'district', 'neighborhood', 'address'], sort: ['name', 'createdDate'], filters: ['city', 'district', 'neighborhood', 'constructionStatus'] },
+  Residences: { model: Residence, search: ['name', 'developer', 'city', 'district', 'neighborhood', 'address'], sort: ['name', 'price.amount', 'createdDate'], filters: ['category', 'transactionType', 'city', 'district', 'neighborhood', 'constructionStatus', 'occupancyStatus', 'sale.status'] },
   Leads: { model: Lead, search: ['leadName', 'leadEmail', 'leadPhoneNumber'], sort: ['leadName', 'createdDate'], filters: [] },
 };
 const fileSchema = new mongoose.Schema({ name: String, storageName: String, mimeType: String, size: Number, uploadedAt: Date, createBy: mongoose.Schema.Types.ObjectId });
@@ -153,7 +154,7 @@ router.get('/:module', moduleRequired, permission('view'), asyncRoute(async (req
   const q = String(req.query.q || '').slice(0, 100);
   if (q) query.$or = search.map(key => ({ [key]: { $regex: escape(q), $options: 'i' } }));
   for (const key of filters) if (typeof req.query[key] === 'string' && req.query[key]) query[key] = req.query[key];
-  if (req.params.module === 'Properties' && (req.query.priceMin || req.query.priceMax)) {
+  if (['Properties', 'Residences'].includes(req.params.module) && (req.query.priceMin || req.query.priceMax)) {
     query['price.amount'] = {};
     for (const [key, operator] of [['priceMin', '$gte'], ['priceMax', '$lte']]) if (req.query[key]) {
       const value = Number(req.query[key]); if (!Number.isFinite(value) || value < 0) fail(key); query['price.amount'][operator] = value;
@@ -163,18 +164,18 @@ router.get('/:module', moduleRequired, permission('view'), asyncRoute(async (req
   const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 20));
   const sortKey = sort.includes(req.query.sort) ? req.query.sort : 'createdDate';
   const [items, total] = await Promise.all([model.find(readScope(req, req.actor, req.params.module, query)).sort({ [sortKey]: req.query.order === 'asc' ? 1 : -1, _id: 1 }).skip((page - 1) * limit).limit(limit).lean(), model.countDocuments(readScope(req, req.actor, req.params.module, query))]);
-  res.json({ items, total, page, limit });
+  res.json({ items: ['Properties', 'Residences'].includes(req.params.module) ? await withCustomerNames(req, items) : items, total, page, limit });
 }));
 router.get('/:module/:id', moduleRequired, permission('view'), asyncRoute(async (req, res) => {
   if (!objectId(req.params.id)) fail('id');
   const record = await req.estateModule.model.findOne({ _id: req.params.id, deleted: false, ...scope(req, req.params.module) }).lean();
   if (!record) return res.status(404).json({ code: 'notFound' });
-  res.json(record);
+  res.json(['Properties', 'Residences'].includes(req.params.module) ? await withCustomerNames(req, record) : record);
 }));
 async function related(req, moduleName, id, field) {
   if (!objectId(id)) fail(field);
   if (!can(req.actor, moduleName, 'view')) throw Object.assign(new InputError('forbidden', field), { status: 403 });
-  if (!await modules[moduleName].model.exists({ _id: id, deleted: false, ...scope(req, req.params.module) })) fail(field, 'relationNotFound');
+  if (!await modules[moduleName].model.exists(readScope(req, req.actor, moduleName, { _id: id, deleted: false }))) fail(field, 'relationNotFound');
 }
 async function payload(req, previous = {}) {
   if (!['Properties', 'Partner Customers', 'Residences'].includes(req.params.module)) throw Object.assign(new Error('forbidden'), { status: 403, code: 'forbidden' });
@@ -188,6 +189,13 @@ async function payload(req, previous = {}) {
     values.name = values.title;
     values.status = values.sale.status === 'SOLD' ? 'Sold' : values.sale.status === 'RENTED' ? 'Rented' : 'Available';
     if (values.residence) await related(req, 'Residences', values.residence, 'residence');
+  }
+  if (req.params.module === 'Residences') {
+    values.transactionType ||= 'SALE';
+    values.sale = normalizeSale(values.sale, values.transactionType);
+    if (values.area) values.area.unit = 'M2';
+  }
+  if (['Properties', 'Residences'].includes(req.params.module)) {
     if (values.sale.lead) await related(req, 'Leads', values.sale.lead, 'sale.lead');
     if (values.sale.partnerCustomer) await related(req, 'Partner Customers', values.sale.partnerCustomer, 'sale.partnerCustomer');
   }
@@ -213,7 +221,7 @@ async function payload(req, previous = {}) {
 }
 router.post('/:module', moduleRequired, permission('create'), asyncRoute(async (req, res) => {
   const values = await payload(req);
-  if (req.params.module === 'Properties') values.sale.soldBy = values.sale.status === 'SOLD' ? req.actor._id : null;
+  if (['Properties', 'Residences'].includes(req.params.module)) values.sale.soldBy = values.sale.status === 'SOLD' ? req.actor._id : null;
   const record = await req.estateModule.model.create({ ...values, createBy: req.actor._id, createdDate: new Date(), updatedDate: new Date() });
   await notifyRecordActivity({ module: req.params.module, record, actorId: req.actor._id, type: 'record_created' });
   res.status(201).json(record);
@@ -224,7 +232,7 @@ router.put('/:module/:id', moduleRequired, permission('update'), asyncRoute(asyn
   if (!record) return res.status(404).json({ code: 'notFound' });
   const previous = JSON.parse(JSON.stringify(record));
   const values = await payload(req, previous);
-  if (req.params.module === 'Properties') {
+  if (['Properties', 'Residences'].includes(req.params.module)) {
     values.sale.soldBy = values.sale.status === 'SOLD'
       ? (previous.sale?.status === 'SOLD' && previous.sale?.soldBy ? previous.sale.soldBy : req.actor._id)
       : null;
@@ -237,7 +245,7 @@ router.put('/:module/:id', moduleRequired, permission('update'), asyncRoute(asyn
 router.delete('/:module/:id', moduleRequired, permission('delete'), asyncRoute(async (req, res) => {
   if (!objectId(req.params.id)) fail('id');
   const key = req.params.module === 'Residences' ? 'residence' : req.params.module === 'Partner Customers' ? 'sale.partnerCustomer' : req.params.module === 'Leads' ? 'sale.lead' : null;
-  if (key && await Property.exists({ [key]: req.params.id, deleted: false })) return res.status(409).json({ code: 'inUse' });
+  if (key && (await Property.exists({ [key]: req.params.id, deleted: false }) || (key.startsWith('sale.') && await Residence.exists({ [key]: req.params.id, deleted: false })))) return res.status(409).json({ code: 'inUse' });
   const record = await req.estateModule.model.findOneAndUpdate({ _id: req.params.id, deleted: false, ...scope(req, req.params.module) }, { $set: { deleted: true, updatedDate: new Date() } });
   if (!record) return res.status(404).json({ code: 'notFound' });
   await notifyRecordActivity({ module: req.params.module, record, actorId: req.actor._id, type: 'record_deleted' });

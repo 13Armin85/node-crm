@@ -2938,3 +2938,52 @@ body.crm-kanban-is-dragging * {
   max-height: clamp(180px, calc(100dvh - 420px), 500px);
 }
 .crm-page-help { align-self: flex-end; }
+
+.chakra-button.crm-excel-export,
+.crm-page-hero .chakra-button.crm-excel-export {
+  min-height: 42px;
+  padding-inline: 14px;
+  color: #17325f !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 13px !important;
+  background: #eff6ff !important;
+  box-shadow: 0 4px 12px rgba(23, 50, 95, .12) !important;
+  font-weight: 800;
+  flex-shrink: 0;
+  opacity: 1 !important;
+}
+.chakra-button.crm-excel-export > .chakra-button__icon:first-child {
+  padding: 5px;
+  margin-inline-end: 9px;
+  border-radius: 7px;
+  color: #166534;
+  background: #dcfce7;
+}
+.chakra-button.crm-excel-export:not(:disabled):not([aria-disabled="true"]):hover {
+  border-color: #93c5fd !important;
+  background: #dbeafe !important;
+  box-shadow: 0 6px 16px rgba(23, 50, 95, .18) !important;
+}
+.chakra-button.crm-excel-export:not(:disabled):not([aria-disabled="true"]):active { transform: translateY(0); }
+.chakra-button.crm-excel-export:focus-visible { outline: 2px solid var(--crm-primary) !important; outline-offset: 3px; }
+.chakra-ui-dark .chakra-button.crm-excel-export,
+.chakra-ui-dark .crm-page-hero .chakra-button.crm-excel-export {
+  color: #eff6ff !important;
+  border-color: #3b6ea3 !important;
+  background: #17365b !important;
+}
+.chakra-ui-dark .chakra-button.crm-excel-export:not(:disabled):not([aria-disabled="true"]):hover { background: #224a78 !important; }
+.chakra-button.crm-excel-export:disabled,
+.chakra-button.crm-excel-export[aria-disabled="true"],
+.crm-page-hero .chakra-button.crm-excel-export:disabled,
+.crm-page-hero .chakra-button.crm-excel-export[aria-disabled="true"],
+.chakra-ui-dark .crm-page-hero .chakra-button.crm-excel-export:disabled,
+.chakra-ui-dark .crm-page-hero .chakra-button.crm-excel-export[aria-disabled="true"] {
+  color: #e2e8f0 !important;
+  border-color: #64748b !important;
+  background: #475569 !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+  transform: none;
+}
+.chakra-button.crm-excel-export:disabled > .chakra-button__icon:first-child { color: #e2e8f0; background: #334155; }

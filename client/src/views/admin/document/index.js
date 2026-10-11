@@ -47,7 +47,6 @@ import {
 } from "react-icons/fi";
 import { deleteApi, getApi, getApiBlob, postApi } from "services/api";
 import Upload from "./component/Upload";
-import ExcelExportButton from "components/ExcelExportButton";
 import ShareRecordButton from "components/ShareRecordButton";
 import SharedRecordBadge from "components/SharedRecordBadge";
 import { HasAccess } from "../../../redux/accessUtils";
@@ -271,15 +270,7 @@ const DocumentPage = () => {
           </Box>
         </Flex>
         <Flex gap={2} wrap="wrap">
-          <ExcelExportButton fileName={t("Documents")} rows={visibleFiles} isDisabled={loading}
-            columns={[
-              { Header: t("Name"), accessor: "fileName" },
-              { Header: t("Folder name"), accessor: () => currentFolder?.folderName || t("Files without folder") },
-              { Header: t("Category"), accessor: file => t(categories.find(category => category.value === categoryOf(file))?.label || "General") },
-              { Header: t("Size (KB)"), accessor: file => file.size ? Math.ceil(file.size / 1024) : 0 },
-              { Header: t("File type"), accessor: "mimeType" },
-              { Header: t("Created Date"), accessor: file => file.createdDate || file.uploadedAt || "" },
-            ]} />
+
           {canEditDocuments && <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiFolderPlus />} variant="outline" onClick={folderModal.onOpen}>
             {t("New folder")}
           </Button>}

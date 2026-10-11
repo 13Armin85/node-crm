@@ -60,6 +60,25 @@ function validateFields(definition, body, existing = {}) {
   }
   return output;
 }
+function normalizeSale(input, transactionType) {
+  oneOf(transactionType, ['SALE', 'RENT'], 'transactionType');
+  const p = { sale: structuredClone(input || {}), transactionType };
+  p.sale.status ||= 'AVAILABLE';
+  // Older rentals may have been recorded using the sold status.
+  if (p.transactionType === 'RENT' && p.sale.status === 'SOLD') p.sale.status = 'RENTED';
+  oneOf(p.sale.status, p.transactionType === 'RENT' ? ['AVAILABLE', 'RENTED'] : ['AVAILABLE', 'SOLD'], 'sale.status');
+  if (p.sale.status === 'AVAILABLE') p.sale = { status: 'AVAILABLE', buyerType: null, lead: null, partnerCustomer: null, soldAt: null };
+  else {
+    oneOf(p.sale.buyerType, ['LEAD', 'PARTNER_CUSTOMER'], 'sale.buyerType');
+    const key = p.sale.buyerType === 'LEAD' ? 'lead' : 'partnerCustomer';
+    if (!objectId(p.sale[key])) fail(`sale.${key}`, 'required');
+    p.sale[key === 'lead' ? 'partnerCustomer' : 'lead'] = null;
+    if (p.sale.soldAt && !Number.isFinite(Date.parse(p.sale.soldAt))) fail('sale.soldAt');
+    p.sale.soldAt ||= new Date().toISOString();
+  }
+  return p.sale;
+}
+
 function normalizeProperty(input) {
   const p = structuredClone(input);
   oneOf(p.category, Object.keys(categories), 'category');
@@ -76,19 +95,7 @@ function normalizeProperty(input) {
   if (p.category === 'COMMERCIAL') p.bedroom = null; else oneOf(p.bedroom, bedrooms, 'bedroom', true);
   if (p.isInsideResidence !== true) { p.isInsideResidence = false; p.residence = null; }
   else if (!objectId(p.residence)) fail('residence', 'required');
-  p.sale ||= { status: 'AVAILABLE' };
-  // Older rentals may have been recorded using the sold status.
-  if (p.transactionType === 'RENT' && p.sale.status === 'SOLD') p.sale.status = 'RENTED';
-  oneOf(p.sale.status, p.transactionType === 'RENT' ? ['AVAILABLE', 'RENTED'] : ['AVAILABLE', 'SOLD'], 'sale.status');
-  if (p.sale.status === 'AVAILABLE') p.sale = { status: 'AVAILABLE', buyerType: null, lead: null, partnerCustomer: null, soldAt: null };
-  else {
-    oneOf(p.sale.buyerType, ['LEAD', 'PARTNER_CUSTOMER'], 'sale.buyerType');
-    const key = p.sale.buyerType === 'LEAD' ? 'lead' : 'partnerCustomer';
-    if (!objectId(p.sale[key])) fail(`sale.${key}`, 'required');
-    p.sale[key === 'lead' ? 'partnerCustomer' : 'lead'] = null;
-    if (p.sale.soldAt && !Number.isFinite(Date.parse(p.sale.soldAt))) fail('sale.soldAt');
-    p.sale.soldAt ||= new Date().toISOString();
-  }
+  p.sale = normalizeSale(p.sale, p.transactionType);
   return p;
 }
 function validateDefinition(input, current, baseline) {
@@ -134,4 +141,4 @@ function validateDefinition(input, current, baseline) {
   for (const system of baseline.fields.filter(f => f.kind === 'SYSTEM_FIELD')) if (!names.has(system.name)) fail(system.name, 'systemFieldProtected');
   return fields;
 }
-module.exports = { InputError, fail, get, set, visible, empty, objectId, validateValue, validateRequiredFields, validateFields, normalizeProperty, validateDefinition };
+module.exports = { InputError, fail, get, set, visible, empty, objectId, validateValue, validateRequiredFields, validateFields, normalizeProperty, normalizeSale, validateDefinition };

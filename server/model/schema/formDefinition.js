@@ -7,7 +7,7 @@ const field = new mongoose.Schema({
   placeholder: localized, helpText: localized, validationMessage: localized,
   options: [{ value: String, label: localized, _id: false }],
   required: Boolean, enabled: Boolean, order: Number, defaultValue: mongoose.Schema.Types.Mixed,
-  min: Number, max: Number, locked: Boolean, relation: String,
+  min: Number, max: Number, integer: Boolean, locked: Boolean, relation: String,
   external: Boolean,
   condition: mongoose.Schema.Types.Mixed,
 }, { _id: false });

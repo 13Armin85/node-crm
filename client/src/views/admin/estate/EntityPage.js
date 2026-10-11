@@ -35,9 +35,11 @@ const propertySections = [
 ];
 
 const residenceSections = [
-  ['estate.section.basic', name => ['name', 'description', 'developer', 'constructionStatus'].includes(name)],
+  ['estate.section.basic', name => ['name', 'description', 'developer', 'constructionStatus', 'category', 'transactionType'].includes(name)],
+  ['estate.section.pricing', name => name.startsWith('price.')],
+  ['estate.section.sale', name => name.startsWith('sale.')],
   ['estate.section.location', name => ['country', 'city', 'district', 'neighborhood', 'address', 'postalCode', 'mapUrl'].includes(name)],
-  ['estate.section.building', name => ['constructionYear', 'buildingAge', 'completionDate', 'blockCount', 'floorCount', 'unitCount', 'totalArea', 'unitTypes'].includes(name)],
+  ['estate.section.building', name => ['constructionYear', 'buildingAge', 'completionDate', 'blockCount', 'floorCount', 'unitCount', 'totalArea', 'unitTypes', 'occupancyStatus'].includes(name) || name.startsWith('area.')],
   ['estate.section.amenities', name => ['amenities', 'heatingType', 'parkingCapacity'].includes(name)],
   ['estate.section.management', name => ['managementCompany', 'contactPerson', 'phone', 'email', 'website'].includes(name) || name.startsWith('maintenanceFee.')],
   ['estate.section.files', name => name === 'files'],
@@ -103,7 +105,7 @@ export function EntityPage({ moduleName }) {
   useEffect(() => { if (definitionError) setError('serverError'); }, [definitionError]);
 
   let initialValues = record || {};
-  if (definition && !record?._id) {
+  if (definition) {
     for (const field of definition.fields) {
       if (getIn(initialValues, fieldPath(field)) === undefined && field.defaultValue !== undefined) {
         initialValues = setIn(initialValues, fieldPath(field), field.defaultValue);
@@ -132,7 +134,7 @@ export function EntityPage({ moduleName }) {
   const open = (item, view) => { setError(""); setRecord(item); setReadOnly(view); };
   const filterNames = moduleName === "Properties"
     ? ["category", "subtype", "transactionType", "district", "neighborhood", "residence", "bedroom", "buildingAge", "occupancyStatus", "floor", "area.type", "sale.status"]
-    : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["city", "district", "neighborhood", "constructionStatus"];
+    : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["category", "transactionType", "city", "district", "neighborhood", "constructionStatus", "occupancyStatus", "sale.status"];
   const name = (item) => item.title || item.fullName || item.companyName || item.name || item.propertyType || item._id;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const dateLocale = language === "fa" ? "fa-IR" : language === "tr" ? "tr-TR" : "en-US";
@@ -231,13 +233,13 @@ export function EntityPage({ moduleName }) {
                   <Input key={key} placeholder={localized(field.label, language)} value={filters[key] || ""} onChange={(event) => updateFilter(key, event.target.value)} />
                 ) : null;
               })}
-              {moduleName === "Properties" && ["priceMin", "priceMax"].map((key) => (
+              {["Properties", "Residences"].includes(moduleName) && ["priceMin", "priceMax"].map((key) => (
                 <Input key={key} type="number" min="0" placeholder={t(`estate.${key}`)} value={filters[key] || ""} onChange={(event) => updateFilter(key, event.target.value)} />
               ))}
               <Select value={sort} aria-label={t("estate.sort")} onChange={(event) => setSort(event.target.value)}>
                 <option value="createdDate">{t("Created Date")}</option>
                 <option value={moduleName === "Properties" ? "title" : moduleName === "Partner Customers" ? "fullName" : "name"}>{t("Name")}</option>
-                {moduleName === "Properties" && <option value="price.amount">{t("Price")}</option>}
+                {["Properties", "Residences"].includes(moduleName) && <option value="price.amount">{t("Price")}</option>}
               </Select>
               <Select value={order} aria-label={t("estate.order")} onChange={(event) => setOrder(event.target.value)}>
                 <option value="asc">{t("estate.ascending")}</option>
@@ -252,12 +254,13 @@ export function EntityPage({ moduleName }) {
             <Flex minH="360px" align="center" justify="center"><Spinner /></Flex>
           ) : (
             <Table className="crm-entity-table">
-              <Thead><Tr><Th>{t("Name")}</Th><Th>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Partner Customers" && <Th>{localized(partnerStatusField?.label || "Status", language)}</Th>}<Th>{t("Created Date")}</Th><Th>{t("Actions")}</Th></Tr></Thead>
+              <Thead><Tr><Th>{t("Name")}</Th><Th>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Residences" && <Th>{t("Price")}</Th>}{moduleName === "Partner Customers" && <Th>{localized(partnerStatusField?.label || "Status", language)}</Th>}<Th>{t("Created Date")}</Th><Th>{t("Actions")}</Th></Tr></Thead>
               <Tbody>
                 {items.map((item) => (
                   <Tr key={item._id}>
-                    <Td><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge module={moduleName} record={item} />{moduleName === "Properties" && <PropertyStatusBadge property={item} />}</Box></Flex></Td>
+                    <Td><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge module={moduleName} record={item} />{["Properties", "Residences"].includes(moduleName) && <PropertyStatusBadge property={item} />}</Box></Flex></Td>
                     <Td data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : moduleName === "Residences" ? [item.city, item.district].filter(Boolean).join(" · ") || "-" : item.phone || "-"}</Td>
+                    {moduleName === "Residences" && <Td data-no-translate>{item.price?.amount != null ? <CurrencyAmount amount={item.price.amount} currency={item.price.currency} compact /> : "-"}</Td>}
                     {moduleName === "Partner Customers" && <Td><Box className="selectOpt"><Select size="sm" minW="170px"
                       aria-label={`${localized(partnerStatusField?.label || "Status", language)} · ${name(item)}`}
                       className={item.status === "PENDING" ? "pending" : item.status === "ACTIVE" ? "completed" : ["LOST", "INACTIVE"].includes(item.status) ? "onHold" : "inProgress"}
@@ -295,7 +298,7 @@ export function EntityPage({ moduleName }) {
         <ModalContent className="crm-entity-modal" dir={direction}>
           <ModalHeader>{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
-          <ModalBody>{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{form}
+          <ModalBody>{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{form}
             {readOnly && record?.createBy && <Text mt={4}>{t("estate.createdBy")}: <span data-no-translate>{typeof record.createBy === "object" ? record.createBy.username || record.createBy._id : record.createBy}</span></Text>}
           </ModalBody>
           <ModalFooter><Stack direction="row">{!readOnly && <Button variant="brand" isLoading={formik.isSubmitting} isDisabled={!definition} onClick={formik.handleSubmit}>{t("Save")}</Button>}<Button onClick={() => setRecord(null)}>{t("Close")}</Button></Stack></ModalFooter>

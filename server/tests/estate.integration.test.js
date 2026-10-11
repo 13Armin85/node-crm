@@ -25,12 +25,29 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     };
     assert.equal((await api('GET', '/estate/Properties', null, null)).status, 401);
     assert.equal((await api('GET', '/estate/Properties', null, user)).status, 200);
-    const residence = await api('POST', '/estate/Residences', { name: 'Integration Residence', district: 'District' });
+    const residencePayload = { name: 'Integration Residence', description: 'Full project', developer: 'Builder', country: 'Turkey', city: 'Istanbul', district: 'District', neighborhood: 'Neighborhood', address: 'Street 1', postalCode: '34000', mapUrl: 'https://example.com/map', constructionStatus: 'READY', constructionYear: 2020, buildingAge: 'AGE_5_10', completionDate: '2020-05-01', blockCount: 2, floorCount: 10, unitCount: 100, totalArea: 2500, unitTypes: ['1+1', '1+3'], amenities: ['POOL', 'SECURITY'], heatingType: 'Central', parkingCapacity: 100, managementCompany: 'Management', contactPerson: 'Manager', phone: '+905551112233', email: 'management@example.com', website: 'https://example.com', maintenanceFee: { amount: 50, currency: 'USD' } };
+    const residence = await api('POST', '/estate/Residences', residencePayload);
     assert.equal(residence.status, 201, JSON.stringify(residence));
     const partner = await api('POST', '/estate/Partner%20Customers', { customerType: 'COMPANY', companyName: 'Integration Company', phone: '+905551112233', status: 'ACTIVE', createBy: user._id });
     assert.equal(partner.status, 201, JSON.stringify(partner)); assert.equal(partner.data.createBy, String(admin._id));
     const { defaults } = require('../services/formDefinitions');
     const FormDefinition = require('../model/schema/formDefinition');
+    for (const [key, value] of Object.entries(residencePayload)) {
+      if (key === 'completionDate') assert.equal(residence.data[key].slice(0, 10), value);
+      else assert.deepEqual(residence.data[key], value, key);
+    }
+    const changedFee = await api('PUT', `/estate/Residences/${residence.data._id}`, { maintenanceFee: { amount: 75 } });
+    assert.deepEqual(changedFee.data.maintenanceFee, { amount: 75, currency: 'USD' });
+    assert.equal((await api('GET', '/estate/Residences?city=Istanbul&constructionStatus=READY')).data.total, 1);
+    assert.equal((await api('PUT', `/estate/Residences/${residence.data._id}`, { unitCount: 1.5 })).status, 400);
+    assert.equal((await api('PUT', `/estate/Residences/${residence.data._id}`, { amenities: ['UNKNOWN'] })).status, 400);
+    const clearedResidence = await api('PUT', `/estate/Residences/${residence.data._id}`, { buildingAge: '', constructionStatus: '' });
+    assert.equal(clearedResidence.status, 200, JSON.stringify(clearedResidence));
+    await FormDefinition.create({ moduleName: 'Residences', fields: defaults.Residences.filter(field => ['name', 'district', 'neighborhood', 'address', 'notes'].includes(field.name)) });
+    const expandedResidence = await api('GET', '/estate/definitions/Residences');
+    assert.equal(expandedResidence.data.fields.length, defaults.Residences.length);
+    assert.equal(expandedResidence.data.fields.find(field => field.name === 'unitCount').integer, true);
+    await FormDefinition.deleteOne({ moduleName: 'Residences' });
     // Older saved definitions must pick up new statuses and discard removed defaults.
     await FormDefinition.create({ moduleName: 'Leads', fields: defaults.Leads.map(field => field.name === 'leadStatus'
       ? { ...field, defaultValue: 'rented', options: [...field.options, { value: 'sold', label: { en: 'Sold', fa: 'Sold', tr: 'Sold' } }, { value: 'rented', label: { en: 'Rented', fa: 'Rented', tr: 'Rented' } }] } : field) });
@@ -51,6 +68,26 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     }
     assert.equal((await api('PUT', `/estate/Partner%20Customers/${partner.data._id}`, { status: 'RENTED' })).status, 400);
     assert.equal((await api('PUT', `/estate/Partner%20Customers/${partner.data._id}`, { status: 'SOLD' })).status, 400);
+    const soldResidence = await api('POST', '/estate/Residences', { name: 'Sold Residence', transactionType: 'SALE', price: { amount: 9000000, currency: 'TRY' }, area: { value: 500, type: 'GROSS' }, sale: { status: 'SOLD', buyerType: 'PARTNER_CUSTOMER', partnerCustomer: partner.data._id } });
+    assert.equal(soldResidence.status, 201, JSON.stringify(soldResidence));
+    assert.equal((await api('GET', '/estate/Residences?priceMin=8000000&priceMax=10000000&sort=price.amount')).data.total, 1);
+    assert.equal((await api('GET', '/estate/Residences/' + soldResidence.data._id)).data.sale.customerName, 'Integration Company');
+    assert.equal((await api('GET', '/estate/Residences?sale.status=SOLD')).data.items[0].sale.customerName, 'Integration Company');
+    assert.equal((await api('POST', '/estate/Residences', { name: 'Missing buyer', sale: { status: 'SOLD' } })).status, 400);
+    assert.equal((await api('PUT', '/estate/Residences/' + soldResidence.data._id, { sale: { status: 'SOLD', buyerType: 'LEAD', lead: String(new mongoose.Types.ObjectId()) } })).status, 400);
+    assert.equal((await api('DELETE', '/estate/Partner%20Customers/' + partner.data._id)).status, 409);
+    const { Lead } = require('../model/schema/lead');
+    Lead.schema.add({ leadName: String, leadEmail: String });
+    const customerLead = await Lead.create({ leadName: 'Rental Customer', leadEmail: 'tenant@example.com', createBy: admin._id });
+    const rentedResidence = await api('POST', '/estate/Residences', { name: 'Rented Residence', transactionType: 'RENT', sale: { status: 'RENTED', buyerType: 'LEAD', lead: String(customerLead._id) } });
+    assert.equal(rentedResidence.status, 201, JSON.stringify(rentedResidence));
+    assert.equal((await api('GET', '/estate/Residences/' + rentedResidence.data._id)).data.sale.customerName, 'Rental Customer');
+    assert.equal((await api('GET', '/estate/Residences?sale.status=RENTED')).data.total, 1);
+    const ownerResidence = await require('../model/schema/residence').create({ name: 'Own residence, hidden customer', createBy: user._id, transactionType: 'SALE', sale: { status: 'SOLD', buyerType: 'LEAD', lead: customerLead._id } });
+    await User.updateOne({ _id: user._id }, { $set: { 'moduleVisibility.Leads': false } });
+    assert.equal((await api('GET', '/estate/Residences/' + ownerResidence._id, null, user)).data.sale.customerName, null);
+    const releasedResidence = await api('PUT', '/estate/Residences/' + rentedResidence.data._id, { sale: { status: 'AVAILABLE' } });
+    assert.equal(releasedResidence.data.sale.lead, null); assert.equal(releasedResidence.data.sale.soldAt, null);
     const definition = await api('GET', '/estate/definitions/Properties');
     const field = { name: 'field_reference', kind: 'CUSTOM_FIELD', type: 'text', enabled: true, required: true, label: { en: 'Reference', fa: 'مرجع', tr: 'Referans' } };
     const updated = await api('PUT', '/estate/definitions/Properties', { ...definition.data, fields: [...definition.data.fields, field] });
@@ -62,6 +99,8 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     const property = await api('POST', '/estate/Properties', payload);
     assert.equal(property.status, 201, JSON.stringify(property));
     assert.equal(property.data.sale.partnerCustomer, partner.data._id);
+    assert.equal((await api('GET', '/estate/Properties/' + property.data._id)).data.sale.customerName, 'Integration Company');
+    assert.equal((await api('GET', '/estate/Properties?sale.status=SOLD')).data.items[0].sale.customerName, 'Integration Company');
     assert.equal((await api('DELETE', `/estate/Partner%20Customers/${partner.data._id}`)).status, 409);
     assert.equal((await api('POST', '/estate/Properties', { ...payload, residence: String(new mongoose.Types.ObjectId()) })).status, 400);
     const rented = await api('POST', '/estate/Properties', { ...payload, title: 'Rented home', transactionType: 'RENT', sale: { status: 'RENTED', buyerType: 'PARTNER_CUSTOMER', partnerCustomer: partner.data._id } });
@@ -94,6 +133,13 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     const upload = await fetch(base + '/estate/files', { method: 'POST', headers: { Authorization: token(admin) }, body: form });
     assert.equal(upload.status, 201); const files = await upload.json(); assert.ok(files[0].uploadedAt);
     assert.equal((await api('PUT', `/estate/Properties/${property.data._id}`, { files })).status, 200);
+    const residenceFiles = await api('PUT', `/estate/Residences/${residence.data._id}`, { files: files.map(file => ({ ...file, name: 'forged-name', storageName: '../forged.txt' })) });
+    assert.equal(residenceFiles.status, 200, JSON.stringify(residenceFiles));
+    assert.equal(residenceFiles.data.files[0].name, 'integration.txt');
+    const residenceReload = await api('GET', `/estate/Residences/${residence.data._id}`);
+    assert.equal(residenceReload.data.unitCount, 100); assert.equal(residenceReload.data.maintenanceFee.currency, 'USD');
+    assert.equal(residenceReload.data.files[0]._id, files[0].id);
+    assert.equal((await api('PUT', `/estate/Residences/${residence.data._id}`, { files: [{ id: String(new mongoose.Types.ObjectId()) }] })).status, 400);
     assert.equal((await api('PUT', `/estate/Properties/${property.data._id}`, { description: 'keeps stored file metadata' })).status, 200);
     const download = await fetch(`${base}/estate/files/${files[0].id}`, { headers: { Authorization: token(admin) } });
     assert.equal(await download.text(), 'integration test');

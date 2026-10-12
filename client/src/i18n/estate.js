@@ -1,4 +1,13 @@
 const messages = {
+  'estate.residence.constructionStatus': ['Construction Status', 'وضعیت ساخت', 'İnşaat durumu'],
+  'estate.residence.developer': ['Developer', 'شرکت سازنده', 'İnşaat firması'],
+  'estate.residence.builtArea': ['Built Area (m²)', 'متراژ ساختمان (متر مربع)', 'Bina alanı (m²)'],
+  'estate.residence.siteArea': ['Site Area', 'مساحت زمین مجموعه', 'Site alanı'],
+  'estate.residence.blockCount': ['Blocks', 'تعداد بلوک‌ها', 'Blok sayısı'],
+  'estate.residence.floorCount': ['Floors per Block', 'طبقات هر بلوک', 'Blok başına kat sayısı'],
+  'estate.residence.unitCount': ['Total Units', 'تعداد کل واحدها', 'Toplam daire sayısı'],
+  'estate.residence.maintenanceFee': ['Monthly Maintenance Fee', 'شارژ ماهانه', 'Aylık aidat'],
+  'estate.rowNumber': ['Row', 'ردیف', 'Sıra'],
   'Customer unavailable': ['Customer unavailable', 'اطلاعات مشتری در دسترس نیست', 'Müşteri bilgisi mevcut değil'],
   'Sold to': ['Sold to', 'فروخته‌شده به', 'Satın alan'],
   'Rented to': ['Rented to', 'اجاره‌داده‌شده به', 'Kiracı'],

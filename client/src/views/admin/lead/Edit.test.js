@@ -15,10 +15,13 @@ jest.mock('components/commonTableModel/SelectPorpertyModel', () => () => null);
 test('a loaded lead shows saved relations and Save submits edited values with relation IDs', async () => {
   const id = '64d33173fd7ff3fa0924a101';
   const contact = { _id: '64d33173fd7ff3fa0924a102', fullName: 'علی رضایی', email: 'ali@example.com' };
+  const relatedLead = { _id: '64d33173fd7ff3fa0924a104', leadName: 'Related lead', leadEmail: 'related@example.com' };
+  const anotherLead = { _id: '64d33173fd7ff3fa0924a105', leadName: 'Another lead' };
   const partner = { _id: '64d33173fd7ff3fa0924a103', fullName: 'Partner' };
   const definition = { moduleName: 'Leads', fields: [
     { name: 'leadName', type: 'text', required: true, label: 'Lead Name' },
     { name: 'leadEmail', type: 'email', required: true, label: 'Lead Email' },
+    { name: 'lead', type: 'select', relation: 'Leads', external: true },
     { name: 'contact', type: 'select', relation: 'Contacts', external: true },
     { name: 'partnerCustomer', type: 'select', relation: 'Partner Customers', external: true },
     { name: 'associatedListing', type: 'select', relation: 'Properties', external: true },
@@ -26,7 +29,7 @@ test('a loaded lead shows saved relations and Save submits edited values with re
   ] };
   localStorage.setItem('user', JSON.stringify({ _id: id, role: 'admin' }));
   getApi.mockImplementation(async path => ({ status: 200, data:
-    path.includes('/definitions/') ? definition : path === 'api/contact' ? [contact]
+    path.includes('/definitions/') ? definition : path === 'api/lead' ? [relatedLead, anotherLead, { _id: id, leadName: 'Original' }] : path === 'api/contact' ? [contact]
       : path.includes('Partner%20Customers') ? { items: [partner] } : [],
   }));
   putApi.mockResolvedValue({ status: 200 });
@@ -38,12 +41,17 @@ test('a loaded lead shows saved relations and Save submits edited values with re
     await act(async () => {
       ReactDOM.render(<ChakraProvider><MemoryRouter><Edit isOpen size="lg" onClose={onClose} setAction={setAction}
         moduleId={id} leadData={{ _id: id, moduleName: 'Leads', fields: [{ name: 'hiddenLegacyField', validation: [{ require: true }] }] }}
-        data={{ _id: id, leadName: 'Original', leadEmail: 'lead@example.com', contact, partnerCustomer: partner, associatedListing: null }}
+        data={{ _id: id, leadName: 'Original', leadEmail: 'lead@example.com', lead: relatedLead, contact, partnerCustomer: partner, associatedListing: null }}
       /></MemoryRouter></ChakraProvider>, container);
     });
-    expect(document.querySelector('#relation-contact').value).toBe(contact._id);
-    expect(document.querySelector('#relation-contact').selectedOptions[0].textContent).toBe(contact.fullName);
-    expect(document.querySelector('#relation-partnerCustomer').value).toBe(partner._id);
+    expect(document.querySelector('#relation-lead').value).toBe(relatedLead._id);
+    expect(document.querySelector('#relation-lead').selectedOptions[0].textContent).toBe(relatedLead.leadName);
+    expect(Array.from(document.querySelector('#relation-lead').options).some(option => option.value === id)).toBe(false);
+    await act(async () => {
+      Simulate.change(document.querySelector('#relation-lead'), { target: { value: anotherLead._id } });
+    });
+    expect(document.querySelector('#relation-contact')).toBeNull();
+    expect(document.querySelector('#relation-partnerCustomer')).toBeNull();
     await act(async () => {
       const input = document.querySelector('#field-leadName');
       input.value = 'Updated';
@@ -51,7 +59,7 @@ test('a loaded lead shows saved relations and Save submits edited values with re
     });
     await act(async () => { Simulate.click(document.querySelector('button[type="submit"]')); });
     expect(putApi).toHaveBeenCalledWith(`api/form/edit/${id}`, expect.objectContaining({
-      leadName: 'Updated', contact: contact._id, partnerCustomer: partner._id, associatedListing: null, moduleId: id,
+      leadName: 'Updated', lead: anotherLead._id, contact: null, partnerCustomer: null, associatedListing: null, moduleId: id,
     }));
     expect(onClose).toHaveBeenCalled();
     expect(setAction).toHaveBeenCalled();

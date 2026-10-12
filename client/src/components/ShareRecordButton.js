@@ -6,9 +6,11 @@ import { useLanguage } from 'i18n';
 import { getApi, postApi, deleteApi } from 'services/api';
 import { canSendRecord, announceRecordSharing } from 'services/recordSharing';
 import { matchesAssignee, userDisplayName } from 'services/taskSearch';
-export default function ShareRecordButton({ module, record }) {
+export default function ShareRecordButton({ module, record, compact = false }) {
   const { t, direction } = useLanguage();
   const modal = useDisclosure();
+  const folder = module === 'Documents' && !!record?.folderName && !record?.isRoot;
+  const label = folder ? 'Send folder to user' : module === 'Documents' ? 'Send file to user' : 'Send to user';
   const [users, setUsers] = useState([]), [shares, setShares] = useState([]);
   const [selected, setSelected] = useState(''), [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false), [saving, setSaving] = useState(false), [failed, setFailed] = useState(false);
@@ -23,7 +25,7 @@ export default function ShareRecordButton({ module, record }) {
       announceRecordSharing(module, record._id, recipients.data);
     } catch { setFailed(true); } finally { setLoading(false); }
   };
-  const open = () => { setSelected(''); setQuery(''); modal.onOpen(); load(); };
+  const open = event => { event.stopPropagation(); setSelected(''); setQuery(''); modal.onOpen(); load(); };
   const send = async () => {
     setSaving(true);
     try {
@@ -47,12 +49,14 @@ export default function ShareRecordButton({ module, record }) {
   if (!canSendRecord(module) || !record?._id) return null;
   const choices = users.filter(user => user._id === selected || matchesAssignee(user, query));
   return <>
-    <Tooltip label={t('Send to user')}><IconButton className="crm-share-record-button" size="sm" variant="ghost" colorScheme="blue" aria-label={t('Send to user')} icon={<FiSend />} onClick={open} /></Tooltip>
+    <Tooltip label={t(label)}>{folder && !compact
+      ? <Button className="crm-share-record-button" size="sm" variant="outline" colorScheme="blue" leftIcon={<FiSend />} onClick={open}>{t(label)}</Button>
+      : <IconButton className="crm-share-record-button" size="sm" variant="ghost" colorScheme="blue" aria-label={t(label)} icon={<FiSend />} onClick={open} />}</Tooltip>
     <Modal isOpen={modal.isOpen} onClose={() => { if (!saving) modal.onClose(); }} isCentered>
       <ModalOverlay /><ModalContent dir={direction} className="crm-share-record-modal">
-        <ModalHeader>{t('Send item to user')}</ModalHeader><ModalCloseButton isDisabled={saving} aria-label={t('Close')} />
+        <ModalHeader>{t(folder ? 'Send folder to user' : 'Send item to user')}</ModalHeader><ModalCloseButton isDisabled={saving} aria-label={t('Close')} />
         <ModalBody>
-          <Text fontSize="sm" mb={4}>{t('Only this item will be visible to the selected user when the section is hidden.')}</Text>
+          <Text fontSize="sm" mb={4}>{t(folder ? 'This folder and its subfolders are shared, including files added later.' : 'Only this item will be visible to the selected user when the section is hidden.')}</Text>
           {loading ? <Spinner /> : failed ? <Box role="alert"><Text>{t('Failed to load sharing settings')}</Text><Button mt={2} onClick={load}>{t('Retry')}</Button></Box> : <FormControl>
             <FormLabel>{t('User')}</FormLabel>
             <Input mb={2} value={query} isDisabled={saving} placeholder={t('Search names...')} aria-label={t('Search names...')} onChange={event => setQuery(event.target.value)} />

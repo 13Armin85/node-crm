@@ -30,6 +30,7 @@ import { toast } from 'react-toastify';
 import CustomForm from "utils/customForm";
 import ManagedFormLayout from "components/dynamicForm/ManagedFormLayout";
 import RelationFields from "components/relations/RelationFields";
+import { LEAD_SELECTION_ERROR, LEAD_SELECTION_MESSAGE } from "utils/leadRelations";
 
 const Add = (props) => {
   const { definition, definitionError } = useFormDefinition('Leads');
@@ -48,6 +49,7 @@ const Add = (props) => {
     ...initialFieldValues,
     associatedListing: "",
     assignUser: "",
+    lead: null,
     contact: null,
     partnerCustomer: null,
     createBy: JSON.parse(localStorage.getItem("user"))?._id,
@@ -95,7 +97,7 @@ const Add = (props) => {
         props.setAction((pre) => !pre);
       } else {
         if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
-        toast.error(response?.data?.message || tr('estate.serverError'));
+        toast.error(response?.data?.code === LEAD_SELECTION_ERROR ? tr(LEAD_SELECTION_MESSAGE) : response?.data?.message || tr('estate.serverError'));
       }
     } catch (e) {
       console.log(e);
@@ -146,7 +148,7 @@ const Add = (props) => {
               errors={errors}
               touched={touched}
             />
-            <RelationFields formik={formik} definition={definition} values={values} setFieldValue={setFieldValue} contact partner />
+            <RelationFields formik={formik} definition={definition} values={values} setFieldValue={setFieldValue} lead contact partner />
             <ManagedFormLayout moduleName="Leads" definition={definition} formik={formik} includeCustom={false}>
             <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
               <GridItem colSpan={{ base: 12 }}>

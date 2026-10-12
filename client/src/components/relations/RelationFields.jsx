@@ -6,6 +6,7 @@ import { formLabel, formValue } from 'utils/formValue';
 import { formatPriceInput } from 'utils/price';
 import { getIn } from 'formik';
 import { useRequiredFields } from 'utils/managedForm';
+import { isLeadRelationVisible, normalizeLeadRelations, LEAD_SELECTION_MESSAGE } from 'utils/leadRelations';
 import { localized } from 'components/dynamicForm/DynamicFormRenderer';
 
 export const labelOf = (item, type) => {
@@ -73,10 +74,22 @@ export function PropertyMultiSelect({ value = [], items, setFieldValue, busy, er
   </GridItem>;
 }
 
-export default function RelationFields({ values, setFieldValue, contact, lead, partner, properties, definition, formik }) {
+export default function RelationFields({ values, setFieldValue, contact, lead, partner, properties, definition, formik, excludeLeadId }) {
   const { t, language } = useLanguage();
+  const exclusive = definition?.moduleName === 'Leads';
+  const relationVisible = name => !exclusive || isLeadRelationVisible(name, values);
+  const changeRelation = (name, value) => {
+    if (!exclusive) return setFieldValue(name, value);
+    const next = { ...values, [name]: value };
+    if (value) for (const key of ['lead', 'contact', 'partnerCustomer']) {
+      if (key !== name) next[key] = null;
+    }
+    const normalized = normalizeLeadRelations(next);
+    if (formik?.setValues) return formik.setValues(normalized);
+    for (const key of ['lead', 'contact', 'partnerCustomer']) setFieldValue(key, normalized[key], false);
+  };
   const relationNames = [contact && 'contact', lead && 'lead', partner && 'partnerCustomer', properties && 'properties'].filter(Boolean);
-  useRequiredFields((definition?.fields || []).filter(field => relationNames.includes(field.name)), formik);
+  useRequiredFields((definition?.fields || []).filter(field => relationNames.includes(field.name) && relationVisible(field.name)), formik);
   const errorFor = name => {
     const error = getIn(formik?.errors, name);
     if (!error || !(formik?.submitCount > 0 || getIn(formik?.touched, name))) return undefined;
@@ -86,7 +99,7 @@ export default function RelationFields({ values, setFieldValue, contact, lead, p
   const required = name => Boolean(definition?.fields.find(field => field.name === name)?.required);
   const enabled = name => {
     const field = definition?.fields.find(item => item.name === name);
-    return field?.enabled !== false && Object.entries(field?.condition || {}).every(([key, value]) => (Array.isArray(value) ? value.includes(getIn(values, key)) : getIn(values, key) === value));
+    return relationVisible(name) && field?.enabled !== false && Object.entries(field?.condition || {}).every(([key, value]) => (Array.isArray(value) ? value.includes(getIn(values, key)) : getIn(values, key) === value));
   };
   const label = (name, fallback) => localized(definition?.fields.find(item => item.name === name)?.label, language) || t(fallback);
   const [options, setOptions] = useState({ contacts: [], leads: [], partners: [], properties: [] });
@@ -120,9 +133,12 @@ export default function RelationFields({ values, setFieldValue, contact, lead, p
   return (
     <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={3}>
       {failed && <GridItem colSpan={12}><Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert></GridItem>}
-      {contact && enabled('contact') && <RelationSelect label={label('contact', 'Related Contact')} name="contact" error={errorFor("contact")} required={required("contact")} value={values.contact} items={options.contacts} type="contact" setFieldValue={setFieldValue} />}
-      {lead && enabled('lead') && <RelationSelect label={label('lead', 'Lead')} name="lead" error={errorFor("lead")} required={required("lead")} value={values.lead} items={options.leads} type="lead" setFieldValue={setFieldValue} />}
-      {partner && enabled('partnerCustomer') && <RelationSelect label={label('partnerCustomer', 'Partner Customer')} name="partnerCustomer" error={errorFor("partnerCustomer")} required={required("partnerCustomer")} value={values.partnerCustomer} items={options.partners} type="partner" setFieldValue={setFieldValue} />}
+      {contact && enabled('contact') && <RelationSelect label={label('contact', 'Related Contact')} name="contact" error={errorFor("contact")} required={required("contact")} value={values.contact} items={options.contacts} type="contact" setFieldValue={changeRelation} />}
+      {lead && enabled('lead') && <RelationSelect label={label('lead', definition?.moduleName === 'Leads' ? 'Related Lead' : 'Lead')} name="lead" error={errorFor("lead")} required={required("lead")} value={values.lead} items={options.leads.filter(item => item._id !== excludeLeadId)} type="lead" setFieldValue={changeRelation} />}
+      {partner && enabled('partnerCustomer') && <RelationSelect label={label('partnerCustomer', 'Partner Customer')} name="partnerCustomer" error={errorFor("partnerCustomer")} required={required("partnerCustomer")} value={values.partnerCustomer} items={options.partners} type="partner" setFieldValue={changeRelation} />}
+      {exclusive && formik?.errors?.leadRelations && formik?.submitCount > 0 && <GridItem colSpan={12}>
+        <Text role="alert" data-testid="lead-selection-error" fontSize="sm" color="red.500">{t(LEAD_SELECTION_MESSAGE)}</Text>
+      </GridItem>}
       {properties && enabled('properties') && <PropertyMultiSelect error={errorFor("properties")} value={values.properties || []} items={options.properties} setFieldValue={setFieldValue} busy={busy} />}
     </Grid>
   );

@@ -120,9 +120,9 @@ const Index = (props) => {
     ),
   };
   const tableColumns = [
+    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     { Header: tr('Property'), accessor: 'propertyName' },
     { Header: tr('Transaction Type'), accessor: 'transactionType', exportValue: value => value ? tr(value === 'SALE' ? 'Purchased' : 'Rented') : '', cell: ({ value }) => value ? tr(value === 'SALE' ? 'Purchased' : 'Rented') : '-' },
-    { Header: tr("#"), accessor: "_id", isSortable: false, width: 10 },
     {
       Header: tr("Invoice Number"),
       accessor: "invoiceNumber",
@@ -639,6 +639,7 @@ const Index = (props) => {
   return (
     <div>
       <CommonCheckTable
+        tableDirection="ltr"
         title={tr("Invoices")}
         isLoding={isLoding}
         columnData={columns ?? []}

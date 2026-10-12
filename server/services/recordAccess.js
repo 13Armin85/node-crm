@@ -45,7 +45,7 @@ const readScope = (req, actor, moduleName, extra = {}) => {
         if (currentActor?.role !== 'user' || !currentActor._id || (!personalFields[moduleName] && moduleName !== 'Tasks' && moduleName !== 'Users')) return { $and: [{ ...extra }, { _id: { $exists: false } }] };
         const own = moduleName === 'Users' ? { _id: currentActor._id } : recordScope(currentActor, moduleName);
         const ids = idsFor(req, moduleName);
-        const shared = moduleName === 'Documents' ? { file: { $elemMatch: { _id: { $in: ids }, deleted: { $ne: true } } } } : { _id: { $in: ids } };
+        const shared = moduleName === 'Documents' ? { $or: [{ _id: { $in: ids } }, { file: { $elemMatch: { _id: { $in: ids }, deleted: { $ne: true } } } }] } : { _id: { $in: ids } };
         const access = ids.length ? { $or: [own, shared] } : own;
         return Object.keys(extra).length ? { $and: [{ ...extra }, access] } : access;
     }

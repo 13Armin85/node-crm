@@ -23,6 +23,7 @@ import {
   Select,
   SimpleGrid,
   Text,
+  Tooltip,
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -42,11 +43,13 @@ import {
   FiFolder,
   FiFolderPlus,
   FiImage,
+  FiMove,
   FiPlus,
   FiTrash2,
 } from "react-icons/fi";
 import { deleteApi, getApi, getApiBlob, postApi } from "services/api";
 import Upload from "./component/Upload";
+import MoveDocumentDialog from "./MoveDocumentDialog";
 import ShareRecordButton from "components/ShareRecordButton";
 import SharedRecordBadge from "components/SharedRecordBadge";
 import { HasAccess } from "../../../redux/accessUtils";
@@ -97,6 +100,7 @@ const DocumentPage = () => {
   const canEditDocuments = !!HasAccess(["Documents"])[0]?.create;
   const [folders, setFolders] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
+  const [moveItem, setMoveItem] = useState(null);
   const [targetFolder, setTargetFolder] = useState("");
   const { definition } = useFormDefinition('Documents');
   const [folderError, setFolderError] = useState(false);
@@ -120,7 +124,7 @@ const DocumentPage = () => {
 
   const actor = getStoredUser();
   const ownsFolder = folder => !!folder && (isAdmin(actor) || String(folder.createBy?._id || folder.createBy) === String(actor?._id));
-  const rootFiles = folders.filter((item) => item.isRoot).flatMap((item) => (item.files || []).map(file => ({ ...file, _canDelete: ownsFolder(item) })));
+  const rootFiles = folders.filter((item) => item.isRoot).flatMap((item) => (item.files || []).map(file => ({ ...file, _canDelete: ownsFolder(item), _folderId: item._id })));
   const realFolders = folders.filter((item) => !item.isRoot);
   const selectedCategory = categories.find((item) => item.value === category);
   const entityType = selectedCategory?.entityType || "";
@@ -130,14 +134,19 @@ const DocumentPage = () => {
     const result = await getApi("api/document");
     if (result?.status === 200) {
       setFolders(result.data || []);
+      const requestedFolder = new URLSearchParams(window.location.search).get("folder");
       const requestedFile = new URLSearchParams(window.location.search).get("file");
+      if (requestedFolder && !currentFolder) {
+        const folder = result.data.find(item => item._id === requestedFolder && !item.isRoot);
+        if (folder) setCurrentFolder(folder);
+      }
       if (requestedFile && !currentFolder) {
         const folder = result.data.find(item => item.files?.some(file => file._id === requestedFile));
         if (folder && !folder.isRoot) setCurrentFolder(folder);
       }
       if (currentFolder) {
         const refreshed = result.data.find((item) => item._id === currentFolder._id);
-        if (refreshed) setCurrentFolder(refreshed);
+        setCurrentFolder(refreshed || null);
       }
     } else {
       toast.error(t("Failed to fetch documents"));
@@ -173,6 +182,13 @@ const DocumentPage = () => {
   const parentFolder = currentFolder?.parentFolder
     ? realFolders.find((item) => item._id === currentFolder.parentFolder)
     : null;
+
+  const moveButton = (kind, record, sourceFolder) => canEditDocuments && ownsFolder(sourceFolder) && (
+    <Tooltip label={t(kind === 'folder' ? 'Move folder' : 'Move file')}>
+      <IconButton aria-label={t(kind === 'folder' ? 'Move folder' : 'Move file')} icon={<FiMove />} size="sm" variant="ghost" colorScheme="blue"
+        onClick={event => { event.stopPropagation(); setMoveItem({ kind, record, sourceFolder }); }} />
+    </Tooltip>
+  );
 
   const openUpload = () => {
     setTargetFolder(ownsFolder(currentFolder) ? currentFolder._id : "");
@@ -302,18 +318,19 @@ const DocumentPage = () => {
                 {t("Files without folder")}
               </Button>
               {realFolders.filter((item) => !item.parentFolder).map((folder) => (
-                <Button
-                  key={folder._id}
-                  flexShrink={0}
-                  variant={currentFolder?._id === folder._id ? "solid" : "ghost"}
-                  colorScheme={currentFolder?._id === folder._id ? "brand" : "gray"}
-                  justifyContent="flex-start"
-                  w={{ base: "auto", lg: "100%" }}
-                  leftIcon={<FiFolder />}
-                  onClick={() => setCurrentFolder(folder)}
-                >
-                  <Text noOfLines={1}>{folder.folderName}</Text>
-                </Button>
+                <Box key={folder._id} flexShrink={0}>
+                  <Flex align="center">
+                    <Button minW={0} flex={1}
+                      variant={currentFolder?._id === folder._id ? "solid" : "ghost"}
+                      colorScheme={currentFolder?._id === folder._id ? "brand" : "gray"}
+                      justifyContent="flex-start" leftIcon={<FiFolder />} onClick={() => setCurrentFolder(folder)}>
+                      <Text noOfLines={1}>{folder.folderName}</Text>
+                    </Button>
+                    <ShareRecordButton module="Documents" record={folder} compact />
+                    {moveButton('folder', folder, folder)}
+                  </Flex>
+                  <Box px={3}><SharedRecordBadge module="Documents" record={folder} /></Box>
+                </Box>
               ))}
             </Flex>
           </Card>
@@ -322,7 +339,7 @@ const DocumentPage = () => {
         <GridItem colSpan={{ base: 12, lg: 9 }} minW={0}>
           <Card minH={{ base: "420px", lg: "620px" }} p={{ base: 3, md: 5 }}>
             <Flex justify="space-between" align={{ base: "stretch", sm: "center" }} mb={5} gap={3} direction={{ base: "column", sm: "row" }}>
-              <Breadcrumb separator={<FiChevronLeft />} overflowX="auto" whiteSpace="nowrap">
+              <Box minW={0}><Breadcrumb separator={<FiChevronLeft />} overflowX="auto" whiteSpace="nowrap">
                 <BreadcrumbItem>
                   <BreadcrumbLink onClick={() => setCurrentFolder(null)}>{t("Files without folder")}</BreadcrumbLink>
                 </BreadcrumbItem>
@@ -334,11 +351,14 @@ const DocumentPage = () => {
                 {currentFolder && (
                   <BreadcrumbItem isCurrentPage><BreadcrumbLink>{currentFolder.folderName}</BreadcrumbLink></BreadcrumbItem>
                 )}
-              </Breadcrumb>
+              </Breadcrumb>{currentFolder && <SharedRecordBadge module="Documents" record={currentFolder} />}</Box>
+              <Flex gap={2} align="center" flexWrap="wrap">
+                {currentFolder && <ShareRecordButton module="Documents" record={currentFolder} />}
+                {currentFolder && moveButton('folder', currentFolder, currentFolder)}
               <Select size="sm" w={{ base: "100%", sm: "210px" }} flexShrink={0} value={filterCategory} onChange={(event) => setFilterCategory(event.target.value)}>
                 <option value="">{t("All sections")}</option>
                 {categories.map((item) => <option value={item.value} key={item.value}>{t(item.label)}</option>)}
-              </Select>
+              </Select></Flex>
             </Flex>
 
             {loading ? (
@@ -352,6 +372,11 @@ const DocumentPage = () => {
                         <Icon as={FiFolder} color="brand.500" boxSize={7} />
                         <Text mt={2} fontWeight="800" noOfLines={1}>{folder.folderName}</Text>
                         <Text fontSize="xs" color="gray.500">{folder.files?.length || 0} {t("Files")}</Text>
+                        <SharedRecordBadge module="Documents" record={folder} />
+                        <Flex mt={2} justify="flex-end" onClick={event => event.stopPropagation()}>
+                          <ShareRecordButton module="Documents" record={folder} compact />
+                          {moveButton('folder', folder, folder)}
+                        </Flex>
                       </Box>
                     ))}
                   </SimpleGrid>
@@ -382,6 +407,7 @@ const DocumentPage = () => {
                           <Badge mt={3} colorScheme="brand" borderRadius="full">{t(fileCategory?.label || "General")}</Badge>
                           <Flex mt={4} gap={2} justify="flex-end">
                             <ShareRecordButton module="Documents" record={file} />
+                            {moveButton('file', file, currentFolder || folders.find(folder => folder._id === file._folderId))}
                             <IconButton aria-label={t("Download")} icon={<FiDownload />} size="sm" variant="ghost" onClick={() => download(file)} />
                             {canEditDocuments && (currentFolder ? ownsFolder(currentFolder) : file._canDelete) && <IconButton aria-label={t("Delete")} icon={<FiTrash2 />} size="sm" variant="ghost" colorScheme="red" onClick={() => removeFile(file)} />}
                           </Flex>
@@ -395,6 +421,8 @@ const DocumentPage = () => {
           </Card>
         </GridItem>
       </Grid>
+
+      <MoveDocumentDialog item={moveItem} folders={folders} onClose={() => setMoveItem(null)} onMoved={fetchFolders} />
 
       <Modal isOpen={folderModal.isOpen} onClose={folderModal.onClose} isCentered>
         <ModalOverlay />

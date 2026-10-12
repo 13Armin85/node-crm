@@ -3,6 +3,7 @@ const CustomField = require('../model/schema/customField');
 const { getDefinition } = require('../services/formDefinitions');
 const { validateFields, objectId } = require('../services/estateValidation');
 const { can, scope } = require('./permissions');
+const { normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection } = require('../services/leadRelations');
 module.exports = async (req, res, next) => {
   try {
     const moduleId = req.body?.moduleId || req.query.moduleId;
@@ -43,8 +44,13 @@ module.exports = async (req, res, next) => {
       if (model && !await model.exists({ _id: req.params.id, deleted: { $ne: true }, ...req.formAccessScope })) return res.status(404).json({ code: 'notFound' });
     }
     if (['create', 'update'].includes(action)) {
-      const definition = await getDefinition(module.moduleName);
+      let definition = await getDefinition(module.moduleName);
       const previous = action === 'update' && model ? await model.findById(req.params.id).lean() : {};
+      if (module.moduleName === 'Leads') {
+        req.body = normalizeLeadRelations(req.body, previous || {});
+        validateLeadSelection(req.body);
+        definition = { ...definition, fields: definition.fields.filter(field => isLeadRelationVisible(field, req.body)) };
+      }
       const values = validateFields(definition, req.body, previous || {});
       if (module.moduleName === 'Invoices') await require('../services/invoiceProperty').validateInvoiceProperty(req, values, previous || {});
       for (const field of (definition?.fields || []).filter(field => field.type === 'file')) {
@@ -57,6 +63,7 @@ module.exports = async (req, res, next) => {
       for (const key of ['assignUser', 'associatedListing', 'contact', 'partnerCustomer', 'relatedOpportunities']) {
         if (req.body[key] !== undefined) extras[key] = req.body[key];
       }
+      if (module.moduleName === 'Leads') extras.lead = req.body.lead;
       req.body = { ...values, ...extras, moduleId, ...(action === 'create' ? { createBy: req.actor._id } : {}) };
     }
     if (action === 'delete' && !req.params.id && (!Array.isArray(req.body?.ids) || req.body.ids.length > 100)) return res.status(400).json({ code: 'invalid', field: 'ids' });

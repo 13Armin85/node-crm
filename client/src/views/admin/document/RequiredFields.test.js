@@ -12,17 +12,18 @@ jest.mock('components/ExcelExportButton', () => () => null);
 jest.mock('./component/Upload', () => ({ onFileSelect }) => <button onClick={() => onFileSelect([new File(['hello'], 'test.txt')])}>Choose test file</button>);
 const button = text => [...document.querySelectorAll('button')].find(item => item.textContent.trim() === text);
 let container;
-beforeEach(async () => {
+beforeEach(() => {
   jest.clearAllMocks(); localStorage.setItem('user', JSON.stringify({ role: 'admin', _id: 'admin' }));
   getApi.mockImplementation(async path => ({ status: 200, data: path.includes('/definitions/') ? { moduleName: 'Documents', fields: [
     { name: 'reference', kind: 'CUSTOM_FIELD', type: 'text', required: true, label: { en: 'Reference' }, validationMessage: { en: 'Enter the reference' } },
   ] } : [] }));
   postApi.mockResolvedValue({ status: 200, data: {} });
   container = document.createElement('div'); document.body.appendChild(container);
-  await act(async () => { ReactDOM.render(<ChakraProvider><LanguageProvider><DocumentPage /></LanguageProvider></ChakraProvider>, container); });
 });
+const render = async () => act(async () => { ReactDOM.render(<ChakraProvider><LanguageProvider><DocumentPage /></LanguageProvider></ChakraProvider>, container); });
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.clear(); });
 test('an empty folder name shows an error beneath the input', async () => {
+  await render();
   await act(async () => Simulate.click(button('New folder')));
   await act(async () => Simulate.click(button('Create folder')));
   expect(postApi).not.toHaveBeenCalled();
@@ -30,6 +31,7 @@ test('an empty folder name shows an error beneath the input', async () => {
   expect(document.body.textContent).toContain('Required');
 });
 test('required document metadata blocks upload until filled and is included in multipart data', async () => {
+  await render();
   await act(async () => Simulate.click(button('Upload document')));
   await act(async () => Simulate.click(button('Choose test file')));
   await act(async () => Simulate.click(button('Upload 1 Files')));

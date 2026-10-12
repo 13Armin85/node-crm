@@ -1,4 +1,5 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import { useLanguage } from 'i18n';
 import { useMemo, useState, useEffect } from "react";
 import {
   Box,
@@ -100,7 +101,10 @@ const CommonCheckTable = (props) => {
     addBtn,
     exportColumn,
     pageHeader = true,
+    tableDirection,
   } = props;
+  const { direction } = useLanguage();
+  const cellDirection = tableDirection ? direction : undefined;
   const sharingModule = shareModuleForTitle(title, tr);
   const showSharing = canSendRecord(sharingModule);
   const { dataLength } = props;
@@ -615,11 +619,13 @@ const CommonCheckTable = (props) => {
         </Grid>
         <Box
           overflowY={"auto"}
+          dir={tableDirection}
           className={`${size ? "small-table-fix-container" : "table-fix-container"} crm-table-scroll`}
         >
           <Table
             {...getTableProps()}
             className="crm-data-table"
+            dir={tableDirection}
             variant="simple"
             color="gray.500"
             mb="0"
@@ -633,6 +639,7 @@ const CommonCheckTable = (props) => {
                         column?.isSortable !== false &&
                           column?.getSortByToggleProps()
                       )}
+                      dir={cellDirection}
                       pe="10px"
                       key={index}
                       borderColor={borderColor}
@@ -774,6 +781,7 @@ const CommonCheckTable = (props) => {
                           <Td
                             {...cell?.getCellProps()}
                             key={index}
+                            dir={cellDirection}
                             fontSize={{ sm: "14px" }}
                             minW={{ base: "132px", md: "160px", lg: "auto" }}
                             borderColor="transparent"

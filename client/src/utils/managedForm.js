@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getIn, setIn } from 'formik';
 import { getApi } from 'services/api';
 import { formValue } from './formValue';
+import { isLeadRelationVisible, normalizeLeadRelations, hasLeadSelection, LEAD_SELECTION_ERROR } from './leadRelations';
 import { FORM_DEFINITION_CHANGED, FORM_DEFINITION_STORAGE_KEY } from 'services/formDefinitionEvents';
 
 export function useFormDefinition(moduleName, enabled = true) {
@@ -57,15 +58,17 @@ export function normalizeFormValues(definition, values) {
     else if (field.type === 'phone' && typeof value === 'number') next = String(value);
     normalized = setIn(normalized, path, next);
   }
-  return normalized;
+  return definition?.moduleName === 'Leads' ? normalizeLeadRelations(normalized) : normalized;
 }
 
 // Validate the fields that the configured form actually shows, including custom fields.
 export function validateFormValues(definition, values) {
   const normalized = normalizeFormValues(definition, values);
   let errors = {};
+  if (definition?.moduleName === 'Leads' && !hasLeadSelection(normalized)) errors.leadRelations = LEAD_SELECTION_ERROR;
   for (const field of definition?.fields || []) {
     if (field.enabled === false || !Object.entries(field.condition || {}).every(([key, expected]) => (Array.isArray(expected) ? expected.includes(getIn(values, key)) : getIn(values, key) === expected))) continue;
+    if (definition?.moduleName === 'Leads' && field.kind !== 'CUSTOM_FIELD' && !isLeadRelationVisible(field.name, normalized)) continue;
     const path = field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
     const value = getIn(normalized, path);
     const empty = (field.type === 'checkbox' && value !== true) || value == null || value === '' || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && !value.length);

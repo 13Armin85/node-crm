@@ -42,3 +42,34 @@ test('required booleans and whitespace fail while zero and hidden conditional fi
   expect(validateFormValues(definition, { amount: 0, customFields: { consent: false } })).toEqual({ customFields: { consent: 'required' } });
   expect(validateFormValues(definition, { amount: 0, status: 'RENTED', notes: ' ', customFields: { consent: true } })).toEqual({ notes: 'required' });
 });
+
+
+test('lead forms clear conflicting populated relations and ignore requirements for hidden alternatives', () => {
+  const leadDefinition = { moduleName: 'Leads', fields: [
+    { name: 'lead', type: 'select', relation: 'Leads', external: true, required: true },
+    { name: 'contact', type: 'select', relation: 'Contacts', external: true, required: true },
+    { name: 'partnerCustomer', type: 'select', relation: 'Partner Customers', external: true, required: true },
+  ] };
+  const lead = '64d33173fd7ff3fa0924a111';
+  const values = { lead: { _id: lead }, contact: { _id: contact }, partnerCustomer: { _id: partner } };
+  expect(normalizeFormValues(leadDefinition, values)).toEqual({ lead, contact: null, partnerCustomer: null });
+  expect(validateFormValues(leadDefinition, values)).toEqual({});
+  expect(normalizeFormValues(leadDefinition, { lead: null, contact, partnerCustomer: partner })).toEqual({ lead: null, contact, partnerCustomer: null });
+  expect(validateFormValues(leadDefinition, { lead: null, contact, partnerCustomer: null })).toEqual({});
+});
+
+
+test.each([
+  {},
+  { lead: null, contact: null, partnerCustomer: null },
+  { lead: '', contact: '', partnerCustomer: '' },
+])('lead selection is required even when individual relation fields are optional: %p', values => {
+  const definition = { moduleName: 'Leads', fields: [] };
+  expect(validateFormValues(definition, values)).toEqual({ leadRelations: 'leadSelectionRequired' });
+});
+
+
+test.each(['lead', 'contact', 'partnerCustomer'])('a single %s is sufficient without choosing the other relations', name => {
+  const definition = { moduleName: 'Leads', fields: [] };
+  expect(validateFormValues(definition, { [name]: '64d33173fd7ff3fa0924a109' })).toEqual({});
+});

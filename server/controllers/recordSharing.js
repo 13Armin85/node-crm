@@ -15,10 +15,10 @@ router.get('/users', asyncRoute(async (req, res) => {
 const existingRecord = async (module, recordId) => {
   if (!shareableModules.includes(module) || !validId(recordId)) return null;
   const query = module === 'Documents'
-    ? { deleted: { $ne: true }, file: { $elemMatch: { _id: recordId, deleted: { $ne: true } } } }
+    ? { deleted: { $ne: true }, $or: [{ file: { $elemMatch: { _id: recordId, deleted: { $ne: true } } } }, { _id: recordId, isRoot: { $ne: true } }] }
     : { _id: recordId, deleted: { $ne: true } };
   const record = await modelFor(module).findOne(query).lean();
-  return module === 'Documents' ? record?.file.find(file => String(file._id) === recordId) : record;
+  return module === 'Documents' ? record?.file?.find(file => !file.deleted && String(file._id) === recordId) || (String(record?._id) === recordId && !record?.isRoot ? record : null) : record;
 };
 router.get('/:module/:recordId', asyncRoute(async (req, res) => {
   if (!await existingRecord(req.params.module, req.params.recordId)) return res.status(404).json({ code: 'notFound' });
@@ -38,8 +38,8 @@ router.post('/', asyncRoute(async (req, res) => {
   } catch (error) { if (error.code !== 11000) throw error; }
   if (created) await createNotification({
     recipientId, actorId: req.actor._id, type: 'record_shared', module, entityId: recordId,
-    message: String(record.title || record.leadName || record.opportunityName || record.fullName || record.companyName || record.subject || record.agenda || record.fileName || record.invoiceNumber || [record.firstName, record.lastName].filter(Boolean).join(' ') || module),
-    link: module === 'Documents' ? '/documents?file=' + recordId : notificationLink(module, recordId),
+    message: String(record.title || record.leadName || record.opportunityName || record.fullName || record.companyName || record.subject || record.agenda || record.fileName || record.folderName || record.invoiceNumber || [record.firstName, record.lastName].filter(Boolean).join(' ') || module),
+    link: module === 'Documents' ? '/documents?' + (record.folderName ? 'folder=' : 'file=') + recordId : notificationLink(module, recordId),
   });
   res.status(created ? 201 : 200).json({ shared: true, created });
 }));

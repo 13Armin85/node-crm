@@ -46,6 +46,16 @@ const residenceSections = [
   ['estate.section.additional', (name, field) => name === 'notes' || field.kind === 'CUSTOM_FIELD'],
 ];
 
+const residenceTableColumns = [
+  ['transactionType', 'Transaction Type'],
+  ['constructionStatus', 'estate.residence.constructionStatus'],
+  ['developer', 'estate.residence.developer'],
+  ['area.value', 'estate.residence.builtArea'],
+  ['building', 'estate.section.building'],
+  ['maintenanceFee.amount', 'estate.residence.maintenanceFee'],
+  ['contact', 'Contact'],
+];
+
 const PAGE_SIZE = 20;
 
 export function EntityPage({ moduleName }) {
@@ -145,6 +155,14 @@ export function EntityPage({ moduleName }) {
     if (result.status === 200) { setDeleting(null); setNotice("Success"); fetchData(); }
     else { setError(result.data?.code || "serverError"); setDeleting(null); }
   };
+
+  const residenceFieldLabel = (key, fallback) => localized(definition?.fields.find(field => field.name === key)?.label, language) || t(fallback);
+  const residenceOption = (key, value) => {
+    if (value == null || value === '') return '-';
+    const option = definition?.fields.find(field => field.name === key)?.options?.find(option => option.value === value);
+    return option ? localized(option.label, language) : t(value);
+  };
+  const residenceNumber = value => value == null || value === '' ? '-' : Number(value).toLocaleString(dateLocale);
 
   const partnerStatusField = definition?.fields.find(field => field.name === 'status');
   const updatePartnerStatus = async (item, status) => {
@@ -249,18 +267,43 @@ export function EntityPage({ moduleName }) {
           </Box>
         )}
 
-        <Box className="crm-entity-table-wrap" overflowX="auto">
+        <Box className="crm-entity-table-wrap" overflowX="auto" dir={moduleName === "Properties" ? "ltr" : direction}>
           {busy ? (
             <Flex minH="360px" align="center" justify="center"><Spinner /></Flex>
           ) : (
-            <Table className="crm-entity-table">
-              <Thead><Tr><Th>{t("Name")}</Th><Th>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Residences" && <Th>{t("Price")}</Th>}{moduleName === "Partner Customers" && <Th>{localized(partnerStatusField?.label || "Status", language)}</Th>}<Th>{t("Created Date")}</Th><Th>{t("Actions")}</Th></Tr></Thead>
+            <Table className="crm-entity-table" minW={moduleName === "Residences" ? "1800px" : undefined} dir={moduleName === "Properties" ? "ltr" : direction}>
+              <Thead><Tr>{moduleName === "Properties" && <Th dir={direction} textAlign="center" w="64px">{t("estate.rowNumber")}</Th>}<Th dir={direction}>{t("Name")}</Th><Th dir={direction}>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Residences" && <>
+                <Th dir={direction}>{t("Price")}</Th>
+                {residenceTableColumns.map(([key, fallback]) => <Th key={key} dir={direction} whiteSpace="nowrap">{residenceFieldLabel(key, fallback)}</Th>)}
+              </>}{moduleName === "Partner Customers" && <Th>{localized(partnerStatusField?.label || "Status", language)}</Th>}<Th dir={direction}>{t("Created Date")}</Th><Th dir={direction}>{t("Actions")}</Th></Tr></Thead>
               <Tbody>
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <Tr key={item._id}>
-                    <Td><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge module={moduleName} record={item} />{["Properties", "Residences"].includes(moduleName) && <PropertyStatusBadge property={item} />}</Box></Flex></Td>
-                    <Td data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : moduleName === "Residences" ? [item.city, item.district].filter(Boolean).join(" · ") || "-" : item.phone || "-"}</Td>
-                    {moduleName === "Residences" && <Td data-no-translate>{item.price?.amount != null ? <CurrencyAmount amount={item.price.amount} currency={item.price.currency} compact /> : "-"}</Td>}
+                    {moduleName === "Properties" && <Td dir="ltr" textAlign="center" fontWeight="700" data-no-translate>{(page - 1) * PAGE_SIZE + index + 1}</Td>}
+                    <Td dir={direction}><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge module={moduleName} record={item} />{["Properties", "Residences"].includes(moduleName) && <PropertyStatusBadge property={item} />}</Box></Flex></Td>
+                    <Td dir={direction} data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : moduleName === "Residences" ? <Box minW="210px" maxW="280px">
+                      <Text fontWeight="600">{[item.city, item.district, item.neighborhood].filter(Boolean).join(" · ") || "-"}</Text>
+                      {item.address && <Text mt={1} fontSize="xs" color="var(--crm-muted)" whiteSpace="normal">{item.address}</Text>}
+                    </Box> : item.phone || "-"}</Td>
+                    {moduleName === "Residences" && <>
+                      <Td dir={direction} whiteSpace="nowrap" data-no-translate>{item.price?.amount != null ? <CurrencyAmount amount={item.price.amount} currency={item.price.currency} compact /> : "-"}</Td>
+                      <Td dir={direction}>{residenceOption('transactionType', item.transactionType)}</Td>
+                      <Td dir={direction}>{residenceOption('constructionStatus', item.constructionStatus)}</Td>
+                      <Td dir={direction} data-no-translate>{item.developer || '-'}</Td>
+                      <Td dir={direction} whiteSpace="nowrap">
+                        <Text data-no-translate>{item.area?.value != null ? `${residenceNumber(item.area.value)} m²` : '-'}</Text>
+                        {item.area?.value != null && item.area?.type && <Text fontSize="xs" color="var(--crm-muted)">{residenceOption('area.type', item.area.type)}</Text>}
+                        {item.totalArea != null && <Text mt={1} fontSize="xs">{residenceFieldLabel('totalArea', 'estate.residence.siteArea')}: <span data-no-translate>{residenceNumber(item.totalArea)} m²</span></Text>}
+                      </Td>
+                      <Td dir={direction} whiteSpace="nowrap">
+                        {['blockCount', 'floorCount', 'unitCount'].map(key => <Text key={key} fontSize="xs">{residenceFieldLabel(key, `estate.residence.${key}`)}: <span data-no-translate>{residenceNumber(item[key])}</span></Text>)}
+                      </Td>
+                      <Td dir={direction} whiteSpace="nowrap" data-no-translate>{item.maintenanceFee?.amount != null ? <CurrencyAmount amount={item.maintenanceFee.amount} currency={item.maintenanceFee.currency} compact /> : '-'}</Td>
+                      <Td dir={direction} data-no-translate>
+                        <Text dir="ltr" whiteSpace="nowrap">{item.phone || '-'}</Text>
+                        {item.email && <Text dir="ltr" mt={1} fontSize="xs">{item.email}</Text>}
+                      </Td>
+                    </>}
                     {moduleName === "Partner Customers" && <Td><Box className="selectOpt"><Select size="sm" minW="170px"
                       aria-label={`${localized(partnerStatusField?.label || "Status", language)} · ${name(item)}`}
                       className={item.status === "PENDING" ? "pending" : item.status === "ACTIVE" ? "completed" : ["LOST", "INACTIVE"].includes(item.status) ? "onHold" : "inProgress"}
@@ -269,8 +312,8 @@ export function EntityPage({ moduleName }) {
                       <option value="" disabled>{t("Select")}</option>
                       {(partnerStatusField?.options || []).map(option => <option key={option.value} value={option.value}>{localized(option.label, language)}</option>)}
                     </Select></Box></Td>}
-                    <Td>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(dateLocale) : "-"}</Td>
-                    <Td>
+                    <Td dir={direction}>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(dateLocale) : "-"}</Td>
+                    <Td dir={direction}>
                       <Flex className="crm-row-actions" gap="5px">
                         <ShareRecordButton module={moduleName} record={item} />
                         <Tooltip label={t("Details")}><IconButton size="sm" variant="ghost" colorScheme="blue" aria-label={t("Details")} icon={<FiEye />} onClick={() => open(item, true)} /></Tooltip>

@@ -1,5 +1,6 @@
 const express = require('express');
 const document = require('./document');
+const move = require('./move');
 const auth = require('../../middelwares/auth');
 const { loadUser } = require('../../middelwares/permissions');
 const dynamicValues = require('../../middelwares/dynamicValues')('Documents');
@@ -13,6 +14,8 @@ router.post('/add', auth, loadUser, document.upload.array('files'), document.val
 router.post('/addDocumentContact', auth, document.upload.array('files'), document.validateUploads, activity('document_uploaded', document.addDocumentContact))
 router.post('/addDocumentLead', auth, document.upload.array('files'), document.validateUploads, activity('document_uploaded', document.addDocumentLead))
 
+router.post('/move/file/:id', auth, move.moveFile)
+router.post('/move/folder/:id', auth, move.moveFolder)
 router.get('/download/:id', auth, document.downloadFile)
 router.post('/link-document/:id', auth, activity('document_linked', document.LinkDocument, { embeddedFile: true }))
 router.delete('/delete/:id', auth, activity('record_deleted', document.deleteFile, { embeddedFile: true }))

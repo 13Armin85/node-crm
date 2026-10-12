@@ -50,7 +50,7 @@ const index = async (req, res) => {
             return {
                 ...folder,
                 file: files,
-                parentFolder: !require('../../services/moduleVisibility').canView(req.actor, 'Documents') && !require('../../services/recordSharing').isOwnDocument(folder, req.actor) ? null : folder.parentFolder,
+                parentFolder: !require('../../services/moduleVisibility').canView(req.actor, 'Documents') && !require('../../services/recordSharing').isOwnDocument(folder, req.actor) && !require('../../services/recordSharing').idsFor(req, 'Documents').some(id => String(id) === String(folder.parentFolder)) ? null : folder.parentFolder,
                 createByName: [folder.createBy?.firstName, folder.createBy?.lastName].filter(Boolean).join(' ') || folder.createBy?.username,
                 files,
             };

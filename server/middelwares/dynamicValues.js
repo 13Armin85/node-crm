@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { getDefinition } = require('../services/formDefinitions');
 const { validateFields, validateRequiredFields, normalizeProperty, objectId } = require('../services/estateValidation');
 const { can, scope, isAdmin } = require('./permissions');
+const { normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection } = require('../services/leadRelations');
 // Extend existing controllers without changing their response contracts.
 module.exports = moduleName => async (req, res, next) => {
   try {
@@ -19,7 +20,7 @@ module.exports = moduleName => async (req, res, next) => {
       req.body.sender = req.actor._id;
       req.body.salesAgent = req.actor._id;
     }
-    const definition = await getDefinition(moduleName);
+    let definition = await getDefinition(moduleName);
     if (!definition) return next();
     const model = mongoose.models[({ Users: 'User', Documents: 'Document', 'Email Template': 'EmailTemps', OpportunityProject: 'OpportunityProjects', 'Opportunity Project': 'OpportunityProjects', 'Bank Details': 'BankDetails' })[moduleName] || moduleName];
     let previous = {};
@@ -27,6 +28,11 @@ module.exports = moduleName => async (req, res, next) => {
       if (!objectId(req.params.id)) return res.status(400).json({ code: 'invalid', field: 'id' });
       previous = await model.findOne({ _id: req.params.id, ...(moduleName === 'Users' ? {} : { deleted: false, ...scope(req) }) }).lean();
       if (!previous) return res.status(404).json({ code: 'notFound' });
+    }
+    if (moduleName === 'Leads') {
+      req.body = normalizeLeadRelations(req.body, previous);
+      validateLeadSelection(req.body);
+      definition = { ...definition, fields: definition.fields.filter(field => isLeadRelationVisible(field, req.body)) };
     }
     if (typeof req.body.customFields === 'string') req.body.customFields = JSON.parse(req.body.customFields);
     // Legacy controllers retain their fixed-field contracts; enforce requirements

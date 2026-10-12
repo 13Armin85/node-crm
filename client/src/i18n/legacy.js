@@ -1,5 +1,7 @@
 // Existing English keys remain stable; aliases cover historical spelling/casing.
 const rows = `
+Select exactly one: a lead, a partner customer, or a contact.|فقط یکی از سرنخ، مشتری همکار یا مخاطب را انتخاب کنید.|Yalnızca birini seçin: müşteri adayı, iş ortağı müşterisi veya kişi.
+Related Lead|سرنخ مرتبط|İlgili Müşteri Adayı
 Developer|توسعه‌دهنده|Geliştirici
 developer|توسعه‌دهنده|Geliştirici
 Message|پیام|Mesaj

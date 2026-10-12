@@ -26,6 +26,7 @@ import { putApi } from "services/api";
 import { getApi } from "services/api";
 import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
 import { formValue } from 'utils/formValue';
+import { normalizeLeadRelations, LEAD_SELECTION_ERROR, LEAD_SELECTION_MESSAGE } from 'utils/leadRelations';
 import { toast } from 'react-toastify';
 import CustomForm from "../../../utils/customForm";
 import UserModel from "components/commonTableModel/UserModel";
@@ -87,7 +88,7 @@ const Edit = (props) => {
         dispatch(fetchLeadData());
       } else {
         if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
-        toast.error(response?.data?.message || tr('estate.serverError'));
+        toast.error(response?.data?.code === LEAD_SELECTION_ERROR ? tr(LEAD_SELECTION_MESSAGE) : response?.data?.message || tr('estate.serverError'));
       }
     } catch (e) {
       console.log(e);
@@ -119,10 +120,11 @@ const Edit = (props) => {
   let response;
   const fetchData = async () => {
     if (data) {
-      setInitialValues((prev) => ({
+      setInitialValues((prev) => normalizeLeadRelations({
         ...prev,
         ...data,
         associatedListing: formValue(data?.associatedListing),
+        lead: formValue(data?.lead) || null,
         contact: formValue(data?.contact) || null,
         partnerCustomer: formValue(data?.partnerCustomer) || null,
         assignUser: formValue(data?.assignUser),
@@ -132,10 +134,11 @@ const Edit = (props) => {
         setIsLoding(true);
         response = await getApi("api/lead/view/", props?.selectedId || param?.id);
         let editData = response?.data?.lead;
-        setInitialValues((prev) => ({
+        setInitialValues((prev) => normalizeLeadRelations({
           ...prev,
           ...editData,
           associatedListing: formValue(editData?.associatedListing),
+          lead: formValue(editData?.lead) || null,
           contact: formValue(editData?.contact) || null,
           partnerCustomer: formValue(editData?.partnerCustomer) || null,
           assignUser: formValue(editData?.assignUser),
@@ -195,7 +198,7 @@ const Edit = (props) => {
                 touched={touched}
               />
             )}
-            <RelationFields formik={formik} definition={definition} values={values} setFieldValue={setFieldValue} contact partner />
+            <RelationFields formik={formik} definition={definition} values={values} setFieldValue={setFieldValue} lead contact partner excludeLeadId={props?.selectedId || param?.id || data?._id} />
             <ManagedFormLayout moduleName="Leads" definition={definition} formik={formik} includeCustom={false}>
             <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
               <GridItem colSpan={{ base: 12 }}>

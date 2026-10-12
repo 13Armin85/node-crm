@@ -90,6 +90,7 @@ const edit = async (req, res) => {
 const view = async (req, res) => {
   let lead = await Lead.findOne({ _id: req.params.id })
     .populate("associatedListing")
+    .populate({ path: 'lead', select: 'leadName leadEmail', match: readScope(req, req.actor, 'Leads', { deleted: false }) })
     .populate({ path: 'contact', select: 'fullName firstName lastName email phoneNumber', match: readScope(req, req.actor, 'Contacts', { deleted: false }) })
     .populate({ path: 'partnerCustomer', select: 'fullName companyName phone email', match: readScope(req, req.actor, 'Partner Customers', { deleted: false }) })
     .populate({ path: 'relatedOpportunities', select: 'opportunityName salesStage amount expectedCloseDate', match: readScope(req, req.actor, 'Opportunities', { deleted: false }) });

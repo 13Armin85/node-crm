@@ -28,6 +28,7 @@ module.exports = ({ field, options, required }) => {
       choice('propertyType', 'Property Type', 'نوع ملک', ['Apartment', 'Land', 'Manssonnate']),
       f('leadMessage', 'textarea', 'Lead Message', 'پیام سرنخ'),
       externalRelation('associatedListing', 'Associated Listing', 'ملک مرتبط', 'Properties'),
+      externalRelation('lead', 'Related Lead', 'سرنخ مرتبط', 'Leads'),
       externalRelation('contact', 'Converted Contact', 'مخاطب مرتبط', 'Contacts'),
       externalRelation('partnerCustomer', 'Partner Customer', 'مشتری همکار', 'Partner Customers'),
       multiRelation('relatedOpportunities', 'Related Opportunities', 'فرصت‌های مرتبط', 'Opportunities'),

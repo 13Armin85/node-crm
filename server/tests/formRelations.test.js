@@ -20,6 +20,7 @@ test('authenticated lead form create, reload, edit and clear retain relations wi
   const contact = '64d33173fd7ff3fa0924a103';
   const partner = '64d33173fd7ff3fa0924a104';
   const opportunity = '64d33173fd7ff3fa0924a105';
+  const relatedLead = '64d33173fd7ff3fa0924a106';
   const notifications = t.mock.method(Notification, 'create', async value => value);
   const records = new Map();
   const query = value => ({ select: () => query(value), lean: () => Promise.resolve(value), then: (resolve, reject) => Promise.resolve(value).then(resolve, reject) });
@@ -27,7 +28,12 @@ test('authenticated lead form create, reload, edit and clear retain relations wi
   t.mock.method(CustomField, 'findById', () => query(module));
   t.mock.method(CustomField, 'findOne', () => query(module));
   t.mock.method(CustomField, 'find', () => query([module]));
-  t.mock.method(FormDefinition, 'findOne', () => query(null));
+  let requireRelations = false;
+  t.mock.method(FormDefinition, 'findOne', () => query(requireRelations ? { moduleName: 'Leads', fields:
+    require('../services/formDefinitions').defaults.Leads.map(field => ({ ...field,
+      required: field.required || ['lead', 'contact', 'partnerCustomer'].includes(field.name),
+    })),
+  } : null));
   await initializeLeadSchema();
   const previousDb = mongoose.connection.db;
   mongoose.connection.db = { listCollections: () => ({ hasNext: async () => true }) };
@@ -66,25 +72,56 @@ test('authenticated lead form create, reload, edit and clear retain relations wi
     });
     return { status: response.status, data: await response.json() };
   };
-  const created = await api('POST', '/add', { moduleId: module._id, leadName: 'Lead', leadEmail: 'lead@example.com', contact, partnerCustomer: partner, associatedListing: null, assignUser: null });
+  for (const relations of [{}, { contact, partnerCustomer: partner }, { lead: relatedLead, contact }, { lead: relatedLead, partnerCustomer: partner }, { lead: relatedLead, contact, partnerCustomer: partner }]) {
+    const invalid = await api('POST', '/add', { moduleId: module._id, leadName: 'Lead', leadEmail: 'lead@example.com', ...relations });
+    assert.equal(invalid.status, 400);
+    assert.deepEqual(invalid.data, { code: 'leadSelectionRequired', field: 'leadRelations' });
+  }
+  assert.equal(records.size, 0);
+  const created = await api('POST', '/add', { moduleId: module._id, leadName: 'Lead', leadEmail: 'lead@example.com', lead: relatedLead, associatedListing: null, assignUser: null });
   assert.equal(created.status, 200, JSON.stringify(created));
   const id = created.data.data._id;
   const reload = () => api('GET', `/view/${id}?moduleId=${module._id}`);
-  assert.equal((await reload()).data.data.contact, contact);
-  assert.equal((await reload()).data.data.partnerCustomer, partner);
-  const edited = await api('PUT', `/edit/${id}`, { ...(await reload()).data.data, moduleId: module._id, leadName: 'Updated', relatedOpportunities: [opportunity] });
+  assert.equal((await reload()).data.data.lead, relatedLead);
+  assert.equal((await reload()).data.data.contact, null);
+  assert.equal((await reload()).data.data.partnerCustomer, null);
+  const edited = await api('PUT', `/edit/${id}`, { moduleId: module._id, leadName: 'Updated', contact, relatedOpportunities: [opportunity] });
   assert.equal(edited.status, 200, JSON.stringify(edited));
   const saved = (await reload()).data.data;
   assert.equal(saved.leadName, 'Updated');
+  assert.equal(saved.lead, null);
   assert.equal(saved.contact, contact);
-  assert.equal(saved.partnerCustomer, partner);
+  assert.equal(saved.partnerCustomer, null);
   assert.deepEqual(saved.relatedOpportunities, [opportunity]);
   assert(Contact.updateOne.mock.calls.some(call => String(call.arguments[0]._id) === contact));
+
+  requireRelations = true;
+  const leadSelected = await api('PUT', `/edit/${id}`, { moduleId: module._id, lead: relatedLead, relatedOpportunities: [opportunity] });
+  assert.equal(leadSelected.status, 200, JSON.stringify(leadSelected));
+  const leadOnly = (await reload()).data.data;
+  assert.equal(leadOnly.lead, relatedLead);
+  assert.equal(leadOnly.contact, null);
+  assert.equal(leadOnly.partnerCustomer, null);
+  const alternativesSelected = await api('PUT', `/edit/${id}`, { moduleId: module._id, partnerCustomer: partner, relatedOpportunities: [opportunity] });
+  assert.equal(alternativesSelected.status, 200, JSON.stringify(alternativesSelected));
+  assert.equal((await reload()).data.data.lead, null);
+  assert.equal((await reload()).data.data.contact, null);
+  assert.equal((await reload()).data.data.partnerCustomer, partner);
   assert(PartnerCustomer.updateOne.mock.calls.some(call => String(call.arguments[0]._id) === partner));
-  const cleared = await api('PUT', `/edit/${id}`, { moduleId: module._id, contact: null, partnerCustomer: null, relatedOpportunities: [] });
-  assert.equal(cleared.status, 200, JSON.stringify(cleared));
+  const contactSelected = await api('PUT', `/edit/${id}`, { moduleId: module._id, contact, relatedOpportunities: [opportunity] });
+  assert.equal(contactSelected.status, 200, JSON.stringify(contactSelected));
+  assert.equal((await reload()).data.data.lead, null);
+  assert.equal((await reload()).data.data.partnerCustomer, null);
+  const unchangedRelations = await api('PUT', `/edit/${id}`, { moduleId: module._id, leadName: 'Still updated', relatedOpportunities: [opportunity] });
+  assert.equal(unchangedRelations.status, 200, JSON.stringify(unchangedRelations));
+  assert.equal((await reload()).data.data.contact, contact);
+  requireRelations = false;
+  const cleared = await api('PUT', `/edit/${id}`, { moduleId: module._id, lead: null, contact: null, partnerCustomer: null, relatedOpportunities: [] });
+  assert.equal(cleared.status, 400, JSON.stringify(cleared));
+  assert.deepEqual(cleared.data, { code: 'leadSelectionRequired', field: 'leadRelations' });
   const empty = (await reload()).data.data;
-  assert.equal(empty.contact, null);
+  assert.equal(empty.lead, null);
+  assert.equal(empty.contact, contact);
   assert.equal(empty.partnerCustomer, null);
   assert(notifications.mock.calls.some(call => call.arguments[0].type === 'record_created'));
   assert(notifications.mock.calls.some(call => call.arguments[0].type === 'record_updated'));

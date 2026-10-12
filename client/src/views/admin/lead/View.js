@@ -551,6 +551,10 @@ const View = () => {
                 <Card mt={3}>
                   <Grid templateColumns="repeat(12, 1fr)">
                     <GridItem colSpan={{ base: 12, md: 6 }} mb={3}>
+                      <Text fontSize="sm" fontWeight="bold"><LocalizedText text="Related Lead" /></Text>
+                      <Text data-no-translate>{formLabel(data?.lead) || ' - '}</Text>
+                    </GridItem>
+                    <GridItem colSpan={{ base: 12, md: 6 }} mb={3}>
                       <Text fontSize="sm" fontWeight="bold"><LocalizedText text="Related Contact" /></Text>
                       <Text data-no-translate>{formLabel(data?.contact) || ' - '}</Text>
                     </GridItem>

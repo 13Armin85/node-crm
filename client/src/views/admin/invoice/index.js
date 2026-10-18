@@ -639,6 +639,7 @@ const Index = (props) => {
   return (
     <div>
       <CommonCheckTable
+              onImported={() => setAction(current => !current)}
         tableDirection="ltr"
         title={tr("Invoices")}
         isLoding={isLoding}

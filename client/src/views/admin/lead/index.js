@@ -372,6 +372,7 @@ const Index = () => {
         {!isLoding && (
           <GridItem colSpan={6}>
             <CommonCheckTable
+              onImported={() => setAction(current => !current)}
               compact
               title={title}
               isLoding={isLoding}

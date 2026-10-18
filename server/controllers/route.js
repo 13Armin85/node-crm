@@ -32,6 +32,7 @@ const notificationRoute = require("./notification/_routes")
 
 //Api`s
 router.use('/record-sharing', require('./recordSharing'));
+router.use('/import', require('./importRecords'));
 router.use('/visibility', require('./visibility'));
 router.use('/contact', contactRoute);
 router.use('/property', propertyRoute)

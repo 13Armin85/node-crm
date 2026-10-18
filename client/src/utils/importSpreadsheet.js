@@ -59,7 +59,11 @@ export const parseImportSpreadsheet = async file => {
   if (!file || !file.size || file.size > MAX_FILE) throw invalid();
   const extension = file.name.split('.').pop().toLowerCase();
   if (extension === 'csv') {
-    const parsed = Papa.parse(await file.text(), { header: true, skipEmptyLines: 'greedy', preview: MAX_ROWS + 1, transformHeader: headerName });
+    const content = await file.text();
+    const first = Papa.parse(content, { preview: 1, skipEmptyLines: 'greedy' });
+    const headers = (first.data[0] || []).map(headerName);
+    if (new Set(headers).size !== headers.length) throw invalid();
+    const parsed = Papa.parse(content, { header: true, skipEmptyLines: 'greedy', preview: MAX_ROWS + 1, transformHeader: headerName });
     if (parsed.errors.length || !parsed.data.length || parsed.data.length > MAX_ROWS || parsed.meta.fields.length > MAX_COLUMNS) throw invalid();
     return parsed.data;
   }
@@ -80,7 +84,9 @@ export const parseImportSpreadsheet = async file => {
     row.eachCell((cell, column) => {
       if (!headers[column - 1]) throw invalid();
       const value = cell.value;
-      values[headers[column - 1]] = value && typeof value === 'object' && 'formula' in value ? value.result ?? '' : value;
+      values[headers[column - 1]] = value && typeof value === 'object' && 'formula' in value ? value.result ?? ''
+        : value && typeof value === 'object' && value.richText ? value.richText.map(part => part.text).join('')
+          : value && typeof value === 'object' && 'text' in value ? value.text : value;
     });
     rows.push(values);
   });

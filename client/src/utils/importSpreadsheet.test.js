@@ -6,6 +6,7 @@ test('CSV imports reject prototype paths and excessive batches', async () => {
   await expect(parseImportSpreadsheet(file('safe.csv', 'Name,Email\nAda,ada@example.test'))).resolves.toEqual([{ Name: 'Ada', Email: 'ada@example.test' }]);
   for (const key of ['__proto__', 'constructor.prototype', '$where']) await expect(parseImportSpreadsheet(file('bad.csv', key + '\nvalue'))).rejects.toThrow();
   await expect(parseImportSpreadsheet(file('big.csv', 'Name\n' + Array(101).fill('Ada').join('\n')))).rejects.toThrow();
+  await expect(parseImportSpreadsheet(file('duplicate.csv', 'Name,Name\nA,B'))).rejects.toThrow();
 });
 test('XLSX archives are checked before parsing and normal exports remain readable', async () => {
   const workbook = new ExcelJS.Workbook();

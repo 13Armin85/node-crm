@@ -164,8 +164,8 @@ const EmailAdvanceSearch = (props) => {
                   fontWeight="500"
                   placeholder={tr("Select Realeted To")}
                 >
-                  <option value="contact"><LocalizedText text="Contact" /></option>
-                  <option value="lead"><LocalizedText text="Lead" /></option>
+                  <option value="contact">{tr("Contact")}</option>
+                  <option value="lead">{tr("Lead")}</option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}

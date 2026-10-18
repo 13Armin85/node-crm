@@ -206,6 +206,9 @@ const Index = () => {
         <Grid templateColumns="repeat(6, 1fr)" mb={3} gap={4}>
           <GridItem colSpan={6}>
             <CommonCheckTable
+              onImported={() => setAction(current => !current)}
+              importModule={moduleData?.moduleName}
+              importModuleId={moduleData?._id}
               title={moduleData?.moduleName}
               isLoding={isLoding}
               columnData={columns ?? []}

@@ -1,3 +1,6 @@
+import TableTools, { useVisibleColumns } from 'components/table/TableTools';
+import RecordImportDialog from 'components/table/RecordImportDialog';
+import { exportSpreadsheet } from 'utils/spreadsheet';
 import FormFeedback from 'components/dynamicForm/FormFeedback';
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -19,7 +22,6 @@ import { getApi, postApi, putApi, deleteApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CurrencyAmount from "components/CurrencyAmount";
 import { useFormDefinition, validateFormValues } from "utils/managedForm";
-import ExcelExportButton from "components/ExcelExportButton";
 import ShareRecordButton from "components/ShareRecordButton";
 import SharedRecordBadge from "components/SharedRecordBadge";
 import PropertyStatusBadge from "components/PropertyStatusBadge";
@@ -80,6 +82,8 @@ export function EntityPage({ moduleName }) {
   const [readOnly, setReadOnly] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const base = `api/estate/${encodeURIComponent(moduleName)}`;
 
   useEffect(() => {
@@ -192,6 +196,25 @@ export function EntityPage({ moduleName }) {
     </Stack>
   ) : definition ? <DynamicFormRenderer definition={definition} formik={formik} readOnly={readOnly} /> : <Spinner />;
 
+  const tableColumns = [
+    ...(moduleName === 'Properties' ? [{ id: 'number', label: t('estate.rowNumber') }] : []),
+    { id: 'name', label: t('Name') },
+    { id: 'summary', label: t(moduleName === 'Properties' ? 'Price' : moduleName === 'Residences' ? 'estate.section.location' : 'Phone') },
+    ...(moduleName === 'Residences' ? [{ id: 'price', label: t('Price') }, ...residenceTableColumns.map(([id, fallback]) => ({ id, label: residenceFieldLabel(id, fallback) }))] : []),
+    ...(moduleName === 'Partner Customers' ? [{ id: 'status', label: localized(partnerStatusField?.label || 'Status', language) }] : []),
+    { id: 'createdDate', label: t('Created Date') }, { id: 'actions', label: t('Actions') },
+  ];
+  const { visible, setVisible } = useVisibleColumns(tableColumns);
+  const hiddenColumnStyles = Object.fromEntries(tableColumns.flatMap((column, index) => visible.includes(column.id) ? [] : [[`& tr > :nth-child(${index + 1})`, { display: 'none' }]]));
+  const download = async extension => {
+    setExporting(true);
+    try {
+      const rows = await loadAllExportRows(getApi, base, { q: search, sort, order, ...filters });
+      await exportSpreadsheet({ jsonArray: rows, csvColumns: entityExportColumns(definition, language, t), fileName: t(moduleName), extension, rightToLeft: language === 'fa' });
+    } catch { setError('serverError'); }
+    finally { setExporting(false); }
+  };
+
   const updateFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
     setPage(1);
@@ -211,9 +234,6 @@ export function EntityPage({ moduleName }) {
           </Box>
         </Flex>
         <Flex gap={2} wrap="wrap">
-          {permissions?.export !== false && <ExcelExportButton fileName={t(moduleName)} columns={entityExportColumns(definition, language, t)}
-            isDisabled={busy || !definition || !total}
-            loadRows={() => loadAllExportRows(getApi, base, { q: search, sort, order, ...filters })} />}
           {permissions?.create && <Button variant="brand" leftIcon={<FiPlus />} onClick={() => open({}, false)}>{t("Add New")}</Button>}
         </Flex>
       </Flex>
@@ -222,14 +242,22 @@ export function EntityPage({ moduleName }) {
       {notice && <Alert status="success" className="crm-page-alert"><AlertIcon />{t(notice)}</Alert>}
 
       <Card className="crm-entity-card">
-        <Flex className="crm-entity-toolbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
-          <InputGroup className="crm-entity-search">
+        <Flex className="crm-entity-toolbar crm-table-toolbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
+          <InputGroup className="crm-entity-search crm-table-search">
             <InputLeftElement h="100%" pointerEvents="none"><FiSearch /></InputLeftElement>
             <Input placeholder={t("Search...")} aria-label={t("Search...")} value={query} onChange={(event) => setQuery(event.target.value)} />
           </InputGroup>
-          <Button variant={showFilters ? "solid" : "outline"} colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setShowFilters((value) => !value)}>
+          <Flex className="crm-table-toolbar__actions" gap={2} align="center" flexWrap="wrap">
+          <Button size="sm" variant={showFilters ? "solid" : "outline"} colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setShowFilters((value) => !value)}>
             {t("Filters")}
           </Button>
+          <TableTools columns={tableColumns} visible={visible} onColumnsChange={setVisible}
+            onImport={permissions?.create && permissions?.import !== false ? () => setImportOpen(true) : undefined}
+            exports={permissions?.export !== false ? [
+              { label: 'Export as CSV', disabled: busy || exporting || !definition || !total, onClick: () => download('csv') },
+              { label: 'Export as Excel', disabled: busy || exporting || !definition || !total, onClick: () => download('xlsx') },
+            ] : []} />
+          </Flex>
           {(Object.values(filters).some(Boolean) || sort !== "createdDate" || order !== "desc") && (
             <Button variant="ghost" leftIcon={<FiX />} onClick={() => { setFilters({}); setSort("createdDate"); setOrder("desc"); setPage(1); }}>
               {t("Clear filters")}
@@ -272,7 +300,7 @@ export function EntityPage({ moduleName }) {
           {busy ? (
             <Flex minH="360px" align="center" justify="center"><Spinner /></Flex>
           ) : (
-            <Table className="crm-entity-table" minW={moduleName === "Residences" ? "1800px" : undefined} dir={moduleName === "Properties" ? "ltr" : direction}>
+            <Table className="crm-entity-table" sx={hiddenColumnStyles} minW={moduleName === "Residences" ? `${Math.max(640, visible.length * 150)}px` : undefined} dir={moduleName === "Properties" ? "ltr" : direction}>
               <Thead><Tr>{moduleName === "Properties" && <Th dir={direction} textAlign="center" w="64px">{t("estate.rowNumber")}</Th>}<Th dir={direction}>{t("Name")}</Th><Th dir={direction}>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Residences" && <>
                 <Th dir={direction}>{t("Price")}</Th>
                 {residenceTableColumns.map(([key, fallback]) => <Th key={key} dir={direction} whiteSpace="nowrap">{residenceFieldLabel(key, fallback)}</Th>)}
@@ -336,6 +364,8 @@ export function EntityPage({ moduleName }) {
           <IconButton aria-label={t("Next Page")} icon={<FiChevronRight />} isDisabled={page >= pageCount || busy} onClick={() => setPage((value) => value + 1)} />
         </Flex>
       </Card>
+
+      <RecordImportDialog moduleName={moduleName} isOpen={importOpen} onClose={() => setImportOpen(false)} onImported={() => { setPage(1); if (page === 1) fetchData(); }} />
 
       <Modal isOpen={record !== null} onClose={() => setRecord(null)} size="5xl" scrollBehavior="inside">
         <ModalOverlay />

@@ -1625,7 +1625,6 @@ body {
   min-height: 74px;
   gap: 11px;
   padding: 13px;
-  border-bottom: 1px solid var(--crm-sidebar-border);
 }
 
 .crm-sidebar-brand__mark {
@@ -3032,4 +3031,20 @@ body.crm-kanban-is-dragging * {
 /* Keep the source logo colors on white paper when printing from dark mode. */
 @media print {
   .crm-brand-logo { filter: none !important; background: transparent !important; }
+}
+
+/* One table tools menu and importer across CRM record lists. */
+.crm-table-tools-menu .chakra-menu__menuitem { border-radius: 8px; min-height: 36px; font-size: 13px; }
+.crm-entity-toolbar.crm-table-toolbar { justify-content: space-between; flex-wrap: wrap; }
+.crm-entity-toolbar .crm-table-search { flex: 1 1 240px; width: min(320px, 100%); max-width: 420px; }
+.crm-table-toolbar__actions { flex-shrink: 0; }
+.crm-columns-modal .chakra-modal__body { max-height: 60vh; overflow-y: auto; }
+.crm-import-preview table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.crm-import-preview th, .crm-import-preview td { padding: 8px 12px; border-bottom: 1px solid var(--crm-border); text-align: start; white-space: nowrap; }
+.crm-import-preview th { font-weight: 800; }
+@media (max-width: 767px) {
+  .crm-entity-toolbar .crm-table-search { max-width: none; flex-basis: auto; width: 100%; }
+  .crm-entity-toolbar .crm-table-toolbar__actions { justify-content: flex-end; flex-wrap: nowrap; }
+  .crm-entity-toolbar .crm-table-toolbar__actions > .chakra-button { width: auto; }
+  .crm-entity-toolbar .crm-table-toolbar__actions > .chakra-button:not(.crm-table-settings) { flex: 1; }
 }

@@ -719,6 +719,7 @@ const Index = (props) => {
   return (
     <div>
       <CommonCheckTable
+              onImported={() => setAction(current => !current)}
         title={tr("Quotes")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}

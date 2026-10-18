@@ -356,14 +356,14 @@ const Task = () => {
           {permission?.create && <Button flex={{ base: "1 1 auto", sm: "initial" }} size="sm" variant="brand" leftIcon={<FiPlus />} onClick={addBtn}><LocalizedText text="New Task" /></Button>}
         </Flex>
       </Flex>
-      <Flex className="crm-task-searchbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
+      {viewMode === "kanban" && <Flex className="crm-task-searchbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
           <InputGroup><InputLeftElement h="100%" pointerEvents="none"><FiSearch /></InputLeftElement><Input value={searchboxOutside} onChange={(event) => setSearchboxOutside(event.target.value)} placeholder={tr("Search tasks or names...")} aria-label={tr("Search tasks or names...")} /></InputGroup>
           <Button variant="outline" colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setAdvanceSearch(true)}><LocalizedText text="Filters" /></Button>
           {(searchboxOutside || displaySearchData) && <Button variant="ghost" onClick={() => {
             setSearchboxOutside(""); setDisplaySearchData(false);
             dispatch(setSearchValue({})); dispatch(setGetTagValues([]));
           }}><LocalizedText text="Clear" /></Button>}
-        </Flex>
+        </Flex>}
       {viewMode === "kanban" ? (
         <TaskKanban tasks={visibleData} assignees={assignees} canDelegate={isAdmin(user)} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
       ) : <CommonCheckTable
@@ -374,7 +374,7 @@ const Task = () => {
         // dataColumn={dataColumn ?? []}
         allData={data ?? []}
         filteredData={visibleData}
-        customSearch={false}
+        customSearch={true}
         searchFilterType="Tasks"
         searchDisplay={displaySearchData}
         setSearchDisplay={setDisplaySearchData}
@@ -387,7 +387,7 @@ const Task = () => {
         selectedValues={selectedValues}
         setSelectedValues={setSelectedValues}
         setDelete={setDeleteMany}
-        AdvanceSearch={true}
+        AdvanceSearch={<Button variant="outline" size="sm" colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setAdvanceSearch(true)}><LocalizedText text="Filters" /></Button>}
         searchboxOutside={searchboxOutside}
         setSearchboxOutside={setSearchboxOutside}
         handleSearchType="TasksSearch"

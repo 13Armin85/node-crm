@@ -253,16 +253,16 @@ const OpprtunityAdvanceSearch = (props) => {
                   fontWeight="500"
                   placeholder={tr("Sales Stage")}
                 >
-                  <option value={"Prospecting"}><LocalizedText text="Prospecting" /></option>
-                  <option value={"Qualification"}><LocalizedText text="Qualification" /></option>
-                  <option value={"Needs Analysis"}><LocalizedText text="Needs Analysis" /></option>
-                  <option value={"Value Proposition"}><LocalizedText text="Value Proposition" /></option>
-                  <option value={"Identifying Decision Makers"}><LocalizedText text="Identifying Decision Makers" /></option>
-                  <option value={"Perception Analysis"}><LocalizedText text="Perception Analysis" /></option>
-                  <option value={"Proposal/Price Quote"}><LocalizedText text="Proposal/Price Quote" /></option>
-                  <option value={"Negotiation/Review"}><LocalizedText text="Negotiation/Review" /></option>
-                  <option value={"Closed/Won"}><LocalizedText text="Closed/Won" /></option>
-                  <option value={"Closed/Lost"}><LocalizedText text="Closed/Lost" /></option>
+                  <option value={"Prospecting"}>{tr("Prospecting")}</option>
+                  <option value={"Qualification"}>{tr("Qualification")}</option>
+                  <option value={"Needs Analysis"}>{tr("Needs Analysis")}</option>
+                  <option value={"Value Proposition"}>{tr("Value Proposition")}</option>
+                  <option value={"Identifying Decision Makers"}>{tr("Identifying Decision Makers")}</option>
+                  <option value={"Perception Analysis"}>{tr("Perception Analysis")}</option>
+                  <option value={"Proposal/Price Quote"}>{tr("Proposal/Price Quote")}</option>
+                  <option value={"Negotiation/Review"}>{tr("Negotiation/Review")}</option>
+                  <option value={"Closed/Won"}>{tr("Closed/Won")}</option>
+                  <option value={"Closed/Lost"}>{tr("Closed/Lost")}</option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}

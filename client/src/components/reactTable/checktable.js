@@ -1,6 +1,9 @@
+import TableTools, { columnKey, useVisibleColumns } from 'components/table/TableTools';
+import RecordImportDialog from 'components/table/RecordImportDialog';
+import { importModuleFor } from 'utils/recordImport';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useLanguage } from 'i18n';
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, isValidElement, cloneElement } from "react";
 import {
   Box,
   Flex,
@@ -15,27 +18,12 @@ import {
   HStack,
   Tag,
   TagLabel,
-  Menu,
-  MenuButton,
-  MenuDivider,
-  MenuItem,
-  MenuList,
-  Portal,
   Grid,
   GridItem,
   Checkbox,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   TagCloseButton,
-  IconButton,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@chakra-ui/system";
-import { BsColumnsGap } from "react-icons/bs";
 import { FiFilter, FiLayers } from "react-icons/fi";
 import { FaSort, FaSortDown, FaSortUp } from "react-icons/fa";
 import { DeleteIcon, AddIcon } from "@chakra-ui/icons";
@@ -87,7 +75,6 @@ const CommonCheckTable = (props) => {
     setDelete,
     selectedValues,
     setSelectedValues,
-    setIsImport,
     checkBox,
     AdvanceSearch,
     searchDisplay,
@@ -116,8 +103,10 @@ const CommonCheckTable = (props) => {
   const [displaySearchData, setDisplaySearchData] = useState(false);
   const [searchedData, setSearchedData] = useState([]);
 
-  const [columns, setColumns] = useState(columnData || []);
-  const [tempSelectedColumns, setTempSelectedColumns] = useState(columns || []);
+  const { columns, visible, setVisible } = useVisibleColumns(columnData || []);
+  const [importOpen, setImportOpen] = useState(false);
+  const importModule = props.importModule || importModuleFor(title, tr);
+  const canImport = Boolean(importModule && (access?.create || access === true) && access?.import !== false);
 
   const searchedDataOut = useSelector(
     (state) => state?.advanceSearchData?.searchResult
@@ -150,7 +139,6 @@ const CommonCheckTable = (props) => {
     [tableCustomFields, allData]
   );
 
-  const [manageColumnsModel, setManageColumnsModel] = useState(false);
   const [searchbox, setSearchbox] = useState("");
   const [advaceSearch, setAdvaceSearch] = useState(false);
   // const [column, setColumn] = useState('');
@@ -201,7 +189,7 @@ const CommonCheckTable = (props) => {
         getSearchData({ searchData: results || [], type: handleSearchType })
       );
     AdvanceSearch
-      ? setSearchedDataOut(results || [])
+      ? setSearchedDataOut?.(results || [])
       : setSearchedData(results || []);
   };
 
@@ -323,28 +311,6 @@ const CommonCheckTable = (props) => {
     state && findStatus();
   }, [state, allData]);
 
-  const toggleColumnVisibility = (columnKey) => {
-    let updatedColumns;
-
-    if (tempSelectedColumns?.some((column) => column?.accessor === columnKey)) {
-      updatedColumns = tempSelectedColumns?.filter(
-        (column) => column?.accessor !== columnKey
-      );
-    } else {
-      const columnToAdd = columnData?.find(
-        (column) => column?.accessor === columnKey
-      );
-      updatedColumns = [...tempSelectedColumns, columnToAdd];
-    }
-
-    const orderedColumns = columnData?.filter((column) =>
-      updatedColumns.some(
-        (updatedColumn) => updatedColumn?.accessor === column?.accessor
-      )
-    );
-    setTempSelectedColumns(orderedColumns);
-  };
-
   const handleCheckboxChange = (event, value) => {
     if (selectType === "single") {
       if (event?.target?.checked) {
@@ -364,10 +330,6 @@ const CommonCheckTable = (props) => {
           prevSelectedValues?.filter((selectedValue) => selectedValue !== value)
         );
     }
-  };
-
-  const handleColumnClose = () => {
-    setManageColumnsModel(!manageColumnsModel);
   };
 
   const handleExportLeads = (extension) => {
@@ -424,9 +386,6 @@ const CommonCheckTable = (props) => {
       : setSearchedData && setSearchedData(data);
   }, []);
 
-  useEffect(() => {
-    setColumns(columnData);
-  }, [columnData]);
 
   const showPageHero = pageHeader !== false && Boolean(title) && ManageGrid !== false && !size;
 
@@ -500,7 +459,7 @@ const CommonCheckTable = (props) => {
                 />
               )}
               {AdvanceSearch
-                ? AdvanceSearch
+                ? (isValidElement(AdvanceSearch) ? cloneElement(AdvanceSearch, { size: 'sm', variant: 'outline', colorScheme: 'brand', leftIcon: <FiFilter /> }) : null)
                 : AdvanceSearch !== false && (
                     <Button
                       variant="outline"
@@ -554,46 +513,14 @@ const CommonCheckTable = (props) => {
             gap="8px"
             className="crm-table-toolbar__actions"
           >
-            {ManageGrid !== false && (
-              <Menu isLazy>
-                <MenuButton as={IconButton} className="crm-table-settings" aria-label={tr("Manage Columns")} icon={<BsColumnsGap />} variant="outline" size="sm" />
-                <Portal>
-                <MenuList minW="210px" zIndex="dropdown" p="8px">
-                  <MenuItem
-                    onClick={() => setManageColumnsModel(true)}
-                    width={"165px"}
-                  >
-                    {" "}<LocalizedText text="Manage Columns" /></MenuItem>
-                  {typeof setIsImport === "function" && (
-                    <MenuItem width={"165px"} onClick={() => setIsImport(true)}>
-                      {" "}<LocalizedText text="Import" /> <LocalizedText text={title} />
-                    </MenuItem>
-                  )}
-                  {canExport && recordsToExport.length > 0 && (
-                    <>
-                      <MenuDivider />
-                      <MenuItem
-                        width={"165px"}
-                        onClick={() => handleExportLeads("csv")}
-                      >
-                        {selectedValues && selectedValues?.length > 0
-                          ? tr("Export Selected Data as CSV")
-                          : tr("Export as CSV")}
-                      </MenuItem>
-                      <MenuItem
-                        width={"165px"}
-                        onClick={() => handleExportLeads("xlsx")}
-                      >
-                        {selectedValues && selectedValues?.length > 0
-                          ? tr("Export Selected Data as Excel")
-                          : tr("Export as Excel")}
-                      </MenuItem>
-                    </>
-                  )}
-                </MenuList>
-                </Portal>
-              </Menu>
-            )}
+            <TableTools
+              columns={(columnData || []).map((column, index) => ({ id: columnKey(column, index), label: column.Header }))}
+              visible={visible} onColumnsChange={setVisible}
+              onImport={ManageGrid !== false && canImport ? () => setImportOpen(true) : undefined}
+              exports={ManageGrid !== false && canExport ? [
+                { label: selectedValues?.length ? 'Export Selected Data as CSV' : 'Export as CSV', disabled: !recordsToExport.length || isLoding, onClick: () => handleExportLeads('csv') },
+                { label: selectedValues?.length ? 'Export Selected Data as Excel' : 'Export as Excel', disabled: !recordsToExport.length || isLoding, onClick: () => handleExportLeads('xlsx') },
+              ] : []} />
             {!showPageHero && addBtn !== false && (access?.create || access === true) && (
               <Button
                 onClick={() => handleClick()}
@@ -818,59 +745,8 @@ const CommonCheckTable = (props) => {
         )}
 
         {/* Manage Columns */}
-        <Modal
-          onClose={() => {
-            setManageColumnsModel(false);
-          }}
-          isOpen={manageColumnsModel}
-          isCentered
-        >
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader><LocalizedText text="Manage Columns" /></ModalHeader>
-            <ModalCloseButton
-              onClick={() => {
-                setManageColumnsModel(false);
-              }}
-            />
-            <ModalBody>
-              <div>
-                {columnData?.map((column, index) => (
-                  <Text display={"flex"} key={`${column?.id ?? column?.accessor ?? column?.Header}-${index}`} py={2}>
-                    <Checkbox
-                      defaultChecked={columns?.some(
-                        (item) => item?.accessor === column?.accessor
-                      )}
-                      onChange={() => toggleColumnVisibility(column?.accessor)}
-                      pe={2}
-                    />
-                    {column?.Header}
-                  </Text>
-                ))}
-              </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button
-                colorScheme="brand"
-                mr={2}
-                onClick={() => {
-                  setColumns([...tempSelectedColumns]);
-                  setManageColumnsModel(false);
-                }}
-                disabled={isLoding ? true : false}
-                size="sm"
-              >
-                {isLoding ? <Spinner /> : tr("Save")}
-              </Button>
-              <Button
-                variant="outline"
-                colorScheme="red"
-                size="sm"
-                onClick={() => handleColumnClose()}
-              ><LocalizedText text="Close" /></Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+        {importModule && <RecordImportDialog moduleName={importModule} moduleId={props.importModuleId} isOpen={importOpen} onClose={() => setImportOpen(false)} onImported={props.onImported} />}
+
       </Card>
     </>
   );

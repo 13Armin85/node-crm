@@ -183,6 +183,7 @@ const Index = () => {
         {!isLoding && (
           <GridItem colSpan={6}>
             <CommonCheckTable
+              onImported={() => setAction(current => !current)}
               title={tr("Properties")}
               isLoding={isLoding}
               columnData={columns ?? []}

@@ -1,5 +1,15 @@
 // Existing English keys remain stable; aliases cover historical spelling/casing.
 const rows = `
+Table tools|ابزارهای جدول|Tablo araçları
+Import CSV or Excel. Maximum 100 rows and 15 MB.|فایل CSV یا اکسل، حداکثر ۱۰۰ سطر و ۱۵ مگابایت.|CSV veya Excel. En fazla 100 satır ve 15 MB.
+Match file columns to CRM fields|ستون‌های فایل را با فیلدهای سیستم تطبیق دهید|Dosya sütunlarını CRM alanlarıyla eşleştirin
+Do not import this column|این ستون وارد نشود|Bu sütunu içe aktarma
+Default for all rows|مقدار پیش‌فرض برای همهٔ سطرها|Tüm satırlar için varsayılan
+Imported successfully|درون‌ریزی با موفقیت انجام شد|İçe aktarma başarılı
+records imported|رکورد وارد شد|kayıt içe aktarıldı
+Preview|پیش‌نمایش|Önizleme
+Row|سطر|Satır
+Select File|انتخاب فایل|Dosya seç
 Select exactly one: a lead, a partner customer, or a contact.|فقط یکی از سرنخ، مشتری همکار یا مخاطب را انتخاب کنید.|Yalnızca birini seçin: müşteri adayı, iş ortağı müşterisi veya kişi.
 Related Lead|سرنخ مرتبط|İlgili Müşteri Adayı
 Developer|توسعه‌دهنده|Geliştirici

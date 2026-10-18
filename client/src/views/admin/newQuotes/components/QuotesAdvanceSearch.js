@@ -214,14 +214,14 @@ const QuotesAdvanceSearch = (props) => {
                     errors?.quoteStage && touched?.quoteStage ? "red.300" : null
                   }
                 >
-                  <option value="Draft"><LocalizedText text="Draft" /></option>
-                  <option value="Negotiation"><LocalizedText text="Negotiation" /></option>
-                  <option value="Delivered"><LocalizedText text="Delivered" /></option>
-                  <option value="On Hold"><LocalizedText text="On Hold" /></option>
-                  <option value="Confirmed"><LocalizedText text="Confirmed" /></option>
-                  <option value="Closed Accepted"><LocalizedText text="Closed Accepted" /></option>
-                  <option value="Closed Lost"><LocalizedText text="Closed Lost" /></option>
-                  <option value="Closed Dead"><LocalizedText text="Closed Dead" /></option>
+                  <option value="Draft">{tr("Draft")}</option>
+                  <option value="Negotiation">{tr("Negotiation")}</option>
+                  <option value="Delivered">{tr("Delivered")}</option>
+                  <option value="On Hold">{tr("On Hold")}</option>
+                  <option value="Confirmed">{tr("Confirmed")}</option>
+                  <option value="Closed Accepted">{tr("Closed Accepted")}</option>
+                  <option value="Closed Lost">{tr("Closed Lost")}</option>
+                  <option value="Closed Dead">{tr("Closed Dead")}</option>
                 </Select>
                 <Text mb="10px" color={"red"}>
                   {" "}

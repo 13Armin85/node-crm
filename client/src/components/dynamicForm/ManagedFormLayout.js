@@ -1,3 +1,4 @@
+import FormFeedback from 'components/dynamicForm/FormFeedback';
 import React from 'react';
 import { Alert, AlertIcon, Box, FormControl, FormErrorMessage, FormLabel, GridItem, Text } from '@chakra-ui/react';
 import { useFormDefinition, useRequiredFields } from 'utils/managedForm';
@@ -20,7 +21,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
   const renderedNames = React.Children.toArray(children).flatMap(findNames);
   useRequiredFields(fields.filter(field => field.kind === 'SYSTEM_FIELD' && renderedNames.includes(field.name)), formik);
   const hasControl = node => React.isValidElement(node) && (node.type === FormControl || React.Children.toArray(node.props.children).some(hasControl));
-  const message = error => ['required', 'invalid', 'relationNotFound'].includes(error) ? t(`estate.${error}`) : error;
+  const message = error => ['required', 'invalid', 'relationNotFound', 'duplicate'].includes(error) ? t(`estate.${error}`) : error;
 
   const optionText = value => {
     if (value == null || typeof value === 'boolean') return '';
@@ -67,7 +68,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     }
     return React.cloneElement(node, patch);
   };
-  return <>{(failed || definitionError) && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
+  return <><FormFeedback formik={formik} />{(failed || definitionError) && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
     {includeCustom && definition && <Box className="crm-managed-fields" mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
   </>;
 }

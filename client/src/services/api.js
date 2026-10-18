@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import axios from "axios";
 import { constant } from "constant";
 import { translate } from 'i18n';
@@ -16,7 +17,20 @@ const getRequestConfig = (config = {}) => ({
   validateStatus: () => true,
 });
 
+
+const reportSave = (result, path, config) => {
+  const method = config?.method || result?.config?.method;
+  const url = path || result?.config?.url || '';
+  const save = ['post', 'put', 'patch'].includes(method) && /api\/(?:form\/(?:add|edit)|(?:contact|lead|task|meeting)\/(?:add|edit)|estate\/(?:Properties|Residences|Partner(?:%20| )Customers)(?:\/|$))/.test(url);
+  if (!save) return;
+  const language = localStorage.getItem('crm-language') || 'en';
+  const ok = result?.status >= 200 && result?.status < 300;
+  const message = ok ? 'Saved successfully' : result?.data?.code === 'duplicate' ? 'estate.duplicate' : 'Save failed. Please check the highlighted fields and try again.';
+  toast[ok ? 'success' : 'error'](translate(message, language), { toastId: `save-${url}-${ok}` });
+};
+
 const normalizeResponse = (result) => {
+  reportSave(result);
   const language = localStorage.getItem('crm-language') || 'en';
   const isBlob = typeof Blob !== 'undefined' && result?.data instanceof Blob;
   if (result?.data && !isBlob && !Array.isArray(result.data) && typeof result.data === 'object') {
@@ -62,6 +76,7 @@ export const postApi = async (path, data, login) => {
     }
     return normalizeResponse(result);
   } catch (e) {
+    reportSave(e.response, path, { method: 'post' });
     return e;
   }
 };
@@ -89,6 +104,7 @@ export const putApi = async (path, data, id) => {
     );
     return normalizeResponse(result);
   } catch (e) {
+    reportSave(e.response, path, { method: 'put' });
     return e;
   }
 };

@@ -150,5 +150,6 @@ propertySchema.index({ 'sale.lead': 1 });
 propertySchema.index({ 'sale.partnerCustomer': 1 });
 propertySchema.index({ 'sale.soldBy': 1 });
 propertySchema.index({ residence: 1 });
+propertySchema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'Properties' });
 const Property = mongoose.model("Properties", propertySchema, "Properties");
 module.exports = { Property, initializePropertySchema };

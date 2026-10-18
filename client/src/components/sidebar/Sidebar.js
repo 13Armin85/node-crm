@@ -13,15 +13,7 @@ export default function Sidebar({ routes, openSidebar, setOpenSidebar }) {
       <Box as="aside" id="crm-sidebar" className="crm-sidebar-shell" dir="ltr" aria-label={t("Navigation")}>
         <Box className="crm-sidebar-panel" dir={direction}>
           <Flex className="crm-sidebar-brand" align="center">
-            <Flex className="crm-sidebar-brand__mark" align="center" justify="center">
-              <BrandLogo src={(process.env.PUBLIC_URL || '') + '/brand-logo-transparent.png'} fallbackSrc={(process.env.PUBLIC_URL || '') + '/brand-logo-transparent.png'} />
-            </Flex>
-            {openSidebar && (
-              <Box minW="0">
-                <Text className="crm-sidebar-brand__name" noOfLines={1}>{t("CRM Studio")}</Text>
-                <Text className="crm-sidebar-brand__caption" noOfLines={1}>{t("Business workspace")}</Text>
-              </Box>
-            )}
+            <BrandLogo width={openSidebar ? "88px" : "40px"} height={openSidebar ? "88px" : "40px"} maxW="100%" mx="auto" />
           </Flex>
           <Content routes={routes} openSidebar={openSidebar} setOpenSidebar={setOpenSidebar} />
           {openSidebar && (

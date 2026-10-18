@@ -1,3 +1,4 @@
+import FormFeedback from 'components/dynamicForm/FormFeedback';
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert, AlertIcon, Box, Button, Flex, Heading, Icon, IconButton, Input,
@@ -341,7 +342,7 @@ export function EntityPage({ moduleName }) {
         <ModalContent className="crm-entity-modal" dir={direction}>
           <ModalHeader>{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
-          <ModalBody>{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{form}
+          <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{form}
             {readOnly && record?.createBy && <Text mt={4}>{t("estate.createdBy")}: <span data-no-translate>{typeof record.createBy === "object" ? record.createBy.username || record.createBy._id : record.createBy}</span></Text>}
           </ModalBody>
           <ModalFooter><Stack direction="row">{!readOnly && <Button variant="brand" isLoading={formik.isSubmitting} isDisabled={!definition} onClick={formik.handleSubmit}>{t("Save")}</Button>}<Button onClick={() => setRecord(null)}>{t("Close")}</Button></Stack></ModalFooter>

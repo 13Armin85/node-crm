@@ -1,3 +1,5 @@
+const path = require('node:path');
+const duplicateUploads = require('../../middelwares/duplicateUploads')('document', path.resolve(__dirname, '../../uploads/document'));
 const express = require('express');
 const document = require('./document');
 const move = require('./move');
@@ -10,9 +12,9 @@ const activity = require('../../middelwares/activityNotifications')('Documents')
 
 router.get('/', auth, document.index)
 router.post('/folder', auth, activity('record_created', document.createFolder, { createdStatus: 201 }))
-router.post('/add', auth, loadUser, document.upload.array('files'), document.validateUploads, dynamicValues, activity('document_uploaded', document.file))
-router.post('/addDocumentContact', auth, document.upload.array('files'), document.validateUploads, activity('document_uploaded', document.addDocumentContact))
-router.post('/addDocumentLead', auth, document.upload.array('files'), document.validateUploads, activity('document_uploaded', document.addDocumentLead))
+router.post('/add', auth, loadUser, document.upload.array('files'), document.validateUploads, duplicateUploads, dynamicValues, activity('document_uploaded', document.file))
+router.post('/addDocumentContact', auth, document.upload.array('files'), document.validateUploads, duplicateUploads, activity('document_uploaded', document.addDocumentContact))
+router.post('/addDocumentLead', auth, document.upload.array('files'), document.validateUploads, duplicateUploads, activity('document_uploaded', document.addDocumentLead))
 
 router.post('/move/file/:id', auth, move.moveFile)
 router.post('/move/folder/:id', auth, move.moveFolder)

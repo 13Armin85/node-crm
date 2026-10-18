@@ -87,5 +87,6 @@ const initializeContactSchema = async () => {
     });
 };
 
+contactSchema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'Contacts' });
 const Contact = mongoose.model('Contacts', contactSchema, 'Contacts');
 module.exports = { Contact, initializeContactSchema };

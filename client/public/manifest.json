@@ -1,10 +1,10 @@
 {
-  "short_name": "Arad CRM",
-  "name": "Arad CRM",
+  "short_name": "Amard Novin CRM",
+  "name": "Amard Novin CRM",
   "icons": [
     {
-      "src": "brand-logo.png",
-      "sizes": "1536x1024",
+      "src": "brand-logo-ta.png",
+      "sizes": "1254x1254",
       "type": "image/png",
       "purpose": "any"
     }

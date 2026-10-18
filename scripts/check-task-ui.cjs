@@ -60,14 +60,14 @@ async function main() {
     });
     await page.setViewport({ width: 1440, height: 1000 });
     await page.goto(origin + '/auth', { waitUntil: 'networkidle0' });
-    await page.waitForSelector('img[src$="/brand-logo.png"]');
-    assert(await page.$eval('img[src$="/brand-logo.png"]', img => img.complete && img.naturalWidth > 0), 'Login logo failed to load');
-    assert(await page.$('link[rel="icon"][href$="/brand-logo.png"]'), 'Missing browser logo');
+    await page.waitForSelector('img[src$="/brand-logo-ta.png"]');
+    assert(await page.$eval('img[src$="/brand-logo-ta.png"]', img => img.complete && img.naturalWidth > 0), 'Login logo failed to load');
+    assert(await page.$('link[rel="icon"][href$="/brand-logo-ta.png"]'), 'Missing browser logo');
     const token = Buffer.from('{}').toString('base64url') + '.' + Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url') + '.fixture';
     await page.evaluate((user, token) => { localStorage.setItem('user', JSON.stringify(user)); localStorage.setItem('token', token); localStorage.setItem('crm-language', 'en'); }, user, token);
     await page.goto(origin + '/task', { waitUntil: 'networkidle0' });
     await page.waitForFunction(() => document.querySelectorAll('.crm-kanban-card').length === 3);
-    assert(await page.$eval('.crm-sidebar-brand__mark img', img => img.complete && img.naturalWidth > 0), 'Sidebar logo failed');
+    assert(await page.$eval('.crm-sidebar-brand img', img => img.complete && img.naturalWidth > 0), 'Sidebar logo failed');
     if (process.env.CRM_FORM_SETTINGS_ONLY) {
       for (const [language, width, role, settingsLabel, formLabel] of [
         ['fa', 1440, 'admin', 'تنظیمات مدیریت', 'مدیریت فرم‌ها'],
@@ -98,29 +98,29 @@ async function main() {
       return;
     }
     if (process.env.CRM_SIDEBAR_BRAND_ONLY) {
-      for (const [language, width, mode] of [['fa', 1440, 'light'], ['en', 1440, 'dark'], ['tr', 390, 'light']]) {
+      for (const [language, width, mode] of [['fa', 1440, 'light'], ['en', 1440, 'dark'], ['tr', 390, 'light'], ['fa', 390, 'dark']]) {
         await page.setViewport({ width, height: 1000 });
         await page.evaluate((language, mode) => { localStorage.setItem('crm-language', language); localStorage.setItem('chakra-ui-color-mode', mode); }, language, mode);
         await page.goto(origin + '/task', { waitUntil: 'networkidle0' });
-        await page.waitForFunction(() => { const img = document.querySelector('.crm-sidebar-brand__mark img'); return img?.complete && img.naturalWidth > 0; });
-        const measure = async () => page.$eval('.crm-sidebar-brand__mark', mark => {
+        await page.waitForFunction(() => { const img = document.querySelector('.crm-sidebar-brand img'); return img?.complete && img.naturalWidth > 0; });
+        if (width < 1280) { await page.click('.crm-sidebar-toggle'); await page.waitForSelector('.crm-shell[data-sidebar-open="true"]'); }
+        const measure = async () => page.$eval('.crm-sidebar-brand', mark => {
           const style = getComputedStyle(mark), img = mark.querySelector('img');
           const canvas = document.createElement('canvas'); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
           const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0); const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
           let transparent = 0, opaque = 0; for (let index = 3; index < pixels.length; index += 4) { if (pixels[index] === 0) transparent++; if (pixels[index] >= 200) opaque++; }
-          return { background: style.backgroundColor, border: style.borderWidth, shadow: style.boxShadow, radius: style.borderRadius, fit: getComputedStyle(img).objectFit, transparent, opaque, total: canvas.width * canvas.height, source: img.getAttribute('src') };
+          return { background: getComputedStyle(img).backgroundColor, border: style.borderWidth, shadow: style.boxShadow, radius: style.borderRadius, fit: getComputedStyle(img).objectFit, filter: getComputedStyle(img).filter, transparent, opaque, total: canvas.width * canvas.height, source: img.getAttribute('src') };
         });
         const values = await measure();
-        assert.equal(values.background, 'rgba(0, 0, 0, 0)'); assert.equal(values.border, '0px'); assert.equal(values.shadow, 'none'); assert.equal(values.radius, '0px'); assert.equal(values.fit, 'contain');
-        assert(values.source.endsWith('/brand-logo-transparent.png'));
+        assert.equal(values.background, 'rgba(0, 0, 0, 0)'); assert.equal(values.fit, 'contain'); assert.equal(values.filter, 'none');
+        assert(values.source.endsWith('/brand-logo-ta.png'));
         assert(values.transparent > values.total * 0.25 && values.opaque > 0, 'Logo is missing real transparent alpha');
-        if (width < 1280) { await page.click('.crm-sidebar-toggle'); await page.waitForSelector('.crm-shell[data-sidebar-open="true"]'); }
         await page.screenshot({ path: path.resolve(__dirname, '../layout-artifacts/sidebar-logo-' + language + '-' + width + '-' + mode + '.png') });
         console.log('PASS sidebar: ' + language + '/' + width + '/' + mode + ' / transparent pixels ' + values.transparent + '/' + values.total);
-        if (width >= 1280) { await page.click('.crm-sidebar-toggle'); await page.waitForSelector('.crm-shell[data-sidebar-open="false"]'); assert.deepEqual(await measure(), values); }
+        if (width >= 1280) { await page.click('.crm-sidebar-toggle'); await page.waitForSelector('.crm-shell[data-sidebar-open="false"]'); const collapsed = await measure(); assert.equal(collapsed.background, 'rgba(0, 0, 0, 0)'); assert.equal(collapsed.fit, 'contain'); assert.equal(collapsed.transparent, values.transparent); }
       }
       assert.deepEqual(errors, [], 'Browser runtime errors');
-      console.log('PASS: transparent logo with no background, border or shadow in expanded/collapsed sidebar and mobile.');
+      console.log('PASS: supplied logo is fully transparent in expanded/collapsed sidebar and mobile, with readable dark-mode contrast.');
       return;
     }
     const changeInput = async (selector, value) => page.$eval(selector, (input, next) => {

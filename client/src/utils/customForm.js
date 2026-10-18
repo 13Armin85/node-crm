@@ -1,3 +1,4 @@
+import FormFeedback from 'components/dynamicForm/FormFeedback';
 import { LocalizedText, tr } from 'i18n/runtime';
 import React from "react";
 import DynamicFormRenderer from 'components/dynamicForm/DynamicFormRenderer';
@@ -511,6 +512,7 @@ export default function ManagedCustomForm(props) {
   if (failed || props.definitionError) return <Text color="red.500">{t('estate.serverError')}</Text>;
   if (!definition) return <Text>{t('estate.loading')}</Text>;
   return <>
+    <FormFeedback formik={props.formik} />
     <DynamicFormRenderer definition={definition} formik={props.formik || { values: props.values, errors: props.errors, touched: props.touched, setFieldValue: props.setFieldValue, handleBlur: props.handleBlur }} />
   </>;
 }

@@ -33,9 +33,17 @@ beforeEach(() => {
   container = document.createElement('div'); document.body.appendChild(container);
 });
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.removeItem('crm-language'); });
-const choose = async (name, value) => act(async () => {
-  Simulate.change(document.querySelector('#relation-' + name), { target: { value } });
-});
+const choose = async (name, value) => {
+  const input = document.querySelector('#relation-' + name);
+  if (!value) {
+    await act(async () => Simulate.click(input.parentElement.querySelector('button')));
+    return;
+  }
+  await act(async () => Simulate.focus(input));
+  const option = [...document.querySelectorAll('[role=option]')].find(option => option.id.startsWith('relation-' + name + '-option-'));
+  await act(async () => Simulate.click(option));
+};
+
 test.each(['lead', 'contact', 'partnerCustomer'])('selecting only %s saves successfully and hides both other options', async name => {
   const onSubmit = jest.fn();
   await act(async () => { ReactDOM.render(<ChakraProvider><Harness onSubmit={onSubmit} /></ChakraProvider>, container); });

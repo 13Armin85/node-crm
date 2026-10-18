@@ -83,7 +83,7 @@ const index = async (req, res) => {
             },
             { $project: { users: 0, contactData: 0, accountData: 0, modifiedByUser: 0, assignedToData: 0 } },
         ]);
-        res.send(result);
+        res.send(result.map(invoice => ({ ...invoice, ...require('../../services/invoiceAmounts').invoiceDisplayAmounts(invoice) })));
     } catch (error) {
         console.error("Error:", error);
         res.status(500).send("Internal Server Error");
@@ -93,12 +93,13 @@ const index = async (req, res) => {
 const add = async (req, res) => {
     try {
         const nextAutoIncrementValue = await getNextAutoIncrementValue();
-        const result = new Invoices({ ...req.body, invoiceNumber: nextAutoIncrementValue });
+        const values = require('../../services/invoiceAmounts').normalizeInvoiceAmounts(req.body);
+        const result = new Invoices({ ...values, invoiceNumber: nextAutoIncrementValue });
         await result.save();
         res.status(200).json(result);
     } catch (err) {
         console.error("Failed to create Invoices:", err);
-        res.status(400).json({ error: "Failed to create Invoices : ", err });
+        res.status(400).json({ code: err.code || "invalid", field: err.field, error: "Failed to create Invoices" });
     }
 };
 
@@ -114,13 +115,13 @@ const edit = async (req, res) => {
         res.status(200).json(result);
     } catch (err) {
         console.error("Failed to create Invoices:", err);
-        res.status(400).json({ error: "Failed to create Invoices : ", err });
+        res.status(400).json({ code: err.code || "invalid", field: err.field, error: "Failed to update Invoices" });
     }
 };
 const addMany = async (req, res) => {
     try {
         const data = req.body.map((item) => ({
-            ...item,
+            ...require('../../services/invoiceAmounts').normalizeInvoiceAmounts(item),
             account: item.account ? item.account : null,
             contact: item.contact ? item.contact : null,
         }))
@@ -130,7 +131,7 @@ const addMany = async (req, res) => {
         res.status(200).json(inserted);
     } catch (err) {
         console.error('Failed to create Invoices :', err);
-        res.status(400).json({ error: 'Failed to create Invoices' });
+        res.status(400).json({ code: err.code || 'invalid', field: err.field, error: 'Failed to create Invoices' });
     }
 };
 const view = async (req, res) => {
@@ -245,7 +246,7 @@ const view = async (req, res) => {
 
         ]);
 
-        res.status(200).json({ result: result[0], quotesDetails });
+        res.status(200).json({ result: result[0] ? { ...result[0], ...require('../../services/invoiceAmounts').invoiceDisplayAmounts(result[0]) } : null, quotesDetails });
     } catch (err) {
         console.log("Error:", err);
         res.status(400).json({ Error: err });

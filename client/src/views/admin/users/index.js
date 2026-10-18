@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -74,14 +75,13 @@ const Index = () => {
       center: true,
       cell: ({ row }) => (
         <Text fontSize="md" fontWeight="900" textAlign={"center"}>
-          <Menu isLazy>
+          <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
             <MenuButton>
               <CiMenuKebab />
             </MenuButton>
-            <MenuList
+            <Portal><MenuList
               minW={"fit-content"}
-              transform={"translate(1520px, 173px);"}
-            >
+             zIndex="popover">
               {canEditUser(actor, row?.original) && <MenuItem
                 py={2.5}
                 onClick={() => {
@@ -111,7 +111,7 @@ const Index = () => {
                   icon={<DeleteIcon fontSize={15} />}
                 ><LocalizedText text="Delete" /></MenuItem>
               )}
-            </MenuList>
+            </MenuList></Portal>
           </Menu>
         </Text>
       ),

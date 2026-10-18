@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
@@ -59,14 +60,13 @@ const Index = (props) => {
     center: true,
     cell: ({ row, i }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
-        <Menu isLazy>
+        <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
           <MenuButton>
             <CiMenuKebab />
           </MenuButton>
-          <MenuList
+          <Portal><MenuList
             minW={"fit-content"}
-            transform={"translate(1520px, 173px);"}
-          >
+           zIndex="popover">
             {permission?.update && (
               <MenuItem
                 py={2.5}
@@ -99,7 +99,7 @@ const Index = (props) => {
                 }}
               ><LocalizedText text="Delete" /></MenuItem>
             )}
-          </MenuList>
+          </MenuList></Portal>
         </Menu>
       </Text>
     ),

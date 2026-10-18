@@ -1,6 +1,7 @@
+import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
-import { DeleteIcon, ViewIcon } from "@chakra-ui/icons";
+import { DeleteIcon, ViewIcon, EditIcon } from "@chakra-ui/icons";
 import {
   Button,
   Menu,
@@ -27,6 +28,7 @@ import { useDispatch } from "react-redux";
 const Index = () => {
   const title = "Meeting";
   const navigate = useNavigate();
+  const [editId, setEditId] = useState(null);
   const [action, setAction] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedValues, setSelectedValues] = useState([]);
@@ -48,14 +50,14 @@ const Index = () => {
     center: true,
     cell: ({ row }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
-        <Menu isLazy>
+        <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
           <MenuButton>
             <CiMenuKebab />
           </MenuButton>
-          <MenuList
+          <Portal><MenuList
             minW={"fit-content"}
-            transform={"translate(1520px, 173px);"}
-          >
+           zIndex="popover">
+            {permission?.update && <MenuItem icon={<EditIcon />} onClick={() => { setEditId(row.original._id); onOpen(); }}><LocalizedText text="Edit" /></MenuItem>}
             {permission?.view && (
               <MenuItem
                 py={2.5}
@@ -75,7 +77,7 @@ const Index = () => {
                 icon={<DeleteIcon fontSize={15} />}
               ><LocalizedText text="Delete" /></MenuItem>
             )}
-          </MenuList>
+          </MenuList></Portal>
         </Menu>
       </Text>
     ),
@@ -170,7 +172,7 @@ const Index = () => {
         // setSelectedColumns={setSelectedColumns}
         // isOpen={isOpen}
         // onClose={onClose}
-        onOpen={onOpen}
+        onOpen={() => { setEditId(null); onOpen(); }}
         selectedValues={selectedValues}
         setSelectedValues={setSelectedValues}
         setDelete={setDeleteMany}
@@ -201,7 +203,7 @@ const Index = () => {
         setGetTagValues={setGetTagValuesOutside}
         setSearchbox={setSearchboxOutside}
       />
-      <AddMeeting setAction={setAction} isOpen={isOpen} onClose={onClose} />
+      <AddMeeting editId={editId} setAction={setAction} isOpen={isOpen} onClose={onClose} />
 
       {/* Delete model */}
       <CommonDeleteModel

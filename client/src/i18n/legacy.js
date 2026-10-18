@@ -402,6 +402,10 @@ for (const row of rows.trim().split('\n')) {
   const [en, fa, tr] = row.split('|'); dictionaries.fa[en] = fa; dictionaries.tr[en] = tr;
 }
 const special = {
+  'KDV': ['مالیات بر ارزش افزوده (KDV)', 'KDV'],
+  'KDV (%)': ['نرخ مالیات بر ارزش افزوده (%)', 'KDV (%)'],
+  'KDV Matrahı': ['مبنای مالیات بر ارزش افزوده', 'KDV Matrahı'],
+  'Total Discount': ['جمع تخفیف', 'Toplam İndirim'],
   'Failed to fetch data': ['دریافت اطلاعات ناموفق بود', 'Veriler alınamadı'],
   'An error occurred while processing your request.': ['پردازش درخواست ناموفق بود.', 'İsteğiniz işlenirken bir hata oluştu.'],
   'Phone number is invalid': ['شماره تلفن معتبر نیست', 'Telefon numarası geçersiz'],

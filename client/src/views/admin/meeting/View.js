@@ -1,3 +1,4 @@
+import AddMeeting from './components/Addmeeting';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -25,6 +26,7 @@ import { FaFilePdf } from "react-icons/fa";
 import html2pdf from "html2pdf.js";
 const View = () => {
   const param = useParams();
+  const [editing, setEditing] = useState(false);
 
   const [data, setData] = useState();
   const [deleteMany, setDeleteMany] = useState(false);
@@ -115,6 +117,7 @@ const View = () => {
                       <Flex justifyContent={"space-between"}>
                         <Heading size="md" mb={3}><LocalizedText text="Meeting Details" /></Heading>
                         <Box id="hide-btn">
+                          {permission?.update && <Button size="sm" me={2} onClick={() => setEditing(true)}><LocalizedText text="Edit" /></Button>}
                           <Button
                             leftIcon={<FaFilePdf />}
                             size="sm"
@@ -315,6 +318,7 @@ const View = () => {
         </>
       )}
       {/* Delete model */}
+      <AddMeeting isOpen={editing} onClose={() => setEditing(false)} editId={param.id} fetchData={fetchData} />
       <CommonDeleteModel
         isOpen={deleteMany}
         onClose={() => setDeleteMany(false)}

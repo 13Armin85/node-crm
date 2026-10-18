@@ -13,7 +13,7 @@ const TASK_PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 const PRIORITY_COLORS = {
     low: { backgroundColor: '#E8F5E9', borderColor: '#66BB6A', textColor: '#1B5E20' },
     normal: { backgroundColor: '#E3F2FD', borderColor: '#42A5F5', textColor: '#0D47A1' },
-    high: { backgroundColor: '#FFF3E0', borderColor: '#FFA726', textColor: '#8A3B00' },
+    high: { backgroundColor: '#FFEBEE', borderColor: '#EF5350', textColor: '#8E1010' },
     urgent: { backgroundColor: '#FFEBEE', borderColor: '#EF5350', textColor: '#8E1010' },
 };
 const currentUser = (req) => User.findOne({ _id: req.user.userId, deleted: false });

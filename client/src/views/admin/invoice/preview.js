@@ -1,251 +1,29 @@
-import BrandLogo from "components/BrandLogo";
-import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
-import { CloseIcon } from "@chakra-ui/icons";
-import {
-  Button,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  IconButton,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  Spinner,
-} from "@chakra-ui/react";
-import moment from "moment";
-import { useEffect, useState } from "react";
-import { getApi } from "services/api";
-import CurrencyAmount from "components/CurrencyAmount";
+import { Button, Drawer, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader, DrawerOverlay, IconButton, Spinner, Text } from '@chakra-ui/react';
+import { CloseIcon } from '@chakra-ui/icons';
+import { useEffect, useState } from 'react';
+import { tr, withLocalization } from 'i18n/runtime';
+import { getApi } from 'services/api';
+import InvoiceDocument from './components/InvoiceDocument';
 
-const Preview = (props) => {
-  const { onClose, isOpen, id, generatePDF, selectedId, isLoading } = props;
-  const [invoiceDetails, setInvoiceDetails] = useState({});
-  const [isLoding, setIsLoding] = useState(false);
-
-  const fetchInvoiceDetails = async () => {
-    try {
-      setIsLoding(true);
-      let result = await getApi("api/invoices/view/", selectedId);
-      if (result?.status === 200) {
-        setInvoiceDetails(result?.data?.result);
-      }
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoding(false);
-    }
-  };
-
+function Preview({ onClose, isOpen, id, generatePDF, selectedId, isLoading }) {
+  const [invoice, setInvoice] = useState(null);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
-    if (selectedId) fetchInvoiceDetails();
-  }, [selectedId]);
-
-  return (
-    <Drawer isOpen={isOpen} size={"lg"}>
-      <DrawerContent>
-        <DrawerHeader
-          alignItems={"center"}
-          justifyContent="space-between"
-          display="flex"
-        ><LocalizedText text="Invoice" /><IconButton onClick={() => onClose(false)} icon={<CloseIcon />} />
-        </DrawerHeader>
-        <DrawerBody>
-          {!isLoding ? (
-            <div id={id} style={{ padding: "5px" }}>
-              <div className="invoice-container">
-                <div style={{ marginBottom: 10 }}>
-                  <h1 style={{ fontSize: 30, textAlign: "center" }}><LocalizedText text="Invoice" /></h1>
-                </div>
-                <div className="invoice-header">
-                  <div>
-                    <BrandLogo
-                      style={{ width: "100%", height: "90px", objectFit: "contain" }}
-                      cursor="pointer"
-                      userSelect="none"
-                      my={2}
-                    />
-                  </div>
-                  <div className="invoice-details">
-                    <table>
-                      <tr>
-                        <th style={{ textAlign: "start" }}><LocalizedText text="Invoice No." /></th>
-                        <td>:</td>
-                        <td style={{ textAlign: "start" }}>
-                          {invoiceDetails?.invoiceNumber}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ textAlign: "start" }}><LocalizedText text="Invoice Date" /></th>
-                        <td>:</td>
-                        <td style={{ textAlign: "start" }}>
-                          {invoiceDetails?.invoiceDate &&
-                            moment(invoiceDetails?.invoiceDate).format(
-                              "DD-MM-YYYY",
-                            )}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ textAlign: "start" }}><LocalizedText text="Name" /></th>
-                        <td>:</td>
-                        <td style={{ textAlign: "start" }}>
-                          {invoiceDetails?.title}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ textAlign: "start" }}><LocalizedText text="Status" /></th>
-                        <td>:</td>
-                        <td style={{ textAlign: "start" }}>
-                          {invoiceDetails?.status}
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
-                </div>
-                <div className="address-section">
-                  <div className="address">
-                    <strong><LocalizedText text="Billing Address" /></strong>
-                    <br />
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {invoiceDetails?.billingStreet
-                        ? `${invoiceDetails?.billingStreet},${invoiceDetails?.billingCity},`
-                        : ""}
-                    </p>
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {invoiceDetails?.billingState
-                        ? `${invoiceDetails?.billingState},`
-                        : ""}
-                    </p>
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {`${invoiceDetails?.billingCountry} - ${invoiceDetails?.billingPostalCode}`}
-                    </p>
-                  </div>
-                  <div className="address">
-                    <strong><LocalizedText text="Shipping Address" /></strong>
-                    <br />
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {invoiceDetails?.shippingStreet
-                        ? `${invoiceDetails?.shippingStreet},${invoiceDetails?.shippingCity},`
-                        : ""}
-                    </p>
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {invoiceDetails?.shippingState
-                        ? `${invoiceDetails?.shippingState},`
-                        : ""}
-                    </p>
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {`${invoiceDetails?.shippingCountry} - ${invoiceDetails?.shippingPostalCode}`}
-                    </p>
-                  </div>
-                </div>
-                <table className="invoice-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: "50px" }}><LocalizedText text="S No" /></th>
-                      <th style={{ width: "100px" }}><LocalizedText text="ITEM" /></th>
-                      <th style={{ width: "50px" }}><LocalizedText text="QTY" /></th>
-                      <th style={{ width: "50px" }}><LocalizedText text="RATE" /></th>
-                      <th style={{ width: "50px" }}><LocalizedText text="DISCOUNT" /></th>
-                      <th style={{ width: "50px" }}><LocalizedText text="AMOUNT" /></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoiceDetails?.items?.length > 0 &&
-                      invoiceDetails?.items?.map((item, index) => (
-                        <tr key={index}>
-                          <td>{item?.id}</td>
-                          <td>{item?.productName}</td>
-                          <td>{item?.qty}</td>
-                          <td><CurrencyAmount amount={item?.rate} currency={invoiceDetails?.currency} compact /></td>
-                          <td>{item?.discountType === "percent" ? `${item?.discount}%` : item?.discountType === "flatAmount" ? <CurrencyAmount amount={item?.discount} currency={invoiceDetails?.currency} compact /> : item?.discountType === "none" ? 0 : ""}</td>
-                          <td><CurrencyAmount amount={item?.amount} currency={invoiceDetails?.currency} compact /></td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-                <div className="totals">
-                  <table>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Total" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={invoiceDetails?.total} currency={invoiceDetails?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Discount" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={invoiceDetails?.discount} currency={invoiceDetails?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Subtotal" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={invoiceDetails?.subtotal} currency={invoiceDetails?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Shipping" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={invoiceDetails?.shipping} currency={invoiceDetails?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Shipping Tax" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={invoiceDetails?.shippingTax} currency={invoiceDetails?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Tax (" />{invoiceDetails?.ptax}%)
-                      </th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={invoiceDetails?.tax} currency={invoiceDetails?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Grand Total" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={invoiceDetails?.grandTotal} currency={invoiceDetails?.currency} compact /></td>
-                    </tr>
-                  </table>
-                </div>
-                <div className="footer">
-                  <div>{invoiceDetails?.description}</div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <Spinner />
-            </div>
-          )}
-        </DrawerBody>
-        <DrawerFooter>
-          <Button
-            sx={{ textTransform: "capitalize" }}
-            size="sm"
-            disabled={isLoading}
-            variant="brand"
-            type="submit"
-            onClick={generatePDF}
-          >
-            {isLoading ? <Spinner /> : tr("Download")}
-          </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-  );
-};
-
+    let active = true; setInvoice(null);
+    if (!isOpen || !selectedId) return undefined;
+    setLoading(true);
+    getApi('api/invoices/view/', selectedId).then(result => {
+      if (active && result?.status === 200) setInvoice(result.data?.result);
+    }).catch(() => {}).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [isOpen, selectedId]);
+  const close = () => onClose(false);
+  return <Drawer isOpen={isOpen} onClose={close} size="xl"><DrawerOverlay /><DrawerContent>
+    <DrawerHeader display="flex" justifyContent="space-between" alignItems="center">{tr('Invoice')}
+      <IconButton aria-label={tr('Close')} icon={<CloseIcon />} onClick={close} variant="ghost" /></DrawerHeader>
+    <DrawerBody>{loading ? <Spinner /> : invoice ? <div id={id}><InvoiceDocument invoice={invoice} /></div>
+      : <Text color="red.500">{tr('estate.serverError')}</Text>}</DrawerBody>
+    <DrawerFooter><Button size="sm" variant="brand" isLoading={isLoading} isDisabled={loading || !invoice} onClick={generatePDF}>{tr('Download')}</Button></DrawerFooter>
+  </DrawerContent></Drawer>;
+}
 export default withLocalization(Preview);

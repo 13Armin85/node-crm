@@ -26,6 +26,8 @@ const loginLimiter = rateLimit({
 });
 const errorHandler = (error, req, res, next) => {
   if (res.headersSent) return next(error);
+  if (error.code === 'uploadBusy') return res.status(409).json({ code: 'uploadBusy', field: 'files' });
+  if (error.code === 'duplicate' || error.code === 11000) return res.status(409).json({ code: 'duplicate', field: error.field });
   if (error.type === 'entity.too.large' || error.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ code: 'tooLarge' });
   if (error.status === 400 || error.name === 'MulterError' || error.name === 'ValidationError' || error.name === 'CastError') return res.status(400).json({ code: 'invalid' });
   console.error('Request failed:', error.name || 'Error');

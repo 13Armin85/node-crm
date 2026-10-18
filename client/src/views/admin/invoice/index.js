@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { DeleteIcon, EditIcon, SearchIcon, ViewIcon } from "@chakra-ui/icons";
@@ -65,14 +66,13 @@ const Index = (props) => {
     center: true,
     cell: ({ row, i }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
-        <Menu isLazy>
+        <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
           <MenuButton>
             <CiMenuKebab />
           </MenuButton>
-          <MenuList
+          <Portal><MenuList
             minW={"fit-content"}
-            transform={"translate(1520px, 173px);"}
-          >
+           zIndex="popover">
             {permission?.update && (
               <MenuItem
                 py={2.5}
@@ -114,7 +114,7 @@ const Index = (props) => {
                 }}
               ><LocalizedText text="Delete" /></MenuItem>
             )}
-          </MenuList>
+          </MenuList></Portal>
         </Menu>
       </Text>
     ),
@@ -618,7 +618,7 @@ const Index = (props) => {
           filename: `Invoice_${moment().format("DD-MM-YYYY")}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
         })
         .save()
         .then(() => {

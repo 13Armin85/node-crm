@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useEffect, useState } from "react";
 import {
@@ -286,11 +287,11 @@ const CustomField = () => {
                   >
                     {moduleName ? tr(moduleName) : tr("Select Module")}
                   </MenuButton>
-                  <MenuList
+                  <Portal><MenuList
                     minWidth={"10rem"}
                     maxHeight={"15rem"}
                     overflow={"auto"}
-                  >
+                   zIndex="popover">
                     <MenuItem
                       onClick={() => {
                         setModuleName("");
@@ -310,7 +311,7 @@ const CustomField = () => {
                         <LocalizedText text={item?.moduleName} />
                       </MenuItem>
                     ))}
-                  </MenuList>
+                  </MenuList></Portal>
                 </Menu>
               )}
 
@@ -523,11 +524,11 @@ const CustomField = () => {
                   >
                     {heading ? tr(heading) : tr("Select All Headings")}
                   </MenuButton>
-                  <MenuList
+                  <Portal><MenuList
                     minWidth={"10rem"}
                     maxHeight={"15rem"}
                     overflow={"auto"}
-                  >
+                   zIndex="popover">
                     <MenuItem
                       onClick={() => {
                         setHeading("");
@@ -545,7 +546,7 @@ const CustomField = () => {
                         <LocalizedText text={item?.heading} />
                       </MenuItem>
                     ))}
-                  </MenuList>
+                  </MenuList></Portal>
                 </Menu>
               )}
               {data?.length > 0 && (

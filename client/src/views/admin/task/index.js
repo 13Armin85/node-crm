@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { canManageTask } from 'services/taskAccess';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -104,14 +105,13 @@ const Task = () => {
     center: true,
     cell: ({ row }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
-        <Menu isLazy>
+        <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
           <MenuButton>
             <CiMenuKebab />
           </MenuButton>
-          <MenuList
+          <Portal><MenuList
             minW={"fit-content"}
-            transform={"translate(1520px, 173px);"}
-          >
+           zIndex="popover">
             {permission?.update && canManageTask(row.original, user) && (
               <MenuItem
                 py={2.5}
@@ -140,7 +140,7 @@ const Task = () => {
                 }}
               ><LocalizedText text="Delete" /></MenuItem>
             )}
-          </MenuList>
+          </MenuList></Portal>
         </Menu>
       </Text>
     ),
@@ -221,7 +221,7 @@ const Task = () => {
       formikType: "",
       cell: ({ row }) => {
         const priority = taskPriority(row.original);
-        const schemes = { low: "green", normal: "blue", high: "orange", urgent: "red" };
+        const schemes = { low: "green", normal: "blue", high: "red", urgent: "red" };
         return <Badge colorScheme={schemes[priority]}><LocalizedText text={priority} /></Badge>;
       },
     },

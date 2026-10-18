@@ -18,4 +18,5 @@ const schema = new mongoose.Schema({
 schema.index({ deleted: 1, createdDate: -1 });
 schema.index({ phone: 1 });
 schema.index({ fullName: 1, companyName: 1 });
+schema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'PartnerCustomers' });
 module.exports = mongoose.model('PartnerCustomers', schema, 'PartnerCustomers');

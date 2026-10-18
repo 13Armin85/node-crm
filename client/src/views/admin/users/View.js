@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   AddIcon,
@@ -152,7 +153,7 @@ const View = () => {
                         rightIcon={<ChevronDownIcon />}
                       ><LocalizedText text="Actions" /></MenuButton>
                       <MenuDivider />
-                      <MenuList minWidth={"13rem"}>
+                      <Portal><MenuList minWidth={"13rem"} zIndex="popover">
                         {isDeveloper(actor) && <MenuItem
                           alignItems={"start"}
                           onClick={() => handleOpen("add")}
@@ -174,7 +175,7 @@ const View = () => {
                               ><LocalizedText text="Delete" /></MenuItem>
                             </>
                           )}
-                      </MenuList>
+                      </MenuList></Portal>
                     </Menu>
                   )}
                   <Link to="/user">

@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { AddIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
@@ -178,14 +179,14 @@ const Index = () => {
                       <LocalizedText text={item?.name} />
                     </Heading>
                   </Flex>
-                  <Menu isLazy>
+                  <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
                     <MenuButton>
                       <CiMenuKebab />
                     </MenuButton>
-                    <MenuList
+                    <Portal><MenuList
                       minW={"fit-content"}
                       transform={"translate(-71px, 0px) !important;"}
-                    >
+                     zIndex="popover">
                       <MenuItem
                         py={2.5}
                         alignItems={"start"}
@@ -206,7 +207,7 @@ const Index = () => {
                         icon={<DeleteIcon fontSize={15} />}
                         onClick={() => handleOpenDeleteMany(item?._id, "one")}
                       ><LocalizedText text="Delete" /></MenuItem>
-                    </MenuList>
+                    </MenuList></Portal>
                   </Menu>
                 </Flex>
                 <Text pt={3} textTransform={"capitalize"}><LocalizedText text="validations" /></Text>

@@ -4,6 +4,7 @@ import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
+  Box,
   Button,
   Checkbox,
   Flex,
@@ -62,7 +63,7 @@ const normalizeTaskPriority = (value) => {
 const priorityColors = {
   low: { backgroundColor: "#E8F5E9", borderColor: "#66BB6A", textColor: "#1B5E20" },
   normal: { backgroundColor: "#E3F2FD", borderColor: "#42A5F5", textColor: "#0D47A1" },
-  high: { backgroundColor: "#FFF3E0", borderColor: "#FFA726", textColor: "#8A3B00" },
+  high: { backgroundColor: "#FFEBEE", borderColor: "#EF5350", textColor: "#8E1010" },
   urgent: { backgroundColor: "#FFEBEE", borderColor: "#EF5350", textColor: "#8E1010" },
 };
 
@@ -123,8 +124,7 @@ const AddEdit = (props) => {
     validationSchema: TaskSchema,
     enableReinitialize: true,
     onSubmit: (values, { resetForm }) => {
-      AddData();
-      resetForm();
+      return AddData();
     },
   });
 
@@ -164,8 +164,8 @@ const AddEdit = (props) => {
         if (response?.status === 200) {
           formik.resetForm();
           onClose();
-          fetchData(1);
-          setAction((pre) => !pre);
+          fetchData?.(1);
+          setAction?.((pre) => !pre);
         }
       } catch (e) {
         console.log(e);
@@ -191,7 +191,7 @@ const AddEdit = (props) => {
         if (response?.status === 200) {
           formik.resetForm();
           onClose();
-          setAction((pre) => !pre);
+          setAction?.((pre) => !pre);
         }
       } catch (e) {
         console.log(e);
@@ -259,8 +259,12 @@ const AddEdit = (props) => {
     }
   };
 
-  useEffect(async () => {
-    values.start = props?.date;
+  useEffect(() => {
+    if (props.date) setFieldValue('start', props.date);
+  }, [props.date, setFieldValue]);
+
+  useEffect(() => {
+    const loadRelations = async () => {
     if (view === true) {
       if (values?.category === "Contact" && assignToContactData?.length <= 0) {
         setAssignToContactData(contactData);
@@ -297,7 +301,9 @@ const AddEdit = (props) => {
         console.log(e);
       }
     }
-  }, [props, values?.category]);
+    };
+    loadRelations();
+  }, [view, values?.category]);
 
   useEffect(() => {
     if (!isAdmin(user)) return;
@@ -646,6 +652,7 @@ const AddEdit = (props) => {
                   <LocalizedText text="Task priority" />
                 </FormLabel>
                 <Select
+                  name="priority" onBlur={handleBlur}
                   value={normalizeTaskPriority(values?.priority)}
                   onChange={(event) => {
                     const priority = normalizeTaskPriority(event.target.value);
@@ -660,9 +667,7 @@ const AddEdit = (props) => {
                   <option value="high">{tr("High")}</option>
                   <option value="urgent">{tr("Urgent")}</option>
                 </Select>
-                <Text mt="6px" mb="10px" fontSize="xs" color="gray.500">
-                  <LocalizedText text="Task priority controls its background color." />
-                </Text>
+                <Box mt={2} mb={3} width="20px" height="20px" borderRadius="3px" bg={priorityColors[normalizeTaskPriority(values?.priority)].borderColor} role="img" aria-label={tr(normalizeTaskPriority(values?.priority))} />
               </GridItem>
 
               <GridItem colSpan={{ base: 12, md: 6 }}>

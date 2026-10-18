@@ -2987,3 +2987,49 @@ body.crm-kanban-is-dragging * {
   transform: none;
 }
 .chakra-button.crm-excel-export:disabled > .chakra-button__icon:first-child { color: #e2e8f0; background: #334155; }
+
+/* Invoice entry and its shared print preview. */
+.crm-invoice-form .crm-invoice-section {
+  padding-block: 14px 8px;
+  border-bottom: 1px solid var(--crm-border, #e2e8f0);
+}
+.crm-invoice-form .chakra-input[readonly] {
+  background: var(--crm-panel, #f7fafc);
+  font-variant-numeric: tabular-nums;
+}
+.crm-invoice-items { min-width: 780px; }
+.crm-invoice-items td { padding: 10px 8px; vertical-align: top; }
+.crm-invoice-items td:nth-child(2) { min-width: 190px; }
+.crm-invoice-items td:nth-child(3), .crm-invoice-items td:nth-child(4) { min-width: 105px; }
+.crm-invoice-items td:nth-child(5) { min-width: 180px; }
+.crm-invoice-items td:nth-child(6) { white-space: nowrap; }
+.crm-invoice-document { color: #1a202c; background: #fff; border-color: #cbd5e0; border-radius: 8px; }
+.crm-invoice-document h1 { font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 20px; }
+.crm-invoice-document .invoice-header { gap: 20px; flex-wrap: wrap; }
+.crm-invoice-document .invoice-details { text-align: start; }
+.crm-invoice-document th { text-align: start; font-weight: 600; }
+.crm-invoice-document .invoice-details td { padding-inline-start: 18px; overflow-wrap: anywhere; }
+.crm-invoice-document .address-section { gap: 20px; }
+.crm-invoice-document .address { min-width: 0; overflow-wrap: anywhere; }
+.crm-invoice-document .invoice-table { min-width: 520px; }
+.crm-invoice-document .invoice-table th { background: #f7fafc; }
+.crm-invoice-document .invoice-table th, .crm-invoice-document .invoice-table td { border-color: #cbd5e0; }
+.crm-invoice-table-scroll { overflow-x: auto; }
+.crm-invoice-document .totals th, .crm-invoice-document .totals td { padding: 5px 10px; }
+.crm-invoice-document .totals td { text-align: right; white-space: nowrap; }
+.crm-invoice-document .totals tr:last-child { font-weight: 700; border-top: 2px solid #cbd5e0; }
+@media (max-width: 480px) {
+  .crm-invoice-document { padding: 12px; }
+  .crm-invoice-document .address-section { flex-direction: column; gap: 0; }
+  .crm-invoice-document .address { width: 100%; }
+}
+@media print {
+  .crm-invoice-document { border: none; margin: 0; border-radius: 0; }
+  .crm-invoice-document .invoice-table { min-width: 0; }
+  .crm-invoice-document tr { break-inside: avoid; }
+}
+
+/* Keep the source logo colors on white paper when printing from dark mode. */
+@media print {
+  .crm-brand-logo { filter: none !important; background: transparent !important; }
+}

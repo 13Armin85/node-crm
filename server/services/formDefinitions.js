@@ -108,6 +108,15 @@ async function getDefinition(moduleName) {
         : null;
       return system ? {
         ...item,
+        // Repair generated invoice labels while retaining administrator-written labels.
+        ...(moduleName === 'Invoices' && /^(billing|shipping)(Street|City|State|PostalCode|Country)$|^(subtotal|discount|tax|ptax|shipping|shippingTax|total|grandTotal)$/.test(item.name) ? {
+          label: Object.fromEntries(Object.entries(item.label || system.label).map(([language, label]) => {
+            const generated = /^(billing|shipping)/.test(item.name)
+              ? item.name.replace(/^(billing|shipping)/, '$1 ').replace('PostalCode', 'Postal Code')
+              : item.name.replace(/([a-z])([A-Z])/g, '$1 $2');
+            return [language, label === generated || label === item.name ? system.label[language] || system.label.en : label];
+          })),
+        } : {}),
         type: system.type,
         integer: Boolean(system.integer),
         ...(system.options ? { options: system.options.map(option => ({ ...option, label: item.options?.find(saved => saved.value === option.value)?.label || option.label })) } : {}),

@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useEffect, useState } from "react";
 import CommonCheckTable from "components/reactTable/checktable";
@@ -66,14 +67,13 @@ const BankDetails = () => {
     center: true,
     cell: ({ row }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
-        <Menu isLazy>
+        <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
           <MenuButton>
             <CiMenuKebab />
           </MenuButton>
-          <MenuList
+          <Portal><MenuList
             minW={"fit-content"}
-            transform={"translate(1520px, 173px);"}
-          >
+           zIndex="popover">
             {permission?.update && (
               <MenuItem
                 py={2.5}
@@ -107,7 +107,7 @@ const BankDetails = () => {
                 }}
               ><LocalizedText text="Delete" /></MenuItem>
             )}
-          </MenuList>
+          </MenuList></Portal>
         </Menu>
       </Text>
     ),

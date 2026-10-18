@@ -6,6 +6,7 @@ const { normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection } =
 // Extend existing controllers without changing their response contracts.
 module.exports = moduleName => async (req, res, next) => {
   try {
+    if (req.body && !Array.isArray(req.body)) delete req.body._duplicateKeys;
     const action = req.method === 'POST' ? 'create' : 'update';
     const ownProfile = moduleName === 'Users' && action === 'update' && String(req.actor._id) === req.params.id;
     if (!ownProfile && !can(req.actor, moduleName, action)) return res.status(403).json({ code: 'forbidden' });
@@ -37,7 +38,7 @@ module.exports = moduleName => async (req, res, next) => {
     if (typeof req.body.customFields === 'string') req.body.customFields = JSON.parse(req.body.customFields);
     // Legacy controllers retain their fixed-field contracts; enforce requirements
     // configured by administrators and every custom field here.
-    const configuredFields = definition.fields.filter(field => field.kind === 'CUSTOM_FIELD' || (!field.locked && moduleName !== 'Documents'));
+    const configuredFields = definition.fields.filter(field => field.kind === 'CUSTOM_FIELD' || (moduleName === 'Meetings' || (!field.locked && moduleName !== 'Documents')));
     validateRequiredFields({ ...definition, fields: configuredFields }, req.body, previous);
     if (moduleName === 'Invoices') await require('../services/invoiceProperty').validateInvoiceProperty(req, req.body, previous);
     const values = validateFields({ ...definition, fields: definition.fields.filter(f => f.kind === 'CUSTOM_FIELD') }, req.body, previous);

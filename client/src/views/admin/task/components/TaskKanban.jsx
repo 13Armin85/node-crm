@@ -1,3 +1,5 @@
+import { useRef, useState } from 'react';
+import { AlertDialog, AlertDialogOverlay, AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter, Button } from '@chakra-ui/react';
 import {
   Badge,
   Box,
@@ -38,6 +40,15 @@ const taskPriority = (task) => {
 
 const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegate, onStatusChange, onView }) => {
   const { t } = useLanguage();
+  const [assignment, setAssignment] = useState(null);
+  const [assigning, setAssigning] = useState(false);
+  const cancelRef = useRef();
+  const confirmAssignment = async () => {
+    if (!assignment || assigning) return;
+    setAssigning(true);
+    try { await onDelegate(assignment.task._id, assignment.userId); setAssignment(null); }
+    finally { setAssigning(false); }
+  };
   const columnBg = useColorModeValue("gray.50", "#0f1727");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
   const dragOverBg = useColorModeValue("blackAlpha.50", "whiteAlpha.100");
@@ -47,13 +58,13 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
     {
       low: { bg: "green.50", border: "green.300", scheme: "green" },
       normal: { bg: "blue.50", border: "blue.300", scheme: "blue" },
-      high: { bg: "orange.50", border: "orange.300", scheme: "orange" },
+      high: { bg: "red.50", border: "red.300", scheme: "red" },
       urgent: { bg: "red.50", border: "red.300", scheme: "red" },
     },
     {
       low: { bg: "#112a27", border: "green.400", scheme: "green" },
       normal: { bg: "#142940", border: "blue.400", scheme: "blue" },
-      high: { bg: "#332616", border: "orange.400", scheme: "orange" },
+      high: { bg: "#351c25", border: "red.400", scheme: "red" },
       urgent: { bg: "#351c25", border: "red.400", scheme: "red" },
     },
   );
@@ -69,6 +80,7 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
   };
 
   return (
+    <>
     <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
       <SimpleGrid
         className="crm-kanban-board"
@@ -147,7 +159,10 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
                                   borderRadius="8px"
                                   assignees={assignees}
                                   value={String(objectValue(task.assignedToUser) || objectValue(task.createBy) || "")}
-                                  onChange={event => onDelegate(task._id, event.target.value)}
+                                  onChange={event => {
+                                    const userId = event.target.value;
+                                    if (userId !== String(objectValue(task.assignedToUser) || objectValue(task.createBy) || '')) setAssignment({ task, userId });
+                                  }}
                                 /></Box>}
                                 {task.category && task.category !== "None" && (
                                   <Badge mt={3} colorScheme="brand" variant="subtle" borderRadius="full">
@@ -173,6 +188,14 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
         })}
       </SimpleGrid>
     </DragDropContext>
+    <AlertDialog isOpen={Boolean(assignment)} leastDestructiveRef={cancelRef} onClose={() => !assigning && setAssignment(null)} isCentered>
+      <AlertDialogOverlay><AlertDialogContent>
+        <AlertDialogHeader>{t('Confirm task assignment')}</AlertDialogHeader>
+        <AlertDialogBody><Text fontWeight="bold" mb={2}>{assignment?.task.title}</Text>{t('Assign this task to')} <strong>{assignees.find(user => String(user._id) === assignment?.userId)?.firstName} {assignees.find(user => String(user._id) === assignment?.userId)?.lastName || assignees.find(user => String(user._id) === assignment?.userId)?.username}</strong>؟</AlertDialogBody>
+        <AlertDialogFooter gap={3}><Button ref={cancelRef} isDisabled={assigning} onClick={() => setAssignment(null)}>{t('Cancel')}</Button><Button colorScheme="blue" isLoading={assigning} onClick={confirmAssignment}>{t('Confirm')}</Button></AlertDialogFooter>
+      </AlertDialogContent></AlertDialogOverlay>
+    </AlertDialog>
+    </>
   );
 };
 

@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -176,7 +177,7 @@ const View = (props) => {
       accessor: "grandTotal",
       cell: (cell) => (
         <div className="selectOpt">
-          {cell?.row?.original?.grandTotal ? <CurrencyAmount amount={cell.row.original.grandTotal} currency={cell.row.original.currency || "USD"} compact /> : <Text>-</Text>}
+          {cell?.row?.original?.grandTotal ? <CurrencyAmount amount={cell.row.original.grandTotal} currency={cell.row.original.currency || "TRY"} compact /> : <Text>-</Text>}
         </div>
       ),
     },
@@ -203,7 +204,7 @@ const View = (props) => {
           filename: `Invoice_Details_${moment().format("DD-MM-YYYY")}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
         })
         .save()
         .then(() => {
@@ -260,7 +261,6 @@ const View = (props) => {
     shippingTax: data?.shippingTax,
     ptax: data?.ptax,
     tax: data?.tax,
-    grandTotal: data?.grandTotal,
     grandTotal: data?.grandTotal,
     modifiedBy: JSON.parse(localStorage.getItem("user"))?._id,
   };
@@ -329,7 +329,7 @@ const View = (props) => {
                           ><LocalizedText text="Actions" /></MenuButton>
                         )}
                         <MenuDivider />
-                        <MenuList minWidth={2}>
+                        <Portal><MenuList minWidth={2} zIndex="popover">
                           {(isAdmin(user) ||
                             invoiceAccess?.create) && (
                             <MenuItem
@@ -374,7 +374,7 @@ const View = (props) => {
                               ><LocalizedText text="Delete" /></MenuItem>
                             </>
                           )}
-                        </MenuList>
+                        </MenuList></Portal>
                       </Menu>
                       <Button
                         leftIcon={<IoIosArrowBack />}
@@ -1206,7 +1206,7 @@ const View = (props) => {
                 <CurrencyAmount amount={data?.shipping} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
-                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Shipping Tax" /></Text>
+                <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="KDV Matrahı" /></Text>
                 <CurrencyAmount amount={data?.shippingTax} currency={data?.currency} />
               </GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>

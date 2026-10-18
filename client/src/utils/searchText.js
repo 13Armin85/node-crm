@@ -7,6 +7,8 @@ export const normalizeSearchText = value => String(value ?? '')
   .replace(/[\u064a\u0649]/g, '\u06cc')
   .replace(/\u0643/g, '\u06a9')
   .replace(/[\u0640\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, '')
+  .replace(/[\u06f0-\u06f9]/g, digit => String(digit.charCodeAt(0) - 1776))
+  .replace(/[\u0660-\u0669]/g, digit => String(digit.charCodeAt(0) - 1632))
   .replace(/\s+/g, ' ')
   .trim();
 

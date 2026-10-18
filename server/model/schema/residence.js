@@ -33,4 +33,5 @@ const schema = new mongoose.Schema({
   deleted: { type: Boolean, default: false },
 }, { timestamps: { createdAt: 'createdDate', updatedAt: 'updatedDate' } });
 schema.index({ deleted: 1, name: 1 });
+schema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'Residences' });
 module.exports = mongoose.model('Residences', schema, 'Residences');

@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { safeUrl, openSafeUrl } from 'services/contentSecurity';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -409,7 +410,7 @@ const View = () => {
                       ><LocalizedText text="Actions" /></MenuButton>
                     )}
                     <MenuDivider />
-                    <MenuList minWidth={2}>
+                    <Portal><MenuList minWidth={2} zIndex="popover">
                       {(isAdmin(user) || permission?.create) && (
                         <MenuItem
                           alignItems={"start"}
@@ -443,7 +444,7 @@ const View = () => {
                           ><LocalizedText text="Delete" /></MenuItem>
                         </>
                       )}
-                    </MenuList>
+                    </MenuList></Portal>
                   </Menu>
                   <Link to="/properties">
                     <Button

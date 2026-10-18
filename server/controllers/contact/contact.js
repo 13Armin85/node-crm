@@ -23,6 +23,7 @@ const index = async (req, res) => {
     try {
         res.send(result)
     } catch (error) {
+    if (error.code === 'duplicate' || error.code === 11000) return res.status(409).json({ code: 'duplicate', field: error.field });
         res.send(error)
     }
 }
@@ -34,6 +35,7 @@ const add = async (req, res) => {
         await user.save();
         res.status(200).json(user);
     } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
         console.error('Failed to create Contact:', err);
         res.status(400).json({ error: 'Failed to create Contact' });
     }
@@ -45,6 +47,7 @@ const addMany = async (req, res) => {
         const insertedContact = await Contact.insertMany(data);
         res.status(200).json(insertedContact);
     } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
         console.error('Failed to create Contact :', err);
         res.status(400).json({ error: 'Failed to create Contact' });
     }
@@ -56,6 +59,7 @@ const addPropertyInterest = async (req, res) => {
         await Contact.updateOne({ _id: id }, { $set: { interestProperty: req.body } });
         res.send(' uploaded successfully.');
     } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
         console.error('Failed to create Contact:', err);
         res.status(400).json({ error: 'Failed to create Contact' });
     }
@@ -69,6 +73,7 @@ const edit = async (req, res) => {
         );
         res.status(200).json(result);
     } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
         console.error('Failed to Update Contact:', err);
         res.status(400).json({ error: 'Failed to Update Contact' });
     }
@@ -355,6 +360,7 @@ const view = async (req, res) => {
         res.status(200).json({ interestProperty, contact, EmailHistory, phoneCallHistory, meetingHistory, textMsg, task, Document, quotes, invoice });
     }
     catch (error) {
+    if (error.code === 'duplicate' || error.code === 11000) return res.status(409).json({ code: 'duplicate', field: error.field });
         console.error(error);
         res.status(500).json({ error, err: 'An error occurred.' });
     }
@@ -365,6 +371,7 @@ const deleteData = async (req, res) => {
         const contact = await Contact.findByIdAndUpdate(req.params.id, { deleted: true });
         res.status(200).json({ message: "done", contact })
     } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
         res.status(404).json({ message: "error", err })
     }
 }
@@ -374,6 +381,7 @@ const deleteMany = async (req, res) => {
         const contact = await Contact.updateMany({ _id: { $in: req.body } }, { $set: { deleted: true } });
         res.status(200).json({ message: "done", contact })
     } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
         res.status(404).json({ message: "error", err })
     }
 }

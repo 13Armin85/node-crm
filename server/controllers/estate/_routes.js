@@ -25,7 +25,8 @@ const modules = {
   Residences: { model: Residence, search: ['name', 'developer', 'city', 'district', 'neighborhood', 'address'], sort: ['name', 'price.amount', 'createdDate'], filters: ['category', 'transactionType', 'city', 'district', 'neighborhood', 'constructionStatus', 'occupancyStatus', 'sale.status'] },
   Leads: { model: Lead, search: ['leadName', 'leadEmail', 'leadPhoneNumber'], sort: ['leadName', 'createdDate'], filters: [] },
 };
-const fileSchema = new mongoose.Schema({ name: String, storageName: String, mimeType: String, size: Number, uploadedAt: Date, createBy: mongoose.Schema.Types.ObjectId });
+const fileSchema = new mongoose.Schema({ contentHash: String, name: String, storageName: String, mimeType: String, size: Number, uploadedAt: Date, createBy: mongoose.Schema.Types.ObjectId });
+fileSchema.index({ createBy: 1, contentHash: 1 }, { unique: true, partialFilterExpression: { contentHash: { $type: 'string' } } });
 const File = mongoose.model('EstateFile', fileSchema);
 const uploadRoot = path.resolve(__dirname, '../../uploads/estate');
 const { createUpload, validateUploads, withinRoot, fileResponseHeaders } = require('../../services/secureFiles');
@@ -62,15 +63,15 @@ router.put('/definitions/:module', adminOnly, asyncRoute(async (req, res) => {
 router.post('/files', (req, res, next) => {
   if (!['Properties', 'Partner Customers', 'Residences', ...legacyModules].some(m => can(req.actor, m, 'create') || can(req.actor, m, 'update'))) return res.status(403).json({ code: 'forbidden' });
   next();
-}, upload.array('files', 10), validateUploads(uploadRoot), asyncRoute(async (req, res) => {
+}, upload.array('files', 10), validateUploads(uploadRoot), require('../../middelwares/duplicateUploads')('estate', uploadRoot), asyncRoute(async (req, res) => {
   const results = [];
   try {
     for (const file of req.files || []) {
-      const stored = await File.create({ name: path.basename(file.originalname), storageName: file.filename, mimeType: file.mimetype, size: file.size, uploadedAt: new Date(), createBy: req.actor._id });
+      const stored = await File.create({ contentHash: file.contentHash, name: path.basename(file.originalname), storageName: file.filename, mimeType: file.mimetype, size: file.size, uploadedAt: new Date(), createBy: req.actor._id });
       results.push({ id: String(stored._id), name: stored.name, mimeType: stored.mimeType, size: stored.size, uploadedAt: stored.uploadedAt });
     }
     res.status(201).json(results);
-  } catch (error) { await Promise.all((req.files || []).map(f => fs.promises.unlink(f.path).catch(() => {}))); throw error; }
+  } catch (error) { await File.deleteMany({ _id: { $in: results.map(file => file.id) } }); await Promise.all((req.files || []).map(f => fs.promises.unlink(f.path).catch(() => {}))); throw error; }
 }));
 router.get('/files/:id', asyncRoute(async (req, res) => {
   if (!objectId(req.params.id)) fail('id');
@@ -139,20 +140,32 @@ router.param('module', (req, res, next, moduleName) => {
 });
 const moduleRequired = (req, res, next) => req.estateModule ? next() : res.status(404).json({ code: 'notFound' });
 const permission = action => (req, res, next) => permit(req.params.module, action)(req, res, next);
-const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-router.get('/:module/options', moduleRequired, permission('view'), asyncRoute(async (req, res) => {
-  const q = String(req.query.q || '').slice(0, 100);
-  const query = { deleted: false, ...scope(req, req.params.module) };
-  if (q) query.$or = req.estateModule.search.map(key => ({ [key]: { $regex: escape(q), $options: 'i' } }));
+const relationModules = {
+  ...modules,
+  Users: { model: require('../../model/schema/user'), search: ['firstName', 'lastName', 'username', 'phoneNumber'] },
+  Contacts: { model: require('../../model/schema/contact').Contact, search: ['fullName', 'firstName', 'lastName', 'email', 'phoneNumber'] },
+  Quotes: { model: require('../../model/schema/quotes'), search: ['title', 'quoteNumber'] },
+  Opportunities: { model: require('../../model/schema/opprtunity'), search: ['name', 'opportunityName', 'title'] },
+  Documents: { model: require('../../model/schema/document'), search: ['folderName'] },
+};
+const { searchCondition, optionLabel } = require('../../services/relationSearch');
+router.get('/:module/options', permission('view'), asyncRoute(async (req, res) => {
+  const requestedModule = ({ Account: 'Partner Customers', Accounts: 'Partner Customers' })[req.params.module] ||
+    require('../../services/moduleVisibility').canonicalModule(req.params.module);
+  const relation = Object.prototype.hasOwnProperty.call(relationModules, requestedModule) ? relationModules[requestedModule] : null;
+  if (!relation) return res.status(404).json({ code: 'notFound' });
+  const numericFields = relation.search.filter(field => relation.model.schema.path(field)?.instance === 'Number');
+  const query = { $and: [{ deleted: false }, scope(req, requestedModule), searchCondition(relation.search, req.query.q, numericFields)] };
   if (req.query.id) { if (!objectId(req.query.id)) fail('id'); query._id = req.query.id; }
-  const items = await req.estateModule.model.find(readScope(req, req.actor, req.params.module, query)).select([...req.estateModule.search, 'name'].join(' ')).sort({ _id: 1 }).limit(25).lean();
-  res.json(items.map(item => ({ value: String(item._id), label: item.title || item.name || item.fullName || item.companyName || item.leadName || item.propertyType || String(item._id) })));
+  const items = await relation.model.find(readScope(req, req.actor, requestedModule, query))
+    .select([...relation.search, 'name'].join(' ')).sort({ _id: 1 }).limit(25).lean();
+  res.json(items.map(item => ({ value: String(item._id), label: optionLabel(item) })));
 }));
 router.get('/:module', moduleRequired, permission('view'), asyncRoute(async (req, res) => {
   const { model, search, filters, sort } = req.estateModule;
-  const query = { deleted: false, ...scope(req, req.params.module) };
+  const query = { deleted: false, $and: [scope(req, req.params.module)] };
   const q = String(req.query.q || '').slice(0, 100);
-  if (q) query.$or = search.map(key => ({ [key]: { $regex: escape(q), $options: 'i' } }));
+  query.$and.push(...(searchCondition(search, q).$and || []));
   for (const key of filters) if (typeof req.query[key] === 'string' && req.query[key]) query[key] = req.query[key];
   if (['Properties', 'Residences'].includes(req.params.module) && (req.query.priceMin || req.query.priceMax)) {
     query['price.amount'] = {};
@@ -201,6 +214,9 @@ async function payload(req, previous = {}) {
   }
   if (['Properties', 'Residences'].includes(req.params.module)) {
     if (req.body.files) {
+      if (!Array.isArray(req.body.files) || req.body.files.length > 100) fail('files');
+      const ids = req.body.files.map(item => String(item.id || item._id));
+      if (new Set(ids).size !== ids.length) throw Object.assign(new InputError('duplicate', 'files'), { status: 409 });
       if (!Array.isArray(req.body.files) || req.body.files.length > 100) fail('files');
       values.files = [];
       for (const item of req.body.files) {
@@ -255,7 +271,7 @@ router.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
   const status = error.code === 11000 ? 409 : error.status || (error.name === 'ValidationError' || error.name === 'CastError' || error instanceof multer.MulterError ? 400 : 500);
   if (status === 500) console.error('Estate API:', error.message);
-  res.status(status).json({ code: error.code === 11000 ? 'conflict' : (typeof error.code === 'string' ? error.code : status === 500 ? 'serverError' : 'invalid'), field: error.field });
+  res.status(status).json({ code: error.code === 11000 ? 'duplicate' : (typeof error.code === 'string' ? error.code : status === 500 ? 'serverError' : 'invalid'), field: error.field });
 });
 module.exports = router;
 module.exports.buildPayload = payload;

@@ -1,1683 +1,196 @@
-import { isAdmin } from 'roles';
-import BrandLogo from "components/BrandLogo";
-import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AddIcon, CloseIcon } from '@chakra-ui/icons';
+import { Box, Button, Checkbox, Drawer, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader, DrawerOverlay,
+  FormControl, FormErrorMessage, FormLabel, Grid, GridItem, Heading, IconButton, Input, Select, Spinner,
+  Table, Tbody, Td, Text, Textarea, Th, Thead, Tr } from '@chakra-ui/react';
+import { getIn, useFormik } from 'formik';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { AsyncRelationSelect } from 'components/dynamicForm/DynamicFormRenderer';
-import CurrencyAmount from 'components/CurrencyAmount';
-import { AddIcon, CloseIcon } from "@chakra-ui/icons";
-import {
-  Box,
-  Button,
-  Checkbox,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
-  Flex,
-  FormControl,
-  FormLabel,
-  Grid,
-  GridItem,
-  Heading,
-  IconButton,
-  Input,
-  Select,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Textarea,
-  Th,
-  Thead,
-  Tr,
-} from "@chakra-ui/react";
-import Spinner from "components/spinner/Spinner";
-import dayjs from "dayjs";
-import { ErrorMessage, Field, FieldArray, useFormik, Form } from "formik";
-import { useState, useEffect, useCallback } from "react";
-import { LiaMousePointerSolid } from "react-icons/lia";
-import { postApi, getApi, putApi } from "services/api";
-import { generateValidationSchema } from "utils";
-import CustomForm from "utils/customForm";
-import * as yup from "yup";
-import { invoicesSchema } from "../../../schema/invoicesSchema";
-import UserModel from "components/commonTableModel/UserModel";
-import OpprtunityModel from "components/commonTableModel/OpprtunityModel";
-import { toast } from "react-toastify";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchOpportunityData } from "../../../redux/slices/opportunitySlice";
-import AccountModel from "components/commonTableModel/AccountModel";
-import { fetchAccountData } from "../../../redux/slices/accountSlice";
-import ContactModel from "components/commonTableModel/ContactModel";
-import { HasAccess } from "../../../redux/accessUtils";
-import { fetchInvoicesData } from "../../../redux/slices/invoicesSlice";
-import moment from "moment";
-import { formLabel, formValue } from "utils/formValue";
+import CalendarDateInput from 'components/date/CalendarDateInput';
+import { tr, withLocalization } from 'i18n/runtime';
+import { isAdmin } from 'roles';
+import { HasAccess } from '../../../redux/accessUtils';
+import { getApi, postApi, putApi } from 'services/api';
+import { formValue } from 'utils/formValue';
+import { calculateInvoice } from 'utils/invoiceCalculations';
+import { invoicesSchema } from 'schema/invoicesSchema';
+import { toast } from 'react-toastify';
+import InvoiceDocument, { invoiceMoney } from './components/InvoiceDocument';
 
-const AddEdit = (props) => {
-  const {
-    isOpen,
-    size,
-    onClose,
-    type,
-    setAction,
-    selectedId,
-    contactId,
-    action,
-  } = props;
-  const [isLoding, setIsLoding] = useState(false);
-  const [userModel, setUserModel] = useState(false);
-  const [opprtunityModel, setOpprtunityModel] = useState(false);
-  const [userData, setUserData] = useState([]);
-  const [accountModel, setAccountModel] = useState(false);
-  const [contactModel, setContactModel] = useState(false);
-  const [invoiceDetails, setInvoiceDetails] = useState({});
-  const [items, setItems] = useState([
-    { id: 1, productName: "", qty: 0, rate: 0, amount: 0 },
-  ]);
-  const [total, setTotal] = useState(0);
-  const [discounts, setDiscount] = useState(0);
-  const [netAmount, setNetAmount] = useState(0);
-  const dispatch = useDispatch();
-  const user = JSON.parse(localStorage.getItem("user"));
-  const [accountAccess, contactAccess] = HasAccess(["Account", "Contacts"]);
-  const [isOpenPreview, setIsOpenPreview] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState(null);
-
-  const opportunityList = useSelector(
-    (state) => state?.opportunityData?.data?.data,
-  );
-  const accountList = useSelector((state) => state?.accountData?.data?.data);
-  const contactList = useSelector((state) => state?.contactData?.data);
-
-  const initialValues = {
-    customFields: invoiceDetails?.customFields || {},
-    title: type === "edit" ? invoiceDetails?.title : "",
-    property: type === "edit" ? formValue(invoiceDetails?.property) : "",
-    transactionType: type === "edit" ? invoiceDetails?.transactionType || "" : "",
-    quoteNumber: type === "edit" ? invoiceDetails?.quoteNumber : null,
-    quoteDate: type === "edit" ? invoiceDetails?.quoteDate : "",
-    dueDate: type === "edit" ? invoiceDetails?.dueDate : "",
-    invoiceDate: type === "edit" ? invoiceDetails?.invoiceDate : "",
-    status: type === "edit" ? formValue(invoiceDetails?.status) || "Draft" : "Draft",
-    assignedTo: type === "edit" ? formValue(invoiceDetails?.assignedTo) : "",
-    description: type === "edit" ? invoiceDetails?.description : "",
-    account: type === "edit" ? formValue(invoiceDetails?.account) : "",
-    contact:
-      type === "edit" ? formValue(invoiceDetails?.contact) : formValue(contactId),
-    billingStreet: type === "edit" ? invoiceDetails?.billingStreet : "",
-    shippingStreet: type === "edit" ? invoiceDetails?.shippingStreet : "",
-    billingCity: type === "edit" ? invoiceDetails?.billingCity : "",
-    shippingCity: type === "edit" ? invoiceDetails?.shippingCity : "",
-    billingState: type === "edit" ? invoiceDetails?.billingState : "",
-    shippingState: type === "edit" ? invoiceDetails?.shippingState : "",
-    billingPostalCode: type === "edit" ? invoiceDetails?.billingPostalCode : "",
-    shippingPostalCode:
-      type === "edit" ? invoiceDetails?.shippingPostalCode : "",
-    billingCountry: type === "edit" ? invoiceDetails?.billingCountry : "",
-    shippingCountry: type === "edit" ? invoiceDetails?.shippingCountry : "",
-    isCheck: type === "edit" ? invoiceDetails?.isCheck : false,
-    currency: type === "edit" ? (invoiceDetails?.currency === "$" ? "USD" : invoiceDetails?.currency) : "TRY",
-    total: type === "edit" ? invoiceDetails?.total : "0",
-    discount: type === "edit" ? invoiceDetails?.discount : "",
-    subtotal: type === "edit" ? invoiceDetails?.subtotal : "0",
-    shipping: type === "edit" ? invoiceDetails?.shipping : "0",
-    shippingTax: type === "edit" ? invoiceDetails?.shippingTax : "",
-    ptax: type === "edit" ? invoiceDetails?.ptax : "0",
-    tax: type === "edit" ? invoiceDetails?.tax : "0",
-    grandTotal: type === "edit" ? invoiceDetails?.grandTotal : "0",
-    discountType: type === "edit" ? invoiceDetails?.discountType : "none",
-    items: type === "edit" ? invoiceDetails?.items : [],
-    createBy: JSON.parse(localStorage.getItem("user"))?._id,
-    modifiedBy: JSON.parse(localStorage.getItem("user"))?._id,
-  };
-
-  const addData = async (values) => {
-    try {
-      setIsLoding(true);
-      let response = await postApi("api/invoices/add", values);
-      if (response?.status === 200) {
-        onClose();
-        toast.success(`Invoice Save successfully`);
-        formik.resetForm();
-        setAction((pre) => !pre);
-      } else {
-        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
-        toast.error(tr(`estate.${response?.data?.code || 'serverError'}`));
-      }
-    } catch (e) {
-      console.log(e);
-      toast.error(`server error`);
-    } finally {
-      setIsLoding(false);
-    }
-  };
-  const editData = async (values) => {
-    try {
-      setIsLoding(true);
-      let response = await putApi(`api/invoices/edit/${selectedId}`, values);
-      if (response?.status === 200) {
-        onClose();
-        toast.success(`Invoice Update successfully`);
-        formik.resetForm();
-        setAction((pre) => !pre);
-      } else {
-        if (response?.data?.field) formik.setFieldError(response.data.field, response.data.code || 'invalid');
-        toast.error(tr(`estate.${response?.data?.code || 'serverError'}`));
-      }
-    } catch (e) {
-      console.log(e);
-      toast.error(`server error`);
-    } finally {
-      setIsLoding(false);
-    }
-  };
-
-  const handleCancel = () => {
-    formik.resetForm();
-    onClose();
-    setIsOpenPreview(false);
-  };
-
-  const formik = useFormik({
-    initialValues: initialValues,
-    validationSchema: invoicesSchema,
-    enableReinitialize: true,
-    onSubmit: (values, { resetForm }) => {
-      if (type === "add") {
-        addData(values);
-      } else {
-        const payload = { ...values, modifiedDate: new Date() };
-        editData(payload);
-      }
-    },
-  });
-  const {
-    errors,
-    touched,
-    values,
-    handleBlur,
-    handleChange,
-    handleSubmit,
-    setFieldValue,
-  } = formik;
-
+const addressKeys = ['Street', 'City', 'State', 'PostalCode', 'Country'];
+const blankItem = () => ({ productName: '', qty: 0, rate: 0, discount: 0, discountType: 'none' });
+const initialInvoice = (invoice = {}, contactId) => ({
+  customFields: invoice.customFields || {}, title: invoice.title || '',
+  property: formValue(invoice.property), transactionType: invoice.transactionType || '',
+  quoteNumber: invoice.quoteNumber || '', quoteDate: invoice.quoteDate?.slice(0, 10) || '',
+  invoiceDate: invoice.invoiceDate?.slice(0, 10) || '', dueDate: invoice.dueDate?.slice(0, 10) || '',
+  status: formValue(invoice.status) || 'Draft', assignedTo: formValue(invoice.assignedTo),
+  account: formValue(invoice.account), contact: formValue(invoice.contact || contactId),
+  description: invoice.description || '', isCheck: Boolean(invoice.isCheck),
+  currency: invoice.currency === '$' ? 'USD' : invoice.currency || 'TRY',
+  items: invoice.items || [], shipping: invoice.shipping ?? 0, ptax: invoice.ptax ?? 20,
+  ...Object.fromEntries(['billing', 'shipping'].flatMap(prefix => addressKeys.map(key =>
+    [prefix + key, invoice[prefix + key] || (key === 'Country' ? 'Türkiye' : '')]))),
+  ...calculateInvoice(invoice),
+});
+function AddEdit({ isOpen, onClose, type, selectedId, contactId, setAction, action }) {
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const [accountAccess, contactAccess] = HasAccess(['Partner Customers', 'Contacts']);
+  const [loaded, setLoaded] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const [property, setProperty] = useState(null);
   useEffect(() => {
     let active = true;
-    setSelectedProperty(null);
+    setPreview(false); setLoaded(null); setLoadError(false);
+    if (!isOpen || type !== 'edit') { setLoading(false); return undefined; }
+    setLoading(true);
+    getApi('api/invoices/view/', selectedId).then(result => {
+      if (!active) return;
+      if (result?.status === 200 && result.data?.result) setLoaded(result.data.result);
+      else setLoadError(true);
+    }).catch(() => { if (active) setLoadError(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [isOpen, type, selectedId, action]);
+  const initialValues = useMemo(() => initialInvoice(loaded || {}, contactId), [loaded, contactId]);
+  const formik = useFormik({
+    initialValues, enableReinitialize: true, validationSchema: invoicesSchema,
+    onSubmit: async values => {
+      const totals = calculateInvoice(values);
+      const payload = { ...values, ...totals, ...Object.fromEntries(['property', 'account', 'contact', 'assignedTo'].map(key => [key, values[key] || null])), modifiedBy: user?._id, ...(type === 'add' ? { createBy: user?._id } : {}) };
+      if (values.isCheck) addressKeys.forEach(key => { payload['shipping' + key] = values['billing' + key]; });
+      try {
+        const result = type === 'edit' ? await putApi(`api/invoices/edit/${selectedId}`, payload) : await postApi('api/invoices/add', payload);
+        if (result?.status === 200) {
+          toast.success(tr(type === 'edit' ? 'Invoice Update successfully' : 'Invoice Save successfully'));
+          setAction?.(previous => !previous); close();
+        } else {
+          if (result?.data?.field) formik.setFieldError(result.data.field, tr(`estate.${result.data.code || 'invalid'}`));
+          toast.error(tr(`estate.${result?.data?.code || 'serverError'}`));
+        }
+      } catch (_) { toast.error(tr('estate.serverError')); }
+    },
+  });
+  const { values, setFieldValue } = formik;
+  const totals = useMemo(() => calculateInvoice(values), [values]);
+  const close = () => { formik.resetForm(); setPreview(false); onClose(); };
+  useEffect(() => {
+    let active = true; setProperty(null);
     if (!values.property) return undefined;
     getApi(`api/estate/Properties/${values.property}`).then(result => {
       if (!active || result?.status !== 200) return;
-      setSelectedProperty(result.data);
+      setProperty(result.data);
       if (!values.transactionType && result.data.transactionType) setFieldValue('transactionType', result.data.transactionType);
-    });
+    }).catch(() => {});
     return () => { active = false; };
   }, [values.property, values.transactionType, setFieldValue]);
-
-  const handleCheck = (e) => {
-    setFieldValue("isCheck", e?.target?.checked);
-    if (e?.target?.checked) {
-      setFieldValue("shippingStreet", values?.billingStreet);
-      setFieldValue("shippingCity", values?.billingCity);
-      setFieldValue("shippingState", values?.billingState);
-      setFieldValue("shippingPostalCode", values?.billingPostalCode);
-      setFieldValue("shippingCountry", values?.billingCountry);
-    } else {
-      setFieldValue("shippingStreet", "");
-      setFieldValue("shippingCity", "");
-      setFieldValue("shippingState", "");
-      setFieldValue("shippingPostalCode", "");
-      setFieldValue("shippingCountry", "");
-    }
+  const document = { ...values, ...totals, invoiceNumber: loaded?.invoiceNumber,
+    propertyName: property?.title || property?.name || loaded?.propertyName };
+  if (values.isCheck) addressKeys.forEach(key => { document['shipping' + key] = values['billing' + key]; });
+  const fieldError = name => (formik.submitCount > 0 || getIn(formik.touched, name)) && getIn(formik.errors, name);
+  const field = (name, label, control, span = 6) => <GridItem key={name} colSpan={{ base: 12, md: span }}>
+    <FormControl isInvalid={Boolean(fieldError(name))}>
+      <FormLabel htmlFor={`invoice-${name}`}>{tr(label)}</FormLabel>{control}
+      <FormErrorMessage>{fieldError(name)}</FormErrorMessage>
+    </FormControl>
+  </GridItem>;
+  const input = (name, label, options = {}) => {
+    const common = { id: `invoice-${name}`, name, value: document[name] ?? '',
+      onBlur: formik.handleBlur, onChange: formik.handleChange, ...options };
+    return field(name, label, <Input {...common} />);
   };
-
-  const fetchData = async () => {
-    setIsLoding(true);
-    let result = await getApi("api/user/options");
-    setUserData(result?.data);
-    setIsLoding(false);
+  const relation = (name, label, moduleName) => field(name, label,
+    <AsyncRelationSelect id={`invoice-${name}`} name={name} moduleName={moduleName} value={values[name]}
+      onBlur={formik.handleBlur} onChange={value => {
+        setFieldValue(name, value || null);
+        if (name === 'property') setFieldValue('transactionType', '');
+      }} />);
+  const select = (name, label, options) => field(name, label,
+    <Select id={`invoice-${name}`} name={name} value={values[name]} onChange={formik.handleChange} onBlur={formik.handleBlur}>
+      {options.map(([value, text]) => <option key={value} value={value}>{tr(text)}</option>)}
+    </Select>);
+  const section = label => <GridItem colSpan={12}><Heading size="sm" className="crm-invoice-section">{tr(label)}</Heading></GridItem>;
+  const updateItem = (index, key, value) => setFieldValue('items', values.items.map((item, position) =>
+    position === index ? { ...item, [key]: value } : item));
+  const cell = (item, index, key, label, numeric = false) => {
+    const name = `items[${index}].${key}`;
+    return <FormControl isInvalid={Boolean(fieldError(name))}><Input size="sm" name={name}
+      aria-label={`${tr(label)} ${index + 1}`} type={numeric ? 'number' : 'text'} min={numeric ? 0 : undefined}
+      step={numeric ? 'any' : undefined} value={item[key] ?? ''} onBlur={formik.handleBlur}
+      isDisabled={key === 'discount' && item.discountType === 'none'}
+      onChange={event => updateItem(index, key, event.target.value)} />
+      <FormErrorMessage>{fieldError(name)}</FormErrorMessage></FormControl>;
   };
-
-  const fetchInvoiceDetails = async () => {
-    if (type === "edit") {
-      try {
-        setIsLoding(true);
-        let result = await getApi("api/invoices/view/", selectedId);
-        if (result?.status === 200) {
-          setInvoiceDetails(result?.data?.result);
-        }
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setIsLoding(false);
-      }
-    }
-  };
-  const calculateAmounts = (items) => {
-    const totalAmount = items?.reduce((sum, item) => sum + item?.amount, 0);
-    const totalDiscount = items?.reduce(
-      (sum, item) => sum + item?.totalDiscount,
-      0,
-    );
-    const netAmount = Number(totalAmount) - Number(totalDiscount);
-    return { totalAmount, netAmount, discount: totalDiscount };
-  };
-
-  const handleAddItem = () => {
-    setFieldValue("items", [
-      ...values?.items,
-      {
-        id: values?.items?.length + 1,
-        productName: "",
-        qty: 0,
-        rate: 0,
-        discount: 0,
-        discountType: "none",
-        totalDiscount: 0,
-        amount: 0,
-      },
-    ]);
-  };
-
-  const handleRemoveItem = (index) => {
-    const newItems = values?.items?.filter((_, idx) => idx !== index);
-    setFieldValue("items", newItems);
-    const { totalAmount, netAmount, discount } = calculateAmounts(newItems);
-    setFieldValue("total", totalAmount);
-    setFieldValue("grandTotal", netAmount);
-    setFieldValue("discount", discount);
-  };
-
-  const handleChangeCalculation = (index, field, value) => {
-    const newItems = values?.items?.map((item, idx) => {
-      if (idx === index) {
-        const updatedItem = { ...item, [field]: value };
-        if (["qty", "rate", "discount", "discountType"]?.includes(field)) {
-          const discountValue =
-            updatedItem?.discountType === "percent"
-              ? (updatedItem?.rate * updatedItem?.qty * updatedItem?.discount) /
-                100
-              : updatedItem?.discountType === "none"
-                ? 0
-                : updatedItem?.discount;
-          updatedItem.amount =
-            updatedItem?.rate * updatedItem?.qty - discountValue;
-          updatedItem.totalDiscount = discountValue;
-        }
-        return updatedItem;
-      }
-      return item;
-    });
-
-    setFieldValue("items", newItems);
-    const { totalAmount, netAmount, discount } = calculateAmounts(newItems);
-    setFieldValue("discount", discount);
-    setFieldValue("total", totalAmount);
-    setFieldValue("subtotal", totalAmount);
-    setFieldValue("grandTotal", netAmount);
-  };
-
-  const calculateValues = useCallback(() => {
-    const subtotal = values.subtotal;
-    const shipping = Number(values.shipping);
-    const ptax = Number(values.ptax);
-    const shippingTax = Number(subtotal) + Number(shipping);
-    const tax = (shippingTax * ptax) / 100;
-    const grandTotal = Number(shippingTax) + Number(tax);
-
-    setFieldValue("shippingTax", shippingTax?.toFixed(2));
-    setFieldValue("tax", tax?.toFixed(2));
-    setFieldValue("grandTotal", grandTotal?.toFixed(2));
-  }, [values?.subtotal, values?.shipping, values?.ptax]);
-
-  useEffect(() => {
-    calculateValues();
-  }, [calculateValues]);
-
-  useEffect(() => {
-    if (type === "edit") fetchInvoiceDetails();
-    if (isAdmin(user)) fetchData();
-  }, [type, selectedId, action]);
-
-  useEffect(() => {
-    if (opportunityList?.length === 0 || opportunityList === undefined) {
-      dispatch(fetchOpportunityData());
-    }
-    if (accountList?.length === 0 || accountList === undefined) {
-      dispatch(fetchAccountData());
-    }
-  }, []);
-
-  return (
-    <div>
-      {userModel && (
-        <UserModel
-          onClose={() => setUserModel(false)}
-          isOpen={userModel}
-          fieldName={"assignedTo"}
-          setFieldValue={setFieldValue}
-          data={userData}
-          isLoding={isLoding}
-          setIsLoding={setIsLoding}
-        />
-      )}
-      {/* {opprtunityModel && <OpprtunityModel onClose={() => setOpprtunityModel(false)} isOpen={opprtunityModel} fieldName={"oppotunity"} setFieldValue={setFieldValue} data={opportunityList} isLoding={isLoding} setIsLoding={setIsLoding} type="quotes" billingState="billingState" billingCity="billingCity" billingPostalCode="billingPostalCode" billingCountry="billingCountry" billingStreet="billingStreet" />} */}
-      {accountModel && (
-        <AccountModel
-          onClose={() => setAccountModel(false)}
-          isOpen={accountModel}
-          fieldName={"account"}
-          setFieldValue={setFieldValue}
-          data={accountList}
-        />
-      )}
-      {contactModel && (
-        <ContactModel
-          isOpen={contactModel}
-          data={contactList}
-          onClose={setContactModel}
-          values={values}
-          fieldName="contact"
-          setFieldValue={setFieldValue}
-        />
-      )}
-
-      <Drawer isOpen={isOpen} size={size}>
-        <DrawerOverlay />
-        <DrawerContent>
-          <DrawerHeader
-            alignItems={"center"}
-            justifyContent="space-between"
-            display="flex"
-          >
-            {type === "add"
-              ? !isOpenPreview
-                ? "Add"
-                : "Preview"
-              : !isOpenPreview
-                ? "Edit"
-                : "Preview"}{" "}<LocalizedText text="Invoice" /><IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
-          </DrawerHeader>
-          {!isOpenPreview ? (
-            <DrawerBody><ManagedFormLayout moduleName="Invoices" formik={formik}>
-              <Grid templateColumns="repeat(12, 1fr)" gap={3}>
-                <GridItem colSpan={{ base: 12 }}>
-                  <Heading as="h1" size="md" mt="10px"><LocalizedText text="Overview" /></Heading>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel>{tr('Property')}</FormLabel>
-                  <AsyncRelationSelect name="property" moduleName="Properties" value={values.property}
-                    onChange={value => { setFieldValue('property', value || null); setFieldValue('transactionType', ''); }} />
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel>{tr('Transaction Type')}</FormLabel>
-                  <Select name="transactionType" value={values.transactionType} onChange={handleChange} onBlur={handleBlur}>
-                    <option value="">{tr('Select')}</option><option value="SALE">{tr('Purchased')}</option><option value="RENT">{tr('Rented')}</option>
-                  </Select>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Title" /><Text color={"red"}>*</Text>
-                  </FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.title}
-                    name="title"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Title")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.title && touched?.title ? "red.300" : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.title && touched?.title && errors?.title}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Quote Number" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.quoteNumber}
-                    name="quoteNumber"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Quote Number")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.quoteNumber && touched?.quoteNumber
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.quoteNumber &&
-                      touched?.quoteNumber &&
-                      errors?.quoteNumber}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Quote Date" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={
-                      values?.quoteDate &&
-                      dayjs(values?.quoteDate).format("YYYY-MM-DD")
-                    }
-                    name="quoteDate"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    type="date"
-                    fontWeight="500"
-                    borderColor={
-                      errors?.quoteDate && touched?.quoteDate ? "red.300" : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.quoteDate &&
-                      touched?.quoteDate &&
-                      errors?.quoteDate}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Due Date" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={
-                      values?.dueDate &&
-                      dayjs(values?.dueDate).format("YYYY-MM-DD")
-                    }
-                    name="dueDate"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    type="date"
-                    fontWeight="500"
-                    borderColor={
-                      errors?.dueDate && touched?.dueDate ? "red.300" : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.dueDate && touched?.dueDate && errors?.dueDate}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Invoice Date" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={
-                      values?.invoiceDate &&
-                      dayjs(values?.invoiceDate).format("YYYY-MM-DD")
-                    }
-                    name="invoiceDate"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    type="date"
-                    fontWeight="500"
-                    borderColor={
-                      errors?.invoiceDate && touched?.invoiceDate
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.invoiceDate &&
-                      touched?.invoiceDate &&
-                      errors?.invoiceDate}
-                  </Text>
-                </GridItem>
-                {isAdmin(user) && (
-                  <GridItem colSpan={{ base: 12, md: 6 }}>
-                    <FormLabel
-                      display="flex"
-                      ms="4px"
-                      fontSize="sm"
-                      fontWeight="500"
-                      mb="8px"
-                    ><LocalizedText text="Assigned To" /></FormLabel>
-                    <Flex justifyContent={"space-between"}>
-                      <Select
-                        value={values?.assignedTo}
-                        name="assignedTo"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        mb={
-                          errors?.assignedTo && touched?.assignedTo
-                            ? undefined
-                            : "10px"
-                        }
-                        fontWeight="500"
-                        placeholder={tr("Assigned To")}
-                        borderColor={
-                          errors?.assignedTo && touched?.assignedTo
-                            ? "red.300"
-                            : null
-                        }
-                      >
-                        {userData?.map((item) => {
-                          return (
-                            <option
-                              value={item?._id}
-                              key={item?._id}
-                            >{formLabel(item, item?._id)}</option>
-                          );
-                        })}
-                      </Select>
-                      <IconButton
-                        onClick={() => setUserModel(true)}
-                        ml={2}
-                        fontSize="25px"
-                        icon={<LiaMousePointerSolid />}
-                      />
-                    </Flex>
-                  </GridItem>
-                )}
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Status" /></FormLabel>
-                  <Select
-                    value={values?.status}
-                    name="status"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    mb={errors?.status && touched?.status ? undefined : "10px"}
-                    fontWeight="500"
-                    placeholder={tr("Status")}
-                    borderColor={
-                      errors?.status && touched?.status ? "red.300" : null
-                    }
-                  >
-                    <option value="Draft"><LocalizedText text="Draft" /></option>
-                    <option value="Sent"><LocalizedText text="Sent" /></option>
-                    <option value="Pending"><LocalizedText text="Pending" /></option>
-                    <option value="Partially Paid"><LocalizedText text="Partially Paid" /></option>
-                    <option value="Paid"><LocalizedText text="Paid" /></option>
-                    <option value="Overdue"><LocalizedText text="Overdue" /></option>
-                    <option value="Cancelled"><LocalizedText text="Cancelled" /></option>
-                  </Select>
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.status && touched?.status && errors?.status}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Description" /></FormLabel>
-                  <Textarea
-                    fontSize="sm"
-                    value={values?.description}
-                    name="description"
-                    resize={"none"}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Description")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.description && touched?.description
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.description &&
-                      touched?.description &&
-                      errors?.description}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <Heading as="h1" size="md" mt="10px"><LocalizedText text="Address Information" /></Heading>
-                </GridItem>
-                {(isAdmin(user) || accountAccess?.view) && (
-                  <GridItem colSpan={{ base: 12, md: 6 }}>
-                    <FormLabel
-                      display="flex"
-                      ms="4px"
-                      fontSize="sm"
-                      fontWeight="500"
-                      mb="8px"
-                    ><LocalizedText text="Partner Customer" /></FormLabel>
-                    <Flex justifyContent={"space-between"}>
-                      <Box flex="1" minW={0} mb={errors?.account && touched?.account ? undefined : "10px"}>
-                        <AsyncRelationSelect
-                          id="invoice-account"
-                          moduleName="Partner Customers"
-                          value={values?.account}
-                          onChange={(value) => setFieldValue("account", value)}
-                        />
-                      </Box>
-                      <IconButton
-                        onClick={() => setAccountModel(true)}
-                        ml={2}
-                        fontSize="25px"
-                        icon={<LiaMousePointerSolid />}
-                      />
-                    </Flex>
-                    <Text mb="10px" fontSize="sm" color={"red"}>
-                      {" "}
-                      {errors?.account && touched?.account && errors?.account}
-                    </Text>
-                  </GridItem>
-                )}
-                {(isAdmin(user) || contactAccess?.view) && (
-                  <GridItem colSpan={{ base: 12, md: 6 }}>
-                    <FormLabel
-                      display="flex"
-                      ms="4px"
-                      fontSize="sm"
-                      fontWeight="500"
-                      mb="8px"
-                    ><LocalizedText text="Contact" /></FormLabel>
-                    <Flex justifyContent={"space-between"}>
-                      <Select
-                        value={values?.contact}
-                        name="contact"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        mb={
-                          errors?.contact && touched?.contact
-                            ? undefined
-                            : "10px"
-                        }
-                        fontWeight="500"
-                        placeholder={tr("Contact")}
-                        borderColor={
-                          errors?.contact && touched?.contact ? "red.300" : null
-                        }
-                      >
-                        {contactList?.length > 0 &&
-                          contactList?.map((item) => {
-                            return (
-                              <option
-                                value={item?._id}
-                                key={item?._id}
-                              >{formLabel(item, item?._id)}</option>
-                            );
-                          })}
-                      </Select>
-                      <IconButton
-                        onClick={() => setContactModel(true)}
-                        ml={2}
-                        fontSize="25px"
-                        icon={<LiaMousePointerSolid />}
-                      />
-                    </Flex>
-                    <Text mb="10px" fontSize="sm" color={"red"}>
-                      {" "}
-                      {errors?.contact && touched?.contact && errors?.contact}
-                    </Text>
-                  </GridItem>
-                )}
-
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <Heading as="h1" size="md" mt="10px"><LocalizedText text="Billing Address" /></Heading>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <Heading as="h1" size="md" mt="10px"><LocalizedText text="Shipping Address" /></Heading>
-                </GridItem>
-
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <Checkbox
-                    isChecked={values?.isCheck}
-                    onChange={(e) => handleCheck(e)}
-                    visibility={"hidden"}
-                  ><LocalizedText text="Copy address from left" /></Checkbox>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                    mt={3}
-                  ><LocalizedText text="Billing Street" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.billingStreet}
-                    name="billingStreet"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Billing Street")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.billingStreet && touched?.billingStreet
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.billingStreet &&
-                      touched?.billingStreet &&
-                      errors?.billingStreet}
-                  </Text>
-                </GridItem>
-
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <Checkbox
-                    isChecked={values?.isCheck}
-                    onChange={(e) => handleCheck(e)}
-                  ><LocalizedText text="Copy address from left" /></Checkbox>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                    mt={3}
-                  ><LocalizedText text="Shipping Street" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.shippingStreet}
-                    name="shippingStreet"
-                    disabled={values?.isCheck}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Shipping Street")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.shippingStreet && touched?.shippingStreet
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.shippingStreet &&
-                      touched?.shippingStreet &&
-                      errors?.shippingStreet}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Billing City" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.billingCity}
-                    name="billingCity"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Billing City")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.billingCity && touched?.billingCity
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.billingCity &&
-                      touched?.billingCity &&
-                      errors?.billingCity}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Shipping City" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.shippingCity}
-                    name="shippingCity"
-                    disabled={values?.isCheck}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Shipping City")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.shippingCity && touched?.shippingCity
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.shippingCity &&
-                      touched?.shippingCity &&
-                      errors?.shippingCity}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Billing State" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.billingState}
-                    name="billingState"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Billing State")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.billingState && touched?.billingState
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.billingState &&
-                      touched?.billingState &&
-                      errors?.billingState}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Shipping State" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.shippingState}
-                    disabled={values?.isCheck}
-                    name="shippingState"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Shipping State")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.shippingState && touched?.shippingState
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.shippingState &&
-                      touched?.shippingState &&
-                      errors?.shippingState}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Billing Postal Code" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.billingPostalCode}
-                    name="billingPostalCode"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    type="number"
-                    placeholder={tr("Billing Postal Code")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.billingPostalCode && touched?.billingPostalCode
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.billingPostalCode &&
-                      touched?.billingPostalCode &&
-                      errors?.billingPostalCode}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Shipping Postal Code" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.shippingPostalCode}
-                    disabled={values?.isCheck}
-                    name="shippingPostalCode"
-                    type="number"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Shipping Postal Code")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.shippingPostalCode && touched?.shippingPostalCode
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.shippingPostalCode &&
-                      touched?.shippingPostalCode &&
-                      errors?.shippingPostalCode}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Billing Country" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.billingCountry}
-                    name="billingCountry"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Billing Country")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.billingCountry && touched?.billingCountry
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.billingCountry &&
-                      touched?.billingCountry &&
-                      errors?.billingCountry}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 6 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Shipping Country" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.shippingCountry}
-                    name="shippingCountry"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    disabled={values?.isCheck}
-                    placeholder={tr("Shipping Country")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.shippingCountry && touched?.shippingCountry
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.shippingCountry &&
-                      touched?.shippingCountry &&
-                      errors?.shippingCountry}
-                  </Text>
-                </GridItem>
-
-                <GridItem colSpan={{ base: 12 }}>
-                  <Heading as="h1" size="md" mt="10px"><LocalizedText text="Line Items" /></Heading>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Currency" /></FormLabel>
-                  <Select
-                    value={values?.currency}
-                    name="currency"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    mb={
-                      errors.currency && touched.currency ? undefined : "10px"
-                    }
-                    fontWeight="500"
-                    placeholder={tr("Select Currency")}
-                    borderColor={
-                      errors?.currency && touched?.currency ? "red.300" : null
-                    }
-                  >
-                    <option value="TRY">TRY — Turkish Lira (₺)</option>
-                    <option value="USD">USD — US Dollar ($)</option>
-                    <option value="EUR">EUR — Euro (€)</option>
-                  </Select>
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.currency && touched?.currency && errors?.currency}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <Box>
-                    <Table
-                      variant="simple"
-                      size="sm"
-                      mt={5}
-                      backgroundColor="#f9f9f9"
-                    >
-                      <Thead>
-                        <Tr>
-                          <Th></Th>
-                          <Th>#</Th>
-                          <Th><LocalizedText text="Item" /></Th>
-                          <Th><LocalizedText text="Qty" /></Th>
-                          <Th><LocalizedText text="Rate" /></Th>
-                          <Th><LocalizedText text="Discount" /></Th>
-                          <Th><LocalizedText text="Amount" /></Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {values?.items?.length > 0 &&
-                          values?.items?.map((item, index) => (
-                            <Tr key={item?.id}>
-                              <Td className="text-center">
-                                <IconButton
-                                  icon={<CloseIcon />}
-                                  onClick={() => handleRemoveItem(index)}
-                                  colorScheme="red"
-                                  variant="outline"
-                                  size="sm"
-                                  style={{ fontSize: "10px" }}
-                                />
-                              </Td>
-                              <Td>{index + 1}</Td>
-                              <Td>
-                                <FormControl>
-                                  <Input
-                                    type="text"
-                                    value={item?.productName}
-                                    onChange={(e) =>
-                                      handleChangeCalculation(
-                                        index,
-                                        "productName",
-                                        e.target.value,
-                                      )
-                                    }
-                                    size="sm"
-                                  />
-                                </FormControl>
-                              </Td>
-                              <Td>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    value={item?.qty}
-                                    onChange={(e) =>
-                                      handleChangeCalculation(
-                                        index,
-                                        "qty",
-                                        Number(e.target.value),
-                                      )
-                                    }
-                                    size="sm"
-                                  />
-                                </FormControl>
-                              </Td>
-                              <Td>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    value={item?.rate}
-                                    onChange={(e) =>
-                                      handleChangeCalculation(
-                                        index,
-                                        "rate",
-                                        Number(e.target.value),
-                                      )
-                                    }
-                                    size="sm"
-                                  />
-                                </FormControl>
-                              </Td>
-                              <Td style={{ display: "flex" }}>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    value={item?.discount}
-                                    onChange={(e) =>
-                                      handleChangeCalculation(
-                                        index,
-                                        "discount",
-                                        Number(e.target.value),
-                                      )
-                                    }
-                                    size="sm"
-                                    disabled={item?.discountType === "none"}
-                                  />
-                                  <Select
-                                    value={item?.discountType}
-                                    onChange={(e) => {
-                                      handleChangeCalculation(
-                                        index,
-                                        "discountType",
-                                        e.target.value,
-                                      );
-                                    }}
-                                    size="sm"
-                                  >
-                                    <option value="none"><LocalizedText text="No Discount" /></option>
-                                    <option value="percent"><LocalizedText text="Percentage" /> (%)</option>
-                                    <option value="flatAmount"><LocalizedText text="Fixed Amount" /> ({values?.currency})</option>
-                                  </Select>
-                                </FormControl>
-                              </Td>
-                              <Td>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    value={item?.amount}
-                                    readOnly
-                                    size="sm"
-                                  />
-                                </FormControl>
-                              </Td>
-                            </Tr>
-                          ))}
-                        <Tr>
-                          <Td colSpan={4} display="flex" justifyContent={"end"}>
-                            <IconButton
-                              icon={<AddIcon />}
-                              onClick={handleAddItem}
-                              colorScheme="green"
-                              variant="outline"
-                              size="sm"
-                              style={{ fontSize: "10px" }}
-                            />
-                          </Td>
-                          <Td></Td>
-                          <Td></Td>
-                          <Td></Td>
-                        </Tr>
-                      </Tbody>
-                    </Table>
-                  </Box>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Total" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.total}
-                    name="total"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Total")}
-                    fontWeight="500"
-                    type="number"
-                    borderColor={
-                      errors?.total && touched?.total ? "red.300" : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.total && touched?.total && errors?.total}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Total Discount" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.discount}
-                    name="discount"
-                    onBlur={handleBlur}
-                    type="number"
-                    onChange={handleChange}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.discount && touched?.discount ? "red.300" : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.discount && touched?.discount && errors?.discount}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Subtotal" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.subtotal}
-                    name="subtotal"
-                    type="number"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Subtotal")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.subtotal && touched?.subtotal ? "red.300" : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.subtotal && touched?.subtotal && errors?.subtotal}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Shipping" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.shipping}
-                    name="shipping"
-                    type="number"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Shipping")}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.shipping && touched?.shipping ? "red.300" : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.shipping && touched?.shipping && errors?.shipping}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 10 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Shipping Tax" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.shippingTax}
-                    name="shippingTax"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder={tr("Shipping Tax")}
-                    type="number"
-                    fontWeight="500"
-                    borderColor={
-                      errors?.shippingTax && touched?.shippingTax
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.shippingTax &&
-                      touched?.shippingTax &&
-                      errors?.shippingTax}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12, md: 2 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                    visibility={"hidden"}
-                  >
-                    -
-                  </FormLabel>
-                  <Select
-                    value={values?.ptax}
-                    name="ptax"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    mb={errors?.ptax && touched?.ptax ? undefined : "10px"}
-                    fontWeight="500"
-                    borderColor={
-                      errors?.ptax && touched?.ptax ? "red.300" : null
-                    }
-                  >
-                    <option value="0">0%</option>
-                    <option value="1">1%</option>
-                    <option value="10">10%</option>
-                    <option value="18">18%</option>
-                    <option value="20">20%</option>
-                  </Select>
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.ptax && touched?.ptax && errors?.ptax}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Tax" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.tax}
-                    name="tax"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    fontWeight="500"
-                    type="number"
-                    placeholder={tr("Tax")}
-                    borderColor={errors?.tax && touched?.tax ? "red.300" : null}
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.tax && touched?.tax && errors?.tax}
-                  </Text>
-                </GridItem>
-                <GridItem colSpan={{ base: 12 }}>
-                  <FormLabel
-                    display="flex"
-                    ms="4px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    mb="8px"
-                  ><LocalizedText text="Grand Total" /></FormLabel>
-                  <Input
-                    fontSize="sm"
-                    value={values?.grandTotal}
-                    name="grandTotal"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    fontWeight="500"
-                    type="number"
-                    placeholder={tr("Grand Total")}
-                    borderColor={
-                      errors?.grandTotal && touched?.grandTotal
-                        ? "red.300"
-                        : null
-                    }
-                  />
-                  <Text mb="10px" fontSize="sm" color={"red"}>
-                    {" "}
-                    {errors?.grandTotal &&
-                      touched?.grandTotal &&
-                      errors?.grandTotal}
-                  </Text>
-                </GridItem>
-              </Grid>
-            </ManagedFormLayout>
-</DrawerBody>
-          ) : (
-            <DrawerBody>
-              <div className="invoice-container">
-                <div className="invoice-header">
-                  <div className="">
-                    <BrandLogo
-                      style={{ width: "100%", height: "90px", objectFit: "contain" }}
-                      cursor="pointer"
-                      userSelect="none"
-                      my={2}
-                    />
-                  </div>
-                  <div className="invoice-details">
-                    <table>
-                      <tr>
-                        <th style={{ textAlign: "start" }}><LocalizedText text="Invoice No." /></th>
-                        <td>:</td>
-                        <td style={{ textAlign: "start" }}>
-                          {type === "edit" ? invoiceDetails?.invoiceNumber : ""}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ textAlign: "start" }}><LocalizedText text="Invoice Date" /></th>
-                        <td>:</td>
-                        <td style={{ textAlign: "start" }}>
-                          {values?.invoiceDate &&
-                            moment(values?.invoiceDate).format("DD-MM-YYYY")}
-                        </td>
-                      </tr>
-                      <tr>
-                        <th style={{ textAlign: "start" }}><LocalizedText text="Name" /></th>
-                        <td>:</td>
-                        <td style={{ textAlign: "start" }}>{values?.title}</td>
-                      </tr>
-                      <tr>
-                        <th style={{ textAlign: "start" }}>{tr('Property')}</th><td>:</td><td data-no-translate>{selectedProperty?.title || selectedProperty?.name || invoiceDetails?.propertyName || values.property || '-'}</td>
-                      </tr>
-                      <tr><th style={{ textAlign: "start" }}>{tr('Transaction Type')}</th><td>:</td><td>{values.transactionType ? tr(values.transactionType === 'SALE' ? 'Purchased' : 'Rented') : '-'}</td></tr>
-                      <tr>
-                        <th style={{ textAlign: "start" }}><LocalizedText text="Status" /></th>
-                        <td>:</td>
-                        <td style={{ textAlign: "start" }}>{values?.status}</td>
-                      </tr>
-                    </table>
-                  </div>
-                </div>
-                <div className="address-section">
-                  <div className="address">
-                    <strong><LocalizedText text="Billing Address" /></strong>
-                    <br />
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {values?.billingStreet
-                        ? `${values?.billingStreet},${values?.billingCity},`
-                        : ""}
-                    </p>
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {values?.billingState ? `${values?.billingState},` : ""}
-                    </p>
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {`${values?.billingCountry} - ${values?.billingPostalCode}`}
-                    </p>
-                  </div>
-                  <div className="address">
-                    <strong><LocalizedText text="Shipping Address" /></strong>
-                    <br />
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {values?.shippingStreet
-                        ? `${values?.shippingStreet},${values?.shippingCity},`
-                        : ""}
-                    </p>
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {values?.shippingState ? `${values?.shippingState},` : ""}
-                    </p>
-                    <p style={{ width: "250px", wordBreak: "break-all" }}>
-                      {`${values?.shippingCountry} - ${values?.shippingPostalCode}`}
-                    </p>
-                  </div>
-                </div>
-                <table className="invoice-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: "50px" }}><LocalizedText text="S No" /></th>
-                      <th style={{ width: "100px" }}><LocalizedText text="ITEM" /></th>
-                      <th style={{ width: "50px" }}><LocalizedText text="QTY" /></th>
-                      <th style={{ width: "50px" }}><LocalizedText text="RATE" /></th>
-                      <th style={{ width: "50px" }}><LocalizedText text="DISCOUNT" /></th>
-                      <th style={{ width: "50px" }}><LocalizedText text="AMOUNT" /></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {values?.items?.length > 0 &&
-                      values?.items?.map((item, index) => (
-                        <tr key={index}>
-                          <td>{item?.id}</td>
-                          <td>{item?.productName}</td>
-                          <td>{item?.qty}</td>
-                          <td><CurrencyAmount amount={item?.rate} currency={values?.currency} compact /></td>
-                          <td>{item?.discountType === "percent" ? `${item?.discount}%` : item?.discountType === "flatAmount" ? <CurrencyAmount amount={item?.discount} currency={values?.currency} compact /> : item?.discountType === "none" ? 0 : ""}</td>
-                          <td><CurrencyAmount amount={item?.amount} currency={values?.currency} compact /></td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-                <div className="totals">
-                  <table>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Total" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={values?.total} currency={values?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Discount" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={values?.discount} currency={values?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Subtotal" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={values?.subtotal} currency={values?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Shipping" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={values?.shipping} currency={values?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Shipping Tax" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={values?.shippingTax} currency={values?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Tax (" />{values?.ptax}%)
-                      </th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={values?.tax} currency={values?.currency} compact /></td>
-                    </tr>
-                    <tr>
-                      <th style={{ textAlign: "start" }}><LocalizedText text="Grand Total" /></th>
-                      <td>:</td>
-                      <td
-                        style={{ textAlign: "start" }}
-                      ><CurrencyAmount amount={values?.grandTotal} currency={values?.currency} compact /></td>
-                    </tr>
-                  </table>
-                </div>
-                <div className="footer">
-                  <div>{values?.description}</div>
-                </div>
-              </div>
-            </DrawerBody>
-          )}
-          <DrawerFooter>
-            <Button
-              size="sm"
-              sx={{
-                marginRight: 2,
-                textTransform: "capitalize",
-              }}
-              variant="brand"
-              onClick={() => setIsOpenPreview(!isOpenPreview)}
-            >
-              {isOpenPreview ? tr("Hide") : tr("Preview")}
-            </Button>
-            {!isOpenPreview && (
-              <>
-                <Button
-                  sx={{ textTransform: "capitalize" }}
-                  size="sm"
-                  disabled={isLoding ? true : false}
-                  variant="brand"
-                  type="submit"
-                  onClick={handleSubmit}
-                >
-                  {isLoding ? <Spinner /> : tr("Save")}
-                </Button>
-                <Button
-                  variant="outline"
-                  colorScheme="red"
-                  size="sm"
-                  sx={{
-                    marginLeft: 2,
-                    textTransform: "capitalize",
-                  }}
-                  onClick={handleCancel}
-                ><LocalizedText text="Close" /></Button>
-              </>
-            )}
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-    </div>
-  );
-};
-
+  return <Drawer isOpen={isOpen} onClose={close} size="xl">
+    <DrawerOverlay /><DrawerContent className="crm-invoice-form">
+      <DrawerHeader display="flex" alignItems="center" justifyContent="space-between">
+        <Text>{tr(preview ? 'Preview' : type === 'edit' ? 'Edit' : 'Add')} {tr('Invoice')}</Text>
+        <IconButton aria-label={tr('Close')} icon={<CloseIcon />} onClick={close} variant="ghost" />
+      </DrawerHeader>
+      <DrawerBody>{loading ? <Box textAlign="center" py={12}><Spinner /></Box>
+        : loadError ? <Text color="red.500">{tr('estate.serverError')}</Text>
+        : preview ? <InvoiceDocument invoice={document} />
+        : <ManagedFormLayout moduleName="Invoices" formik={formik}>
+          <Grid templateColumns="repeat(12, minmax(0, 1fr))" gap={5}>
+            {section('Overview')}
+            {input('title', 'Title')}
+            {input('quoteNumber', 'Quote Number')}
+            {relation('property', 'Property', 'Properties')}
+            {select('transactionType', 'Transaction Type', [['', 'Select'], ['SALE', 'Purchased'], ['RENT', 'Rented']])}
+            {['invoiceDate', 'dueDate', 'quoteDate'].map(name => field(name, ({ invoiceDate: 'Invoice Date', dueDate: 'Due Date', quoteDate: 'Quote Date' })[name],
+              <CalendarDateInput id={`invoice-${name}`} name={name} type="date" value={values[name]}
+                onBlur={formik.handleBlur} onChange={formik.handleChange} />))}
+            {select('status', 'Status', ['Draft', 'Sent', 'Pending', 'Partially Paid', 'Paid', 'Overdue', 'Cancelled'].map(value => [value, value]))}
+            {isAdmin(user) && relation('assignedTo', 'Assigned To', 'Users')}
+            {(isAdmin(user) || accountAccess?.view) && relation('account', 'Partner Customer', 'Partner Customers')}
+            {(isAdmin(user) || contactAccess?.view) && relation('contact', 'Contact', 'Contacts')}
+            {field('description', 'Description', <Textarea id="invoice-description" name="description" value={values.description}
+              onChange={formik.handleChange} onBlur={formik.handleBlur} resize="vertical" />, 12)}
+            {section('Address Information')}
+            <GridItem colSpan={12}><Checkbox name="isCheck" isChecked={values.isCheck}
+              onChange={event => setFieldValue('isCheck', event.target.checked)}>{tr('Copy address from left')}</Checkbox></GridItem>
+            {addressKeys.map(key => ['billing', 'shipping'].map(prefix =>
+              input(prefix + key, `${prefix === 'billing' ? 'Billing' : 'Shipping'} ${key === 'PostalCode' ? 'Postal Code' : key}`,
+                { isDisabled: prefix === 'shipping' && values.isCheck,
+                  ...(key === 'PostalCode' ? { inputMode: 'numeric', maxLength: 5 } : {}) })))}
+            {section('Line Items')}
+            {select('currency', 'Currency', [['TRY', 'TRY — Turkish Lira (₺)'], ['USD', 'USD — US Dollar ($)'], ['EUR', 'EUR — Euro (€)']])}
+            <GridItem colSpan={12}><Box overflowX="auto"><Table size="sm" className="crm-invoice-items">
+              <Thead><Tr>{['#', 'Item', 'Qty', 'Rate', 'Discount', 'Amount', ''].map((label, index) => <Th key={index}>{tr(label)}</Th>)}</Tr></Thead>
+              <Tbody>{values.items.map((item, index) => <Tr key={index}>
+                <Td>{index + 1}</Td><Td>{cell(item, index, 'productName', 'Item')}</Td>
+                <Td>{cell(item, index, 'qty', 'Qty', true)}</Td><Td>{cell(item, index, 'rate', 'Rate', true)}</Td>
+                <Td><Box display="grid" gap={1}>{cell(item, index, 'discount', 'Discount', true)}
+                  <Select size="sm" aria-label={`${tr('Discount Type')} ${index + 1}`} value={totals.items[index].discountType}
+                    onChange={event => updateItem(index, 'discountType', event.target.value)}>
+                    <option value="none">{tr('No Discount')}</option><option value="percent">{tr('Percentage')} (%)</option>
+                    <option value="flatAmount">{tr('Fixed Amount')} ({values.currency})</option>
+                  </Select></Box></Td>
+                <Td data-no-translate>{invoiceMoney(totals.items[index].amount, values.currency)}</Td>
+                <Td><IconButton size="sm" colorScheme="red" variant="ghost" aria-label={`${tr('Delete')} ${index + 1}`}
+                  icon={<CloseIcon />} onClick={() => setFieldValue('items', values.items.filter((_, position) => position !== index))} /></Td>
+              </Tr>)}</Tbody>
+            </Table></Box><Button mt={3} size="sm" variant="outline" leftIcon={<AddIcon />}
+              onClick={() => setFieldValue('items', [...values.items, blankItem()])}>{tr('Add')}</Button></GridItem>
+            {input('total', 'Total', { value: totals.total.toFixed(2), isReadOnly: true })}
+            {input('discount', 'Total Discount', { value: totals.discount.toFixed(2), isReadOnly: true })}
+            {input('subtotal', 'Subtotal', { value: totals.subtotal.toFixed(2), isReadOnly: true })}
+            {input('shipping', 'Shipping', { type: 'number', min: 0, step: '0.01', value: values.shipping })}
+            {input('shippingTax', 'KDV Matrahı', { value: totals.shippingTax.toFixed(2), isReadOnly: true })}
+            {select('ptax', 'KDV (%)', [...new Set(['0', '1', '10', '20', String(values.ptax)])].map(rate => [rate, `%${rate}`]))}
+            {input('tax', 'KDV', { value: totals.tax.toFixed(2), isReadOnly: true })}
+            {input('grandTotal', 'Grand Total', { value: totals.grandTotal.toFixed(2), isReadOnly: true })}
+          </Grid>
+        </ManagedFormLayout>}</DrawerBody>
+      <DrawerFooter gap={2} flexWrap="wrap">
+        <Button size="sm" variant="outline" isDisabled={loading || loadError} onClick={() => setPreview(!preview)}>{tr(preview ? 'Hide' : 'Preview')}</Button>
+        {!preview && <Button size="sm" variant="brand" isLoading={formik.isSubmitting} isDisabled={loading || loadError}
+          onClick={formik.handleSubmit}>{tr('Save')}</Button>}
+        <Button size="sm" variant="outline" onClick={close}>{tr('Close')}</Button>
+      </DrawerFooter>
+    </DrawerContent>
+  </Drawer>;
+}
 export default withLocalization(AddEdit);

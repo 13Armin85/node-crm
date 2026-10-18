@@ -132,6 +132,7 @@ const index = async (req, res) => {
 
     return res.status(200).json({ data: allData });
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error(`Failed to display Record`, err);
     return res
       .status(400)
@@ -184,6 +185,7 @@ const view = async (req, res) => {
 
     return res.status(200).json({ data: allData });
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error(`Failed to display Record`, err);
     return res
       .status(400)
@@ -246,6 +248,7 @@ const add = async (req, res) => {
       .status(200)
       .json({ message: "Record added successfully", data: newDocument });
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error(`Failed to create Record`, err);
     return res
       .status(400)
@@ -301,6 +304,7 @@ const deleteField = async (req, res) => {
       .status(200)
       .json({ message: "Record deleted successfully", data: result });
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error(`Failed to delete Record`, err);
     return res
       .status(400)
@@ -358,6 +362,7 @@ const deleteManyField = async (req, res) => {
       .status(200)
       .json({ message: "Record deleted successfully", data: result });
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error(`Failed to delete Record`, err);
     return res
       .status(400)
@@ -431,6 +436,7 @@ const edit = async (req, res) => {
         .json({ success: false, message: "Record not found for the given id" });
     }
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error(`Failed to Update Record`, err);
     return res
       .status(400)

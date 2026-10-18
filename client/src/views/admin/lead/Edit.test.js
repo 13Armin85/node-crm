@@ -44,12 +44,12 @@ test('a loaded lead shows saved relations and Save submits edited values with re
         data={{ _id: id, leadName: 'Original', leadEmail: 'lead@example.com', lead: relatedLead, contact, partnerCustomer: partner, associatedListing: null }}
       /></MemoryRouter></ChakraProvider>, container);
     });
-    expect(document.querySelector('#relation-lead').value).toBe(relatedLead._id);
-    expect(document.querySelector('#relation-lead').selectedOptions[0].textContent).toBe(relatedLead.leadName);
-    expect(Array.from(document.querySelector('#relation-lead').options).some(option => option.value === id)).toBe(false);
-    await act(async () => {
-      Simulate.change(document.querySelector('#relation-lead'), { target: { value: anotherLead._id } });
-    });
+    expect(document.querySelector('#relation-lead').value).toBe(relatedLead.leadName);
+    await act(async () => Simulate.focus(document.querySelector('#relation-lead')));
+    expect([...document.querySelectorAll('[role=option]')].some(option => option.textContent === 'Original')).toBe(false);
+    await act(async () => Simulate.keyDown(document.querySelector('#relation-lead'), { key: 'Escape' }));
+    await act(async () => Simulate.focus(document.querySelector('#relation-lead')));
+    await act(async () => Simulate.click([...document.querySelectorAll('[role=option]')].find(option => option.textContent === anotherLead.leadName)));
     expect(document.querySelector('#relation-contact')).toBeNull();
     expect(document.querySelector('#relation-partnerCustomer')).toBeNull();
     await act(async () => {

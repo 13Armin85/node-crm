@@ -6,6 +6,7 @@ const { can, scope } = require('./permissions');
 const { normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection } = require('../services/leadRelations');
 module.exports = async (req, res, next) => {
   try {
+    if (req.body && !Array.isArray(req.body)) delete req.body._duplicateKeys;
     const moduleId = req.body?.moduleId || req.query.moduleId;
     if (!objectId(moduleId)) return res.status(400).json({ code: 'invalid', field: 'moduleId' });
     const module = await CustomField.findById(moduleId).lean();

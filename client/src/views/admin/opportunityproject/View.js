@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -504,7 +505,7 @@ const View = (props) => {
                             ><LocalizedText text="Actions" /></MenuButton>
                           )}
                           <MenuDivider />
-                          <MenuList minWidth={2}>
+                          <Portal><MenuList minWidth={2} zIndex="popover">
                             {(isAdmin(user) ||
                               permission?.create) && (
                               <MenuItem
@@ -549,7 +550,7 @@ const View = (props) => {
                                 ><LocalizedText text="Delete" /></MenuItem>
                               </>
                             )}
-                          </MenuList>
+                          </MenuList></Portal>
                         </Menu>
                         <Link to="/opportunityproject">
                           <Button

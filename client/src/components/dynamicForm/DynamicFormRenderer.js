@@ -1,3 +1,4 @@
+import SearchableSelect from 'components/SearchableSelect';
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertIcon, Box, Button, Checkbox, FormControl, FormErrorMessage, FormHelperText, FormLabel, Grid, Input, Radio, RadioGroup, Select, Stack, Text, Textarea } from '@chakra-ui/react';
 import { getIn } from 'formik';
@@ -29,7 +30,7 @@ export function FileInput({ value = [], onChange, disabled }) {
     const data = new FormData(); files.forEach(file => data.append('files', file));
     setBusy(true); setError('');
     const response = await postApi('api/estate/files', data);
-    if (response.status === 201) onChange([...value, ...response.data]); else setError(t('estate.invalidFile'));
+    if (response.status === 201) onChange([...value, ...response.data]); else setError(t(response?.data?.code === 'duplicate' ? 'estate.duplicate' : 'estate.invalidFile'));
     setBusy(false); event.target.value = '';
   };
   return <Stack>{error && <Alert status="error"><AlertIcon />{error}</Alert>}
@@ -42,7 +43,7 @@ export function FileInput({ value = [], onChange, disabled }) {
     </Stack>)}
   </Stack>;
 }
-export function AsyncRelationSelect({ moduleName, value, onChange, id, name, disabled }) {
+export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, name, disabled }) {
   const { t } = useLanguage();
   const selectedValue = formValue(value);
   const [query, setQuery] = useState('');
@@ -50,33 +51,38 @@ export function AsyncRelationSelect({ moduleName, value, onChange, id, name, dis
   const [selected, setSelected] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  useEffect(() => { setQuery(''); setOptions([]); setSelected(null); }, [moduleName]);
   useEffect(() => {
     let active = true;
-    if (!selectedValue) { setSelected(null); return undefined; }
+    setSelected(null);
+    if (!selectedValue) return undefined;
     getApi(`api/estate/${encodeURIComponent(moduleName)}/options?id=${encodeURIComponent(selectedValue)}`).then(result => {
-      if (active && result.status === 200) setSelected(result.data[0] || null);
-    });
+      if (active && result?.status === 200 && Array.isArray(result.data)) setSelected(result.data[0] || null);
+    }).catch(() => {});
     return () => { active = false; };
   }, [moduleName, selectedValue]);
   useEffect(() => {
     let active = true;
+    if (disabled) { setBusy(false); return undefined; }
+    setBusy(true); setError(false); setOptions([]);
     const timer = setTimeout(async () => {
-      setBusy(true); setError(false);
-      const result = await getApi(`api/estate/${encodeURIComponent(moduleName)}/options?q=${encodeURIComponent(query)}`);
-      if (active) { setOptions(result.status === 200 ? result.data : []); setError(result.status !== 200); setBusy(false); }
+      try {
+        const result = await getApi(`api/estate/${encodeURIComponent(moduleName)}/options?q=${encodeURIComponent(query.trim())}`);
+        if (!active) return;
+        const valid = result?.status === 200 && Array.isArray(result.data);
+        setOptions(valid ? result.data : []); setError(!valid);
+      } catch (_) { if (active) { setOptions([]); setError(true); } }
+      finally { if (active) setBusy(false); }
     }, 300);
     return () => { active = false; clearTimeout(timer); };
-  }, [moduleName, query]);
-  const all = selected && !options.some(o => o.value === selected.value) ? [selected, ...options] : options;
-  return <Stack spacing={1}>
-    {!disabled && <Input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('Search...')} aria-label={t('Search...')} />}
-    <Select id={id} name={name} value={selectedValue} onChange={e => onChange(e.target.value)} disabled={disabled}>
-      <option value="">{t(busy ? 'estate.loading' : 'Select')}</option>
-      {all.map(option => <option key={formValue(option.value)} value={formValue(option.value)} data-no-translate>{formLabel(option.label, formValue(option.value))}</option>)}
-    </Select>
-    {error && <Text color="red.500">{t('estate.serverError')}</Text>}
-    {!busy && !error && !all.length && <Text fontSize="sm">{t('No Data Found')}</Text>}
-  </Stack>;
+  }, [moduleName, query, disabled]);
+  const all = selected && !options.some(option => String(formValue(option.value)) === String(selectedValue)) ? [selected, ...options] : options;
+  return <SearchableSelect id={id} name={name} value={selectedValue} disabled={disabled} busy={busy} error={error} noResults={!options.length}
+    options={all.map(option => ({ value: formValue(option.value), label: formLabel(option.label, formValue(option.value)) }))}
+    onSearch={setQuery} onBlur={onBlur} onChange={next => {
+      setSelected(all.find(option => String(formValue(option.value)) === next) || null);
+      onChange(next); setQuery('');
+    }} />;
 }
 export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false }) {
   const { language, t } = useLanguage();
@@ -108,7 +114,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       if (field.name === 'sale.status') options = options.filter(o => o.value === 'AVAILABLE' || o.value === (formik.values.transactionType === 'RENT' ? 'RENTED' : 'SOLD'));
       const common = { id, name: path, value: formValue(value) || formLabel(value), onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly };
       let control;
-      if (field.relation) control = <AsyncRelationSelect id={id} name={path} moduleName={field.relation} value={value} onChange={v => change(field, v)} disabled={readOnly} />;
+      if (field.relation) control = <AsyncRelationSelect id={id} name={path} moduleName={field.relation} value={value} onChange={v => change(field, v)} onBlur={formik.handleBlur} disabled={readOnly} />;
       else if (field.type === 'file') control = <FileInput value={value || []} onChange={v => change(field, v)} disabled={readOnly} />;
       else if (field.type === 'currency' && readOnly) control = <CurrencyAmount amount={value} currency={getIn(formik.values, field.name.endsWith('.amount') ? field.name.replace(/\.amount$/, '.currency') : 'currency') || 'TRY'} />;
       else if (field.type === 'currency') control = <PriceInput {...common} value={value} onValueChange={v => change(field, v)} />;
@@ -136,7 +142,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
         {field.type !== 'checkbox' && <FormLabel htmlFor={id}>{label}</FormLabel>}
         <Box>{control}</Box>
         {field.helpText && <FormHelperText>{localized(field.helpText, language)}</FormHelperText>}
-        <FormErrorMessage>{error ? localized(field.validationMessage, language) || t(`estate.${error}`) : ''}</FormErrorMessage>
+        <FormErrorMessage>{error ? localized(field.validationMessage, language) || (['required', 'invalid', 'relationNotFound', 'duplicate'].includes(error) ? t(`estate.${error}`) : error) : ''}</FormErrorMessage>
       </FormControl>;
     })}
   </Grid>;

@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { safeUrl } from 'services/contentSecurity';
 import { isAdmin } from 'roles';
 import { canManageTask } from 'services/taskAccess';
@@ -184,7 +185,7 @@ const TaskView = (props) => {
                           ><LocalizedText text="Actions" /></MenuButton>
                         )}
                         <MenuDivider />
-                        <MenuList minWidth={2}>
+                        <Portal><MenuList minWidth={2} zIndex="popover">
                           {(isAdmin(user) ||
                             permission?.create) && (
                             <MenuItem
@@ -222,7 +223,7 @@ const TaskView = (props) => {
                               ><LocalizedText text="Delete" /></MenuItem>
                             </>
                           )}
-                        </MenuList>
+                        </MenuList></Portal>
                       </Menu>
                       <Button
                         leftIcon={<IoIosArrowBack />}

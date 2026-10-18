@@ -132,4 +132,13 @@ const deleteMany = async (req, res) => {
     }
 }
 
-module.exports = { add, index, view, deleteData, deleteMany }
+const edit = async (req, res) => {
+    try {
+        const fields = ['agenda', 'attendes', 'attendesLead', 'location', 'related', 'dateTime', 'notes', 'customFields'];
+        const updates = Object.fromEntries(fields.filter(field => req.body[field] !== undefined).map(field => [field, req.body[field]]));
+        const result = await MeetingHistory.findOneAndUpdate({ _id: req.params.id, deleted: false, ...require('../../middelwares/permissions').scope(req, 'Meetings') }, { $set: { ...updates, updatedDate: new Date() } }, { new: true, runValidators: true });
+        if (!result) return res.status(404).json({ code: 'notFound' });
+        res.json(result);
+    } catch (error) { res.status(400).json({ code: 'invalid', field: Object.keys(error.errors || {})[0] }); }
+};
+module.exports = { edit, add, index, view, deleteData, deleteMany }

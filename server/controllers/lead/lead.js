@@ -31,6 +31,7 @@ const addMany = async (req, res) => {
 
     res.status(200).json(insertedLead);
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error("Failed to create Lead :", err);
     res.status(400).json({ error: "Failed to create Lead" });
   }
@@ -57,6 +58,7 @@ const changeStatus = async (req, res) => {
       .status(200)
       .json({ message: "Status Change Successfully", result });
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error("Failed to change status:", err);
     return res.status(400).json({ error: "Failed to change status : ", err });
   }
@@ -69,6 +71,7 @@ const add = async (req, res) => {
     await user.save();
     res.status(200).json(user);
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error("Failed to create Lead:", err);
     res.status(400).json({ error: "Failed to create Lead" });
   }
@@ -82,6 +85,7 @@ const edit = async (req, res) => {
     );
     res.status(200).json(result);
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     console.error("Failed to Update Lead:", err);
     res.status(400).json({ error: "Failed to Update Lead" });
   }
@@ -297,6 +301,7 @@ const deleteData = async (req, res) => {
     if (lead) await unlinkLead(lead._id);
     res.status(200).json({ message: "done", lead });
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     res.status(404).json({ message: "error", err });
   }
 };
@@ -310,6 +315,7 @@ const deleteMany = async (req, res) => {
     await Promise.all((req.body || []).map(unlinkLead));
     res.status(200).json({ message: "done", lead });
   } catch (err) {
+    if (err.code === 'duplicate' || err.code === 11000) return res.status(409).json({ code: 'duplicate', field: err.field });
     res.status(404).json({ message: "error", err });
   }
 };

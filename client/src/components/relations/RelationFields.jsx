@@ -1,3 +1,4 @@
+import SearchableSelect from 'components/SearchableSelect';
 import { Alert, AlertIcon, Box, Checkbox, Flex, FormLabel, Grid, GridItem, Input, Select, Spinner, Stack, Tag, TagCloseButton, TagLabel, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { getApi } from "services/api";
@@ -22,16 +23,11 @@ const RelationSelect = ({ label, name, value, items, type, setFieldValue, error,
   return (
   <GridItem colSpan={{ base: 12, md: 6 }}>
     <FormLabel htmlFor={`relation-${name}`} fontSize="sm" fontWeight="600">{label}{required && <Box as="span" ms={1} color="red.500">*</Box>}</FormLabel>
-    <Select
-      id={`relation-${name}`}
-      name={name}
-      value={selected}
-      placeholder={t('Select')}
-      onChange={(event) => setFieldValue(name, event.target.value || null)}
-    >
-      {selected && !items.some(item => item._id === selected) && <option value={selected}>{labelOf(value, type) || selected}</option>}
-      {items.map((item) => <option value={item._id} key={item._id}>{labelOf(item, type)}</option>)}
-    </Select>
+    <SearchableSelect id={`relation-${name}`} name={name} value={selected}
+      options={[
+        ...(selected && !items.some(item => String(item._id) === String(selected)) ? [{ value: selected, label: labelOf(value, type) || selected }] : []),
+        ...items.map(item => ({ value: String(item._id), label: labelOf(item, type) })),
+      ]} placeholder={t('Search...')} onChange={value => setFieldValue(name, value || null)} />
     {error && <Text role="alert" fontSize="sm" color="red.500" mt={1}>{error}</Text>}
   </GridItem>
 );

@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { AddIcon, DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
@@ -89,14 +90,13 @@ const Index = () => {
       center: true,
       cell: ({ row }) => (
         <Text fontSize="md" fontWeight="900" textAlign={"center"}>
-          <Menu isLazy>
+          <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
             <MenuButton>
               <CiMenuKebab />
             </MenuButton>
-            <MenuList
+            <Portal><MenuList
               minW={"fit-content"}
-              transform={"translate(1520px, 173px);"}
-            >
+             zIndex="popover">
               {permission?.update && (
                 <MenuItem
                   py={2.5}
@@ -129,7 +129,7 @@ const Index = () => {
                   }}
                 ><LocalizedText text="Delete" /></MenuItem>
               )}
-            </MenuList>
+            </MenuList></Portal>
           </Menu>
         </Text>
       ),
@@ -347,15 +347,14 @@ const Index = () => {
             size="sm"
           ><LocalizedText text="Delete" /></Button>
         )}
-        <Menu isLazy>
+        <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
           <MenuButton p={4}>
             <BsColumnsGap />
           </MenuButton>
-          <MenuList
+          <Portal><MenuList
             minW={"fit-content"}
             transform={"translate(1670px, 60px)"}
-            zIndex={2}
-          >
+           zIndex="popover">
             <MenuItem width="165px" onClick={() => setIsImportProperty(true)}><LocalizedText text="Import Properties" /></MenuItem>
             <MenuDivider />
             <MenuItem
@@ -374,7 +373,7 @@ const Index = () => {
                 ? tr("Export Selected Data as Excel")
                 : tr("Export as Excel")}
             </MenuItem>
-          </MenuList>
+          </MenuList></Portal>
         </Menu>
         <Button
           size="sm"
@@ -504,10 +503,9 @@ const Index = () => {
                     <MenuButton>
                       <CiMenuKebab />
                     </MenuButton>
-                    <MenuList
+                    <Portal><MenuList
                       minW={"fit-content"}
-                      transform={"translate(1520px, 173px);"}
-                    >
+                     zIndex="popover">
                       {permission?.update && (
                         <MenuItem
                           py={2.5}
@@ -539,7 +537,7 @@ const Index = () => {
                           }}
                         ><LocalizedText text="Delete" /></MenuItem>
                       )}
-                    </MenuList>
+                    </MenuList></Portal>
                   </Menu>
                 </Flex>
               </Card>

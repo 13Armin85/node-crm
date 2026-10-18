@@ -33,7 +33,7 @@ import { LiaMousePointerSolid } from "react-icons/lia";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { MeetingSchema } from "schema";
-import { getApi, postApi } from "services/api";
+import { getApi, postApi, putApi } from "services/api";
 
 const AddMeeting = (props) => {
   const { onClose, isOpen, setAction, from, fetchData, view, leadName } = props;
@@ -75,7 +75,7 @@ const AddMeeting = (props) => {
     initialValues: initialValues,
     validationSchema: MeetingSchema,
     onSubmit: (values, { resetForm }) => {
-      AddData();
+      return AddData();
     },
   });
 
@@ -96,16 +96,16 @@ const AddMeeting = (props) => {
   const AddData = async () => {
     try {
       setIsLoding(true);
-      if (values?.attendes?.length > 0 || values?.attendesLead?.length > 0) {
-        let response = await postApi("api/meeting/add", values);
-        if (response?.status === 200) {
-          formik.resetForm();
-          props.onClose();
-          fetchData(1);
-          // setAction((pre) => !pre)
-        }
-      } else {
-        toast.error(tr("Select Related To"));
+      const response = props.editId
+        ? await putApi(`api/meeting/edit/${props.editId}`, values)
+        : await postApi('api/meeting/add', values);
+      if (response?.status === 200) {
+        formik.resetForm();
+        props.onClose();
+        fetchData?.(1);
+        setAction?.(pre => !pre);
+      } else if (response?.data?.field) {
+        formik.setFieldError(response.data.field, response.data.code || 'invalid');
       }
     } catch (e) {
       console.log(e);
@@ -113,6 +113,27 @@ const AddMeeting = (props) => {
       setIsLoding(false);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    formik.resetForm();
+    if (props.editId) {
+      setIsLoding(true);
+      getApi('api/meeting/view/', props.editId).then(result => {
+        if (!active) return;
+        if (result.status === 200) {
+          const data = result.data;
+          formik.resetForm({ values: { ...initialValues, ...data,
+            dateTime: data.dateTime ? dayjs(data.dateTime).format('YYYY-MM-DDTHH:mm') : '',
+            attendes: (data.attendes || []).map(item => item._id || item),
+            attendesLead: (data.attendesLead || []).map(item => item._id || item),
+          } });
+        } else toast.error(tr('estate.serverError'));
+      }).finally(() => { if (active) setIsLoding(false); });
+    }
+    return () => { active = false; };
+  }, [isOpen, props.editId]);
 
   const fetchAllData = async () => {
     if (view === true) {
@@ -151,7 +172,7 @@ const AddMeeting = (props) => {
 
   useEffect(() => {
     const conditionData =
-      values?.related === "Contact" ? contactdata : leadData;
+      values?.related === "Contact" ? contactdata : leaddata;
     setSetCondition(conditionData);
     const mappedCountries = Array?.isArray(conditionData)
       ? conditionData?.map((item) => ({
@@ -162,13 +183,13 @@ const AddMeeting = (props) => {
         }))
       : [];
     setCountriesWithEmailAsLabel(mappedCountries);
-  }, [leadData, values?.related, contactdata]);
+  }, [leaddata, values?.related, contactdata]);
 
   return (
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
       <ModalContent height={"580px"}>
-        <ModalHeader><LocalizedText text="Add Meeting" /></ModalHeader>
+        <ModalHeader><LocalizedText text={props.editId ? "Edit Meeting" : "Add Meeting"} /></ModalHeader>
         <ModalCloseButton />
         <ModalBody overflowY={"auto"} height={"400px"}><ManagedFormLayout moduleName="Meetings" formik={formik}>
           {/* Contact Model  */}
@@ -336,7 +357,7 @@ const AddMeeting = (props) => {
                 type="datetime-local"
                 onChange={handleChange}
                 onBlur={handleBlur}
-                min={dayjs(todayTime).format("YYYY-MM-DD HH:mm")}
+                min={props.editId ? undefined : dayjs(todayTime).format("YYYY-MM-DDTHH:mm")}
                 value={values?.dateTime}
                 name="dateTime"
                 placeholder={tr("Date Time")}

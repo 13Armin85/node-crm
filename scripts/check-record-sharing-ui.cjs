@@ -159,7 +159,7 @@ async function main(){
   await goto('/documents');await clickText('button','Upload document');await page.waitForSelector('[role="dialog"]');await page.keyboard.press('Escape');
   console.log('PASS all tabs and data-entry actions remain available with general data disabled');
   const logo=await page.$eval('.crm-sidebar-brand__mark',node=>({background:getComputedStyle(node).backgroundColor,border:getComputedStyle(node).borderWidth,shadow:getComputedStyle(node).boxShadow,src:node.querySelector('img').getAttribute('src')}));
-  assert.equal(logo.background,'rgba(0, 0, 0, 0)');assert.equal(logo.border,'0px');assert.equal(logo.shadow,'none');assert(logo.src.includes('brand-logo-transparent.png'));
+  assert.equal(logo.background,'rgba(0, 0, 0, 0)');assert.equal(logo.border,'0px');assert.equal(logo.shadow,'none');assert(logo.src.includes('brand-logo-ta.png'));
   assert.deepEqual(errors,[],'Browser runtime errors');
   console.log('PASS always-available tabs, data-entry actions, transparent logo, sharing, badges and Excel rules in the production build');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

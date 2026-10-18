@@ -139,6 +139,7 @@ const file = async (req, res) => {
             fileName: req.body.filename || path.basename(item.originalname),
             path: item.path,
             img: `${baseUrl}/api/document/images/${item.filename}`,
+            contentHash: item.contentHash,
             mimeType: item.mimetype,
             size: item.size,
             createOn: new Date(),
@@ -151,6 +152,7 @@ const file = async (req, res) => {
         await folder.save();
         res.status(200).json({ message: 'Files uploaded successfully', folder });
     } catch (error) {
+        if (error.code === 'duplicate' || error.code === 11000) return res.status(409).json({ code: 'duplicate', field: 'files' });
         res.status(500).json({ message: 'Failed to upload files', error: error.message });
     }
 };

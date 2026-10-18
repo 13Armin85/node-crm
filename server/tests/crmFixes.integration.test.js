@@ -1,0 +1,117 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const mongoose = require('mongoose');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('../config/auth');
+
+test('duplicate records, concurrent imports, uploads and meeting editing are enforced through persistence and HTTP', { skip: process.env.CRM_FIXES_INTEGRATION !== '1' }, async t => {
+  const dbName = 'crm_fixes_test_' + crypto.randomUUID().replace(/-/g, '');
+  await mongoose.connect('mongodb://127.0.0.1:27017', { dbName, serverSelectionTimeoutMS: 5000 });
+  mongoose.set('strictQuery', false);
+  let server;
+  const paths = [];
+  t.after(async () => {
+    if (server) await new Promise(resolve => server.close(resolve));
+    for (const uploadPath of paths) {
+      assert(uploadPath.startsWith(path.resolve(__dirname, '../uploads') + path.sep));
+      await fs.unlink(uploadPath).catch(() => {});
+    }
+    assert.equal(mongoose.connection.name, dbName);
+    assert(dbName.startsWith('crm_fixes_test_'));
+    await mongoose.connection.dropDatabase(); await mongoose.disconnect();
+  });
+  const app = express(); app.use(express.json()); app.use('/api', require('../controllers/route'));
+  app.use(require('../middelwares/securityHeaders').errorHandler);
+  const User = require('../model/schema/user');
+  const { Contact } = require('../model/schema/contact');
+  Contact.schema.add({ email: String, fullName: String, firstName: String, lastName: String, phoneNumber: String, mobileNumber: String });
+  const admin = await User.create({ username: 'fixes-admin@example.test', password: 'unused-test-hash', role: 'admin' });
+  const other = await User.create({ username: 'fixes-user@example.test', password: 'unused-test-hash', role: 'user' });
+  server = await new Promise(resolve => { const instance = app.listen(0, '127.0.0.1', () => resolve(instance)); });
+  const api = async (method, route, body, actor = admin) => {
+    const form = body instanceof FormData;
+    const response = await fetch('http://127.0.0.1:' + server.address().port + '/api' + route, {
+      method, headers: { ...(form ? {} : { 'Content-Type': 'application/json' }), Authorization: jwt.sign({ userId: actor._id }, jwtSecret, { expiresIn: '5m' }) },
+      ...(body ? { body: form ? body : JSON.stringify(body) } : {}),
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  await Contact.init();
+  const contact = await Contact.create({ fullName: 'One', email: 'One@example.test', createBy: admin._id });
+  await assert.rejects(Contact.create({ email: 'one@example.test', createBy: admin._id }), error => error.code === 'duplicate');
+  await assert.rejects(Contact.create({ fullName: ' one ', email: 'changed@example.test', phoneNumber: '9000000000', createBy: admin._id }), error => error.code === 'duplicate' && error.field === 'fullName');
+  const duplicatePerson = await api('POST', '/contact/add', { fullName: 'One', email: 'http-changed@example.test', phoneNumber: '9000000001' });
+  assert.equal(duplicatePerson.status, 409, JSON.stringify(duplicatePerson));
+  assert.equal(duplicatePerson.data.code, 'duplicate'); assert.equal(duplicatePerson.data.field, 'fullName');
+  const { Lead } = require('../model/schema/lead');
+  Lead.schema.add({ leadName: String, leadEmail: String, leadMobile: String, leadPhoneNumber: String });
+  await Lead.create({ leadName: 'Mobile Lead', leadEmail: 'lead@example.test', leadMobile: '+90 555 700 8000', createBy: admin._id });
+  await assert.rejects(Lead.create({ leadName: 'Different Lead', leadEmail: 'different@example.test', leadMobile: '00905557008000', createBy: admin._id }), error => error.code === 'duplicate' && error.field === 'leadMobile');
+  await assert.rejects(Lead.create({ leadName: 'Mobile Lead', leadEmail: 'another@example.test', leadMobile: '9999999999', createBy: admin._id }), error => error.code === 'duplicate' && error.field === 'leadName');
+  const second = await Contact.create({ fullName: 'Two', email: 'two@example.test', createBy: admin._id });
+  await assert.rejects(Contact.findByIdAndUpdate(second._id, { email: 'ONE@example.test' }), error => error.code === 'duplicate');
+  await assert.rejects(Contact.findByIdAndUpdate(second._id, { fullName: 'One' }), error => error.code === 'duplicate' && error.field === 'fullName');
+  await Contact.findByIdAndUpdate(contact._id, { fullName: 'Renamed' });
+  assert.equal((await Contact.findById(contact._id).lean()).fullName, 'Renamed');
+  await Contact.collection.insertOne({ fullName: 'Legacy', email: ' legacy@example.test ', mobileNumber: '+90 (555) 100-2000', createBy: admin._id, deleted: false });
+  await assert.rejects(Contact.create({ phoneNumber: '00905551002000', createBy: admin._id }), error => error.code === 'duplicate');
+  await assert.rejects(Contact.create({ email: 'LEGACY@example.test', createBy: admin._id }), error => error.code === 'duplicate');
+  await assert.rejects(Contact.insertMany([{ email: 'batch@example.test', createBy: admin._id }, { email: 'BATCH@example.test', createBy: admin._id }]));
+  assert.equal(await Contact.countDocuments({ email: /batch/i }), 0);
+  await assert.rejects(Contact.insertMany([{ fullName: 'Batch Person', email: 'batch1@example.test', createBy: admin._id }, { fullName: 'batch person', email: 'batch2@example.test', createBy: admin._id }]));
+  assert.equal(await Contact.countDocuments({ fullName: /batch person/i }), 0);
+  const sameNameRace = await Promise.allSettled([1, 2].map(index => Contact.create({ fullName: 'Concurrent Person', email: `name-race-${index}@example.test`, createBy: admin._id })));
+  assert.equal(sameNameRace.filter(result => result.status === 'fulfilled').length, 1);
+  assert.equal(await Contact.countDocuments({ fullName: 'Concurrent Person' }), 1);
+
+  const concurrent = await Promise.allSettled([1, 2].map(() => Contact.create({ email: 'race@example.test', createBy: admin._id })));
+  assert.equal(concurrent.filter(item => item.status === 'fulfilled').length, 1);
+  assert.equal(await Contact.countDocuments({ email: 'race@example.test' }), 1);
+  await Contact.findByIdAndUpdate(contact._id, { deleted: true });
+  await Contact.create({ email: 'one@example.test', createBy: admin._id });
+  const Residence = require('../model/schema/residence');
+  await Residence.create({ name: 'Palm', city: 'Istanbul', createBy: admin._id });
+  const duplicateResidence = await api('POST', '/estate/Residences', { name: ' palm ', city: 'istanbul' });
+  assert.equal(duplicateResidence.status, 409, JSON.stringify(duplicateResidence));
+  assert.equal(duplicateResidence.data.code, 'duplicate');
+  const Partner = require('../model/schema/partnerCustomer');
+  await Partner.create({ fullName: 'Partner', phone: '+90 555 200 3000', createBy: admin._id });
+  await assert.rejects(Partner.create({ fullName: 'Other', phone: '00905552003000', createBy: admin._id }));
+  const { Property } = require('../model/schema/property');
+  await Property.create({ title: 'Unit 1', district: 'North', createBy: admin._id });
+  await assert.rejects(Property.create({ title: ' unit 1 ', district: 'north', createBy: admin._id }));
+  const meeting = await api('POST', '/meeting/add', { agenda: 'Original', dateTime: '2026-10-20T10:00', related: 'None' });
+  assert.equal(meeting.status, 200, JSON.stringify(meeting));
+  const edited = await api('PUT', '/meeting/edit/' + meeting.data._id, { agenda: 'Edited', dateTime: '2026-10-21T11:00', createBy: other._id });
+  assert.equal(edited.status, 200, JSON.stringify(edited));
+  assert.equal(edited.data.agenda, 'Edited'); assert.equal(edited.data.createBy, String(admin._id));
+  assert.equal((await api('PUT', '/meeting/edit/' + meeting.data._id, { agenda: 'Unauthorized' }, other)).status, 404);
+  const missing = await api('PUT', '/meeting/edit/' + meeting.data._id, { agenda: ' ' });
+  assert.equal(missing.status, 400); assert.equal(missing.data.field, 'agenda');
+  const data = 'Distinct test upload ' + dbName;
+  const form = name => { const body = new FormData(); body.append('files', new Blob([data], { type: 'text/plain' }), name); return body; };
+  const upload = await api('POST', '/estate/files', form('first.txt'));
+  assert.equal(upload.status, 201, JSON.stringify(upload));
+  const File = mongoose.model('EstateFile');
+  const stored = await File.findById(upload.data[0].id).lean();
+  paths.push(path.resolve(__dirname, '../uploads/estate', stored.storageName));
+  const duplicateUpload = await api('POST', '/estate/files', form('renamed.txt'));
+  assert.equal(duplicateUpload.status, 409, JSON.stringify(duplicateUpload));
+  assert.equal(duplicateUpload.data.code, 'duplicate');
+  const documentUpload = await api('POST', '/document/add', form('first.txt'));
+  assert.equal(documentUpload.status, 200, JSON.stringify(documentUpload));
+  const Document = require('../model/schema/document');
+  const folder = await Document.findById(documentUpload.data.folder._id).lean();
+  paths.push(...folder.file.map(file => file.path));
+  const duplicateDocument = await api('POST', '/document/add', form('other-name.txt'));
+  assert.equal(duplicateDocument.status, 409, JSON.stringify(duplicateDocument));
+  const nextForm = name => { const body = new FormData(); body.append('files', new Blob([data + ' concurrent'], { type: 'text/plain' }), name); return body; };
+  const uploads = await Promise.all([api('POST', '/document/add', nextForm('one.txt')), api('POST', '/document/add', nextForm('two.txt'))]);
+  assert.deepEqual(uploads.map(result => result.status).sort(), [200, 409]);
+  const refreshed = await Document.findById(folder._id).lean();
+  paths.push(...refreshed.file.map(file => file.path));
+});

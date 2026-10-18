@@ -1,3 +1,4 @@
+import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -201,7 +202,7 @@ const Index = () => {
                   >
                     {moduleName ? tr(moduleName) : tr("Select Module")}
                   </MenuButton>
-                  <MenuList minWidth={"10rem"}>
+                  <Portal><MenuList minWidth={"10rem"} zIndex="popover">
                     <MenuItem
                       onClick={() => {
                         setModuleName("");
@@ -219,7 +220,7 @@ const Index = () => {
                         <LocalizedText text={item?.moduleName} />
                       </MenuItem>
                     ))}
-                  </MenuList>
+                  </MenuList></Portal>
                 </Menu>
               )}
               <Button
@@ -287,11 +288,11 @@ const Index = () => {
                             </Flex>
                             <div>
                               {item?.isTableField && (
-                                <Menu isLazy>
+                                <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
                                   <MenuButton>
                                     <BsThreeDots />
                                   </MenuButton>
-                                  <MenuList minW={"fit-content"} zIndex={2}>
+                                  <Portal><MenuList minW={"fit-content"} zIndex="popover">
                                     <Flex alignItems="center" m={2}>
                                       <Checkbox
                                         colorScheme="brandScheme"
@@ -307,7 +308,7 @@ const Index = () => {
                                         title={tr("View")}
                                         me="10px"
                                       /><LocalizedText text="Open View" /></Flex>
-                                  </MenuList>
+                                  </MenuList></Portal>
                                 </Menu>
                               )}
                             </div>

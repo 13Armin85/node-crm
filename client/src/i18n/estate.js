@@ -1,4 +1,13 @@
 const messages = {
+  'estate.uploadBusy': ['Another upload is still in progress. Please try again shortly.', 'بارگذاری دیگری در حال انجام است. لطفاً چند لحظه بعد دوباره تلاش کنید.', 'Başka bir yükleme devam ediyor. Lütfen kısa süre sonra tekrar deneyin.'],
+  'estate.duplicate': ['This record already exists. Duplicate entries are not allowed.', 'این مورد قبلاً ثبت شده است. ثبت تکراری مجاز نیست.', 'Bu kayıt zaten mevcut. Yinelenen kayıtlara izin verilmez.'],
+  'Saved successfully': ['Saved successfully', 'اطلاعات با موفقیت ذخیره شد.', 'Başarıyla kaydedildi'],
+  'Save failed. Please check the highlighted fields and try again.': ['Save failed. Please check the highlighted fields and try again.', 'ذخیره انجام نشد. فیلدهای مشخص‌شده را بررسی و دوباره تلاش کنید.', 'Kaydetme başarısız. İşaretli alanları kontrol edip tekrar deneyin.'],
+  'Please complete the required fields and correct the highlighted errors.': ['Please complete the required fields and correct the highlighted errors.', 'لطفاً فیلدهای الزامی را تکمیل و خطاهای مشخص‌شده را اصلاح کنید.', 'Lütfen zorunlu alanları doldurun ve işaretli hataları düzeltin.'],
+  'Confirm task assignment': ['Confirm task assignment', 'تأیید واگذاری وظیفه', 'Görev atamasını onayla'],
+  'Assign this task to': ['Assign this task to', 'این وظیفه واگذار شود به', 'Bu görevi şu kişiye ata'],
+  'Clear selection': ['Clear selection', 'پاک کردن انتخاب', 'Seçimi temizle'],
+  'Edit Meeting': ['Edit Meeting', 'ویرایش جلسه', 'Toplantıyı düzenle'],
   'estate.residence.constructionStatus': ['Construction Status', 'وضعیت ساخت', 'İnşaat durumu'],
   'estate.residence.developer': ['Developer', 'شرکت سازنده', 'İnşaat firması'],
   'estate.residence.builtArea': ['Built Area (m²)', 'متراژ ساختمان (متر مربع)', 'Bina alanı (m²)'],

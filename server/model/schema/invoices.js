@@ -85,5 +85,21 @@ const Invoices = new mongoose.Schema({
     },
 })
 
+// Recalculate every invoice write, including imports and quote conversions.
+Invoices.pre('validate', function () {
+    const { normalizeInvoiceAmounts } = require('../../services/invoiceAmounts');
+    const values = this.toObject();
+    this.set(normalizeInvoiceAmounts(values, this.isNew ? {} : values));
+});
+Invoices.pre('findOneAndUpdate', async function () {
+    const update = this.getUpdate();
+    if (!update?.$set) return;
+    const calculationFields = ['items', 'shipping', 'ptax', 'currency', 'total', 'discount', 'subtotal', 'tax', 'shippingTax', 'grandTotal', 'isCheck'];
+    if (!Object.keys(update.$set).some(key => calculationFields.includes(key) || /^(billing|shipping)(Street|City|State|PostalCode|Country)$/.test(key))) return;
+    const previous = await this.model.findOne(this.getQuery()).lean();
+    if (!previous) return;
+    update.$set = require('../../services/invoiceAmounts').normalizeInvoiceAmounts(update.$set, previous);
+    this.setUpdate(update);
+});
 module.exports = mongoose.model('Invoices', Invoices, 'Invoices');
 

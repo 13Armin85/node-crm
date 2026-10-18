@@ -83,5 +83,6 @@ const initializeLeadSchema = async () => {
     });
 };
 
+leadSchema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'Leads' });
 const Lead = mongoose.model('Leads', leadSchema, 'Leads');
 module.exports = { Lead, initializeLeadSchema };

@@ -368,6 +368,7 @@ const Task = () => {
         <TaskKanban tasks={visibleData} assignees={assignees} canDelegate={isAdmin(user)} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
       ) : <CommonCheckTable
         pageHeader={false}
+        uniformToolbar
         title={tr("Tasks")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}

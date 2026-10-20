@@ -1,5 +1,20 @@
 // Existing English keys remain stable; aliases cover historical spelling/casing.
 const rows = `
+Change Password|تغییر رمز عبور|Şifre Değiştir
+Current Password|رمز عبور فعلی|Mevcut Şifre
+New Password|رمز عبور جدید|Yeni Şifre
+Confirm New Password|تأیید رمز عبور جدید|Yeni Şifreyi Onayla
+Password must contain at least 8 characters.|رمز عبور باید حداقل ۸ کاراکتر داشته باشد.|Şifre en az 8 karakter içermelidir.
+The new password is too long.|رمز عبور جدید بیش از حد طولانی است.|Yeni şifre çok uzun.
+The current password is incorrect.|رمز عبور فعلی اشتباه است.|Mevcut şifre yanlış.
+Passwords do not match.|رمز عبور جدید و تأیید آن یکسان نیستند.|Şifreler eşleşmiyor.
+The new password must differ from the current password.|رمز عبور جدید باید با رمز فعلی متفاوت باشد.|Yeni şifre mevcut şifreden farklı olmalıdır.
+Password change failed. Please try again.|تغییر رمز عبور انجام نشد؛ دوباره تلاش کنید.|Şifre değiştirilemedi. Lütfen tekrar deneyin.
+Your session changed. Please sign in again.|نشست شما تغییر کرده است؛ دوباره وارد شوید.|Oturumunuz değişti. Lütfen tekrar giriş yapın.
+Password changed. Please sign in again.|رمز عبور تغییر کرد؛ با رمز جدید وارد شوید.|Şifreniz değiştirildi. Lütfen tekrar giriş yapın.
+After changing your password, sign in again on your devices.|پس از تغییر رمز عبور، در دستگاه‌های خود دوباره وارد شوید.|Şifrenizi değiştirdikten sonra cihazlarınızda tekrar giriş yapın.
+Show password|نمایش رمز عبور|Şifreyi göster
+Hide password|پنهان کردن رمز عبور|Şifreyi gizle
 Table tools|ابزارهای جدول|Tablo araçları
 Import CSV or Excel. Maximum 100 rows and 15 MB.|فایل CSV یا اکسل، حداکثر ۱۰۰ سطر و ۱۵ مگابایت.|CSV veya Excel. En fazla 100 satır ve 15 MB.
 Match file columns to CRM fields|ستون‌های فایل را با فیلدهای سیستم تطبیق دهید|Dosya sütunlarını CRM alanlarıyla eşleştirin

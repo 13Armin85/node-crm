@@ -3,6 +3,7 @@ import { Button, Flex, FormControl, FormLabel, Select, Text } from '@chakra-ui/r
 import { useLanguage } from 'i18n';
 import { getApi } from 'services/api';
 import { getDataUser, setDataUser } from 'services/adminDataScope';
+import { clearRecordCache } from 'services/recordCache';
 
 const labels = {
   en: { title: 'View data', all: 'All users', hint: 'View everyone’s records or select a person across all pages.', error: 'Failed to load users', retry: 'Retry' },
@@ -18,11 +19,8 @@ export default function AdminDataFilter() {
   const [error, setError] = useState(false);
   const change = async value => {
     setDataUser(value);
-    // Purge persisted record caches before reloading; old responses cannot enter the new view.
-    const { persistor } = await import('../../redux/store');
-    persistor.pause();
-    await persistor.flush();
-    await persistor.purge();
+    // A reload discards in-memory responses from the previous data view.
+    clearRecordCache();
     window.location.reload();
   };
   const load = async () => {

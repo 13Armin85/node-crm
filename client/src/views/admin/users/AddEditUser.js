@@ -24,6 +24,7 @@ import {
 import Spinner from "components/spinner/Spinner";
 import { useFormik } from "formik";
 import React, { useState } from "react";
+import { useFormDefinition, validateFormValues } from "utils/managedForm";
 import { MdOutlineRemoveRedEye } from "react-icons/md";
 import { RiEyeCloseLine } from "react-icons/ri";
 import { useDispatch } from "react-redux";
@@ -54,15 +55,19 @@ const AddEditUser = (props) => {
     firstName: userAction === "add" ? "" : data?.firstName,
     lastName: userAction === "add" ? "" : data?.lastName,
     username: userAction === "add" ? "" : data?.username,
-    phoneNumber: userAction === "add" ? "" : data?.phoneNumber,
+    phoneNumber: userAction === "add" ? "" : data?.phoneNumber ?? "",
     password: userAction === "add" ? "" : data?.password,
     role: userAction === "add" ? "user" : data?.role || "user",
   };
   const user = JSON.parse(window.localStorage.getItem("user"));
+  const { definition, definitionError } = useFormDefinition('Users', isOpen);
+
+
 
   const formik = useFormik({
     initialValues: initialValues,
-    validationSchema: userSchema,
+    validationSchema: definition ? undefined : userSchema,
+    validate: values => validateFormValues(definition, values),
     enableReinitialize: true,
     onSubmit: (values) => {
       AddData();
@@ -84,7 +89,9 @@ const AddEditUser = (props) => {
     if (userAction === "add") {
       try {
         setIsLoding(true);
-        let response = await postApi("api/user/register", values);
+        const payload = { ...values };
+        if (!String(payload.phoneNumber ?? "").trim()) delete payload.phoneNumber;
+        let response = await postApi("api/user/register", payload);
         if (response && response?.status === 200) {
           resetForm();
           setAction((pre) => !pre);
@@ -142,9 +149,9 @@ const AddEditUser = (props) => {
         <ModalHeader justifyContent="space-between" display="flex">
           {userAction === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="User" /><IconButton onClick={onClose} icon={<CloseIcon />} />
         </ModalHeader>
-        <ModalBody><ManagedFormLayout moduleName="Users" formik={formik}>
+        <ModalBody><ManagedFormLayout moduleName="Users" formik={formik} definition={definition} definitionError={definitionError}>
           <Grid templateColumns="repeat(12, 1fr)" gap={3}>
-            <GridItem colSpan={{ base: 12 }}>
+            <GridItem order={0} colSpan={{ base: 12 }}>
               <FormLabel
                 display="flex"
                 ms="4px"
@@ -170,7 +177,7 @@ const AddEditUser = (props) => {
                 {errors?.firstName && touched?.firstName && errors?.firstName}
               </Text>
             </GridItem>
-            <GridItem colSpan={{ base: 12 }}>
+            <GridItem order={1} colSpan={{ base: 12 }}>
               <FormLabel
                 display="flex"
                 ms="4px"
@@ -195,23 +202,7 @@ const AddEditUser = (props) => {
                 {errors?.lastName && touched?.lastName && errors?.lastName}
               </Text>
             </GridItem>
-            <GridItem colSpan={{ base: 12 }}>
-              <FormLabel ms="4px" fontSize="sm" fontWeight="500" mb="8px"><LocalizedText text="Role" /><Text as="span" color="red">*</Text></FormLabel>
-              <Select
-                name="role"
-                value={values.role}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                isDisabled={!isAdmin(user) || (userAction === "edit" && user?._id === selectedId)}
-                borderColor={errors.role && touched.role ? "red.300" : undefined}
-              >
-                <option value="user">{tr("User")}</option>
-                <option value="admin">{tr("Admin")}</option>
-                {isDeveloper(user) && <option value="developer">{tr("Developer")}</option>}
-              </Select>
-              <Text mb="10px" color="red">{errors.role && touched.role && errors.role}</Text>
-            </GridItem>
-            <GridItem colSpan={{ base: 12 }}>
+            <GridItem order={2} colSpan={{ base: 12 }}>
               <FormLabel
                 display="flex"
                 ms="4px"
@@ -239,45 +230,8 @@ const AddEditUser = (props) => {
                 {errors?.username && touched?.username && errors?.username}
               </Text>
             </GridItem>
-            <GridItem colSpan={{ base: 12 }}>
-              <FormLabel
-                display="flex"
-                ms="4px"
-                fontSize="sm"
-                fontWeight="500"
-                mb="8px"
-              ><LocalizedText text="Phone Number" /><Text color={"red"}>*</Text>
-              </FormLabel>
-              <InputGroup>
-                <InputLeftElement
-                  pointerEvents="none"
-                  children={<PhoneIcon color="gray.300" borderRadius="16px" />}
-                />
-                <Input
-                  type="tel"
-                  fontSize="sm"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values?.phoneNumber}
-                  name="phoneNumber"
-                  fontWeight="500"
-                  borderColor={
-                    errors?.phoneNumber && touched?.phoneNumber
-                      ? "red.300"
-                      : null
-                  }
-                  placeholder={tr("Phone number")}
-                  borderRadius="16px"
-                />
-              </InputGroup>
-              <Text mb="10px" color={"red"}>
-                {errors?.phoneNumber &&
-                  touched?.phoneNumber &&
-                  errors?.phoneNumber}
-              </Text>
-            </GridItem>
             {userAction !== "edit" && (
-              <GridItem colSpan={{ base: 12 }}>
+              <GridItem order={(definition?.fields.find(field => field.name === "username")?.order ?? 2) + 0.5} colSpan={{ base: 12 }}>
                 <FormLabel
                   display="flex"
                   ms="4px"
@@ -323,6 +277,59 @@ const AddEditUser = (props) => {
                 </Text>
               </GridItem>
             )}
+            <GridItem order={4} colSpan={{ base: 12 }}>
+              <FormLabel
+                display="flex"
+                ms="4px"
+                fontSize="sm"
+                fontWeight="500"
+                mb="8px"
+              ><LocalizedText text="Phone Number" />
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement
+                  pointerEvents="none"
+                  children={<PhoneIcon color="gray.300" borderRadius="16px" />}
+                />
+                <Input
+                  type="tel"
+                  fontSize="sm"
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  value={values?.phoneNumber}
+                  name="phoneNumber"
+                  fontWeight="500"
+                  borderColor={
+                    errors?.phoneNumber && touched?.phoneNumber
+                      ? "red.300"
+                      : null
+                  }
+                  placeholder={tr("Phone number")}
+                  borderRadius="16px"
+                />
+              </InputGroup>
+              <Text mb="10px" color={"red"}>
+                {errors?.phoneNumber &&
+                  touched?.phoneNumber &&
+                  errors?.phoneNumber}
+              </Text>
+            </GridItem>
+            <GridItem order={5} colSpan={{ base: 12 }}>
+              <FormLabel ms="4px" fontSize="sm" fontWeight="500" mb="8px"><LocalizedText text="Role" /><Text as="span" color="red">*</Text></FormLabel>
+              <Select
+                name="role"
+                value={values.role}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                isDisabled={!isAdmin(user) || (userAction === "edit" && user?._id === selectedId)}
+                borderColor={errors.role && touched.role ? "red.300" : undefined}
+              >
+                <option value="user">{tr("User")}</option>
+                <option value="admin">{tr("Admin")}</option>
+                {isDeveloper(user) && <option value="developer">{tr("Developer")}</option>}
+              </Select>
+              <Text mb="10px" color="red">{errors.role && touched.role && errors.role}</Text>
+            </GridItem>
           </Grid>
         </ManagedFormLayout>
 </ModalBody>

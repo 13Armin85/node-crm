@@ -44,7 +44,10 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     const name = names.length === 1 ? names[0] : null;
     const field = fields.find(f => f.name === name && f.kind === 'SYSTEM_FIELD');
     const isContainer = node.type === GridItem || node.type === FormControl || /GridItem|FormControl/.test(type);
-    if (field && !isVisible(field, formik?.values || {}) && (isContainer || typeof node.props.name === 'string')) return null;
+    if ((definition?.removedFields?.includes(name) || (field && !isVisible(field, formik?.values || {}))) && (isContainer || typeof node.props.name === 'string')) return null;
+    if (isContainer && field && !field.external && field.storageType && field.type !== field.storageType) {
+      return <GridItem key={node.key || name} colSpan={node.props.colSpan} order={field.order}><DynamicFormRenderer definition={{ ...definition, fields: [field] }} formik={formik} /></GridItem>;
+    }
     const activeField = isContainer ? field : currentField;
     if ((node.type === FormLabel || /FormLabel/.test(type)) && activeField) return React.cloneElement(node, {}, <>{localized(activeField.label, language)}{activeField.required && <Box as="span" color="red.500" ms={1}>*</Box>}</>);
     // The configured field owns one error message below its widget.
@@ -58,6 +61,9 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     }
     if (isContainer && field) patch.order = field.order;
     if (node.props.children) patch.children = React.Children.map(node.props.children, child => configure(child, activeField));
+    if (field && /^(Select|select)$/.test(type) && field.options && !field.relation) {
+      patch.children = [<option key="empty" value="">{t('Select')}</option>, ...field.options.map(option => <option key={option.value} value={option.value}>{localized(option.label, language)}</option>)];
+    }
     if (isContainer && field && !React.Children.toArray(node.props.children).some(hasControl)) {
       const error = getIn(formik?.errors, name);
       const showError = Boolean(error && (formik?.submitCount > 0 || getIn(formik?.touched, name)));

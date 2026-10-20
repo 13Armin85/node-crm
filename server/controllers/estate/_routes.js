@@ -53,12 +53,14 @@ router.put('/definitions/:module', adminOnly, asyncRoute(async (req, res) => {
     ],
   };
   const fields = validateDefinition(req.body, current, baseline);
+  const retained = new Set(fields.map(field => field.name));
+  const removedFields = [...new Set([...(current.removedFields || []), ...baseline.fields.map(field => field.name)])].filter(name => !retained.has(name));
   if (req.body.revision !== current.revision) return res.status(409).json({ code: 'conflict' });
   let updated;
-  if (!current._id) updated = await FormDefinition.create({ moduleName: req.params.module, fields, revision: 1, updatedBy: req.actor._id });
-  else updated = await FormDefinition.findOneAndUpdate({ _id: current._id, revision: current.revision }, { $set: { fields, updatedBy: req.actor._id }, $inc: { revision: 1 } }, { new: true, runValidators: true });
+  if (!current._id) updated = await FormDefinition.create({ moduleName: req.params.module, fields, removedFields, revision: 1, updatedBy: req.actor._id });
+  else updated = await FormDefinition.findOneAndUpdate({ _id: current._id, revision: current.revision }, { $set: { fields, removedFields, updatedBy: req.actor._id }, $inc: { revision: 1 } }, { new: true, runValidators: true });
   if (!updated) return res.status(409).json({ code: 'conflict' });
-  res.json(updated);
+  res.json(await getDefinition(req.params.module));
 }));
 router.post('/files', (req, res, next) => {
   if (!['Properties', 'Partner Customers', 'Residences', ...legacyModules].some(m => can(req.actor, m, 'create') || can(req.actor, m, 'update'))) return res.status(403).json({ code: 'forbidden' });

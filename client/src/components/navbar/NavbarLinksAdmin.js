@@ -12,6 +12,7 @@ import {
   MenuList,
   Text,
   useColorModeValue,
+  useDisclosure,
 } from "@chakra-ui/react";
 import PropTypes from "prop-types";
 import { useCallback, useEffect } from "react";
@@ -19,6 +20,7 @@ import {
   FiChevronDown,
   FiHome,
   FiLogOut,
+  FiLock,
   FiSettings,
   FiUser,
 } from "react-icons/fi";
@@ -31,12 +33,14 @@ import { useLanguage } from "i18n";
 import { clearUser } from "../../redux/slices/localSlice";
 import { clearAuthSession, scheduleSessionExpiry } from "services/authSession";
 import NotificationsMenu from "./NotificationsMenu";
+import ChangePasswordDialog from "./ChangePasswordDialog";
 
 export default function HeaderLinks() {
   const panelBg = useColorModeValue("white", "#121a2b");
   const textColor = useColorModeValue("#172033", "white");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const { t, direction } = useLanguage();
+  const passwordDialog = useDisclosure();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userData = useSelector((state) => state?.user?.user);
@@ -61,6 +65,7 @@ export default function HeaderLinks() {
   }, [logOut, t]);
 
   return (
+    <>
     <Flex className="crm-header-actions" align="center" gap={{ base: "4px", md: "8px" }} dir="ltr">
       <Flex className="crm-header-tools" align="center">
         <ThemeToggle />
@@ -99,11 +104,17 @@ export default function HeaderLinks() {
             <MenuItem icon={<Icon as={FiSettings} />} onClick={() => navigate("/admin-setting")}>{t("Admin Settings")}</MenuItem>
           )}
           <MenuItem icon={<Icon as={FiUser} />} onClick={() => navigate(`/userView/${storedUser?._id}`)}>{t("Profile Settings")}</MenuItem>
+          <MenuItem id="crm-change-password-menu" icon={<Icon as={FiLock} />} onClick={passwordDialog.onOpen}>{t("Change Password")}</MenuItem>
           <MenuDivider />
           <MenuItem className="crm-menu-danger" icon={<Icon as={FiLogOut} />} onClick={() => logOut()}>{t("Log out")}</MenuItem>
         </MenuList>
       </Menu>
     </Flex>
+    <ChangePasswordDialog isOpen={passwordDialog.isOpen} onClose={passwordDialog.onClose} onChanged={() => {
+      clearAuthSession(); dispatch(clearUser()); navigate('/auth/sign-in', { replace: true });
+      toast.success(t('Password changed. Please sign in again.'));
+    }} />
+    </>
   );
 }
 

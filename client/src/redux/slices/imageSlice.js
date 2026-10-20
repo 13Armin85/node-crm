@@ -10,14 +10,12 @@ const initialState = {
 // Create an asynchronous thunk
 export const fetchImage = createAsyncThunk(
   "images/fetchImage",
-  async (active, { dispatch, getState }) => {
-    dispatch(fetchImage.pending());
+  async (active) => {
     try {
       const response = await getApi(`api/images/${active ? active : ""}`);
-      dispatch(fetchImage.fulfilled(response.data));
+      if (response?.status !== 200 || !Array.isArray(response.data)) throw new Error("Failed to load images");
       return response.data;
     } catch (error) {
-      dispatch(fetchImage.rejected(error));
       throw error;
     }
   },
@@ -38,6 +36,7 @@ const imageSlice = createSlice({
       })
       .addCase(fetchImage.rejected, (state, action) => {
         state.status = "failed";
+        state.images = [];
         state.error = action.error.message;
       });
   },

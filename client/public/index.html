@@ -12,11 +12,16 @@
   <link rel="icon" type="image/png" href="%PUBLIC_URL%/brand-logo-ta.png" />
   <link rel="apple-touch-icon" href="%PUBLIC_URL%/brand-logo-ta.png" />
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <script src="%PUBLIC_URL%/startup.js"></script>
 </head>
 
 <body>
   <noscript>You need to enable JavaScript to run this app.</noscript>
-  <div id="root"></div>
+  <div id="root"><p id="crm-startup-loading" role="status" style="padding:24px;text-align:center;font-family:sans-serif">Loading the application...</p></div>
+  <div id="crm-startup-recovery" hidden role="alert" style="position:fixed;inset:0;z-index:2147483647;background:#fff;color:#17325f;padding:15vh 24px;text-align:center;font-family:sans-serif">
+    <p id="crm-startup-message">The page could not be loaded.</p>
+    <button id="crm-startup-retry" type="button" style="padding:12px 24px;cursor:pointer">Try again</button>
+  </div>
 </body>
 
 </html>

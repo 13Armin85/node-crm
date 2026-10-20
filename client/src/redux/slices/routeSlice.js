@@ -1,12 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
-import { constant } from "../../constant";
 import { getApi } from "services/api";
 
 export const fetchRouteData = createAsyncThunk("fetchRouteData", async () => {
   try {
     const response = await getApi(`api/route/`);
-    return response.data;
+    if (response?.status !== 200 || !Array.isArray(response.data)) throw new Error("Failed to load records");
+    return response.data.filter(item => item && typeof item.moduleName === "string");
   } catch (error) {
     throw error;
   }

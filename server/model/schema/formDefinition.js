@@ -13,6 +13,7 @@ const field = new mongoose.Schema({
 }, { _id: false });
 const schema = new mongoose.Schema({
   moduleName: { type: String, unique: true, required: true }, fields: [field],
+  removedFields: { type: [String], default: [] },
   revision: { type: Number, default: 0 }, updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 module.exports = mongoose.model('FormDefinition', schema);

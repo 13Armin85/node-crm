@@ -17,8 +17,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Provider } from "react-redux";
 import { useSelector } from "react-redux";
-import { store, persistor } from "./redux/store";
-import { PersistGate } from "redux-persist/integration/react";
+import { store } from "./redux/store";
+import AppErrorBoundary from "components/AppErrorBoundary";
 import { LanguageProvider, TranslationBoundary } from "i18n";
 import { RtlProvider } from 'components/rtlProvider/RtlProvider';
 import {
@@ -28,11 +28,16 @@ import {
 } from "services/authSession";
 
 function App() {
+  React.useEffect(() => { window.crmAppStarted?.(); }, []);
   const reduxUser = useSelector((state) => state?.user?.user);
   const [session, setSession] = React.useState(getAuthSession);
 
   React.useEffect(() => {
-    const syncSession = () => setSession(getAuthSession());
+    const syncSession = () => {
+      const nextSession = getAuthSession();
+      if (!nextSession.token) store.dispatch({ type: "user/clearUser" });
+      setSession(nextSession);
+    };
     window.addEventListener("storage", syncSession);
     window.addEventListener(AUTH_CHANGED_EVENT, syncSession);
     return () => {
@@ -74,7 +79,7 @@ function App() {
 
 ReactDOM.render(
   <Provider store={store}>
-    <PersistGate loading={null} persistor={persistor}>
+    <AppErrorBoundary>
       <LanguageProvider>
         <ColorModeScript initialColorMode={theme.config.initialColorMode} />
         <RtlProvider><ChakraProvider theme={theme}>
@@ -89,7 +94,7 @@ ReactDOM.render(
           </React.StrictMode>
         </ChakraProvider></RtlProvider>
       </LanguageProvider>
-    </PersistGate>
+    </AppErrorBoundary>
   </Provider>,
   document.getElementById("root"),
 );

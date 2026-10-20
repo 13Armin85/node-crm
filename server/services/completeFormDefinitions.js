@@ -198,7 +198,7 @@ module.exports = ({ field, options, required }) => {
     Users: [
       f('firstName', 'text', 'First Name', 'نام', required),
       f('lastName', 'text', 'Last Name', 'نام خانوادگی', required),
-      f('username', 'email', 'Email / Username', 'ایمیل / نام کاربری', required),
+      f('username', 'email', 'Email', 'ایمیل', required),
       f('phoneNumber', 'phone', 'Phone Number', 'شماره تلفن'),
       choice('role', 'Role', 'نقش', ['developer', 'admin', 'user'], required),
     ],

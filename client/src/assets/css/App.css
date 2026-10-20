@@ -2141,15 +2141,15 @@ body.crm-kanban-is-dragging * {
   }
 
   .crm-header-tools .chakra-stack {
-    min-width: 70px !important;
-    max-width: 76px !important;
-    padding-inline: 5px !important;
+    min-width: 128px !important;
+    max-width: 128px !important;
+    padding-inline: 6px !important;
   }
 
   .crm-header-tools .chakra-select {
     min-height: 30px !important;
-    width: 58px !important;
-    font-size: 11px;
+    width: 100% !important;
+    font-size: 13px;
   }
 
   .crm-header-divider {
@@ -3047,4 +3047,47 @@ body.crm-kanban-is-dragging * {
   .crm-entity-toolbar .crm-table-toolbar__actions { justify-content: flex-end; flex-wrap: nowrap; }
   .crm-entity-toolbar .crm-table-toolbar__actions > .chakra-button { width: auto; }
   .crm-entity-toolbar .crm-table-toolbar__actions > .chakra-button:not(.crm-table-settings) { flex: 1; }
+}
+
+/* Auth content remains reachable when the viewport shrinks or the keyboard opens. */
+body:has(.crm-auth-shell) { min-width: 0; }
+.crm-auth-shell { min-height: 100vh; min-height: 100dvh; }
+.crm-auth-viewport { min-height: 100vh; min-height: 100dvh; width: 100%; padding: clamp(12px, 3vh, 32px) clamp(12px, 4vw, 24px); flex-direction: column; align-items: center; }
+.crm-auth-container { width: 100%; max-width: 460px; min-width: 0; margin-block: auto; }
+.crm-login-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(14px, 2.5vh, 24px); width: 100%; min-width: 0; }
+.crm-login-controls { align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.crm-login-brand { min-width: 0; text-align: center; }
+.crm-login-brand .crm-login-logo { width: clamp(64px, 12vh, 112px); max-width: 100%; margin: 0 auto 12px; }
+.crm-login-brand .crm-login-heading { font-size: clamp(24px, 4vh, 36px); line-height: 1.2; margin-bottom: 8px; }
+.crm-login-intro { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.crm-login-card { width: 100%; max-width: 420px; min-width: 0; margin-inline: auto; padding: clamp(16px, 3vw, 28px); }
+.crm-login-form { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.crm-login-form .chakra-input { width: 100%; min-width: 0; height: 44px; min-height: 44px; font-size: 16px; border-radius: 12px; }
+.crm-login-form .chakra-checkbox__label { font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
+.crm-login-form .crm-login-submit { height: 46px; min-height: 46px; margin: 0; }
+.crm-language-select .chakra-select__wrapper { flex: 1; min-width: 0; }
+.crm-language-select .chakra-select { padding-inline: 4px 24px !important; }
+@media (max-height: 700px) {
+  .crm-login-layout { gap: 12px; }
+  .crm-login-brand .crm-login-logo { width: 64px; margin-bottom: 8px; }
+  .crm-login-brand .crm-login-heading { font-size: 26px; }
+  .crm-login-intro { font-size: 13px; }
+  .crm-login-card { padding: 18px; }
+  .crm-login-form { gap: 14px; }
+}
+@media (max-height: 600px) and (min-width: 560px) {
+  .crm-auth-container { max-width: 860px; }
+  .crm-login-layout { grid-template-columns: minmax(140px, .75fr) minmax(280px, 1.25fr); column-gap: 24px; align-items: center; }
+  .crm-login-controls { grid-column: 1; grid-row: 1; align-self: start; flex-wrap: nowrap; }
+  .crm-login-controls .crm-language-select { flex: 1; min-width: 0; padding-inline: 6px; }
+  .crm-login-controls .crm-language-select > svg { display: none; }
+  .crm-login-brand { grid-column: 1; grid-row: 1; padding-top: 50px; }
+  .crm-login-card { grid-column: 2; grid-row: 1; padding: 16px; }
+  .crm-login-form { gap: 12px; }
+  .crm-login-form .chakra-input { height: 40px; min-height: 40px; }
+  .crm-login-form .crm-login-submit { height: 40px; min-height: 40px; }
+}
+@media (max-width: 359px) {
+  .crm-login-card { padding: 14px; }
+  .crm-header-tools .crm-language-select { min-width: 112px !important; max-width: 112px !important; }
 }

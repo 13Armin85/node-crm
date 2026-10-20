@@ -51,3 +51,19 @@ test('a required managed field shows its configured error below the input after 
   expect(view.indexOf('name="title"')).toBeLessThan(view.indexOf('Please enter a title'));
   expect(view).toContain('aria-invalid="true"');
 });
+
+
+test('removed system fields stay hidden and changed widget types use their configuration', () => {
+  const definition = { removedFields: ['deletedField'], fields: [
+    { name: 'notes', kind: 'SYSTEM_FIELD', storageType: 'text', type: 'textarea', order: 2, label: { en: 'Updated notes' } },
+  ] };
+  const view = renderToStaticMarkup(<ManagedFormLayout moduleName="Invoices" definition={definition} formik={{ values: { notes: 'Existing notes' }, errors: {} }}>
+    <Grid><GridItem><FormLabel>Deleted field</FormLabel><Input name="deletedField" /></GridItem>
+      <GridItem><FormLabel>Old notes</FormLabel><Input name="notes" /></GridItem></Grid>
+  </ManagedFormLayout>);
+  expect(view).not.toContain('name="deletedField"');
+  expect(view).not.toContain('Deleted field');
+  expect(view).toContain('<textarea');
+  expect(view).toContain('Updated notes');
+  expect(view).toContain('Existing notes');
+});

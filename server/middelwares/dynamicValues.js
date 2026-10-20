@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { getDefinition } = require('../services/formDefinitions');
+const { getDefinition, defaults } = require('../services/formDefinitions');
 const { validateFields, validateRequiredFields, normalizeProperty, objectId } = require('../services/estateValidation');
 const { can, scope, isAdmin } = require('./permissions');
 const { normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection } = require('../services/leadRelations');
@@ -36,9 +36,12 @@ module.exports = moduleName => async (req, res, next) => {
       definition = { ...definition, fields: definition.fields.filter(field => isLeadRelationVisible(field, req.body)) };
     }
     if (typeof req.body.customFields === 'string') req.body.customFields = JSON.parse(req.body.customFields);
-    // Legacy controllers retain their fixed-field contracts; enforce requirements
-    // configured by administrators and every custom field here.
-    const configuredFields = definition.fields.filter(field => field.kind === 'CUSTOM_FIELD' || (moduleName === 'Meetings' || (!field.locked && moduleName !== 'Documents')));
+    // Existing controllers handle default core requirements, including partial edits.
+    // Once an administrator saves a definition, its requirements take precedence here.
+    const configuredFields = definition.fields.filter(field => field.kind === 'CUSTOM_FIELD'
+      || moduleName === 'Meetings'
+      || (moduleName !== 'Documents' && (definition._id
+        || !(defaults[moduleName] || []).some(system => system.name === field.name && system.required))));
     validateRequiredFields({ ...definition, fields: configuredFields }, req.body, previous);
     if (moduleName === 'Invoices') await require('../services/invoiceProperty').validateInvoiceProperty(req, req.body, previous);
     const values = validateFields({ ...definition, fields: definition.fields.filter(f => f.kind === 'CUSTOM_FIELD') }, req.body, previous);

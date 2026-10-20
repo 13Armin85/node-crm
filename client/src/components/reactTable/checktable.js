@@ -388,6 +388,7 @@ const CommonCheckTable = (props) => {
 
 
   const showPageHero = pageHeader !== false && Boolean(title) && ManageGrid !== false && !size;
+  const hasListToolbar = showPageHero || props.uniformToolbar;
 
   return (
     <>
@@ -413,19 +414,19 @@ const CommonCheckTable = (props) => {
       )}
       <Card
         data-compact-table={props.compact || ["Leads", "Contacts"].includes(title)}
-        className={`crm-data-card${showPageHero ? " crm-list-table" : ""}`}
+        className={`crm-data-card${hasListToolbar ? " crm-list-table" : ""}`}
         direction="column"
         w="100%"
         overflow="hidden"
       >
         <Grid className="crm-table-toolbar" templateColumns="repeat(12, 1fr)" gap={3}>
           <GridItem
-            colSpan={{ base: 12, lg: showPageHero ? 10 : 8 }}
+            colSpan={{ base: 12, lg: hasListToolbar ? 10 : 8 }}
             display={"flex"}
             alignItems={"center"}
           >
             <Flex className="crm-table-toolbar__main" alignItems={"center"} flexWrap={"wrap"} w="100%">
-              {title && !showPageHero && (
+              {title && !hasListToolbar && (
                 <Flex className="crm-table-title" align="center" me={{ base: 0, md: 3 }}>
                   <Box className="crm-table-title__mark" />
                   <Text color={textColor} fontSize={{ base: "18px", md: "20px" }} fontWeight="800" textTransform="capitalize">
@@ -459,7 +460,7 @@ const CommonCheckTable = (props) => {
                 />
               )}
               {AdvanceSearch
-                ? (isValidElement(AdvanceSearch) ? cloneElement(AdvanceSearch, { size: 'sm', variant: 'outline', colorScheme: 'brand', leftIcon: <FiFilter /> }) : null)
+                ? (isValidElement(AdvanceSearch) ? cloneElement(AdvanceSearch, { size: 'sm', mt: { sm: '5px', md: '0' }, variant: 'outline', colorScheme: 'brand', leftIcon: <FiFilter /> }) : null)
                 : AdvanceSearch !== false && (
                     <Button
                       variant="outline"
@@ -505,7 +506,7 @@ const CommonCheckTable = (props) => {
             handleAdvanceSearch={handleAdvanceSearch}
           />
           <GridItem
-            colSpan={{ base: 12, lg: showPageHero ? 2 : 4 }}
+            colSpan={{ base: 12, lg: hasListToolbar ? 2 : 4 }}
             display={"flex"}
             justifyContent={"end"}
             alignItems={"center"}
@@ -521,7 +522,7 @@ const CommonCheckTable = (props) => {
                 { label: selectedValues?.length ? 'Export Selected Data as CSV' : 'Export as CSV', disabled: !recordsToExport.length || isLoding, onClick: () => handleExportLeads('csv') },
                 { label: selectedValues?.length ? 'Export Selected Data as Excel' : 'Export as Excel', disabled: !recordsToExport.length || isLoding, onClick: () => handleExportLeads('xlsx') },
               ] : []} />
-            {!showPageHero && addBtn !== false && (access?.create || access === true) && (
+            {!hasListToolbar && addBtn !== false && (access?.create || access === true) && (
               <Button
                 onClick={() => handleClick()}
                 size="sm"

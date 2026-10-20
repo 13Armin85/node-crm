@@ -39,7 +39,7 @@ test('residence details validate counts, amenities, fees and optional legacy fie
   }
   const baseline = { fields };
   const saved = validateDefinition({ fields: fields.map(field => field.name === 'unitCount' ? { ...field, integer: false } : field) }, baseline, baseline);
-  assert.equal(saved.find(field => field.name === 'unitCount').integer, true);
+  assert.equal(saved.find(field => field.name === 'unitCount').integer, false);
 });
 
 test('residences require the selected customer for a completed transaction and clear stale buyers', () => {
@@ -102,14 +102,14 @@ test('custom fields validate required values and reject injection keys', () => {
   assert.deepEqual(result, { customFields: { field_test: 'value' } });
   assert.throws(() => validateFields({ fields: [{ ...custom, name: '__proto__' }] }, {}));
 });
-test('builder adds, edits, reorders and removes custom fields while protecting system fields', () => {
+test('builder adds, edits, reorders and removes fields while validating metadata', () => {
   const baseline = { fields: defaults.Properties }; const current = { ...baseline };
   const added = validateDefinition({ fields: [...baseline.fields, custom] }, current, baseline);
   assert.equal(added.at(-1).label.fa, 'آزمون');
   const edited = validateDefinition({ fields: [{ ...custom, label: { ...custom.label, en: 'Changed' } }, ...baseline.fields] }, { fields: added }, baseline);
   assert.equal(edited[0].order, 0); assert.equal(edited[0].label.en, 'Changed');
   assert.equal(validateDefinition(baseline, { fields: edited }, baseline).length, baseline.fields.length);
-  assert.throws(() => validateDefinition({ fields: [] }, current, baseline));
+  assert.deepEqual(validateDefinition({ fields: [] }, current, baseline), []);
   assert.throws(() => validateDefinition({ fields: [...baseline.fields, { ...custom, label: { en: 'Only' } }] }, current, baseline));
 });
 test('form builder catalogs every CRM data-entry module with unique valid fields', () => {

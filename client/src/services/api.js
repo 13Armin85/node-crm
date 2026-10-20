@@ -2,7 +2,7 @@ import { toast } from 'react-toastify';
 import axios from "axios";
 import { constant } from "constant";
 import { translate } from 'i18n';
-import { getStoredUser, saveAuthSession } from "./authSession";
+import { clearAuthSession, getStoredToken, getStoredUser, saveAuthSession } from "./authSession";
 import { dataScopeHeaders } from "./adminDataScope";
 import { readVisibilityPath } from "./readVisibility";
 import { NOTIFICATIONS_CHANGED_EVENT } from "./notificationEvents";
@@ -11,7 +11,7 @@ const getRequestConfig = (config = {}) => ({
   ...config,
   headers: {
     Authorization:
-      localStorage.getItem("token") || sessionStorage.getItem("token"),
+      getStoredToken(),
     ...config.headers,
   },
   validateStatus: () => true,
@@ -30,6 +30,11 @@ const reportSave = (result, path, config) => {
 };
 
 const normalizeResponse = (result) => {
+  // A revoked remembered session must return to sign-in instead of caching a 401 as records.
+  const requestToken = result?.config?.headers?.Authorization;
+  if (result?.status === 401 && requestToken && requestToken === getStoredToken()) {
+    clearAuthSession();
+  }
   reportSave(result);
   const language = localStorage.getItem('crm-language') || 'en';
   const isBlob = typeof Blob !== 'undefined' && result?.data instanceof Blob;

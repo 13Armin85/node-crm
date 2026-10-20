@@ -4,7 +4,7 @@ import { exportSpreadsheet } from 'utils/spreadsheet';
 import FormFeedback from 'components/dynamicForm/FormFeedback';
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert, AlertIcon, Box, Button, Flex, Heading, Icon, IconButton, Input,
+  Alert, AlertIcon, Box, Button, Flex, Grid, GridItem, Heading, Icon, IconButton, Input,
   InputGroup, InputLeftElement, Modal, ModalBody, ModalCloseButton,
   ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, SimpleGrid,
   Spinner, Stack, Table, Tbody, Td, Text, Th, Thead, Tooltip, Tr,
@@ -234,36 +234,40 @@ export function EntityPage({ moduleName }) {
           </Box>
         </Flex>
         <Flex gap={2} wrap="wrap">
-          {permissions?.create && <Button variant="brand" leftIcon={<FiPlus />} onClick={() => open({}, false)}>{t("Add New")}</Button>}
+          {permissions?.create && <Button className="crm-page-hero__action" leftIcon={<FiPlus />} onClick={() => open({}, false)}>{t("Add New")}</Button>}
         </Flex>
       </Flex>
 
       {error && <Alert status="error" className="crm-page-alert"><AlertIcon />{t(`estate.${error}`)}</Alert>}
       {notice && <Alert status="success" className="crm-page-alert"><AlertIcon />{t(notice)}</Alert>}
 
-      <Card className="crm-entity-card">
-        <Flex className="crm-entity-toolbar crm-table-toolbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
-          <InputGroup className="crm-entity-search crm-table-search">
-            <InputLeftElement h="100%" pointerEvents="none"><FiSearch /></InputLeftElement>
-            <Input placeholder={t("Search...")} aria-label={t("Search...")} value={query} onChange={(event) => setQuery(event.target.value)} />
-          </InputGroup>
-          <Flex className="crm-table-toolbar__actions" gap={2} align="center" flexWrap="wrap">
-          <Button size="sm" variant={showFilters ? "solid" : "outline"} colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setShowFilters((value) => !value)}>
-            {t("Filters")}
-          </Button>
-          <TableTools columns={tableColumns} visible={visible} onColumnsChange={setVisible}
-            onImport={permissions?.create && permissions?.import !== false ? () => setImportOpen(true) : undefined}
-            exports={permissions?.export !== false ? [
-              { label: 'Export as CSV', disabled: busy || exporting || !definition || !total, onClick: () => download('csv') },
-              { label: 'Export as Excel', disabled: busy || exporting || !definition || !total, onClick: () => download('xlsx') },
-            ] : []} />
-          </Flex>
-          {(Object.values(filters).some(Boolean) || sort !== "createdDate" || order !== "desc") && (
-            <Button variant="ghost" leftIcon={<FiX />} onClick={() => { setFilters({}); setSort("createdDate"); setOrder("desc"); setPage(1); }}>
-              {t("Clear filters")}
-            </Button>
-          )}
-        </Flex>
+      <Card className="crm-entity-card crm-data-card crm-list-table">
+        <Grid className="crm-table-toolbar" templateColumns="repeat(12, 1fr)" gap={3}>
+          <GridItem colSpan={{ base: 12, lg: 10 }} display="flex" alignItems="center">
+            <Flex className="crm-table-toolbar__main" alignItems="center" flexWrap="wrap" w="100%">
+              <InputGroup className="crm-table-search" width={{ base: "100%", md: "min(320px, 40%)" }} mx={{ base: 0, md: 3 }} my={{ sm: "8px", md: "0" }}>
+                <InputLeftElement size="sm" h="100%" pointerEvents="none" zIndex="0"><FiSearch /></InputLeftElement>
+                <Input size="sm" fontSize="sm" fontWeight="500" borderRadius="12px" placeholder={t("Search...")} aria-label={t("Search...")} value={query} onChange={(event) => setQuery(event.target.value)} />
+              </InputGroup>
+              <Button size="sm" mt={{ sm: "5px", md: "0" }} variant="outline" colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setShowFilters((value) => !value)}>
+                {t("Filters")}
+              </Button>
+              {(Object.values(filters).some(Boolean) || sort !== "createdDate" || order !== "desc") && (
+                <Button size="sm" variant="outline" colorScheme="red" leftIcon={<FiX />} onClick={() => { setFilters({}); setSort("createdDate"); setOrder("desc"); setPage(1); }}>
+                  {t("Clear filters")}
+                </Button>
+              )}
+            </Flex>
+          </GridItem>
+          <GridItem colSpan={{ base: 12, lg: 2 }} display="flex" justifyContent="end" alignItems="center" textAlign="right" gap="8px" className="crm-table-toolbar__actions">
+            <TableTools columns={tableColumns} visible={visible} onColumnsChange={setVisible}
+              onImport={permissions?.create && permissions?.import !== false ? () => setImportOpen(true) : undefined}
+              exports={permissions?.export !== false ? [
+                { label: 'Export as CSV', disabled: busy || exporting || !definition || !total, onClick: () => download('csv') },
+                { label: 'Export as Excel', disabled: busy || exporting || !definition || !total, onClick: () => download('xlsx') },
+              ] : []} />
+          </GridItem>
+        </Grid>
 
         {showFilters && (
           <Box className="crm-entity-filters">

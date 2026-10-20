@@ -22,7 +22,7 @@ const labels = {
 const localized = (en, fa, tr) => ({ en, fa, tr });
 const options = values => values.map(value => ({ value, label: localized(...(labels[value] || labels[value.toLowerCase()] || [value, value, value])) }));
 const field = (name, type, en, fa, tr, extra = {}) => ({ name, type, kind: 'SYSTEM_FIELD', enabled: true, required: false, label: localized(en, fa, tr), ...extra });
-const required = { required: true, locked: true };
+const required = { required: true };
 const company = { condition: { customerType: 'COMPANY' } };
 const address = () => [field('district', 'text', 'District', 'منطقه', 'İlçe'), field('neighborhood', 'text', 'Neighborhood', 'محله', 'Mahalle')];
 const defaults = {
@@ -33,7 +33,7 @@ const defaults = {
     field('transactionType', 'radio', 'Transaction Type', 'نوع معامله', 'İşlem Türü', { ...required, options: options(['SALE', 'RENT']), defaultValue: 'SALE' }),
     field('price.amount', 'currency', 'Price', 'قیمت', 'Fiyat', { ...required, min: 0 }),
     field('price.currency', 'select', 'Currency', 'ارز', 'Para Birimi', { ...required, options: options(['TRY', 'USD', 'EUR']), defaultValue: 'TRY' }),
-    ...address(), field('isInsideResidence', 'checkbox', 'Is this property inside a Residence?', 'آیا ملک داخل یک رزیدانس قرار دارد؟', 'Gayrimenkul bir rezidans içerisinde mi?', { locked: true, defaultValue: false }),
+    ...address(), field('isInsideResidence', 'checkbox', 'Is this property inside a Residence?', 'آیا ملک داخل یک رزیدانس قرار دارد؟', 'Gayrimenkul bir rezidans içerisinde mi?', { defaultValue: false }),
     field('residence', 'select', 'Residence', 'رزیدانس', 'Rezidans', { relation: 'Residences', condition: { isInsideResidence: true }, ...required }),
     field('bedroom', 'select', 'Bedroom Type', 'تعداد خواب', 'Oda Sayısı', { options: options(bedrooms), condition: { category: 'RESIDENTIAL' } }),
     field('buildingAge', 'select', 'Building Age', 'عمر ساختمان', 'Bina Yaşı', { options: options(ages) }),
@@ -90,7 +90,7 @@ async function getDefinition(moduleName) {
           || (require('./estateCatalog').fieldTypes.includes(item.type) ? item.type : 'text'),
         item.label || item.name, item.label || item.name, item.label || item.name, {
           required: item.validation?.some(rule => rule.require) || false,
-          locked: kind === 'SYSTEM_FIELD' && Boolean(item.fixed),
+          locked: false,
           options: item.options?.map(option => ({
             value: String(option.value),
             label: localized(option.name, option.name, option.name),
@@ -117,27 +117,22 @@ async function getDefinition(moduleName) {
             return [language, label === generated || label === item.name ? system.label[language] || system.label.en : label];
           })),
         } : {}),
-        type: system.type,
-        integer: Boolean(system.integer),
-        ...(system.options ? { options: system.options.map(option => ({ ...option, label: item.options?.find(saved => saved.value === option.value)?.label || option.label })) } : {}),
-        ...(system.options && ['select', 'radio'].includes(system.type) && item.defaultValue != null && item.defaultValue !== '' && !system.options.some(option => option.value === item.defaultValue)
-          ? { defaultValue: system.defaultValue ?? '' } : {}),
+        storageType: system.type,
         relation: system.relation,
         condition: system.condition,
         external: Boolean(system.external),
-        locked: Boolean(system.locked),
-        ...(system.locked ? { enabled: true, required: Boolean(system.required) } : {}),
-      } : item;
+        locked: false,
+      } : { ...item, locked: false };
     });
     const existingNames = new Set(mergedExisting.map(item => item.name));
-    const missing = baseline.filter(item => !existingNames.has(item.name));
+    const missing = baseline.filter(item => !existingNames.has(item.name) && !(existing.removedFields || []).includes(item.name));
     // A saved definition owns its custom fields. Re-importing legacy metadata
     // here resurrected fields that administrators deliberately removed.
     const additions = missing;
     return {
       ...existing,
       fields: [...mergedExisting, ...additions.map((item, index) => ({
-        ...item,
+        ...item, locked: false, storageType: item.type,
         order: mergedExisting.length + index,
       }))],
     };
@@ -158,9 +153,9 @@ async function getDefinition(moduleName) {
     const model = require('mongoose').models[modelName];
     fields = Object.entries(model?.schema.paths || {}).filter(([name, path]) => safeName(name) && !['createdDate', 'updatedDate', 'modifiedDate', '_id', '__v', 'customFields'].includes(name) && ['String', 'Number', 'Boolean', 'Date'].includes(path.instance)).map(([name, path]) => {
       const label = name.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
-      return field(name, { String: 'text', Number: 'number', Boolean: 'checkbox', Date: 'datetime' }[path.instance], label, label, label, { locked: Boolean(path.isRequired), required: Boolean(path.isRequired) });
+      return field(name, { String: 'text', Number: 'number', Boolean: 'checkbox', Date: 'datetime' }[path.instance], label, label, label, { required: Boolean(path.isRequired) });
     });
   }
-  return { moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, order })) };
+  return { moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, locked: false, storageType: f.type, order })) };
 }
 module.exports = { defaults, legacyModules, getDefinition, localized, safeName };

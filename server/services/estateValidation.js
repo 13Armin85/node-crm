@@ -118,16 +118,14 @@ function validateDefinition(input, current, baseline) {
       relation: system?.relation,
       condition: system?.condition,
       external: Boolean(system?.external),
-      locked: system?.locked || false,
+      locked: false,
     };
     if (system) {
-      result.kind = 'SYSTEM_FIELD'; result.type = system.type;
-      if (system.options) result.options = system.options.map(option => ({ ...option, label: field.options?.find(o => o.value === option.value)?.label || option.label }));
-      if (system.locked) { result.enabled = true; result.required = system.required; }
-      result.min = system.min; result.max = system.max; result.integer = Boolean(system.integer);
+      result.kind = 'SYSTEM_FIELD';
     }
-    const previous = current.fields.find(f => f.name === field.name);
-    if (previous && previous.type !== result.type) fail(field.name, 'fieldTypeImmutable');
+    for (const key of ['enabled', 'required', 'integer']) if (result[key] != null && typeof result[key] !== 'boolean') fail(key);
+    for (const key of ['min', 'max']) if (result[key] != null && (typeof result[key] !== 'number' || !Number.isFinite(result[key]))) fail(key);
+    if (result.min != null && result.max != null && result.min > result.max) fail('min');
     if (['select', 'radio', 'multiselect'].includes(result.type) && !result.relation) {
       if (!result.options?.length || new Set(result.options.map(o => o.value)).size !== result.options.length) fail('options');
       for (const option of result.options) {
@@ -138,7 +136,6 @@ function validateDefinition(input, current, baseline) {
     if (!empty(result.defaultValue)) validateValue(result, result.defaultValue);
     return result;
   });
-  for (const system of baseline.fields.filter(f => f.kind === 'SYSTEM_FIELD')) if (!names.has(system.name)) fail(system.name, 'systemFieldProtected');
   return fields;
 }
 module.exports = { InputError, fail, get, set, visible, empty, objectId, validateValue, validateRequiredFields, validateFields, normalizeProperty, normalizeSale, validateDefinition };

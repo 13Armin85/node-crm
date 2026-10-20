@@ -7,7 +7,7 @@ import {
 } from '@chakra-ui/react';
 import {
   MdAdd, MdArrowDownward, MdArrowUpward, MdCheckCircle, MdDeleteOutline,
-  MdDragIndicator, MdInfoOutline, MdLockOutline, MdOutlineDynamicForm,
+  MdDragIndicator, MdInfoOutline, MdOutlineDynamicForm,
   MdOutlineSettings, MdSave, MdTranslate, MdViewList,
 } from 'react-icons/md';
 import Card from 'components/card/Card';
@@ -50,7 +50,6 @@ export default function FormBuilder() {
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
   const [selected, setSelected] = useState(0);
-  const [savedNames, setSavedNames] = useState([]);
   const [changed, setChanged] = useState(false);
   const draft = useRef(null);
   const activeModule = useRef(moduleName);
@@ -79,7 +78,6 @@ export default function FormBuilder() {
       if (!active) return;
       if (response.status === 200) {
         setDefinition(response.data);
-        setSavedNames(response.data.fields.map(item => item.name));
         setSelected(0);
       } else setError(response.data?.code || 'serverError');
     });
@@ -134,7 +132,6 @@ export default function FormBuilder() {
       if (activeModule.current === targetModule) {
         const unchanged = draft.current === snapshot;
         setDefinition(current => current === snapshot ? result.data : { ...current, _id: result.data._id, revision: result.data.revision });
-        setSavedNames(result.data.fields.map(item => item.name));
         setChanged(!unchanged); setSuccess(unchanged);
         clean = unchanged;
       }
@@ -228,7 +225,6 @@ export default function FormBuilder() {
                       <Button key={item.name} h="auto" minH="58px" px="10px" py="9px" variant="ghost" bg={isActive ? activeBg : 'transparent'} color={isActive ? 'brand.500' : 'inherit'} border="1px solid" borderColor={isActive ? 'brand.200' : 'transparent'} borderRadius="14px" justifyContent="stretch" onClick={() => setSelected(index)} _hover={{ bg: activeBg }}>
                         <Icon as={MdDragIndicator} color={isActive ? 'brand.400' : muted} boxSize="20px" flexShrink={0} />
                         <Box textAlign="left" mx="9px" minW="0" flex="1"><Text fontSize="sm" fontWeight="800" noOfLines={1}>{localized(item.label, language) || t('estate.newField')}</Text><Text color={muted} fontSize="10px" mt="3px" fontWeight="600">{t(`estate.type.${item.type}`)}</Text></Box>
-                        {item.kind === 'SYSTEM_FIELD' && <Icon as={MdLockOutline} color={muted} boxSize="15px" />}
                       </Button>
                     );
                   })}
@@ -247,17 +243,16 @@ export default function FormBuilder() {
                     <Flex gap="6px" flexShrink={0}>
                       <Tooltip label={t('estate.moveUp')}><IconButton aria-label={t('estate.moveUp')} icon={<MdArrowUpward />} isDisabled={selected === 0} onClick={() => move(-1)} variant="outline" borderRadius="11px" /></Tooltip>
                       <Tooltip label={t('estate.moveDown')}><IconButton aria-label={t('estate.moveDown')} icon={<MdArrowDownward />} isDisabled={selected === definition.fields.length - 1} onClick={() => move(1)} variant="outline" borderRadius="11px" /></Tooltip>
-                      {field.kind === 'CUSTOM_FIELD' && <Tooltip label={t('Delete')}><IconButton aria-label={t('Delete')} icon={<MdDeleteOutline />} onClick={remove} colorScheme="red" variant="ghost" borderRadius="11px" /></Tooltip>}
+                      <Tooltip label={t('Delete')}><IconButton aria-label={t('Delete')} icon={<MdDeleteOutline />} onClick={remove} colorScheme="red" variant="ghost" borderRadius="11px" /></Tooltip>
                     </Flex>
                   </Flex>
 
                   <Stack spacing="18px" p={{ base: 4, md: 5 }} bg={subtleBg}>
                     <Section icon={MdOutlineSettings} title={t('estate.fieldSettings')} description={t('estate.fieldSettingsHint')}>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing="18px">
-                        <FormControl><FormLabel fontSize="sm">{t('Type')}</FormLabel><Select value={field.type} isDisabled={field.kind === 'SYSTEM_FIELD' || savedNames.includes(field.name)} onChange={event => update({ type: event.target.value, defaultValue: undefined })} borderRadius="12px" bg={panelBg}>{types.map(type => <option key={type} value={type}>{t(`estate.type.${type}`)}</option>)}</Select></FormControl>
-                        <Box><Text fontWeight="700" fontSize="sm" mb="12px">{t('estate.fieldBehavior')}</Text><Flex gap="18px" minH="40px" align="center" flexWrap="wrap"><Checkbox data-testid="field-enabled" isChecked={field.enabled !== false} isDisabled={field.locked} onChange={event => update({ enabled: event.target.checked })}>{t('estate.enabled')}</Checkbox><Checkbox data-testid="field-required" isChecked={Boolean(field.required)} isDisabled={field.locked} onChange={event => update({ required: event.target.checked })}>{t('estate.required')}</Checkbox></Flex></Box>
+                        <FormControl><FormLabel fontSize="sm">{t('Type')}</FormLabel><Select data-testid="field-type" value={field.type} onChange={event => update({ type: event.target.value, defaultValue: undefined, options: field.options || [] })} borderRadius="12px" bg={panelBg}>{types.map(type => <option key={type} value={type}>{t(`estate.type.${type}`)}</option>)}</Select></FormControl>
+                        <Box><Text fontWeight="700" fontSize="sm" mb="12px">{t('estate.fieldBehavior')}</Text><Flex gap="18px" minH="40px" align="center" flexWrap="wrap"><Checkbox data-testid="field-enabled" isChecked={field.enabled !== false} onChange={event => update({ enabled: event.target.checked })}>{t('estate.enabled')}</Checkbox><Checkbox data-testid="field-required" isChecked={Boolean(field.required)} onChange={event => update({ required: event.target.checked })}>{t('estate.required')}</Checkbox></Flex></Box>
                       </SimpleGrid>
-                      {(field.locked || savedNames.includes(field.name)) && <Flex mt="14px" gap="8px" color={muted} fontSize="xs" align="center"><Icon as={MdInfoOutline} /><Text>{t('estate.protectedFieldHint')}</Text></Flex>}
                     </Section>
 
                     <Section icon={MdTranslate} title={t('estate.translations')} description={t('estate.translationsHint')}><Stack spacing="18px">{['label', 'placeholder', 'helpText', 'validationMessage'].map(localizedEditor)}</Stack></Section>
@@ -268,20 +263,20 @@ export default function FormBuilder() {
                           : ['multiselect', 'file'].includes(field.type) ? <Flex bg={subtleBg} borderRadius="12px" p="12px" color={muted} align="center" gap="8px"><Icon as={MdInfoOutline} /><Text fontSize="sm">{t('estate.defaultEmpty')}</Text></Flex>
                           : <Input value={field.defaultValue ?? ''} type={['number', 'currency'].includes(field.type) ? 'number' : 'text'} onChange={event => update({ defaultValue: event.target.value === '' ? undefined : ['number', 'currency'].includes(field.type) ? Number(event.target.value) : event.target.value })} borderRadius="12px" bg={panelBg} />}
                       </FormControl>
-                      {['number', 'currency'].includes(field.type) && field.kind === 'CUSTOM_FIELD' && <SimpleGrid columns={{ base: 1, sm: 2 }} spacing="14px" mt="16px">{['min', 'max'].map(key => <FormControl key={key}><FormLabel fontSize="sm">{t(`estate.${key}`)}</FormLabel><Input type="number" value={field[key] ?? ''} onChange={event => update({ [key]: event.target.value === '' ? undefined : Number(event.target.value) })} borderRadius="12px" bg={panelBg} /></FormControl>)}</SimpleGrid>}
+                      {['number', 'currency'].includes(field.type) && <SimpleGrid columns={{ base: 1, sm: 2 }} spacing="14px" mt="16px">{['min', 'max'].map(key => <FormControl key={key}><FormLabel fontSize="sm">{t(`estate.${key}`)}</FormLabel><Input type="number" value={field[key] ?? ''} onChange={event => update({ [key]: event.target.value === '' ? undefined : Number(event.target.value) })} borderRadius="12px" bg={panelBg} /></FormControl>)}</SimpleGrid>}
                     </Section>
 
                     {['select', 'radio', 'multiselect'].includes(field.type) && !field.relation && (
                       <Section icon={MdViewList} title={t('estate.options')} description={t('estate.optionsHint')}>
                         <Stack spacing="12px">
                           {(field.options || []).map((option, optionIndex) => (
-                            <Box border="1px solid" borderColor={border} borderRadius="15px" p="14px" key={`${option.value}-${optionIndex}`} bg={panelBg}>
-                              <Flex align="center" justify="space-between" mb="12px"><Text fontWeight="800" fontSize="sm">{t('estate.option')} {optionIndex + 1}</Text>{field.kind === 'CUSTOM_FIELD' && <IconButton size="sm" aria-label={t('Delete')} icon={<MdDeleteOutline />} colorScheme="red" variant="ghost" onClick={() => update({ options: field.options.filter((_, index) => index !== optionIndex) })} />}</Flex>
-                              <FormControl mb="12px"><FormLabel color={muted} fontSize="xs">{t('estate.optionValue')}</FormLabel><Input value={option.value} isDisabled={field.kind === 'SYSTEM_FIELD'} onChange={event => updateOption(optionIndex, { value: event.target.value })} borderRadius="12px" /></FormControl>
+                            <Box border="1px solid" borderColor={border} borderRadius="15px" p="14px" key={optionIndex} bg={panelBg}>
+                              <Flex align="center" justify="space-between" mb="12px"><Text fontWeight="800" fontSize="sm">{t('estate.option')} {optionIndex + 1}</Text><IconButton size="sm" aria-label={t('Delete')} icon={<MdDeleteOutline />} colorScheme="red" variant="ghost" onClick={() => update({ options: field.options.filter((_, index) => index !== optionIndex) })} /></Flex>
+                              <FormControl mb="12px"><FormLabel color={muted} fontSize="xs">{t('estate.optionValue')}</FormLabel><Input value={option.value} onChange={event => updateOption(optionIndex, { value: event.target.value })} borderRadius="12px" /></FormControl>
                               <SimpleGrid columns={{ base: 1, md: 3 }} spacing="10px">{languages.map(lang => <FormControl key={lang}><FormLabel color={muted} fontSize="xs">{t(`estate.language.${lang}`)}</FormLabel><Input dir="ltr" value={option.label?.[lang] || ''} onChange={event => updateOption(optionIndex, { label: { ...option.label, [lang]: event.target.value } })} borderRadius="12px" /></FormControl>)}</SimpleGrid>
                             </Box>
                           ))}
-                          {field.kind === 'CUSTOM_FIELD' && <Button leftIcon={<MdAdd />} onClick={() => update({ options: [...(field.options || []), { value: '', label: emptyLocalized() }] })} variant="outline" borderStyle="dashed" borderRadius="13px" minH="46px">{t('estate.addOption')}</Button>}
+                          <Button leftIcon={<MdAdd />} onClick={() => update({ options: [...(field.options || []), { value: '', label: emptyLocalized() }] })} variant="outline" borderStyle="dashed" borderRadius="13px" minH="46px">{t('estate.addOption')}</Button>
                         </Stack>
                       </Section>
                     )}

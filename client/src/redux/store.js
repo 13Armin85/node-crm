@@ -1,6 +1,5 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
-import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import { clearRecordCache } from "services/recordCache";
 import imageReducer from "./slices/imageSlice";
 import userReducer from "./slices/localSlice";
 import routeReducer from "./slices/routeSlice";
@@ -29,31 +28,17 @@ const middleware = (getDefaultMiddleware) => {
   });
 };
 
-const routePersistConfig = {
-  key: "route",
-  storage,
-};
-const imagesPersistConfig = {
-  key: "image",
-  storage,
-};
-const leadPersistConfig = {
-  key: "lead",
-  storage,
-};
-const contactPersistConfig = {
-  key: "contact",
-  storage,
-};
+// Fetch server records afresh; persisted error responses can break every subsequent visit.
+clearRecordCache();
 
 const appReducer = combineReducers({
     modules: moduleSlice,
-    images: persistReducer(imagesPersistConfig, imageReducer),
+    images: imageReducer,
     user: userReducer,
-    route: persistReducer(routePersistConfig, routeReducer),
+    route: routeReducer,
     advanceSearchData: advanceSearchSlice,
-    leadData: persistReducer(leadPersistConfig, leadSlice),
-    contactData: persistReducer(contactPersistConfig, contactSlice),
+    leadData: leadSlice,
+    contactData: contactSlice,
     propertyCustomFiled: propertyCustomFiledSlice,
     contactCustomFiled: contactCustomFiledSlice,
     leadCustomFiled: leadCustomFiledSlice,
@@ -78,5 +63,3 @@ export const store = configureStore({
   reducer: rootReducer,
   middleware,
 });
-
-export const persistor = persistStore(store);

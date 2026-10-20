@@ -67,3 +67,19 @@ test('failed saves retain changes and do not retry in a loop', async () => {
   expect(container.querySelector('[data-testid="field-enabled"] input').checked).toBe(false);
   expect(container.querySelector('[data-testid="save-form"]').disabled).toBe(false);
 });
+
+
+test('formerly locked system fields allow changing behavior, type and deletion', async () => {
+  definition.fields[0] = { ...system, locked: true, required: true };
+  await render();
+  expect(container.querySelector('[data-testid="field-type"]').disabled).toBe(false);
+  expect(container.querySelector('[data-testid="field-enabled"] input').disabled).toBe(false);
+  expect(container.querySelector('[data-testid="field-required"] input').disabled).toBe(false);
+  await change('[data-testid="field-required"] input', { checked: false });
+  await change('[data-testid="field-type"]', { value: 'textarea' });
+  await settleSave();
+  expect(putApi.mock.calls[0][1].fields[0]).toMatchObject({ type: 'textarea', required: false });
+  await act(async () => Simulate.click(container.querySelector('button[aria-label="Delete"]')));
+  await settleSave();
+  expect(putApi.mock.calls.at(-1)[1].fields).toEqual([]);
+});

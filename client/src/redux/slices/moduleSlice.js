@@ -12,7 +12,8 @@ const initialState = {
 export const fetchModules = createAsyncThunk("modules", async () => {
   try {
     const response = await getApi(`api/modules`);
-    return response.data;
+    if (response?.status !== 200 || !Array.isArray(response.data)) throw new Error("Failed to load records");
+    return response.data.filter(item => item && typeof item.moduleName === "string");
   } catch (error) {
     throw error;
   }
@@ -34,6 +35,7 @@ const moduleSlice = createSlice({
       })
       .addCase(fetchModules.rejected, (state, action) => {
         state.status = "failed";
+        state.data = [];
         state.error = action.error.message;
       });
   },

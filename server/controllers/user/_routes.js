@@ -10,6 +10,8 @@ router.get('/', auth, loadUser, permit('Users', 'view'), user.index)
 router.get('/options', auth, loadUser, permit('Users', 'view'), user.options)
 router.post('/register', auth, loadUser, developerOnly, dynamicValues, user.register)
 router.post('/login', require('../../middelwares/securityHeaders').loginLimiter, user.login)
+const changePassword = require('./changePassword');
+router.post('/change-password', auth, loadUser, changePassword.limiter, changePassword.handle)
 router.post('/deleteMany', auth, loadUser, permit('Users', 'delete'), user.deleteMany)
 router.get('/view/:id', auth, loadUser, user.view)
 router.delete('/delete/:id', auth, loadUser, permit('Users', 'delete'), user.deleteData)

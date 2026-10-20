@@ -5,13 +5,14 @@ export const userSchema = yup.object({
   role: yup.string().oneOf(["developer", "admin", "user"]).required(tr("Role Is required")),
   firstName: yup.string().required(tr("First Name Is required")),
   lastName: yup.string(),
-  // phoneNumber: yup.string().required("Phone Number Is required").matches(/^\d{10}$/, "Phone Number must be exactly 10 digits"),
   phoneNumber: yup
     .number()
+    .transform((value, original) => original == null || (typeof original === "string" && !original.trim()) ? undefined : value)
+    .nullable()
+    .optional()
     .typeError("Invalid Phone Number")
     .min(1000000000, tr("Phone Number is invalid"))
-    .max(999999999999, tr("Phone Number is invalid"))
-    .required(tr("Phone Number is Required")),
+    .max(999999999999, tr("Phone Number is invalid")),
   username: yup
     .string()
     .email(tr("Email must be a valid email"))

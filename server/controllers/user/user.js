@@ -50,8 +50,8 @@ const register = async (req, res) => {
       await User.deleteOne({ _id: user._id });
     } else if (user) {
       return res
-        .status(401)
-        .json({ message: "user already exist please try another email" });
+        .status(409)
+        .json({ code: "duplicate", message: "user already exist please try another email" });
     }
     const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
     const newUser = new User({
@@ -207,7 +207,8 @@ const edit = async (req, res) => {
     );
 
     if (result.modifiedCount) await createNotification({ recipientId: target._id, actorId: req.actor._id, type: roleChanged ? 'role_changed' : 'account_updated', message: username || target.username, status: roleChanged ? role : undefined, module: 'Users', link: '/default' });
-    res.status(200).json(result);
+    const updatedUser = await User.findById(target._id).select('-password -authVersion').lean();
+    res.status(200).json({ ...result, user: updatedUser });
   } catch (err) {
     console.error("Failed to Update User:", err);
     res.status(400).json({ error: "Failed to Update User" });
@@ -248,6 +249,8 @@ const login = async (req, res) => {
       expiresIn: req.body.rememberMe === true ? "30d" : "1d",
     });
 
+    req.actor = user;
+    await require('../../services/auditLog').recordEvent(req, 'login');
     const safeUser = user.toObject();
     delete safeUser.password;
     delete safeUser.authVersion;

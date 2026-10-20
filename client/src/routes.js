@@ -106,6 +106,7 @@ const templateView = React.lazy(
 const SignInCentered = React.lazy(() => import("views/auth/signIn"));
 // admin setting
 const AdminSetting = React.lazy(() => import("views/admin/adminSetting"));
+const AuditLogs = React.lazy(() => import("views/admin/adminSetting/AuditLogs"));
 const validation = React.lazy(() => import("views/admin/validation"));
 const module = React.lazy(() => import("views/admin/moduleName"));
 const Opportunities = React.lazy(() => import("views/admin/opportunities"));
@@ -509,6 +510,13 @@ const routes = [
   },
 
   // -----------------------------Admin setting-------------------------------------
+  {
+    name: "Logs",
+    layout: [ROLE_PATH.admin, ROLE_PATH.user],
+    path: "/audit-logs",
+    under: "Admin Setting",
+    component: AuditLogs,
+  },
   {
     name: "User data visibility",
     layout: [ROLE_PATH.admin],

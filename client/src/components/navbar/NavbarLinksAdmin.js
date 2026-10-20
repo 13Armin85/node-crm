@@ -19,6 +19,7 @@ import { useCallback, useEffect } from "react";
 import {
   FiChevronDown,
   FiHome,
+  FiList,
   FiLogOut,
   FiLock,
   FiSettings,
@@ -33,6 +34,7 @@ import { useLanguage } from "i18n";
 import { clearUser } from "../../redux/slices/localSlice";
 import { clearAuthSession, scheduleSessionExpiry } from "services/authSession";
 import NotificationsMenu from "./NotificationsMenu";
+import { postApi } from "services/api";
 import ChangePasswordDialog from "./ChangePasswordDialog";
 
 export default function HeaderLinks() {
@@ -51,6 +53,7 @@ export default function HeaderLinks() {
   const userRole = loginUser?.role ? t(loginUser.role) : t("Team member");
 
   const logOut = useCallback((message) => {
+    if (!message) void postApi("api/user/logout", {});
     clearAuthSession();
     dispatch(clearUser());
     navigate("/auth/sign-in", { replace: true });
@@ -104,6 +107,7 @@ export default function HeaderLinks() {
             <MenuItem icon={<Icon as={FiSettings} />} onClick={() => navigate("/admin-setting")}>{t("Admin Settings")}</MenuItem>
           )}
           <MenuItem icon={<Icon as={FiUser} />} onClick={() => navigate(`/userView/${storedUser?._id}`)}>{t("Profile Settings")}</MenuItem>
+          <MenuItem id="crm-audit-logs-menu" icon={<Icon as={FiList} />} onClick={() => navigate("/audit-logs")}>{t("Logs")}</MenuItem>
           <MenuItem id="crm-change-password-menu" icon={<Icon as={FiLock} />} onClick={passwordDialog.onOpen}>{t("Change Password")}</MenuItem>
           <MenuDivider />
           <MenuItem className="crm-menu-danger" icon={<Icon as={FiLogOut} />} onClick={() => logOut()}>{t("Log out")}</MenuItem>

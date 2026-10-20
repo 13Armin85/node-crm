@@ -26,8 +26,6 @@ import { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getApi } from "services/api";
-import { useDispatch, useSelector } from "react-redux";
-import { setUser } from "../../../redux/slices/localSlice";
 import CommonDeleteModel from "components/commonDeleteModel";
 import { deleteApi } from "services/api";
 import AddEditUser from "./AddEditUser";
@@ -35,22 +33,11 @@ import { isDeveloper, canEditUser, canDeleteUser } from 'roles';
 
 const View = () => {
   const actor = JSON.parse(localStorage.getItem('user') || 'null');
-  const dispatch = useDispatch();
-  const userData = useSelector((state) => state?.user?.user);
-
-  const userName =
-    typeof userData === "string" ? JSON.parse(userData) : userData;
-
   const param = useParams();
   const navigate = useNavigate();
-  const handleOpenModal = (userData) => {
-    setEdit(true);
-    dispatch(setUser(userData)); // Dispatch setUser action to set user data
-  };
 
   const [data, setData] = useState();
   // const { isOpen, onOpen, onClose } = useDisclosure()
-  const [edit, setEdit] = useState(false);
   const [deleteModel, setDelete] = useState(false);
   const [isLoding, setIsLoding] = useState(false);
   const [action, setAction] = useState(false);
@@ -225,7 +212,6 @@ const View = () => {
                 <Flex justifyContent={"right"}>
                   {canEditUser(actor, data) && <Button
                     onClick={() => {
-                      handleOpenModal(userData);
                       handleOpen("edit");
                     }}
                     leftIcon={<EditIcon />}

@@ -3,6 +3,7 @@ import MiniStatistics from "components/card/MiniStatistics";
 import IconBox from "components/icons/IconBox";
 import { FaWpforms } from "react-icons/fa";
 import { HiUsers } from "react-icons/hi";
+import { FiList } from "react-icons/fi";
 import { TbExchange } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import { GrValidate } from "react-icons/gr";
@@ -18,6 +19,12 @@ const Index = () => {
     <Box className="crm-settings-page">
       <Button mb={4} colorScheme="blue" onClick={() => navigate("/data-visibility")}>{t("User data visibility")}</Button>
       <SimpleGrid className="crm-settings-grid" templateColumns="repeat(auto-fit, minmax(min(100%, 220px), 1fr))" gap="16px" mb="20px">
+        <MiniStatistics
+          fontsize="md"
+          onClick={() => navigate("/audit-logs")}
+          startContent={<IconBox w="56px" h="56px" bg="linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)" icon={<Icon w="28px" h="28px" as={FiList} color="white" />} />}
+          name="Logs"
+        />
         <MiniStatistics
           fontsize="md"
           onClick={() => navigate("/user")}

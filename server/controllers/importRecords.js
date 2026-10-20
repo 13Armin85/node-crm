@@ -21,7 +21,7 @@ const targets = Object.assign(Object.create(null), {
   Quotes: () => require('../model/schema/quotes'),
   'Opportunity Project': () => require('../model/schema/opportunityproject'),
 });
-const denied = new Set(['User', 'Users', 'Accounts', 'Account', 'Documents', 'Document', 'Payments', 'Notification', 'Notifications', 'Images', 'EstateFile', 'RecordShare', 'RecordShares', 'AuthSession', 'AuthSessions', 'CustomField', 'FormDefinition', 'Validation', 'ModuleActiveDeactive', 'uploadlocks']);
+const denied = new Set(['User', 'Users', 'Accounts', 'Account', 'Documents', 'Document', 'Payments', 'Notification', 'Notifications', 'Images', 'EstateFile', 'RecordShare', 'RecordShares', 'AuthSession', 'AuthSessions', 'AuditLog', 'AuditLogs', 'CustomField', 'FormDefinition', 'Validation', 'ModuleActiveDeactive', 'uploadlocks']);
 const aliases = { Users: 'User', 'Partner Customers': 'PartnerCustomers', Documents: 'Document', 'Opportunity Project': 'OpportunityProjects', OpportunityProject: 'OpportunityProjects', 'Bank Details': 'BankDetails', 'Email Template': 'EmailTemps' };
 const fieldOf = error => error.field || Object.keys(error.errors || {})[0];
 const cleanError = (error, row) => ({ row, field: fieldOf(error), code: error.code === 11000 || error.code === 'duplicate' ? 'duplicate' : error.code || (error.errors?.[fieldOf(error)]?.kind === 'required' ? 'required' : 'invalid') });

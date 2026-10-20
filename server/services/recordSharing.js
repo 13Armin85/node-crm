@@ -11,7 +11,7 @@ const modelLoaders = {
   Documents: () => require('../model/schema/document'),
   'Partner Customers': () => require('../model/schema/partnerCustomer'),
 };
-const shareableModules = ['Leads', 'Opportunities', 'Documents'];
+const shareableModules = ['Leads', 'Opportunities', 'Documents', 'Partner Customers'];
 // Visibility and ownership scopes still cover all existing modules.
 const limitedModules = new Set([...Object.keys(modelLoaders), 'Tasks']);
 const modelFor = name => modelLoaders[name]?.() || (name === 'Tasks' ? require('../model/schema/task') : null);

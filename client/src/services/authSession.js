@@ -67,6 +67,16 @@ export const saveAuthSession = ({ token, user, remember = true }) => {
   notifyAuthChanged();
 };
 
+export const updateSessionUser = (updatedUser) => {
+  const current = getStoredUser();
+  if (!current || !updatedUser || String(current._id) !== String(updatedUser._id)) return null;
+  const next = { ...current, ...updatedUser };
+  localStorage.setItem("user", JSON.stringify(next));
+  sessionStorage.removeItem("user");
+  notifyAuthChanged();
+  return next;
+};
+
 export const clearAuthSession = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");

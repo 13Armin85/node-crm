@@ -25,21 +25,21 @@ beforeEach(() => {
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.clear(); });
 const modal = () => document.querySelector('.crm-share-record-modal');
 const button = name => [...modal().querySelectorAll('button')].find(item => item.textContent === name);
-const render = () => act(() => { ReactDOM.render(<ChakraProvider><ShareRecordButton module="Leads" record={{ _id: 'record' }} /></ChakraProvider>, container); });
+const render = (module = "Leads") => act(() => { ReactDOM.render(<ChakraProvider><ShareRecordButton module={module} record={{ _id: 'record' }} /></ChakraProvider>, container); });
 const open = () => act(async () => Simulate.click(container.querySelector('.crm-share-record-button')));
 const choose = value => act(async () => Simulate.change(modal().querySelector('select'), { target: { value } }));
 
-test('admins send a single record to the selected user and can revoke exactly that grant', async () => {
-  render(); await open();
+test.each(['Leads', 'Partner Customers'])('admins send a single %s record to the selected user and can revoke exactly that grant', async module => {
+  render(module); await open();
   await act(async () => Simulate.change(modal().querySelector('input'), { target: { value: 'IPEK YILMAZ' } }));
   expect([...modal().querySelectorAll('option')].map(item => item.value)).toEqual(['', 'two']);
   await choose('two'); await act(async () => Simulate.click(button('Send')));
-  expect(postApi).toHaveBeenCalledWith('api/record-sharing', { module: 'Leads', recordId: 'record', recipientId: 'two' });
+  expect(postApi).toHaveBeenCalledWith('api/record-sharing', { module, recordId: 'record', recipientId: 'two' });
   expect(toast.success).toHaveBeenCalledWith('Item sent to user');
   expect(button('Send')).toBeUndefined();
   expect(modal().textContent).toContain('This item has already been sent to this user');
   await act(async () => Simulate.click(button('Revoke access')));
-  expect(deleteApi).toHaveBeenCalledWith('api/record-sharing/Leads/record/', 'two');
+  expect(deleteApi).toHaveBeenCalledWith('api/record-sharing/' + encodeURIComponent(module) + '/record/', 'two');
   expect(button('Send')).toBeDefined();
 });
 
@@ -56,14 +56,14 @@ test('a failed send leaves the recipient available for retry and never claims su
   expect(toast.success).toHaveBeenCalledWith('Item sent to user');
 });
 
-test('ordinary users have no sending action or recipient directory request', () => {
+test.each(['Leads', 'Partner Customers'])('ordinary users have no %s sending action or recipient directory request', module => {
   localStorage.setItem('user', JSON.stringify({ role: 'user', _id: 'one' }));
-  render();
+  render(module);
   expect(container.querySelector('.crm-share-record-button')).toBeNull();
   expect(getApi).not.toHaveBeenCalled();
 });
 
-test.each(['Contacts', 'Invoices', 'Meetings', 'Calls', 'Emails', 'Properties', 'Partner Customers'])('administrators cannot send records in %s', module => {
+test.each(['Contacts', 'Invoices', 'Meetings', 'Calls', 'Emails', 'Properties'])('administrators cannot send records in %s', module => {
   act(() => { ReactDOM.render(<ShareRecordButton module={module} record={{ _id: 'record' }} />, container); });
   expect(container.querySelector('.crm-share-record-button')).toBeNull();
   expect(getApi).not.toHaveBeenCalled();

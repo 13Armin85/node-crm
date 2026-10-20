@@ -54,7 +54,11 @@ function App() {
     }
   }, [reduxUser]);
 
-  const user = reduxUser || session.user;
+  let normalizedUser = reduxUser;
+  if (typeof normalizedUser === "string") {
+    try { normalizedUser = JSON.parse(normalizedUser); } catch { normalizedUser = null; }
+  }
+  const user = normalizedUser?.role ? normalizedUser : session.user;
   const token = session.token;
 
   return (

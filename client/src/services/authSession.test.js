@@ -1,4 +1,4 @@
-import { clearAuthSession, getAuthSession, saveAuthSession, scheduleSessionExpiry } from './authSession';
+import { clearAuthSession, getAuthSession, saveAuthSession, scheduleSessionExpiry, updateSessionUser } from './authSession';
 const user = { _id: 'ordinary-user', role: 'user' };
 const token = (exp) => 'eyJhbGciOiJIUzI1NiJ9.' + btoa(JSON.stringify({ exp })) + '.test';
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
@@ -44,4 +44,16 @@ test('expired remembered login and explicit logout cannot restore a session', ()
   expect(localStorage.getItem('user')).toBeNull();
   expect(localStorage.getItem('token')).toBeNull();
   expect(sessionStorage.getItem('token')).toBeNull();
+});
+
+for (const remember of [true, false]) test('profile edits preserve the existing token and storage choice: ' + remember, () => {
+  const jwt = token(Math.floor(Date.now() / 1000) + 86400);
+  saveAuthSession({ token: jwt, user: { ...user, firstName: 'Old', username: 'old@example.test', moduleVisibility: { Tasks: true } }, remember });
+  const updated = updateSessionUser({ _id: user._id, role: 'user', firstName: 'New', username: 'new@example.test' });
+  expect(typeof updated).toBe('object');
+  expect(getAuthSession()).toEqual({ token: jwt, user: { ...user, firstName: 'New', username: 'new@example.test', moduleVisibility: { Tasks: true } } });
+  expect(localStorage.getItem('token')).toBe(remember ? jwt : null);
+  expect(sessionStorage.getItem('token')).toBe(remember ? null : jwt);
+  expect(updateSessionUser({ _id: 'another-user', role: 'admin' })).toBeNull();
+  expect(getAuthSession().user.role).toBe('user');
 });

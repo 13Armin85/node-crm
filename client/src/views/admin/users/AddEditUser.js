@@ -33,6 +33,7 @@ import { userSchema } from "schema";
 import { postApi, putApi } from "services/api";
 import { setUser } from "../../../redux/slices/localSlice";
 import { isDeveloper, isAdmin, canEditUser } from 'roles';
+import { getStoredUser, updateSessionUser } from 'services/authSession';
 
 const AddEditUser = (props) => {
   const {
@@ -59,7 +60,7 @@ const AddEditUser = (props) => {
     password: userAction === "add" ? "" : data?.password,
     role: userAction === "add" ? "user" : data?.role || "user",
   };
-  const user = JSON.parse(window.localStorage.getItem("user"));
+  const user = getStoredUser();
   const { definition, definitionError } = useFormDefinition('Users', isOpen);
 
 
@@ -112,22 +113,11 @@ const AddEditUser = (props) => {
         if (!isAdmin(user)) delete payload.role;
         let response = await putApi(`api/user/edit/${selectedId}`, payload);
         if (response && response?.status === 200) {
-          // setEdit(false)
-          fetchData();
-          if (user?._id === selectedId) {
-            let updatedUserData = data; // Create a copy of userData
-            if (updatedUserData && typeof updatedUserData === "object") {
-              // Create a new object with the updated firstName
-              updatedUserData = {
-                ...updatedUserData,
-                firstName: values?.firstName,
-                lastName: values?.lastName,
-              };
-            }
-            const updatedDataString = JSON.stringify(updatedUserData);
-            localStorage.setItem("user", updatedDataString);
-            dispatch(setUser(updatedDataString));
+          if (user?._id === selectedId && response.data.user) {
+            const updatedUser = updateSessionUser(response.data.user);
+            if (updatedUser) dispatch(setUser(updatedUser));
           }
+          fetchData();
 
           setUserAction("");
           setAction((pre) => !pre);
@@ -218,7 +208,6 @@ const AddEditUser = (props) => {
                 onBlur={handleBlur}
                 value={values?.username}
                 name="username"
-                disabled={userAction === "edit"}
                 placeholder={tr("Email Address")}
                 fontWeight="500"
                 borderColor={

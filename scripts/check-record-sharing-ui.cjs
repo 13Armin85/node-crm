@@ -16,14 +16,17 @@ async function main(){
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
  try{
-  browser=await puppeteer.launch({executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,pipe:true});
+  const browserName=process.env.CRM_BROWSER||'chrome';
+  assert(['chrome','firefox'].includes(browserName));
+  if(browserName==='firefox')assert(process.env.CRM_PARTNER_SHARING_FOCUSED==='1','Firefox is supported by the focused partner sharing check');
+  browser=await puppeteer.launch({browser:browserName,executablePath:process.env.BROWSER_PATH||process.env.CHROME_PATH||(browserName==='chrome'?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined),headless:true,pipe:browserName==='chrome'});
   const page=await browser.newPage(),errors=[],calls=[];page.on('pageerror',error=>errors.push(error.message));
-  const cdp=await browser.target().createCDPSession();await cdp.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:downloads});
+  if(browserName==='chrome'){const cdp=await browser.target().createCDPSession();await cdp.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:downloads});}
   const user={_id:'000000000000000000000001',role:'developer',firstName:'UI',lastName:'Tester',username:'ui@example.test'};
   const people=[{_id:'000000000000000000000002',firstName:'علی',lastName:'کریمی',username:'ali@example.test',role:'user'},{_id:'000000000000000000000003',firstName:'İpek',lastName:'Yılmaz',username:'ipek@example.test',role:'user'}];
   const records=people.map((p,i)=>({...p,_id:'10000000000000000000000'+i,leadName:p.firstName+' '+p.lastName,title:'Task '+i,name:p.firstName,fullName:p.firstName+' '+p.lastName,subject:'Subject '+i,agenda:'Agenda '+i,opportunityName:'Opportunity '+i,invoiceNumber:'INV-'+i,senderName:p.firstName,createBy:user._id,assignedToUser:p._id,assignedToUserName:p.firstName+' '+p.lastName,status:'todo',priority:'normal',category:'None',leadStatus:'active',emailsent:2,outboundcall:1,textsent:0,tasks:2,completedTasks:1,createdDate:'2026-10-01T12:00:00.000Z'}));
   const properties=Array.from({length:205},(_,i)=>({_id:(i+100).toString(16).padStart(24,'0'),title:'Property '+i,fullName:'Customer '+i,name:'Residence '+i,price:{amount:1234+i,currency:'TRY'},createdDate:'2026-10-01T12:00:00.000Z'}));
-  await page.setRequestInterception(true);page.on('request',req=>{
+  await page.setRequestInterception(true);page.on('request',async req=>{
    const url=new URL(req.url()),p=decodeURIComponent(url.pathname).replace(/\/$/,'');
    if(!p.startsWith('/api/')){req.continue().catch(()=>{});return;}calls.push(url.pathname+url.search);let data=[], status=200;
    if(p==='/api/visibility/me')data={visibility:Object.fromEntries(hidden.map(name=>[name,false])),accessibleModules:activeRole==='user'?grantedModules:[]};
@@ -31,8 +34,13 @@ async function main(){
    if(p==='/api/record-sharing/users')data=people;
    if(p.startsWith('/api/record-sharing/')&&!p.endsWith('/users'))data=shares.get(p)||[];
    if(p==='/api/record-sharing'&&req.method()==='POST'){
-    const body=JSON.parse(req.postData());sends.push(body);const key='/api/record-sharing/'+body.module+'/'+body.recordId;
+    const body=JSON.parse(await req.fetchPostData());sends.push(body);const key='/api/record-sharing/'+body.module+'/'+body.recordId;
     shares.set(key,[{user:people.find(person=>person._id===body.recipientId)}]);status=201;data={shared:true,created:true};
+   }
+
+   if(p.startsWith('/api/record-sharing/')&&req.method()==='DELETE'){
+    const parts=p.split('/'),recipientId=parts.pop(),key=parts.join('/');
+    shares.set(key,(shares.get(key)||[]).filter(share=>share.user._id!==recipientId));data={shared:false};
    }
    if(['/api/task','/api/lead','/api/contact','/api/invoices','/api/opportunity','/api/meeting','/api/phoneCall','/api/email','/api/email-temp','/api/reporting'].includes(p))data=records.map((record,index)=>({...record,_receivedFromAdmin:activeRole==='user'&&index===1}));
    if(p==='/api/task/assignees')data=people;
@@ -104,6 +112,37 @@ async function main(){
    await goto('/lead');assert(await page.$$eval('button',nodes=>nodes.some(node=>node.textContent.trim()==='Add New')),'Other modules retain data entry');
    assert.deepEqual(errors,[],'Browser runtime errors');
    console.log('PASS task read-only UI, disabled drag/status changes, retained view/search/export and administrative creation');
+   return;
+  }
+
+  if(process.env.CRM_PARTNER_SHARING_FOCUSED==='1'){
+   const labels={
+    en:{send:'Send',revoke:'Revoke access',close:'Close'},
+    fa:{send:'ارسال',revoke:'لغو دسترسی',close:'بستن'},
+    tr:{send:'Gönder',revoke:'Erişimi kaldır',close:'Kapat'}
+   };
+   for(const [role,language] of [['developer','en'],['admin','fa'],['admin','tr']]){
+    shares.clear();await setSession(role,language);await goto('/partner-customers');
+    await page.waitForSelector('.crm-share-record-button');
+    await page.$eval('.crm-share-record-button',node=>node.click());
+    await page.waitForSelector('.crm-share-record-modal select');
+    await page.type('.crm-share-record-modal input','IPEK YILMAZ');
+    await page.select('.crm-share-record-modal select',people[1]._id);
+    await clickText('.crm-share-record-modal button',labels[language].send);
+    await page.waitForFunction(name=>document.querySelector('.crm-sent-record-label')?.textContent.includes(name),{},people[1].firstName);
+    assert.deepEqual(sends.at(-1),{module:'Partner Customers',recordId:properties[0]._id,recipientId:people[1]._id});
+    await page.screenshot({path:path.join(artifacts,'partner-sharing-'+browserName+'-'+language+'.png')});
+    await clickText('.crm-share-record-modal button',labels[language].revoke);
+    await page.waitForFunction(()=>document.querySelectorAll('.crm-sent-record-label').length===0);
+    assert.deepEqual(shares.get('/api/record-sharing/Partner Customers/'+properties[0]._id),[]);
+    await clickText('.crm-share-record-modal button',labels[language].close);
+    console.log('PASS '+role+' partner customer send, recipient label and revoke: '+language);
+   }
+   await setSession('user','en');await goto('/partner-customers');await page.waitForSelector('.crm-entity-table tbody tr');
+   assert.equal(await page.$$eval('.crm-share-record-button',nodes=>nodes.length),0);
+   assert(await page.$('.crm-received-record-label'),'Recipient sees the received-from-admin label');
+   assert.deepEqual(errors,[],'Browser runtime errors');
+   console.log('PASS ordinary recipient has no sending action and sees received record label');
    return;
   }
   for(const [route,module] of matrix){

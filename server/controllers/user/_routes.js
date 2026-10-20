@@ -12,6 +12,9 @@ router.post('/register', auth, loadUser, developerOnly, dynamicValues, user.regi
 router.post('/login', require('../../middelwares/securityHeaders').loginLimiter, user.login)
 const changePassword = require('./changePassword');
 router.post('/change-password', auth, loadUser, changePassword.limiter, changePassword.handle)
+router.post('/logout', auth, async (req, res, next) => {
+    try { await require('../../services/auditLog').recordEvent(req, 'logout'); res.json({ success: true }); } catch (error) { next(error); }
+});
 router.post('/deleteMany', auth, loadUser, permit('Users', 'delete'), user.deleteMany)
 router.get('/view/:id', auth, loadUser, user.view)
 router.delete('/delete/:id', auth, loadUser, permit('Users', 'delete'), user.deleteData)

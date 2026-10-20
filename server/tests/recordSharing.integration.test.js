@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { jwtSecret } = require('../config/auth');
 
-test('individual grants expose only own and explicitly sent records with sending limited to leads, opportunities and documents', { skip: process.env.SHARING_INTEGRATION !== '1' }, async t => {
+test('individual grants expose only own and explicitly sent records with sending limited to leads, opportunities, documents and partner customers', { skip: process.env.SHARING_INTEGRATION !== '1' }, async t => {
   const dbName = 'crm_sharing_test_' + crypto.randomUUID().replace(/-/g, '');
   await mongoose.connect('mongodb://127.0.0.1:27017', { dbName, serverSelectionTimeoutMS: 5000 });
   mongoose.set('strictQuery', false);
@@ -106,7 +106,7 @@ test('individual grants expose only own and explicitly sent records with sending
         assert.equal((await api('DELETE', route + '/delete/' + sent._id)).status, 404, module);
       }
     }
-    assert.equal(await Notification.countDocuments({ recipient: user._id, type: 'record_shared' }), 2);
+    assert.equal(await Notification.countDocuments({ recipient: user._id, type: 'record_shared' }), 3);
     const metadata = await CustomField.create({ moduleName: 'Leads', fields: [] });
     const generic = await api('GET', '/form?moduleId=' + metadata._id);
     assert.deepEqual(ids(generic.data.data), ids([fixtures.Leads.own, fixtures.Leads.sent]));
@@ -148,16 +148,36 @@ test('individual grants expose only own and explicitly sent records with sending
     const invisible = await Notification.create({ recipient: user._id, module: 'Leads', entityId: fixtures.Leads.foreign._id, type: 'record_created', message: 'Private' });
     await Notification.create({ recipient: other._id, module: 'Leads', entityId: fixtures.Leads.sent._id, type: 'record_shared', message: 'Other inbox' });
     const inbox = (await api('GET', '/notification')).data;
-    assert.equal(inbox.unreadCount, 3); assert.equal(inbox.notifications.length, 3);
+    assert.equal(inbox.unreadCount, 4); assert.equal(inbox.notifications.length, 4);
     assert(inbox.notifications.every(row => row.type === 'record_shared'));
     assert.equal((await api('PUT', '/notification/' + invisible._id + '/read')).status, 404);
     const item = inbox.notifications[0];
     assert.equal((await api('PUT', '/notification/' + item._id + '/read', null, other)).status, 404);
     assert.equal((await api('PUT', '/notification/' + item._id + '/read')).status, 200);
-    assert.equal((await api('GET', '/notification')).data.unreadCount, 2);
+    assert.equal((await api('GET', '/notification')).data.unreadCount, 3);
     const all = await api('PUT', '/notification/read-all'); assert.equal(all.status, 200, JSON.stringify(all));
     assert.equal(all.data.unreadCount, 0);
     assert.equal((await Notification.findById(invisible._id)).readAt, null);
+  });
+  await t.test('partner customer grants are view-only, recipient-specific and can be revoked', async () => {
+    const module = 'Partner Customers', route = routes[module], { own, sent } = fixtures[module];
+    assert.equal((await api('PUT', route + '/' + sent._id, { phone: '+905550000001' })).status, 404);
+    assert.equal((await api('DELETE', route + '/' + sent._id)).status, 404);
+    const recipients = await api('GET', '/record-sharing/Partner%20Customers/' + sent._id, null, admin);
+    assert.equal(recipients.status, 200);
+    assert.equal(recipients.data[0].user._id, String(user._id));
+    const notice = await Notification.findOne({ recipient: user._id, module, entityId: sent._id, type: 'record_shared' }).lean();
+    assert.equal(notice.link, '/partner-customers/' + sent._id);
+    const endpoint = '/record-sharing/Partner%20Customers/' + sent._id + '/' + user._id;
+    assert.equal((await api('DELETE', endpoint)).status, 403);
+    assert.equal((await api('DELETE', endpoint, null, admin)).status, 200);
+    assert.deepEqual(ids(rows(await api('GET', route))), ids([own]));
+    assert.equal((await api('GET', detailPath(module, sent._id))).status, 404);
+    assert.equal((await send(module, sent._id, developer, empty)).status, 201);
+    assert((await api('GET', '/visibility/me', null, empty)).data.accessibleModules.includes(module));
+    assert.deepEqual(ids(rows(await api('GET', route, null, empty))), ids([sent]));
+    await api('DELETE', '/record-sharing/Partner%20Customers/' + sent._id + '/' + empty._id, null, developer);
+    assert(!(await api('GET', '/visibility/me', null, empty)).data.accessibleModules.includes(module));
   });
   await t.test('input validation, explicit full visibility, revocation and user self-edits cannot widen grants', async () => {
     assert.equal((await send('Users', fixtures.Leads.sent._id)).status, 400);
@@ -206,6 +226,7 @@ test('individual grants expose only own and explicitly sent records with sending
       const created = await api('POST', route + (module === 'Partner Customers' ? '' : '/add'), { ...payloads[module], createBy: String(admin._id), sender: String(admin._id) }, actor);
       assert([200, 201].includes(created.status), module + ' creation: ' + JSON.stringify(created));
       const item = created.data.result || created.data;
+      if (module === 'Contacts') payloads.Leads.contact = String(item._id);
       assert.equal(String(item.createBy), String(actor._id), module + ' actor owns new record');
       assert.deepEqual(ids(rows(await api('GET', route, null, actor))), [String(item._id)], module + ' new record readable');
       assert.equal((await api('GET', detailPath(module, item._id), null, actor)).status, 200, module);
@@ -251,7 +272,7 @@ test('individual grants expose only own and explicitly sent records with sending
     assert.equal((await api('GET', '/document/download/' + uploadedFile._id, null, other)).status, 404);
 
     const formModule = await CustomField.findOne({ moduleName: 'Leads' });
-    const generic = await api('POST', '/form/add', { moduleId: String(formModule._id), leadName: 'New own generic lead', leadEmail: 'new@example.test' }, actor);
+    const generic = await api('POST', '/form/add', { moduleId: String(formModule._id), leadName: 'New own generic lead', leadEmail: 'new@example.test', contact: payloads.Leads.contact }, actor);
     assert.equal(generic.status, 200, 'generic creation: ' + JSON.stringify(generic));
     assert.equal((await api('GET', '/reporting', null, actor)).status, 200);
     assert.deepEqual(ids((await api('GET', '/reporting', null, actor)).data), [String(actor._id)]);

@@ -1,5 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const auditLog = require('../services/auditLog');
+auditLog.install();
+router.use(auditLog.middleware);
 router.use(require('../middelwares/requestSecurity').requestSecurity);
 
 const contactRoute = require('./contact/_routes')
@@ -31,6 +34,7 @@ const bankDetailsRoute = require("./bankDetails/_routes")
 const notificationRoute = require("./notification/_routes")
 
 //Api`s
+router.use('/audit-logs', require('./auditLog'));
 router.use('/record-sharing', require('./recordSharing'));
 router.use('/import', require('./importRecords'));
 router.use('/visibility', require('./visibility'));

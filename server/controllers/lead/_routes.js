@@ -10,6 +10,7 @@ const router = express.Router();
 const activity = require('../../middelwares/activityNotifications')('Leads');
 
 router.get('/', auth, loadUser, permit('Leads', 'view'), guarded.list, lead.index)
+router.post('/convert/:id', auth, loadUser, permit('Leads', 'update'), permit('Leads', 'delete'), guarded.record(Lead), activity('record_deleted', lead.convert))
 router.post('/add', auth, loadUser, dynamicValues, activity('record_created', lead.add))
 router.post('/addMany', auth, loadUser, permit('Leads', 'create'), guarded.createMany, activity('record_created', lead.addMany))
 router.get('/view/:id', auth, loadUser, permit('Leads', 'view'), guarded.record(Lead), lead.view)

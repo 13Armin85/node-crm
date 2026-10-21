@@ -1,3 +1,5 @@
+import useRecordRefresh from "utils/useRecordRefresh";
+import RecordMenuButton from "components/table/RecordMenuButton";
 import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { canManageTask } from 'services/taskAccess';
@@ -11,7 +13,6 @@ import {
   Flex,
   Box,
   Menu,
-  MenuButton,
   MenuItem,
   MenuList,
   Select,
@@ -25,7 +26,6 @@ import { getApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import TaskAdvanceSearch from "./components/TaskAdvanceSearch";
-import { CiMenuKebab } from "react-icons/ci";
 import ImportModal from "../lead/components/ImportModal";
 import { putApi } from "services/api";
 import { useLocation } from "react-router-dom";
@@ -106,9 +106,7 @@ const Task = () => {
     cell: ({ row }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
         <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
-          <MenuButton>
-            <CiMenuKebab />
-          </MenuButton>
+          <RecordMenuButton />
           <Portal><MenuList
             minW={"fit-content"}
            zIndex="popover">
@@ -243,6 +241,10 @@ const Task = () => {
     }
     setIsLoding(false);
   };
+  useRecordRefresh(async () => {
+    const result = await getApi('api/task');
+    if (result?.status === 200) setData((result.data || []).map(normalizeTaskRecord));
+  });
   const setStatusData = async (cell, e) => {
     try {
       setIsLoding(true);
@@ -367,6 +369,7 @@ const Task = () => {
       {viewMode === "kanban" ? (
         <TaskKanban tasks={visibleData} assignees={assignees} canDelegate={isAdmin(user)} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
       ) : <CommonCheckTable
+                preservePage
         pageHeader={false}
         uniformToolbar
         title={tr("Tasks")}

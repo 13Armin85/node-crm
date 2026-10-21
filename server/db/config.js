@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const User = require('../model/schema/user');
+const AuditLog = require('../model/schema/auditLog');
 const bcrypt = require('bcrypt');
 const { provisionDeveloper } = require('../services/provisionDeveloper');
 const { initializeLeadSchema } = require("../model/schema/lead");
@@ -50,6 +51,8 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
 
         mongoose.set("strictQuery", false);
         await mongoose.connect(DATABASE_URL, DB_OPTIONS);
+        // Wait for the retention index before accepting API traffic.
+        await AuditLog.init();
 
         // Preserve developer accounts while migrating legacy roles.
         await User.collection.updateMany(

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getIn, setIn } from 'formik';
 import { getApi } from 'services/api';
 import { formValue } from './formValue';
-import { isLeadRelationVisible, normalizeLeadRelations, hasLeadSelection, LEAD_SELECTION_ERROR } from './leadRelations';
+import { isLeadRelationVisible, normalizeLeadRelations, hasLeadSelection, LEAD_SELECTION_ERROR, prepareLeadDefinition } from './leadRelations';
 import { FORM_DEFINITION_CHANGED, FORM_DEFINITION_STORAGE_KEY } from 'services/formDefinitionEvents';
 
 export function useFormDefinition(moduleName, enabled = true) {
@@ -18,14 +18,14 @@ export function useFormDefinition(moduleName, enabled = true) {
       try {
         const result = await getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`);
         if (!active || current !== request) return;
-        if (result.status === 200) { setDefinition(result.data); setDefinitionError(false); }
+        if (result.status === 200) { setDefinition(prepareLeadDefinition(result.data)); setDefinitionError(false); }
         else setDefinitionError(true);
       } catch (_) { if (active && current === request) setDefinitionError(true); }
     };
     const changed = event => {
       if (event.detail?.moduleName !== moduleName) return;
       ++request; // Ignore a fetch started before this confirmed save.
-      setDefinition(event.detail); setDefinitionError(false);
+      setDefinition(prepareLeadDefinition(event.detail)); setDefinitionError(false);
     };
     const stored = event => {
       if (event.key !== FORM_DEFINITION_STORAGE_KEY) return;
@@ -63,6 +63,7 @@ export function normalizeFormValues(definition, values) {
 
 // Validate the fields that the configured form actually shows, including custom fields.
 export function validateFormValues(definition, values) {
+  definition = prepareLeadDefinition(definition);
   const normalized = normalizeFormValues(definition, values);
   let errors = {};
   if (definition?.moduleName === 'Leads' && !hasLeadSelection(normalized)) errors.leadRelations = LEAD_SELECTION_ERROR;

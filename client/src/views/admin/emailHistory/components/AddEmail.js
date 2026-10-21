@@ -138,7 +138,7 @@ const AddEmailHistory = (props) => {
   return (
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent className="crm-record-form">
         <ModalHeader><LocalizedText text="Send Email" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody><ManagedFormLayout moduleName="Emails" formik={formik}>

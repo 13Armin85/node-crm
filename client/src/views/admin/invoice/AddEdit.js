@@ -124,7 +124,7 @@ function AddEdit({ isOpen, onClose, type, selectedId, contactId, setAction, acti
       <FormErrorMessage>{fieldError(name)}</FormErrorMessage></FormControl>;
   };
   return <Drawer isOpen={isOpen} onClose={close} size="xl">
-    <DrawerOverlay /><DrawerContent className="crm-invoice-form">
+    <DrawerOverlay /><DrawerContent className="crm-invoice-form crm-record-form">
       <DrawerHeader display="flex" alignItems="center" justifyContent="space-between">
         <Text>{tr(preview ? 'Preview' : type === 'edit' ? 'Edit' : 'Add')} {tr('Invoice')}</Text>
         <IconButton aria-label={tr('Close')} icon={<CloseIcon />} onClick={close} variant="ghost" />

@@ -72,12 +72,18 @@ test('authenticated lead form create, reload, edit and clear retain relations wi
     });
     return { status: response.status, data: await response.json() };
   };
-  for (const relations of [{}, { contact, partnerCustomer: partner }, { lead: relatedLead, contact }, { lead: relatedLead, partnerCustomer: partner }, { lead: relatedLead, contact, partnerCustomer: partner }]) {
+  for (const relations of [{ contact, partnerCustomer: partner }, { lead: relatedLead, contact }, { lead: relatedLead, partnerCustomer: partner }, { lead: relatedLead, contact, partnerCustomer: partner }]) {
     const invalid = await api('POST', '/add', { moduleId: module._id, leadName: 'Lead', leadEmail: 'lead@example.com', ...relations });
     assert.equal(invalid.status, 400);
     assert.deepEqual(invalid.data, { code: 'leadSelectionRequired', field: 'leadRelations' });
   }
   assert.equal(records.size, 0);
+  requireRelations = true;
+  const emptyLead = await api('POST', '/add', { moduleId: module._id });
+  assert.equal(emptyLead.status, 200, JSON.stringify(emptyLead));
+  assert.equal(emptyLead.data.data.createBy, actor._id);
+  assert.equal(emptyLead.data.data.contact, null);
+  requireRelations = false;
   const created = await api('POST', '/add', { moduleId: module._id, leadName: 'Lead', leadEmail: 'lead@example.com', lead: relatedLead, associatedListing: null, assignUser: null });
   assert.equal(created.status, 200, JSON.stringify(created));
   const id = created.data.data._id;
@@ -117,11 +123,10 @@ test('authenticated lead form create, reload, edit and clear retain relations wi
   assert.equal((await reload()).data.data.contact, contact);
   requireRelations = false;
   const cleared = await api('PUT', `/edit/${id}`, { moduleId: module._id, lead: null, contact: null, partnerCustomer: null, relatedOpportunities: [] });
-  assert.equal(cleared.status, 400, JSON.stringify(cleared));
-  assert.deepEqual(cleared.data, { code: 'leadSelectionRequired', field: 'leadRelations' });
+  assert.equal(cleared.status, 200, JSON.stringify(cleared));
   const empty = (await reload()).data.data;
   assert.equal(empty.lead, null);
-  assert.equal(empty.contact, contact);
+  assert.equal(empty.contact, null);
   assert.equal(empty.partnerCustomer, null);
   assert(notifications.mock.calls.some(call => call.arguments[0].type === 'record_created'));
   assert(notifications.mock.calls.some(call => call.arguments[0].type === 'record_updated'));

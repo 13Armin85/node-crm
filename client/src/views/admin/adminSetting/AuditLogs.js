@@ -1,3 +1,4 @@
+import RecordPagination from "components/pagination/RecordPagination";
 import React, { useEffect, useState } from "react";
 import {
   Avatar,
@@ -10,13 +11,6 @@ import {
   Heading,
   Icon,
   Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Select,
   SimpleGrid,
   Skeleton,
@@ -27,14 +21,11 @@ import {
   Text,
   Th,
   Thead,
-  Tooltip,
   Tr,
 } from "@chakra-ui/react";
 import {
   FiActivity,
   FiAlertCircle,
-  FiArrowLeft,
-  FiArrowRight,
   FiClock,
   FiEdit3,
   FiFilter,
@@ -54,6 +45,9 @@ import { useLanguage } from "i18n";
 import { getApi } from "services/api";
 import { getStoredUser } from "services/authSession";
 import { isAdmin } from "roles";
+import { auditActivityText, auditSectionName } from "services/auditMessages";
+import ExcelExportButton from "components/ExcelExportButton";
+import { loadAllExportRows } from "utils/exportRecords";
 
 const emptyFilters = {
   q: "",
@@ -72,44 +66,27 @@ const actionIcons = {
   login: FiLogIn,
   logout: FiLogOut,
 };
-const sections = {
-  User: "Users",
-  Contact: "Contacts",
-  Lead: "Leads",
-  Task: "Tasks",
-  Property: "Properties",
-  Document: "Documents",
-  Notification: "Notifications",
-  FormDefinition: "estate.formBuilder",
-  RecordShare: "Send item to user",
-  PartnerCustomer: "Partner Customers",
-  Residence: "Residences",
-};
-const fields = {
-  firstName: "First Name",
-  lastName: "Last Name",
-  username: "Email",
-  phoneNumber: "Phone Number",
-  role: "Role",
-  password: "Password",
-  title: "Title",
-  status: "Status",
-  priority: "Priority",
-  deleted: "Delete",
-  createdDate: "Created Date",
-  updatedDate: "Modified Date",
-  assignedToUser: "Assigned To",
-  moduleVisibility: "User data visibility",
-  customFields: "Custom Fields",
+// Both the table and export use applied filters and the same local-day boundaries.
+const auditQuery = (filters, admin) => {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters))
+    if (value && (key !== "actorId" || admin)) {
+      query.set(
+        key,
+        key === "from" || key === "to"
+          ? new Date(
+              value + (key === "to" ? "T23:59:59.999" : "T00:00:00"),
+            ).toISOString()
+          : value,
+      );
+    }
+  return query;
 };
 const normalizeResult = (data) => ({
   ...data,
   actors: Array.isArray(data.actors) ? data.actors : [],
   collections: Array.isArray(data.collections) ? data.collections : [],
-  items: data.items.map((item) => ({
-    ...item,
-    changes: Array.isArray(item.changes) ? item.changes : [],
-  })),
+  items: data.items,
   total: Number(data.total) || 0,
 });
 
@@ -118,9 +95,16 @@ export default function AuditLogs() {
   const rtl = language === "fa";
   const locale = rtl ? "fa-IR" : language === "tr" ? "tr-TR" : "en-US";
   const admin = isAdmin(getStoredUser());
-  const [draft, setDraft] = useState(emptyFilters);
-  const [filters, setFilters] = useState(emptyFilters);
+  const [draft, setDraft] = useState(() => {
+    const actorId = new URLSearchParams(window.location.search).get("actorId");
+    return {
+      ...emptyFilters,
+      actorId: admin && /^[a-f\d]{24}$/i.test(actorId || "") ? actorId : "",
+    };
+  });
+  const [filters, setFilters] = useState(() => draft);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [refresh, setRefresh] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -130,26 +114,26 @@ export default function AuditLogs() {
     actors: [],
     collections: [],
   });
-  const [selected, setSelected] = useState(null);
-  const activeFilters = Object.values(filters).filter(Boolean).length;
+  const activeFilters = Object.entries(filters).filter(
+    ([key, value]) => key !== "actorId" && value,
+  ).length;
+  const currentActor = result.actors.find(
+    (actor) => String(actor._id) === filters.actorId,
+  );
+  const chooseActor = (actorId) => {
+    setDraft((previous) => ({ ...previous, actorId }));
+    setFilters((previous) => ({ ...previous, actorId }));
+    setPage(1);
+  };
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError(false);
-    setSelected(null);
     const load = async () => {
       try {
-        const query = new URLSearchParams({ page: String(page), limit: "25" });
-        for (const [key, value] of Object.entries(filters))
-          if (value && (key !== "actorId" || admin)) {
-            const boundary =
-              key === "from" || key === "to"
-                ? new Date(
-                    value + (key === "to" ? "T23:59:59.999" : "T00:00:00"),
-                  ).toISOString()
-                : value;
-            query.set(key, boundary);
-          }
+        const query = auditQuery(filters, admin);
+        query.set("page", String(page));
+        query.set("limit", String(pageSize));
         const response = await getApi("api/audit-logs?" + query, undefined, {
           dataScope: false,
         });
@@ -167,32 +151,18 @@ export default function AuditLogs() {
     return () => {
       active = false;
     };
-  }, [filters, page, refresh, admin]);
+  }, [filters, page, pageSize, refresh, admin]);
   const input = (key) => ({
     value: draft[key],
     onChange: (event) =>
       setDraft((previous) => ({ ...previous, [key]: event.target.value })),
   });
   const reset = () => {
-    setDraft(emptyFilters);
-    setFilters(emptyFilters);
+    const clean = { ...emptyFilters, actorId: filters.actorId };
+    setDraft(clean);
+    setFilters(clean);
     setPage(1);
   };
-  const valueText = (value) =>
-    value === "[REDACTED]"
-      ? t("audit.redacted")
-      : value == null || value === ""
-        ? t("audit.emptyValue")
-        : typeof value === "boolean"
-          ? t("audit." + value)
-          : typeof value === "object"
-            ? JSON.stringify(value, null, 2)
-            : String(value);
-  const fieldText = (field) =>
-    String(field || "")
-      .split(".")
-      .map((part) => t(fields[part] || part))
-      .join(" / ");
   const dateText = (value) =>
     new Date(value).toLocaleDateString(locale, {
       year: "numeric",
@@ -204,57 +174,48 @@ export default function AuditLogs() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  const exportColumns = [
+    {
+      Header: t("audit.time"),
+      accessor: (item) =>
+        dateText(item.createdAt) + " / " + timeText(item.createdAt),
+    },
+    {
+      Header: t("audit.actor"),
+      accessor: (item) => item.actorName || item.actorUsername || t("User"),
+    },
+    { Header: t("audit.username"), accessor: "actorUsername" },
+    {
+      Header: t("audit.collection"),
+      accessor: (item) => auditSectionName(item.collection, t),
+    },
+    {
+      Header: t("audit.action"),
+      accessor: (item) => t("audit." + item.action),
+    },
+    {
+      Header: t("audit.activity"),
+      accessor: (item) => auditActivityText(item, t, language),
+    },
+  ];
+  const exportRows = () =>
+    loadAllExportRows(
+      (path) => getApi(path, undefined, { dataScope: false }),
+      "api/audit-logs",
+      Object.fromEntries(auditQuery(filters, admin)),
+    );
   const actionBadge = (item) => (
     <Badge className="crm-audit-action" data-action={item.action}>
       <Icon as={actionIcons[item.action] || FiActivity} boxSize="13px" />
       {t("audit." + item.action)}
     </Badge>
   );
-  const detailsButton = (item) => (
-    <Button
-      className="crm-audit-details-button"
-      size="sm"
-      variant="ghost"
-      onClick={() => setSelected(item)}
-      rightIcon={<Icon as={rtl ? FiArrowLeft : FiArrowRight} />}
-      aria-label={
-        t("audit.details") +
-        ": " +
-        (item.recordLabel || item.recordId || item.actorName || "")
-      }
-    >
-      {t("audit.details")}
-      <span className="crm-audit-change-count">
-        {item.changes.length.toLocaleString(locale)}
-      </span>
-    </Button>
-  );
-  const recordInfo = (item) => (
-    <Box minW={0}>
-      <Text
-        className="crm-audit-record-name"
-        title={item.recordLabel || item.recordId}
-      >
-        {item.recordLabel || t("audit." + item.action)}
+  const activity = (item) => (
+    <Box className="crm-audit-readable-activity">
+      <Text>{auditActivityText(item, t, language)}</Text>
+      <Text className="crm-audit-activity-section">
+        {auditSectionName(item.collection, t)}
       </Text>
-      {item.changes.length > 0 && (
-        <Text className="crm-audit-record-fields" noOfLines={1}>
-          {item.changes
-            .slice(0, 2)
-            .map((change) => fieldText(change.field))
-            .join(" / ")}
-          {item.changes.length > 2
-            ? " +" + (item.changes.length - 2).toLocaleString(locale)
-            : ""}
-        </Text>
-      )}
-      {item.recordId && (
-        <Tooltip label={item.recordId}>
-          <Text className="crm-audit-record-id" dir="ltr">
-            #{item.recordId.slice(-8)}
-          </Text>
-        </Tooltip>
-      )}
     </Box>
   );
   const person = (item) => (
@@ -281,7 +242,12 @@ export default function AuditLogs() {
       textAlign={rtl ? "right" : "left"}
     >
       <Box className="crm-audit-hero">
-        <Flex className="crm-audit-hero-top" justify="space-between" gap={4}>
+        <Flex
+          className="crm-audit-hero-top"
+          justify="space-between"
+          gap={4}
+          wrap="wrap"
+        >
           <Flex gap={4} align="center" minW={0}>
             <Flex className="crm-audit-hero-icon">
               <Icon as={FiActivity} />
@@ -293,15 +259,25 @@ export default function AuditLogs() {
               </Heading>
             </Box>
           </Flex>
-          <Button
-            className="crm-audit-refresh"
-            leftIcon={<Icon as={FiRefreshCw} />}
-            onClick={() => setRefresh((previous) => previous + 1)}
-            isLoading={loading}
-            loadingText={t("audit.refresh")}
-          >
-            {t("audit.refresh")}
-          </Button>
+          <Flex gap={2} align="center" wrap="wrap">
+            <ExcelExportButton
+              label="audit.exportExcel"
+              title={t("audit.exportHint")}
+              loadRows={exportRows}
+              columns={exportColumns}
+              fileName={"audit-logs-" + new Date().toISOString().slice(0, 10)}
+              isDisabled={loading || error || !result.total}
+            />
+            <Button
+              className="crm-audit-refresh"
+              leftIcon={<Icon as={FiRefreshCw} />}
+              onClick={() => setRefresh((previous) => previous + 1)}
+              isLoading={loading}
+              loadingText={t("audit.refresh")}
+            >
+              {t("audit.refresh")}
+            </Button>
+          </Flex>
         </Flex>
         <Text className="crm-audit-description">
           {t(admin ? "audit.allHint" : "audit.ownHint")}
@@ -311,6 +287,41 @@ export default function AuditLogs() {
           <Text>{t(admin ? "audit.adminScope" : "audit.personalScope")}</Text>
         </Flex>
       </Box>
+      {admin && (
+        <Box className="crm-audit-user-scope">
+          <FormControl>
+            <FormLabel htmlFor="audit-actor">{t("audit.chooseUser")}</FormLabel>
+            <Select
+              id="audit-actor"
+              value={filters.actorId}
+              onChange={(event) => chooseActor(event.target.value)}
+            >
+              <option value="">{t("audit.allActors")}</option>
+              {result.actors.map((actor) => (
+                <option key={actor._id} value={actor._id}>
+                  {actor.name || actor.username}
+                  {actor.name && actor.username
+                    ? " (" + actor.username + ")"
+                    : ""}
+                  {actor.inactive ? " - " + t("audit.formerUser") : ""}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+          <Box>
+            <Text className="crm-audit-user-scope-title">
+              {filters.actorId
+                ? t("audit.userHistory") +
+                  ": " +
+                  (currentActor?.name || currentActor?.username || t("User"))
+                : t("audit.everyoneHistory")}
+            </Text>
+            <Text className="crm-audit-user-scope-hint">
+              {t("audit.chooseUserHint")}
+            </Text>
+          </Box>
+        </Box>
+      )}
       <SimpleGrid
         className="crm-audit-statistics"
         columns={{ base: 2, lg: 4 }}
@@ -390,22 +401,6 @@ export default function AuditLogs() {
           </Box>
         </FormControl>
         <SimpleGrid columns={{ base: 2, xl: admin ? 5 : 4 }} spacing={3}>
-          {admin && (
-            <FormControl gridColumn={{ base: "1 / -1", xl: "auto" }}>
-              <FormLabel htmlFor="audit-actor">{t("audit.actor")}</FormLabel>
-              <Select id="audit-actor" {...input("actorId")}>
-                <option value="">{t("audit.allActors")}</option>
-                {result.actors.map((actor) => (
-                  <option key={actor._id} value={actor._id}>
-                    {actor.name || actor.username}
-                    {actor.name && actor.username
-                      ? " (" + actor.username + ")"
-                      : ""}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
-          )}
           <FormControl>
             <FormLabel htmlFor="audit-action">{t("audit.action")}</FormLabel>
             <Select id="audit-action" {...input("action")}>
@@ -425,7 +420,7 @@ export default function AuditLogs() {
               <option value="">{t("audit.allCollections")}</option>
               {result.collections.map((name) => (
                 <option key={name} value={name}>
-                  {t(sections[name] || name)}
+                  {auditSectionName(name, t)}
                 </option>
               ))}
             </Select>
@@ -539,14 +534,7 @@ export default function AuditLogs() {
               <Table className="crm-audit-table" size="sm">
                 <Thead>
                   <Tr>
-                    {[
-                      "time",
-                      "actor",
-                      "action",
-                      "collection",
-                      "record",
-                      "details",
-                    ].map((key) => (
+                    {["time", "actor", "activity"].map((key) => (
                       <Th key={key} textAlign="start">
                         {t("audit." + key)}
                       </Th>
@@ -570,14 +558,12 @@ export default function AuditLogs() {
                         </Flex>
                       </Td>
                       <Td>{person(item)}</Td>
-                      <Td>{actionBadge(item)}</Td>
                       <Td>
-                        <span className="crm-audit-section-tag">
-                          {t(sections[item.collection] || item.collection)}
-                        </span>
+                        <Flex align="flex-start" gap={3}>
+                          {actionBadge(item)}
+                          {activity(item)}
+                        </Flex>
                       </Td>
-                      <Td maxW="220px">{recordInfo(item)}</Td>
-                      <Td>{detailsButton(item)}</Td>
                     </Tr>
                   ))}
                 </Tbody>
@@ -593,173 +579,22 @@ export default function AuditLogs() {
                     {person(item)}
                     {actionBadge(item)}
                   </Flex>
-                  <Flex align="center" justify="space-between" gap={3} mb={3}>
-                    {recordInfo(item)}
-                    <Text className="crm-audit-section-tag">
-                      {t(sections[item.collection] || item.collection)}
-                    </Text>
-                  </Flex>
-                  <Flex justify="space-between" align="center" gap={2}>
-                    <Text className="crm-audit-mobile-time">
-                      <Icon as={FiClock} />
-                      {dateText(item.createdAt)} / {timeText(item.createdAt)}
-                    </Text>
-                    {detailsButton(item)}
-                  </Flex>
+                  {activity(item)}
+                  <Text className="crm-audit-mobile-time" mt={4}>
+                    <Icon as={FiClock} />
+                    {dateText(item.createdAt)} / {timeText(item.createdAt)}
+                  </Text>
                 </Box>
               ))}
             </Box>
           </>
         )}
         {!loading && !error && result.total > 0 && (
-          <Flex
-            className="crm-audit-pagination"
-            align="center"
-            justify="space-between"
-            gap={3}
-            wrap="wrap"
-          >
-            <Text>
-              {t("audit.total")}: {result.total.toLocaleString(locale)} &middot;{" "}
-              {t("audit.page")}: {page.toLocaleString(locale)}
-            </Text>
-            <Flex gap={2}>
-              <Button
-                size="sm"
-                variant="outline"
-                isDisabled={page <= 1}
-                onClick={() => setPage((previous) => previous - 1)}
-              >
-                {t("audit.previous")}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                isDisabled={page * 25 >= result.total}
-                onClick={() => setPage((previous) => previous + 1)}
-              >
-                {t("audit.next")}
-              </Button>
-            </Flex>
-          </Flex>
+          <RecordPagination page={page} pageCount={Math.ceil(result.total / pageSize)} total={result.total}
+            pageSize={pageSize} isLoading={loading} onPageChange={setPage}
+            onPageSizeChange={size => { setPageSize(size); setPage(1); }} />
         )}
       </Box>
-      <Modal
-        isOpen={Boolean(selected)}
-        onClose={() => setSelected(null)}
-        size="4xl"
-        scrollBehavior="inside"
-      >
-        <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent className="crm-audit-modal" dir={rtl ? "rtl" : "ltr"}>
-          <ModalHeader>
-            <Text className="crm-audit-eyebrow">{t("audit.history")}</Text>
-            <Heading size="md">{t("audit.details")}</Heading>
-          </ModalHeader>
-          <ModalCloseButton aria-label={t("Close")} />
-          <ModalBody>
-            {selected && (
-              <>
-                <Flex
-                  className="crm-audit-detail-meta"
-                  align="center"
-                  justify="space-between"
-                  gap={3}
-                  wrap="wrap"
-                >
-                  {person(selected)}
-                  <Flex align="center" gap={3}>
-                    {actionBadge(selected)}
-                    <Text className="crm-audit-time">
-                      {dateText(selected.createdAt)} /{" "}
-                      {timeText(selected.createdAt)}
-                    </Text>
-                  </Flex>
-                </Flex>
-                <Flex
-                  className="crm-audit-detail-record"
-                  gap={2}
-                  align="center"
-                >
-                  <Icon as={FiLayers} />
-                  <Text>
-                    {t(sections[selected.collection] || selected.collection)}
-                    {selected.recordLabel ? " / " + selected.recordLabel : ""}
-                  </Text>
-                </Flex>
-                {selected.changes.length ? (
-                  <Box role="list" className="crm-audit-change-list">
-                    {selected.changes.map((change, index) => (
-                      <Box
-                        role="listitem"
-                        className="crm-audit-change"
-                        key={index}
-                      >
-                        <Flex
-                          className="crm-audit-change-heading"
-                          gap={2}
-                          align="center"
-                        >
-                          <span>{(index + 1).toLocaleString(locale)}</span>
-                          <Text>{fieldText(change.field)}</Text>
-                        </Flex>
-                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                          <Box className="crm-audit-value crm-audit-value-before">
-                            <Text className="crm-audit-value-label">
-                              {t("audit.before")}
-                            </Text>
-                            <Text
-                              dir="auto"
-                              className={
-                                change.before === "[REDACTED]"
-                                  ? "crm-audit-redacted"
-                                  : ""
-                              }
-                            >
-                              {change.before === "[REDACTED]" && (
-                                <Icon as={FiLock} />
-                              )}
-                              {valueText(change.before)}
-                            </Text>
-                          </Box>
-                          <Box className="crm-audit-value crm-audit-value-after">
-                            <Text className="crm-audit-value-label">
-                              {t("audit.after")}
-                            </Text>
-                            <Text
-                              dir="auto"
-                              className={
-                                change.after === "[REDACTED]"
-                                  ? "crm-audit-redacted"
-                                  : ""
-                              }
-                            >
-                              {change.after === "[REDACTED]" && (
-                                <Icon as={FiLock} />
-                              )}
-                              {valueText(change.after)}
-                            </Text>
-                          </Box>
-                        </SimpleGrid>
-                      </Box>
-                    ))}
-                  </Box>
-                ) : (
-                  <Box className="crm-audit-state">
-                    <Icon as={FiShield} boxSize={8} />
-                    <Text>{t("audit.noChanges")}</Text>
-                  </Box>
-                )}
-              </>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="outline" onClick={() => setSelected(null)}>
-              {t("Close")}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </Box>
   );
 }

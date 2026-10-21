@@ -1,3 +1,5 @@
+import LeadOwner from "./components/LeadOwner";
+import ConvertLeadButtons from "./components/ConvertLeadButtons";
 import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -437,6 +439,7 @@ const View = () => {
           <Heading size="lg" mt={0} m={3}>
             {data?.leadName || ""}
           </Heading>
+          <LeadOwner lead={data} />
           <Tabs onChange={handleTabChange} index={selectedTab}>
             <Grid templateColumns={"repeat(12, 1fr)"} mb={3} gap={1}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
@@ -473,6 +476,7 @@ const View = () => {
                 mt={{ sm: "3px", md: "5px" }}
               >
                 <Flex justifyContent={"right"}>
+                  <ConvertLeadButtons leadId={param.id} onConverted={() => navigate("/lead")} />
                   <Menu>
                     {(isAdmin(user) ||
                       permission?.create ||

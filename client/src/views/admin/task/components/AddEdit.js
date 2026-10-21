@@ -291,9 +291,7 @@ const AddEdit = (props) => {
           assignToLeadData?.length <= 0
         ) {
           result = await getApi(
-            isAdmin(user)
-              ? "api/lead/"
-              : `api/lead/?createBy=${user._id}`
+            "api/lead/"
           );
           setAssignToLeadData(result?.data);
         }
@@ -324,7 +322,7 @@ const AddEdit = (props) => {
   return (
     <Modal isOpen={isOpen && isAdmin(user)} size={"xl"} isCentered scrollBehavior="inside">
       {!props.from && <ModalOverlay />}
-      <ModalContent maxH={{ base: "calc(100vh - 24px)", md: "calc(100vh - 64px)" }} mx={{ base: 3, md: 0 }}>
+      <ModalContent className="crm-record-form" maxH={{ base: "calc(100vh - 24px)", md: "calc(100vh - 64px)" }} mx={{ base: 3, md: 0 }}>
         <ModalHeader justifyContent="space-between" display="flex">
           {userAction === "add" ? tr("Create Task") : tr("Edit Task")}
 

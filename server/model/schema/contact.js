@@ -6,6 +6,8 @@ const fetchSchemaFields = async () => {
 };
 
 const contactSchema = new mongoose.Schema({
+    phoneNumber: String,
+    convertedLeads: { type: [mongoose.Schema.Types.Mixed], default: [] },
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     // 1. Basic Information
     // firstName: String,
@@ -83,7 +85,7 @@ const contactSchema = new mongoose.Schema({
 const initializeContactSchema = async () => {
     const schemaFieldsData = await fetchSchemaFields();
     schemaFieldsData[0]?.fields?.forEach((item) => {
-        contactSchema.add({ [item.name]: item?.backendType });
+        contactSchema.add({ [item.name]: item.name === 'phoneNumber' ? String : item?.backendType });
     });
 };
 

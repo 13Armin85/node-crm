@@ -79,7 +79,7 @@ const Add = (props) => {
     <div>
       <Drawer isOpen={props?.isOpen} size={props?.size}>
         <DrawerOverlay />
-        <DrawerContent>
+        <DrawerContent className="crm-record-form">
           <DrawerHeader
             alignItems={"center"}
             justifyContent="space-between"

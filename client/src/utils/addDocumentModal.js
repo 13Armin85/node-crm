@@ -89,7 +89,7 @@ const AddDocumentModal = ({
       isCentered
     >
       <ModalOverlay />
-      <ModalContent maxWidth={"2xl"}>
+      <ModalContent className="crm-record-form" maxWidth={"2xl"}>
         <ModalHeader></ModalHeader>
         <ModalCloseButton />
         <ModalBody>

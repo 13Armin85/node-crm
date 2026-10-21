@@ -1,3 +1,4 @@
+import RecordMenuButton from "components/table/RecordMenuButton";
 import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
@@ -5,7 +6,6 @@ import { DeleteIcon, ViewIcon, EditIcon } from "@chakra-ui/icons";
 import {
   Button,
   Menu,
-  MenuButton,
   MenuItem,
   MenuList,
   Text,
@@ -15,7 +15,6 @@ import { getApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import { SearchIcon } from "@chakra-ui/icons";
-import { CiMenuKebab } from "react-icons/ci";
 import { Link, useNavigate } from "react-router-dom";
 import MeetingAdvanceSearch from "./components/MeetingAdvanceSearch";
 import AddMeeting from "./components/Addmeeting";
@@ -51,9 +50,7 @@ const Index = () => {
     cell: ({ row }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
         <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
-          <MenuButton>
-            <CiMenuKebab />
-          </MenuButton>
+          <RecordMenuButton />
           <Portal><MenuList
             minW={"fit-content"}
            zIndex="popover">

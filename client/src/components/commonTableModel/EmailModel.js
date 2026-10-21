@@ -166,9 +166,7 @@ const EmailModel = (props) => {
         setAssignToContactData(result?.data);
       } else if (values?.category === "Lead" && assignToLeadData <= 0) {
         result = await getApi(
-          isAdmin(user)
-            ? "api/lead/"
-            : `api/lead/?createBy=${user?._id}`,
+          "api/lead/",
         );
         setAssignToLeadData(result?.data);
       }
@@ -220,7 +218,7 @@ const EmailModel = (props) => {
   return (
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent height={"580px"}>
+      <ModalContent className="crm-record-form" height={"580px"}>
         <ModalHeader><LocalizedText text="Add Email" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody overflowY={"auto"} height={"400px"}>

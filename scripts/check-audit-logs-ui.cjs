@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
 const puppeteer = require("../server/node_modules/puppeteer");
+const ExcelJS = require("../client/node_modules/exceljs");
 async function main() {
   const build = path.resolve(__dirname, "../client/build");
   assert(
@@ -64,19 +65,28 @@ async function main() {
       lastName: "User",
       username: "other@example.test",
     };
-    const users = [admin, other];
+    const idle = {
+      _id: "000000000000000000000003",
+      role: "user",
+      firstName: "No History",
+      username: "empty@example.test",
+    };
+    const users = [admin, other, idle];
+    let currentUser = admin;
     const event = {
       _id: "100000000000000000000001",
       actorId: admin._id,
       actorName: "Admin Person",
       actorUsername: admin.username,
-      collection: "User",
+      collection: "Properties",
+      operation: "update",
+      recordCount: 1,
       action: "update",
       recordId: admin._id,
-      recordLabel: "Admin",
+      recordLabel: "Seaside apartment",
       createdAt: "2026-10-20T12:00:00Z",
       changes: [
-        { field: "firstName", before: "Before name", after: "After name" },
+        { field: "Seaside", before: "Before name", after: "After name" },
         { field: "password", before: "[REDACTED]", after: "[REDACTED]" },
       ],
     };
@@ -85,6 +95,48 @@ async function main() {
       auditFailure = 0;
     const artifacts = path.resolve(__dirname, "../layout-artifacts/audit-logs");
     fs.mkdirSync(artifacts, { recursive: true });
+    const downloads = path.join(artifacts, "downloads-" + Date.now());
+    fs.mkdirSync(downloads, { recursive: true });
+    const cdp = await browser.target().createCDPSession();
+    await cdp.send("Browser.setDownloadBehavior", {
+      behavior: "allowAndName",
+      downloadPath: downloads,
+    });
+    const download = async () => {
+      const before = new Set(fs.readdirSync(downloads));
+      await page.waitForFunction(() => {
+        const button = document.querySelector(
+          ".crm-audit-logs .crm-excel-export",
+        );
+        return button && !button.disabled;
+      });
+      await page.click(".crm-audit-logs .crm-excel-export");
+      let file;
+      for (let n = 0; n < 200; n++) {
+        file = fs
+          .readdirSync(downloads)
+          .find((name) => !before.has(name) && !name.endsWith(".crdownload"));
+        if (file) break;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      assert(file, "Audit Excel download missing");
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(fs.readFileSync(path.join(downloads, file)));
+      const sheet = workbook.getWorksheet(1);
+      assert.equal(sheet.columnCount, 6);
+      assert.equal(sheet.views[0].ySplit, 1);
+      assert(sheet.autoFilter);
+      const text = sheet.getSheetValues().flat(2).join(" ");
+      for (const raw of [
+        "Before name",
+        "After name",
+        "[REDACTED]",
+        admin._id,
+        "customFields",
+      ])
+        assert(!text.includes(raw), "Technical audit data leaked into Excel");
+      return { sheet, text };
+    };
     await page.setRequestInterception(true);
     page.on("request", async (req) => {
       const url = new URL(req.url()),
@@ -112,14 +164,57 @@ async function main() {
         data = { visibility: {}, accessibleModules: [] };
       if (route.startsWith("/api/notification"))
         data = { notifications: [], unreadCount: 0, hasMore: false };
-      if (route === "/api/audit-logs")
+      if (route === "/api/audit-logs") {
+        const selected =
+          currentUser.role === "user"
+            ? currentUser._id
+            : url.searchParams.get("actorId");
+        const person = selected === other._id ? other : admin;
+        const empty = selected === idle._id;
+        const personal = Boolean(selected);
         data = {
-          items: [event],
-          total: 26,
-          summary: { create: 5, update: 18, delete: 1 },
-          actors: [{ _id: admin._id, name: "Admin Person" }],
-          collections: ["User"],
+          items: empty
+            ? []
+            : [
+                {
+                  ...event,
+                  actorId: person._id,
+                  actorName: person.firstName + " " + (person.lastName || ""),
+                  actorUsername: person.username,
+                },
+              ],
+          total: empty ? 0 : personal ? 1 : 26,
+          summary: {
+            create: empty || personal ? 0 : 5,
+            update: empty ? 0 : personal ? 1 : 18,
+            delete: empty || personal ? 0 : 1,
+          },
+          actors:
+            currentUser.role === "user"
+              ? []
+              : users.map((user) => ({
+                  _id: user._id,
+                  name: [user.firstName, user.lastName]
+                    .filter(Boolean)
+                    .join(" "),
+                  username: user.username,
+                })),
+          collections: empty ? [] : ["Properties"],
         };
+      }
+      if (
+        route === "/api/audit-logs" &&
+        url.searchParams.get("limit") === "100"
+      ) {
+        const rows = data.items.length
+          ? Array.from({ length: data.total }, (_, index) => ({
+              ...data.items[0],
+              _id: "export-" + index,
+            }))
+          : [];
+        const start = (Number(url.searchParams.get("page") || 1) - 1) * 100;
+        data.items = rows.slice(start, start + 100);
+      }
       if (route === "/api/audit-logs" && auditFailure > 0) {
         auditFailure--;
         status = 404;
@@ -138,7 +233,7 @@ async function main() {
         const nodes = [...document.querySelectorAll("button")].filter(
           (node) =>
             node.getClientRects().length &&
-            node.textContent.trim().startsWith(text),
+            (node.textContent.trim().startsWith(text) || (node.getAttribute("aria-label") || "").toLowerCase() === text.toLowerCase()),
         );
         if (!nodes.length) throw new Error("Button missing: " + text);
         nodes[nodes.length - 1].click();
@@ -163,6 +258,7 @@ async function main() {
       ).toString("base64url") +
       ".fixture";
     const session = async (user, remember = true, language = "en") => {
+      currentUser = user;
       await page.goto(origin + "/auth", { waitUntil: "networkidle0" });
       await page.evaluate(
         (user, token, remember, language) => {
@@ -193,22 +289,67 @@ async function main() {
     );
     await page.waitForSelector("#audit-actor");
     await page.waitForSelector(".crm-audit-table tbody tr");
-    await button("Change details");
-    await page.waitForSelector("[role=dialog]");
-    const details = await page.$eval(
-      "[role=dialog]",
+    const activityText = await page.$eval(
+      ".crm-audit-results",
       (node) => node.textContent,
     );
-    assert(details.includes("Before name"));
-    assert(details.includes("After name"));
-    assert(details.includes("Hidden for security"));
-    assert(!details.includes("[REDACTED]"));
-    await page.keyboard.press("Escape");
-    await input("#audit-search", "firstName");
+    assert(activityText.includes("Admin Person edited and saved property"));
+    assert(activityText.includes("Seaside apartment"));
+    for (const raw of ["Before name", "After name", "[REDACTED]", admin._id])
+      assert(!activityText.includes(raw));
+    const allExport = await download();
+    assert.equal(
+      allExport.sheet.rowCount,
+      27,
+      "Export must include all rows beyond the visible table",
+    );
+    assert(allExport.text.includes("Admin Person edited and saved property"));
+    const personResponse = page.waitForResponse((response) =>
+      response.url().includes("actorId=" + other._id),
+    );
+    await page.select("#audit-actor", other._id);
+    await personResponse;
+    await page.waitForSelector(".crm-audit-table tbody tr");
+    await page.waitForFunction(() =>
+      document
+        .querySelector(".crm-audit-user-scope-title")
+        ?.textContent.includes("Other User"),
+    );
+    assert(
+      (
+        await page.$eval(".crm-audit-results", (node) => node.textContent)
+      ).includes("Other User"),
+    );
+    const userExport = await download();
+    assert.equal(userExport.sheet.rowCount, 2);
+    assert(userExport.text.includes("Other User"));
+    assert(!userExport.text.includes("Admin Person"));
+    await page.goto(origin + "/audit-logs?actorId=" + idle._id, {
+      waitUntil: "networkidle0",
+    });
+    assert.equal(
+      await page.$eval("#audit-actor", (node) => node.value),
+      idle._id,
+    );
+    assert.equal(await page.$(".crm-audit-table tbody tr"), null);
+    assert(
+      await page.$eval(
+        ".crm-audit-logs .crm-excel-export",
+        (node) => node.disabled,
+      ),
+    );
+    assert(
+      (await page.$eval("#audit-actor", (node) => node.textContent)).includes(
+        "No History",
+      ),
+    );
+    await page.select("#audit-actor", "");
+    await page.waitForSelector(".crm-audit-table tbody tr");
+    await input("#audit-search", "Seaside");
     const filteredResponse = page.waitForResponse(
       (response) =>
         response.url().includes("/api/audit-logs?") &&
-        response.url().includes("q=firstName"),
+        response.url().includes("q=Seaside"),
     );
     await button("Apply filters");
     await filteredResponse;
@@ -217,7 +358,7 @@ async function main() {
       requests.some(
         (request) =>
           request.route === "/api/audit-logs" &&
-          request.query.includes("q=firstName"),
+          request.query.includes("q=Seaside"),
       ),
     );
     await button("Next page");
@@ -226,8 +367,22 @@ async function main() {
         .querySelector(".crm-audit-logs")
         ?.textContent.includes("Page: 2"),
     );
+    const filteredExport = await download();
+    assert.equal(filteredExport.sheet.rowCount, 27);
+    assert(
+      requests.some(
+        (request) =>
+          request.route === "/api/audit-logs" &&
+          request.query.includes("q=Seaside") &&
+          request.query.includes("limit=100") &&
+          request.query.includes("page=1"),
+      ),
+    );
     console.log(
-      "PASS: settings Logs card, old/new details, hidden credentials, filtering and pagination.",
+      "PASS: valid full XLSX downloads, selected-user and applied-search exports, readable columns and no technical data.",
+    );
+    console.log(
+      "PASS: readable activity summaries, immediate per-user filtering, empty user history and pagination.",
     );
     for (const remember of [true, false]) {
       await session(admin, remember);
@@ -297,23 +452,15 @@ async function main() {
       );
       await page.goto(origin + "/audit-logs", { waitUntil: "networkidle0" });
       await page.waitForSelector(".crm-audit-table tbody tr");
+      if (mode === "light") {
+        const persian = await download();
+        assert.equal(persian.sheet.views[0].rightToLeft, true);
+        assert.equal(persian.sheet.getCell("A1").value, "تاریخ و ساعت");
+      }
       await page.screenshot({
         path: path.join(artifacts, "fa-" + mode + "-desktop.png"),
         fullPage: true,
       });
-      if (mode === "dark") {
-        await page.evaluate(() =>
-          [...document.querySelectorAll(".crm-audit-details-button")]
-            .find((node) => node.getClientRects().length)
-            .click(),
-        );
-        await page.waitForSelector(".crm-audit-change-list");
-        await page.screenshot({
-          path: path.join(artifacts, "fa-dark-details.png"),
-          fullPage: true,
-        });
-        await page.keyboard.press("Escape");
-      }
     }
     await session(other, false, "fa");
     await page.evaluate(() =>
@@ -336,7 +483,11 @@ async function main() {
       if (width === 390) {
         await page.keyboard.press("Escape");
         await page.waitForSelector('.crm-shell[data-sidebar-open="false"]');
-        await page.waitForFunction(() => getComputedStyle(document.querySelector('.crm-sidebar-backdrop')).visibility === 'hidden');
+        await page.waitForFunction(
+          () =>
+            getComputedStyle(document.querySelector(".crm-sidebar-backdrop"))
+              .visibility === "hidden",
+        );
         await page.waitForSelector(".crm-audit-mobile-event", {
           visible: true,
         });
@@ -352,6 +503,22 @@ async function main() {
         "Logs page overflows the viewport",
       );
     }
+    const ownExport = await download();
+    assert.equal(ownExport.sheet.rowCount, 2);
+    assert.equal(ownExport.sheet.views[0].rightToLeft, true);
+    assert(ownExport.text.includes("Other User"));
+    const ownRequest = requests
+      .filter(
+        (request) =>
+          request.route === "/api/audit-logs" &&
+          request.query.includes("limit=100"),
+      )
+      .at(-1);
+    assert(!ownRequest.query.includes("actorId"));
+    assert(!ownRequest.headers["x-crm-data-user"]);
+    console.log(
+      "PASS: Persian RTL Excel and personal export download on mobile.",
+    );
     assert.deepEqual(errors, [], "Browser runtime errors");
     console.log(
       "PASS: ordinary users reach their Logs page in Persian on desktop/mobile without the actor filter.",

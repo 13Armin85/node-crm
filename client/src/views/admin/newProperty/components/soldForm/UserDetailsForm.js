@@ -44,9 +44,7 @@ const UserDetailsForm = (props) => {
         setContactList(result?.data);
       } else if (values?.category === "Lead" && leadList?.length <= 0) {
         result = await getApi(
-          isAdmin(user)
-            ? "api/lead/"
-            : `api/lead/?createBy=${user._id}`
+          "api/lead/"
         );
         setLeadList(result?.data);
       }

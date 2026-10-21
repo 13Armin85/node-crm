@@ -92,49 +92,134 @@ async function persist(connection, entries) {
       .insertMany(entries.slice(start, start + 100));
   }
 }
-const ignoredCollections = new Set(['AuditLog', 'Notification', 'Notifications', 'uploadlocks', 'AuthSession', 'AuthSessions']);
-const canonical = name => require('./moduleVisibility').canonicalModule(name);
+const ignoredCollections = new Set([
+  "AuditLog",
+  "Notification",
+  "Notifications",
+  "uploadlocks",
+  "AuthSession",
+  "AuthSessions",
+]);
+const canonical = (name) =>
+  require("./moduleVisibility").canonicalModule(
+    { formdefinitions: "FormDefinition", estatefiles: "EstateFile" }[name] ||
+      name,
+  );
 function primaryModule(req) {
-  const parts = String(req.originalUrl || '').split('?')[0].split('/').filter(Boolean).map(decodeURIComponent);
+  const parts = String(req.originalUrl || "")
+    .split("?")[0]
+    .split("/")
+    .filter(Boolean)
+    .map(decodeURIComponent);
   const route = parts[1];
   if (req.readModuleName) return canonical(req.readModuleName);
-  if (route === 'estate') return parts[2] === 'definitions' ? 'FormDefinition' : parts[2] === 'files' ? 'EstateFile' : canonical(parts[2]);
-  if (route === 'import') return canonical(parts[2]);
-  return canonical(({ user: 'Users', visibility: 'Users', contact: 'Contacts', lead: 'Leads', task: 'Tasks', property: 'Properties', document: 'Documents', 'record-sharing': 'RecordShares', 'custom-field': 'CustomField', form: req.readModuleName, 'phoneCall': 'Calls', 'text-msg': 'Texts', meeting: 'Meetings', email: 'Emails', 'email-temp': 'Email Template', opportunity: 'Opportunities', invoices: 'Invoices', quotes: 'Quotes', images: 'Images', validation: 'Validation', modules: 'ModuleActiveDeactive', route: 'Route', 'bank-details': 'Bank Details', opportunityproject: 'Opportunity Project' })[route] || '');
+  if (route === "estate")
+    return parts[2] === "definitions"
+      ? "FormDefinition"
+      : parts[2] === "files"
+        ? "EstateFile"
+        : canonical(parts[2]);
+  if (route === "import") return canonical(parts[2]);
+  return canonical(
+    {
+      user: "Users",
+      visibility: "Users",
+      contact: "Contacts",
+      lead: "Leads",
+      task: "Tasks",
+      property: "Properties",
+      document: "Documents",
+      "record-sharing": "RecordShares",
+      "custom-field": "CustomField",
+      form: req.readModuleName,
+      phoneCall: "Calls",
+      "text-msg": "Texts",
+      meeting: "Meetings",
+      email: "Emails",
+      "email-temp": "Email Template",
+      opportunity: "Opportunities",
+      invoices: "Invoices",
+      quotes: "Quotes",
+      images: "Images",
+      validation: "Validation",
+      modules: "ModuleActiveDeactive",
+      route: "Route",
+      "bank-details": "Bank Details",
+      opportunityproject: "Opportunity Project",
+    }[route] || "",
+  );
 }
 function operationFor(req, action) {
-  const path = String(req.originalUrl || '').split('?')[0];
-  if (/\/user\/change-password$/.test(path)) return 'password';
-  if (/^\/api\/visibility\//.test(path)) return 'access';
-  if (/^\/api\/record-sharing(?:\/|$)/.test(path)) return action === 'delete' ? 'unshare' : 'share';
-  if (/^\/api\/import\//.test(path)) return 'import';
-  if (/\/move\//.test(path)) return 'move';
-  if (/^\/api\/(?:custom-field|validation|modules|route)(?:\/|$)|^\/api\/estate\/definitions\//.test(path)) return 'settings';
+  const path = String(req.originalUrl || "").split("?")[0];
+  if (/\/user\/change-password$/.test(path)) return "password";
+  if (/^\/api\/visibility\//.test(path)) return "access";
+  if (/^\/api\/record-sharing(?:\/|$)/.test(path))
+    return action === "delete" ? "unshare" : "share";
+  if (/^\/api\/import\//.test(path)) return "import";
+  if (/\/move\//.test(path)) return "move";
+  if (
+    /^\/api\/(?:custom-field|validation|modules|route)(?:\/|$)|^\/api\/estate\/definitions\//.test(
+      path,
+    )
+  )
+    return "settings";
   return action;
 }
 function queue(store, connection, entry) {
-  const key = entry.entityCollection + ':' + (entry.recordId || 'collection');
+  const key = entry.entityCollection + ":" + (entry.recordId || "collection");
   const previous = store.entries.get(key);
-  if (previous?.action === 'create' && entry.action === 'delete') { store.entries.delete(key); return; }
-  if (previous?.action === 'create' && entry.action === 'update') entry.action = 'create';
+  if (previous?.action === "create" && entry.action === "delete") {
+    store.entries.delete(key);
+    return;
+  }
+  if (previous?.action === "create" && entry.action === "update")
+    entry.action = "create";
   store.entries.set(key, { ...entry, connection });
 }
 function summarize(store) {
-  if (store.explicit) return { ...store.explicit, schemaVersion: 2, recordCount: 1, changes: [] };
+  if (store.explicit)
+    return { ...store.explicit, schemaVersion: 2, recordCount: 1, changes: [] };
   const all = [...store.entries.values()];
   if (!all.length) return null;
   const preferred = primaryModule(store.req);
-  const matched = all.filter(entry => canonical(entry.entityCollection) === preferred);
-  const chosen = matched.length ? matched : all.filter(entry => entry.entityCollection === all[0].entityCollection);
-  const actions = new Set(chosen.map(entry => entry.action));
-  const action = actions.size === 1 ? chosen[0].action : 'update';
+  const matched = all.filter(
+    (entry) => canonical(entry.entityCollection) === preferred,
+  );
+  const chosen = matched.length
+    ? matched
+    : all.filter((entry) => entry.entityCollection === all[0].entityCollection);
+  const actions = new Set(chosen.map((entry) => entry.action));
+  const deleting =
+    store.req.method === "DELETE" ||
+    /\/deleteMany(?:\/|$)/i.test(store.req.originalUrl || "");
+  const action = deleting
+    ? "delete"
+    : actions.size === 1
+      ? chosen[0].action
+      : "update";
   const first = chosen[0];
-  return { ...envelope(store.req), schemaVersion: 2, action, operation: operationFor(store.req, action), entityCollection: first.entityCollection, recordCount: chosen.length, recordId: chosen.length === 1 ? first.recordId : undefined, recordLabel: chosen.length === 1 ? first.recordLabel : '', changes: [] };
+  return {
+    ...envelope(store.req),
+    schemaVersion: 2,
+    action,
+    operation: operationFor(store.req, action),
+    entityCollection: first.entityCollection,
+    recordCount: chosen.length,
+    recordId: chosen.length === 1 ? first.recordId : undefined,
+    recordLabel: chosen.length === 1 ? first.recordLabel : "",
+    changes: [],
+  };
 }
 async function recordEvent(req, action) {
   const store = context.getStore();
   if (!store?.enabled || !req.actor?._id) return;
-  store.explicit = { ...envelope(req), action, operation: action, entityCollection: 'User', recordId: String(req.actor._id) };
+  store.explicit = {
+    ...envelope(req),
+    action,
+    operation: action,
+    entityCollection: "User",
+    recordId: String(req.actor._id),
+  };
 }
 function install() {
   const prototype = mongoose.Collection.prototype;
@@ -160,7 +245,11 @@ function install() {
     prototype[method] = function (...args) {
       const store = context.getStore();
       const req = store?.req;
-      if (!store?.enabled || !req?.actor?._id || ignoredCollections.has(this.name))
+      if (
+        !store?.enabled ||
+        !req?.actor?._id ||
+        ignoredCollections.has(this.name)
+      )
         return original.apply(this, args);
       // Mongoose bulkWrite uses a callback. Complete auditing before resolving it.
       const callback =
@@ -169,7 +258,11 @@ function install() {
         const collectionName = this.name;
         if (method === "rename") {
           const result = await original.apply(this, args);
-          queue(store, this.conn, { action: 'rename', entityCollection: collectionName, recordLabel: String(args[0] || collectionName) });
+          queue(store, this.conn, {
+            action: "rename",
+            entityCollection: collectionName,
+            recordLabel: String(args[0] || collectionName),
+          });
           return result;
         }
         const before = new Map(),
@@ -241,7 +334,23 @@ function install() {
           );
           if (!changes.length) continue;
           const row = newRow || oldRow;
-          const label = row.title || row.leadName || row.opportunityName || row.invoiceNumber || row.quoteNumber || row.folderName || row.fileName || row.name || row.subject || row.agenda || row.fullName || row.companyName || [row.firstName, row.lastName].filter(Boolean).join(' ') || row.username || row.moduleName || '';
+          const label =
+            row.title ||
+            row.leadName ||
+            row.opportunityName ||
+            row.invoiceNumber ||
+            row.quoteNumber ||
+            row.folderName ||
+            row.fileName ||
+            row.name ||
+            row.subject ||
+            row.agenda ||
+            row.fullName ||
+            row.companyName ||
+            [row.firstName, row.lastName].filter(Boolean).join(" ") ||
+            row.username ||
+            row.moduleName ||
+            "";
           entries.push({
             ...envelope(req),
             action: !oldRow
@@ -254,7 +363,8 @@ function install() {
             recordLabel: typeof label === "string" ? label.slice(0, 500) : "",
           });
         }
-        if (!writeError) for (const entry of entries) queue(store, this.conn, entry);
+        if (!writeError)
+          for (const entry of entries) queue(store, this.conn, entry);
         if (writeError) throw writeError;
         return result;
       };
@@ -271,27 +381,51 @@ function install() {
   }
 }
 function middleware(req, res, next) {
-  const enabled = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) && !/^\/api\/(?:notification|reporting|audit-logs)(?:\/|$)/.test(req.originalUrl || '');
-  const store = { req, enabled, requestId: randomUUID(), entries: new Map(), explicit: null };
+  const enabled =
+    ["POST", "PUT", "PATCH", "DELETE"].includes(req.method) &&
+    !/^\/api\/(?:notification|reporting|audit-logs)(?:\/|$)/.test(
+      req.originalUrl || "",
+    );
+  const store = {
+    req,
+    enabled,
+    requestId: randomUUID(),
+    entries: new Map(),
+    explicit: null,
+  };
   const end = res.end;
   let ending = false;
   res.end = function (...args) {
     if (ending || !enabled) return end.apply(this, args);
     ending = true;
     // Persist one summary only after the controller has confirmed a successful save.
-    const entry = res.statusCode >= 200 && res.statusCode < 300 ? summarize(store) : null;
+    const entry =
+      res.statusCode >= 200 && res.statusCode < 300 ? summarize(store) : null;
     if (!entry) return end.apply(this, args);
-    const connection = [...store.entries.values()][0]?.connection || mongoose.connection;
-    persist(connection, [entry]).then(() => end.apply(this, args)).catch(error => {
-      console.error('Audit summary could not be saved:', error.name);
-      if (!res.headersSent) {
-        res.statusCode = 503; res.removeHeader('Content-Length'); res.removeHeader('ETag');
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        end.call(res, JSON.stringify({ code: 'serverError' }));
-      } else res.destroy(error);
-    });
+    const connection =
+      [...store.entries.values()][0]?.connection || mongoose.connection;
+    persist(connection, [entry])
+      .then(() => end.apply(this, args))
+      .catch((error) => {
+        console.error("Audit summary could not be saved:", error.name);
+        if (!res.headersSent) {
+          res.statusCode = 503;
+          res.removeHeader("Content-Length");
+          res.removeHeader("ETag");
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          end.call(res, JSON.stringify({ code: "serverError" }));
+        } else res.destroy(error);
+      });
     return this;
   };
   context.run(store, next);
 }
-module.exports = { install, middleware, differences, sanitize, recordEvent, summarize, ignoredCollections };
+module.exports = {
+  install,
+  middleware,
+  differences,
+  sanitize,
+  recordEvent,
+  summarize,
+  ignoredCollections,
+};

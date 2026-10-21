@@ -215,7 +215,7 @@ const Addfield = (props) => {
     <div>
       <Modal onClose={props?.onClose} isOpen={props?.isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent maxWidth={"2xl"}>
+        <ModalContent className="crm-record-form" maxWidth={"2xl"}>
           <ModalHeader><LocalizedText text="Add Field" /></ModalHeader>
           <ModalCloseButton onClick={() => resetForm()} />
           <ModalBody>

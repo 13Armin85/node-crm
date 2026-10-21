@@ -441,23 +441,23 @@ const helpContent = {
     en: {
       title: "Table fields guide",
       purpose:
-        "Table Fields controls which fields can appear in module tables.",
+        "Choose the columns shown in each module’s table.",
       actions:
-        "Manage table columns, adjust visible fields, and make list pages easier for users to scan.",
+        "Select a module, choose columns, and save.",
     },
     fa: {
       title: "راهنمای فیلدهای جدول",
       purpose:
-        "فیلدهای جدول مشخص می‌کند چه فیلدهایی در جدول‌های ماژول‌ها نمایش داده شوند.",
+        "ستون‌های جدول هر بخش را تنظیم کنید.",
       actions:
-        "می‌توانید ستون‌های جدول را مدیریت کنید، فیلدهای قابل نمایش را تنظیم کنید و خواندن لیست‌ها را برای کاربران ساده‌تر کنید.",
+        "بخش و ستون‌های دلخواه را انتخاب و ذخیره کنید.",
     },
     tr: {
       title: "Tablo alanları rehberi",
       purpose:
-        "Tablo Alanları, modül tablolarında hangi alanların görüneceğini kontrol eder.",
+        "Her modülün tablo sütunlarını belirleyin.",
       actions:
-        "Tablo sütunlarını yönetebilir, görünür alanları ayarlayabilir ve liste sayfalarını kullanıcılar için daha okunabilir hale getirebilirsiniz.",
+        "Modülü ve sütunları seçip kaydedin.",
     },
   },
   "Active Deactive Module": {

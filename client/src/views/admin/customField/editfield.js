@@ -237,7 +237,7 @@ const EditField = (props) => {
     <div>
       <Modal onClose={props?.onClose} isOpen={props?.isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent maxWidth={"2xl"} height={"580px"}>
+        <ModalContent className="crm-record-form" maxWidth={"2xl"} height={"580px"}>
           <ModalHeader><LocalizedText text="Edit Field" /></ModalHeader>
           <ModalCloseButton />
           <ModalBody overflowY={"auto"} height={"400px"}>

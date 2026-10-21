@@ -48,6 +48,7 @@ module.exports = async (req, res, next) => {
       let definition = await getDefinition(module.moduleName);
       const previous = action === 'update' && model ? await model.findById(req.params.id).lean() : {};
       if (module.moduleName === 'Leads') {
+        req.body = await require('../services/leadWorkflow').normalizeLeadAssignment(req.body, previous || {}, req.actor);
         req.body = normalizeLeadRelations(req.body, previous || {});
         validateLeadSelection(req.body);
         definition = { ...definition, fields: definition.fields.filter(field => isLeadRelationVisible(field, req.body)) };
@@ -64,7 +65,7 @@ module.exports = async (req, res, next) => {
       for (const key of ['assignUser', 'associatedListing', 'contact', 'partnerCustomer', 'relatedOpportunities']) {
         if (req.body[key] !== undefined) extras[key] = req.body[key];
       }
-      if (module.moduleName === 'Leads') extras.lead = req.body.lead;
+      if (module.moduleName === 'Leads') { extras.lead = req.body.lead; if (req.body.assignedBy) extras.assignedBy = req.body.assignedBy; }
       req.body = { ...values, ...extras, moduleId, ...(action === 'create' ? { createBy: req.actor._id } : {}) };
     }
     if (action === 'delete' && !req.params.id && (!Array.isArray(req.body?.ids) || req.body.ids.length > 100)) return res.status(400).json({ code: 'invalid', field: 'ids' });
@@ -74,5 +75,5 @@ module.exports = async (req, res, next) => {
       if (count !== new Set(req.body.ids).size) return res.status(403).json({ code: 'forbidden' });
     }
     next();
-  } catch (error) { res.status(400).json({ code: error.code || 'invalid', field: error.field }); }
+  } catch (error) { res.status(error.status || 400).json({ code: error.code || 'invalid', field: error.field }); }
 };

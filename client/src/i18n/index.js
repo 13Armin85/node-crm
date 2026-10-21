@@ -12,6 +12,9 @@ import taskSearchMessages from './taskSearch';
 import exportMessages from './exports';
 import sharingMessages from './recordSharing';
 import auditMessages from './auditLogs';
+import pipelineMessages from './pipeline';
+import leadConversionMessages from './leadConversion';
+import pwaMessages from './pwa';
 import legacy, { aliases } from './legacy';
 
 export const LANGUAGES = {
@@ -598,7 +601,7 @@ const tr = {
 };
 
 const visibilityLabels = { en: { 'User data visibility': 'User data visibility' }, fa: { 'User data visibility': 'کنترل نمایش اطلاعات کاربران' }, tr: { 'User data visibility': 'Kullanıcı veri görünürlüğü' } };
-const dictionaries = { en: { ...legacy.en, ...estate.en, ...notificationMessages.en, ...taskSearchMessages.en, ...exportMessages.en, ...sharingMessages.en, ...auditMessages.en, ...visibilityLabels.en }, fa: { ...fa, ...legacy.fa, ...estate.fa, ...notificationMessages.fa, ...taskSearchMessages.fa, ...exportMessages.fa, ...sharingMessages.fa, ...auditMessages.fa, ...visibilityLabels.fa }, tr: { ...tr, ...legacy.tr, ...estate.tr, ...notificationMessages.tr, ...taskSearchMessages.tr, ...exportMessages.tr, ...sharingMessages.tr, ...auditMessages.tr, ...visibilityLabels.tr } };
+const dictionaries = { en: { ...legacy.en, ...estate.en, ...notificationMessages.en, ...taskSearchMessages.en, ...exportMessages.en, ...sharingMessages.en, ...pwaMessages.en, ...leadConversionMessages.en, ...pipelineMessages.en, ...auditMessages.en, ...visibilityLabels.en }, fa: { ...fa, ...legacy.fa, ...estate.fa, ...notificationMessages.fa, ...taskSearchMessages.fa, ...exportMessages.fa, ...sharingMessages.fa, ...pwaMessages.fa, ...leadConversionMessages.fa, ...pipelineMessages.fa, ...auditMessages.fa, ...visibilityLabels.fa }, tr: { ...tr, ...legacy.tr, ...estate.tr, ...notificationMessages.tr, ...taskSearchMessages.tr, ...exportMessages.tr, ...sharingMessages.tr, ...pwaMessages.tr, ...leadConversionMessages.tr, ...pipelineMessages.tr, ...auditMessages.tr, ...visibilityLabels.tr } };
 
 const LanguageContext = createContext({
   language: "en",

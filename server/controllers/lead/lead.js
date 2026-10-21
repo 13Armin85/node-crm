@@ -16,7 +16,7 @@ const index = async (req, res) => {
   let allData = await Lead.find(query)
     .populate({
       path: "createBy",
-      match: { deleted: false }, // Populate only if createBy.deleted is false
+      select: "firstName lastName username",
     })
     .exec();
 
@@ -93,6 +93,7 @@ const edit = async (req, res) => {
 
 const view = async (req, res) => {
   let lead = await Lead.findOne({ _id: req.params.id })
+    .populate("createBy", "firstName lastName username")
     .populate("associatedListing")
     .populate({ path: 'lead', select: 'leadName leadEmail', match: readScope(req, req.actor, 'Leads', { deleted: false }) })
     .populate({ path: 'contact', select: 'fullName firstName lastName email phoneNumber', match: readScope(req, req.actor, 'Contacts', { deleted: false }) })
@@ -320,7 +321,18 @@ const deleteMany = async (req, res) => {
   }
 };
 
+const convert = async (req, res) => {
+  try {
+    const result = await require('../../services/leadConversion').convertLead(req);
+    return res.status(200).json(result);
+  } catch (error) {
+    const duplicate = error.code === 'duplicate' || error.code === 11000;
+    return res.status(duplicate ? 409 : error.status || 400).json({ code: duplicate ? 'duplicate' : error.code || 'invalid', field: error.field });
+  }
+};
+
 module.exports = {
+  convert,
   index,
   add,
   addMany,

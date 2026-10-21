@@ -28,10 +28,10 @@ test('required errors include source row numbers; custom values remain nested', 
   expect(result.errors).toEqual(expect.arrayContaining([{ row: 3, field: 'name', code: 'required' }, { row: 3, field: 'customFields.score', code: 'invalid' }]));
 });
 
-test('a default related contact applies to every imported lead and missing selection is rejected', () => {
+test('lead imports work without relations and still support optional legacy contact defaults', () => {
   const definition = { fields: [field('leadName', 'text', { required: true }), field('contact', 'select', { relation: 'Contacts' })] };
   const rows = [{ Name: 'A' }, { Name: 'B' }];
-  expect(prepareImport(rows, definition, { leadName: 'Name' }, {}, 'Leads').errors[0].field).toBe('leadRelations');
+  expect(prepareImport(rows, definition, { leadName: 'Name' }, {}, 'Leads').errors).toEqual([]);
   const result = prepareImport(rows, definition, { leadName: 'Name' }, { contact: '100000000000000000000001' }, 'Leads');
   expect(result.errors).toEqual([]);
   expect(result.records.map(row => row.contact)).toEqual(['100000000000000000000001', '100000000000000000000001']);

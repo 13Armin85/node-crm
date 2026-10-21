@@ -1,4 +1,7 @@
 const messages = {
+  'search.apply': ['Apply filters', 'اعمال فیلترها', 'Filtreleri uygula'],
+  'search.dates': ['Date filters', 'فیلترهای تاریخ', 'Tarih filtreleri'],
+
   'estate.uploadBusy': ['Another upload is still in progress. Please try again shortly.', 'بارگذاری دیگری در حال انجام است. لطفاً چند لحظه بعد دوباره تلاش کنید.', 'Başka bir yükleme devam ediyor. Lütfen kısa süre sonra tekrar deneyin.'],
   'estate.duplicate': ['This record already exists. Duplicate entries are not allowed.', 'این مورد قبلاً ثبت شده است. ثبت تکراری مجاز نیست.', 'Bu kayıt zaten mevcut. Yinelenen kayıtlara izin verilmez.'],
   'Saved successfully': ['Saved successfully', 'اطلاعات با موفقیت ذخیره شد.', 'Başarıyla kaydedildi'],

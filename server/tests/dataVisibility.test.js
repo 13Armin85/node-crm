@@ -17,17 +17,17 @@ test('ordinary users can read every module while administrative mutations stay r
   }
   assert.deepEqual(scope({ method: 'GET', actor }), {});
   assert.deepEqual(scope({ method: 'PUT', actor }), { createBy: actor._id });
-  assert.deepEqual(scope({ method: 'GET', actor }, 'Tasks'), {});
+  assert.deepEqual(scope({ method: 'GET', actor }, 'Tasks'), require('../services/leadAccess').generatedTaskScope(actor));
 });
 
-test('dashboard analytics read all permitted leads and tasks', async t => {
+test('dashboard analytics apply assignment scopes to leads and generated tasks', async t => {
   t.mock.method(User, 'findOne', async () => actor);
   const tasks = t.mock.method(Task, 'find', async query => {
-    assert.deepEqual(query, { deleted: false });
+    assert.deepEqual(query, require('../services/leadAccess').generatedTaskScope(actor, { deleted: false }));
     return [];
   });
   const leads = t.mock.method(Lead, 'find', async query => {
-    assert.deepEqual(query, { deleted: false });
+    assert.deepEqual(query, require('../services/leadAccess').leadScope(actor, { deleted: false }));
     return [{ title: 'Shared lead' }];
   });
   const res = { status(code) { this.code = code; return this; }, json(data) { this.data = data; } };
@@ -56,6 +56,6 @@ test('ordinary module defaults are closed while own and sent records remain read
   for (const name of require('../services/recordSharing').limitedModules) assert.equal(visibility.canRead(user, name), true, name);
   assert.equal(visibility.canRead(user, 'Reporting and Analytics'), true);
   const recordId = new mongoose.Types.ObjectId();
-  assert.deepEqual(scope({ method: 'GET', actor: user, recordShares: [{ module: 'Leads', recordId }] }, 'Leads'), { $or: [{ createBy: user._id }, { _id: { $in: [recordId] } }] });
+  assert.deepEqual(scope({ method: 'GET', actor: user, recordShares: [{ module: 'Leads', recordId }] }, 'Leads'), require('../services/leadAccess').leadScope(user));
   assert.equal(visibility.canView({ ...user, moduleVisibility: { Leads: true } }, 'Leads'), true);
 });

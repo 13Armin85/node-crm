@@ -1,3 +1,4 @@
+const { optionalLeadFields } = require('./leadRelations');
 const FormDefinition = require('../model/schema/formDefinition');
 const CustomField = require('../model/schema/customField');
 const { categories, ages, bedrooms, floors } = require('./estateCatalog');
@@ -129,13 +130,13 @@ async function getDefinition(moduleName) {
     // A saved definition owns its custom fields. Re-importing legacy metadata
     // here resurrected fields that administrators deliberately removed.
     const additions = missing;
-    return {
+    return optionalLeadFields({
       ...existing,
       fields: [...mergedExisting, ...additions.map((item, index) => ({
         ...item, locked: false, storageType: item.type,
         order: mergedExisting.length + index,
       }))],
-    };
+    });
   }
   if (!defaults[moduleName] && !legacyModules.includes(moduleName) && !legacy) return null;
   let fields;
@@ -156,6 +157,6 @@ async function getDefinition(moduleName) {
       return field(name, { String: 'text', Number: 'number', Boolean: 'checkbox', Date: 'datetime' }[path.instance], label, label, label, { required: Boolean(path.isRequired) });
     });
   }
-  return { moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, locked: false, storageType: f.type, order })) };
+  return optionalLeadFields({ moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, locked: false, storageType: f.type, order })) });
 }
 module.exports = { defaults, legacyModules, getDefinition, localized, safeName };

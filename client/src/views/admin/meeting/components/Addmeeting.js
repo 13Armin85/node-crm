@@ -153,9 +153,7 @@ const AddMeeting = (props) => {
         setContactData(result?.data);
       } else if (values?.related === "Lead" && leaddata?.length <= 0) {
         result = await getApi(
-          isAdmin(user)
-            ? "api/lead/"
-            : `api/lead/?createBy=${user?._id}`
+          "api/lead/"
         );
         setLeadData(result?.data);
       }
@@ -188,7 +186,7 @@ const AddMeeting = (props) => {
   return (
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent height={"580px"}>
+      <ModalContent className="crm-record-form" height={"580px"}>
         <ModalHeader><LocalizedText text={props.editId ? "Edit Meeting" : "Add Meeting"} /></ModalHeader>
         <ModalCloseButton />
         <ModalBody overflowY={"auto"} height={"400px"}><ManagedFormLayout moduleName="Meetings" formik={formik}>

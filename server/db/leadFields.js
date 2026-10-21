@@ -12,7 +12,7 @@ const leadFields = [
     options: [],
     validation: [
       {
-        require: true,
+        require: false,
         message: "",
       },
     ],
@@ -59,7 +59,7 @@ const leadFields = [
     options: [],
     validation: [
       {
-        require: true,
+        require: false,
         message: "",
       },
     ],
@@ -79,7 +79,7 @@ const leadFields = [
     options: [],
     validation: [
       {
-        require: true,
+        require: false,
         message: "",
       },
     ],
@@ -120,7 +120,7 @@ const leadFields = [
     ],
     validation: [
       {
-        require: true,
+        require: false,
         message: "Lead Campaign is require ",
       },
     ],
@@ -161,7 +161,7 @@ const leadFields = [
     ],
     validation: [
       {
-        require: true,
+        require: false,
         message: "",
       },
     ],
@@ -202,7 +202,7 @@ const leadFields = [
     ],
     validation: [
       {
-        require: true,
+        require: false,
         message: "Communication Tool is Required",
       },
     ],
@@ -231,7 +231,7 @@ const leadFields = [
     ],
     validation: [
       {
-        require: true,
+        require: false,
         message: "Listed for is Required",
       },
     ],
@@ -361,7 +361,7 @@ const leadFields = [
     ],
     validation: [
       {
-        require: true,
+        require: false,
         message: "Property Type is Required",
       },
     ],

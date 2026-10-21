@@ -78,8 +78,9 @@ const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, m
         borderRadius="full"
         bg="linear-gradient(180deg, #7551ff 0%, #39b8ff 100%)"
       />
-      <Flex align="center" minW={0} ps={2}>
+      <Flex className="crm-dashboard-card-header__main" align="center" minW={0} ps={2}>
         <Flex
+          className="crm-dashboard-card-header__icon"
           w="42px"
           h="42px"
           flexShrink={0}
@@ -93,14 +94,15 @@ const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, m
         >
           <Icon as={HeaderIcon} w="22px" h="22px" />
         </Flex>
-        <Box minW={0}>
-          <Heading color={titleColor} size="md" lineHeight="1.25">{title}</Heading>
-          {subtitle && <Text mt={1} color={mutedColor} fontSize="sm">{subtitle}</Text>}
+        <Box className="crm-dashboard-card-header__copy" minW={0}>
+          <Heading className="crm-dashboard-card-header__title" color={titleColor} size="md" lineHeight="1.25">{title}</Heading>
+          {subtitle && <Text className="crm-dashboard-card-header__subtitle" mt={1} color={mutedColor} fontSize="sm">{subtitle}</Text>}
         </Box>
       </Flex>
-      <Flex align="center" gap={2} ps={{ base: 2, sm: 0 }}>
+      {(meta !== undefined || action) && <Flex className="crm-dashboard-card-header__tools" align="center" gap={2} ps={{ base: 2, sm: 0 }}>
         {meta !== undefined && (
           <Text
+            className="crm-dashboard-card-header__meta"
             minW="34px"
             px={2.5}
             py={1}
@@ -116,7 +118,7 @@ const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, m
           </Text>
         )}
         {action}
-      </Flex>
+      </Flex>}
     </Flex>
   );
 };
@@ -404,12 +406,12 @@ export default function UserReports() {
                 meta={salesSummary?.bySeller?.length || 0}
                 mb={3}
               />
-              {salesSummary?.bySeller?.length ? <Table size="sm">
+              {salesSummary?.bySeller?.length ? <Table size="sm" className="crm-mobile-records" role="table">
                 <Thead><Tr><Th>{t('dashboard.teamMember')}</Th><Th isNumeric>{t('dashboard.soldCount')}</Th><Th>{t('dashboard.salesAmount')}</Th></Tr></Thead>
-                <Tbody>{salesSummary.bySeller.map(person => <Tr key={person.userId}>
-                  <Td fontWeight="800" data-no-translate>{person.name || person.userId}</Td>
-                  <Td isNumeric fontWeight="800">{person.soldCount}</Td>
-                  <Td>{moneyValues(person.values)}</Td>
+                <Tbody>{salesSummary.bySeller.map(person => <Tr key={person.userId} className="crm-record-row" role="row">
+                  <Td role="cell" data-label={t("dashboard.teamMember")} data-mobile-role="primary" fontWeight="800" data-no-translate>{person.name || person.userId}</Td>
+                  <Td role="cell" data-label={t("dashboard.soldCount")} data-mobile-role="field" isNumeric fontWeight="800">{person.soldCount}</Td>
+                  <Td role="cell" data-label={t("dashboard.salesAmount")} data-mobile-role="field">{moneyValues(person.values)}</Td>
                 </Tr>)}</Tbody>
               </Table> : <Text py="8" textAlign="center" color={statisticsMutedColor}>{t('dashboard.noSales')}</Text>}
             </Box>

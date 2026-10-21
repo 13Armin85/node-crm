@@ -124,9 +124,7 @@ const Editopportunityproject = (props) => {
           assignToLeadData?.length <= 0
         ) {
           result = await getApi(
-            isAdmin(user)
-              ? "api/lead/"
-              : `api/lead/?createBy=${user?._id}`,
+            "api/lead/",
           );
           setAssignToLeadData(result?.data);
         }
@@ -220,7 +218,7 @@ const Editopportunityproject = (props) => {
   return (
     <Modal isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent className="crm-record-form">
         <ModalHeader justifyContent="space-between" display="flex">
           {userAction === "add"
             ? tr("Add Opportunity Project")

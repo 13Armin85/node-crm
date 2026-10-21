@@ -3,14 +3,14 @@ import * as yup from "yup";
 
 export const leadSchema = yup.object({
   // Lead Information:
-  leadName: yup.string().required(tr("Lead Name Is required")),
-  leadEmail: yup.string().email().required(tr("Lead Email Is required")),
+  leadName: yup.string(),
+  leadEmail: yup.string().email(),
   leadPhoneNumber: yup
     .number()
     .min(1000000000, tr("Phone number is invalid"))
     .max(999999999999, tr("Phone number is invalid"))
-    .required(tr("Lead Phone Number Is required")),
-  leadAddress: yup.string().required(tr("Lead Address Is required")),
+    ,
+  leadAddress: yup.string(),
   // Lead Source and Details:
   leadSource: yup.string(),
   leadStatus: yup.string(),
@@ -25,18 +25,18 @@ export const leadSchema = yup.object({
   leadOwner: yup.string(),
   leadCommunicationPreferences: yup.string(),
   // Lead Dates and Follow-up:
-  leadCreationDate: yup.date().required(tr("Lead Creation Date Is required")),
-  leadConversionDate: yup.date().required(tr("Lead Conversion Date Is required")),
-  leadFollowUpDate: yup.date().required(tr("lead Follow Up Date  Is required")),
+  leadCreationDate: yup.date(),
+  leadConversionDate: yup.date(),
+  leadFollowUpDate: yup.date(),
   leadFollowUpStatus: yup.string(),
   // Lead Scoring and Nurturing:
   leadScore: yup
     .number()
-    .required(tr("Lead Score Is required"))
+
     .min(0, tr("Lead Score Is invalid")),
   leadNurturingWorkflow: yup.string(),
   leadEngagementLevel: yup.string(),
-  leadConversionRate: yup.number().required(tr("lead Conversion Rate Is required")),
+  leadConversionRate: yup.number(),
   leadNurturingStage: yup.string(),
   leadNextAction: yup.string(),
 });

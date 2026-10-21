@@ -53,15 +53,16 @@ test('record import validates complete batches, permissions, relationships and p
     assert.equal(await Contact.countDocuments({}), before);
     assert.equal((await request('Contacts', Array(101).fill(person('Too many', 17)))).status, 400);
   });
-  await t.test('leads require a visible related record and update reverse relationships', async () => {
+  await t.test('leads import independently and optional relations still enforce visibility', async () => {
     const contact = await Contact.findOne({}).lean();
     const payload = { leadName: 'Imported lead', leadEmail: 'lead@example.test', leadMobile: '+90 555 222 1111' };
-    assert.equal((await request('Leads', [payload])).data.errors[0].field, 'leadRelations');
+    const independent = await request('Leads', [{ leadMessage: 'Independent prospect' }]);
+    assert.equal(independent.status, 201, JSON.stringify(independent));
     const forbidden = await request('Leads', [{ ...payload, contact: String(contact._id) }], regular);
     assert.equal(forbidden.status, 400); assert.equal(forbidden.data.errors[0].code, 'relationNotFound');
     const result = await request('Leads', [{ ...payload, contact: String(contact._id) }]);
     assert.equal(result.status, 201, JSON.stringify(result));
-    const lead = await Lead.findOne({}).lean();
+    const lead = await Lead.findOne({ leadEmail: payload.leadEmail }).lean();
     assert((await Contact.findById(contact._id).lean()).relatedLeads.some(id => String(id) === String(lead._id)));
   });
   await t.test('residences, partners, opportunities and invoice values persist through the same importer', async () => {

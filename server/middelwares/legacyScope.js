@@ -15,10 +15,13 @@ const record = Model => async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-const createMany = (req, res, next) => {
+const createMany = async (req, res, next) => {
   if (!Array.isArray(req.body) || req.body.length > 100) return res.status(400).json({ code: 'invalid' });
-  req.body = req.body.map(item => ({ ...item, _id: undefined, createBy: req.actor._id, modifiedBy: req.actor._id, createdDate: new Date(), updatedDate: new Date(), deleted: false }));
-  next();
+  req.body = req.body.map(item => ({ ...item, _id: undefined, conversion: undefined, convertedLeads: undefined, createBy: req.actor._id, modifiedBy: req.actor._id, createdDate: new Date(), updatedDate: new Date(), deleted: false }));
+  try {
+    if (require('../services/recordAccess').requestModule(req) === 'Leads') for (const item of req.body) await require('../services/leadWorkflow').normalizeLeadAssignment(item, {}, req.actor);
+    next();
+  } catch (error) { res.status(error.status || 400).json({ code: error.code || 'invalid', field: error.field }); }
 };
 
 const batch = Model => async (req, res, next) => {

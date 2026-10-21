@@ -168,6 +168,7 @@ const add = async (req, res) => {
         if (!isAdmin(user) && req.body.assignedToUser && String(req.body.assignedToUser) !== String(user._id)) {
             return res.status(403).json({ message: 'Only administrators and developers can assign tasks to other users' });
         }
+        delete req.body.leadCallFor;
         const taskData = normalizeTask(req.body, user);
         const validationError = await validateReferences(taskData);
         if (validationError) return res.status(400).json({ message: validationError });
@@ -200,6 +201,7 @@ const edit = async (req, res) => {
         ) {
             return res.status(403).json({ message: 'Only administrators and developers can assign tasks to other users' });
         }
+        delete req.body.leadCallFor;
         const taskData = normalizeTask(req.body, access.user, access.task);
         // Ordinary edits never write assignment fields, even if the current assignee was submitted.
         if (!isAdmin(access.user)) {
@@ -209,6 +211,12 @@ const edit = async (req, res) => {
         const validationError = await validateReferences(taskData);
         if (validationError) return res.status(400).json({ message: validationError });
         const assigneeChanged = Object.prototype.hasOwnProperty.call(taskData, 'assignedToUser') && String(taskData.assignedToUser || '') !== String(access.task.assignedToUser || '');
+        if (access.task.leadCallFor && assigneeChanged) {
+            const transferred = await require('../../services/leadWorkflow').assignLead(access.task.leadCallFor, taskData.assignedToUser, access.user);
+            const details = Object.fromEntries(['notes', 'description', 'start', 'end', 'reminder', 'priority'].filter(key => key in taskData).map(key => [key, taskData[key]]));
+            const result = await Task.findByIdAndUpdate(transferred.task._id, { $set: details }, { new: true, runValidators: true });
+            return res.status(200).json(result);
+        }
         const statusChanged = taskData.status && taskData.status !== access.task.status;
         const detailsChanged = ['title', 'description', 'notes', 'start', 'end', 'reminder', 'priority', 'category', 'assignTo', 'assignToLead', 'customFields'].some(key => Object.prototype.hasOwnProperty.call(taskData, key) && !isDeepStrictEqual(JSON.parse(JSON.stringify(taskData[key] ?? null)), JSON.parse(JSON.stringify(access.task[key] ?? null))));
         const result = await Task.findByIdAndUpdate(req.params.id, { $set: taskData }, { new: true, runValidators: true });

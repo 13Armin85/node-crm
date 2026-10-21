@@ -64,7 +64,8 @@
     "deploy": "gh-pages -d build",
     "sitemap": "babel-node ./sitemap-builder.js",
     "lint": "eslint src --ext .js,.jsx --quiet",
-    "localization:audit": "node ../scripts/audit-localization.cjs && node ../scripts/check-translations.cjs"
+    "localization:audit": "node ../scripts/audit-localization.cjs && node ../scripts/check-translations.cjs",
+    "postbuild": "node ../scripts/prepare-pwa.cjs"
   },
   "resolutions": {
     "react-error-overlay": "6.0.9"

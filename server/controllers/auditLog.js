@@ -55,7 +55,6 @@ function buildFilter(actor, query) {
       "entityCollection",
       "recordId",
       "recordLabel",
-      "changes.field",
     ].map((field) => ({ [field]: regex }));
   }
   return filter;
@@ -63,7 +62,14 @@ function buildFilter(actor, query) {
 router.get("/", auth, async (req, res, next) => {
   try {
     const filter = buildFilter(req.actor, req.query);
-    const eligible = { entityCollection: { $nin: [...ignoredCollections] }, $or: [{ schemaVersion: 2 }, { method: { $in: ['POST', 'PUT', 'PATCH', 'DELETE'] } }, { action: { $in: ['login', 'logout'] } }] };
+    const eligible = {
+      entityCollection: { $nin: [...ignoredCollections] },
+      $or: [
+        { schemaVersion: 2 },
+        { method: { $in: ["POST", "PUT", "PATCH", "DELETE"] } },
+        { action: { $in: ["login", "logout"] } },
+      ],
+    };
     filter.$and = [eligible];
     const page = Number(req.query.page || 1),
       limit = Number(req.query.limit || 25);
@@ -76,51 +82,74 @@ router.get("/", auth, async (req, res, next) => {
       limit > 100
     )
       return res.status(400).json({ code: "invalid" });
-    const scope = { ...eligible, ...(isAdmin(req.actor) ? {} : { actorId: req.actor._id }) };
+    const scope = {
+      ...eligible,
+      ...(isAdmin(req.actor) ? {} : { actorId: req.actor._id }),
+    };
     const aggregateFilter = {
       ...filter,
       ...(filter.actorId
         ? { actorId: new mongoose.Types.ObjectId(String(filter.actorId)) }
         : {}),
     };
-    const [items, statistics, actors, collections, activeUsers] = await Promise.all([
-      AuditLog.find(filter)
-        .select("-changes -path -method -requestId")
-        .sort({ createdAt: -1, _id: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean(),
-      AuditLog.aggregate([
-        { $match: aggregateFilter },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: 1 },
-            create: { $sum: { $cond: [{ $eq: ["$action", "create"] }, 1, 0] } },
-            update: { $sum: { $cond: [{ $eq: ["$action", "update"] }, 1, 0] } },
-            delete: { $sum: { $cond: [{ $eq: ["$action", "delete"] }, 1, 0] } },
-          },
-        },
-      ]),
-      isAdmin(req.actor)
-        ? AuditLog.aggregate([
-            { $match: eligible },
-            { $sort: { createdAt: -1, _id: -1 } },
-            {
-              $group: {
-                _id: "$actorId",
-                name: { $first: "$actorName" },
-                username: { $first: "$actorUsername" },
+    const [items, statistics, actors, collections, activeUsers] =
+      await Promise.all([
+        AuditLog.find(filter)
+          .select("-changes -path -method -requestId")
+          .sort({ createdAt: -1, _id: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+        AuditLog.aggregate([
+          { $match: aggregateFilter },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: 1 },
+              create: {
+                $sum: { $cond: [{ $eq: ["$action", "create"] }, 1, 0] },
+              },
+              update: {
+                $sum: { $cond: [{ $eq: ["$action", "update"] }, 1, 0] },
+              },
+              delete: {
+                $sum: { $cond: [{ $eq: ["$action", "delete"] }, 1, 0] },
               },
             },
-            { $sort: { name: 1, username: 1 } },
-          ])
-        : [],
-      AuditLog.distinct("entityCollection", scope),
-      isAdmin(req.actor) ? User.find({ deleted: { $ne: true } }).select('_id firstName lastName username').sort({ firstName: 1, lastName: 1, username: 1 }).lean() : [],
-    ]);
-    const directory = new Map(actors.map(actor => [String(actor._id), { ...actor, inactive: true }]));
-    for (const user of activeUsers) directory.set(String(user._id), { _id: user._id, name: [user.firstName, user.lastName].filter(Boolean).join(' '), username: user.username, inactive: false });
+          },
+        ]),
+        isAdmin(req.actor)
+          ? AuditLog.aggregate([
+              { $match: eligible },
+              { $sort: { createdAt: -1, _id: -1 } },
+              {
+                $group: {
+                  _id: "$actorId",
+                  name: { $first: "$actorName" },
+                  username: { $first: "$actorUsername" },
+                },
+              },
+              { $sort: { name: 1, username: 1 } },
+            ])
+          : [],
+        AuditLog.distinct("entityCollection", scope),
+        isAdmin(req.actor)
+          ? User.find({ deleted: { $ne: true } })
+              .select("_id firstName lastName username")
+              .sort({ firstName: 1, lastName: 1, username: 1 })
+              .lean()
+          : [],
+      ]);
+    const directory = new Map(
+      actors.map((actor) => [String(actor._id), { ...actor, inactive: true }]),
+    );
+    for (const user of activeUsers)
+      directory.set(String(user._id), {
+        _id: user._id,
+        name: [user.firstName, user.lastName].filter(Boolean).join(" "),
+        username: user.username,
+        inactive: false,
+      });
     const {
       total = 0,
       create = 0,

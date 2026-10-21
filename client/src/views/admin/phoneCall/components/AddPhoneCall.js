@@ -161,7 +161,7 @@ const AddPhoneCall = (props) => {
   return (
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent className="crm-record-form">
         <ModalHeader><LocalizedText text="Add Call" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody><ManagedFormLayout moduleName="Calls" formik={formik}>

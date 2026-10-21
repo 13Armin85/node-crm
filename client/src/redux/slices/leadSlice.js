@@ -6,9 +6,7 @@ export const fetchLeadData = createAsyncThunk("fetchLeadData", async () => {
   const user = JSON.parse(localStorage.getItem("user"));
   try {
     const response = await getApi(
-      isAdmin(user)
-        ? "api/lead/"
-        : `api/lead/?createBy=${user?._id}`,
+      "api/lead/",
     );
     return response.data;
   } catch (error) {

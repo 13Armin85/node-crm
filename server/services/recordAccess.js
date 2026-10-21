@@ -27,6 +27,7 @@ const personalFields = {
 };
 const recordScope = (actor, moduleName, extra = {}) => {
     if (moduleName === 'Tasks') return taskScope(actor, extra);
+    if (moduleName === 'Leads') return require('./leadAccess').leadScope(actor, extra);
     if (isAdmin(actor) || !personalFields[moduleName]) return { ...extra };
     if (!actor?._id) throw new Error('An authenticated actor is required');
     const fields = personalFields[moduleName];
@@ -38,6 +39,8 @@ const readScope = (req, actor, moduleName, extra = {}) => {
     const { canView, publicModules, canonicalModule, requestViewModule } = require('./moduleVisibility');
     moduleName = canonicalModule(moduleName);
     const currentActor = req.actor || actor;
+    if (moduleName === 'Leads') return recordScope(readActor(req, actor), moduleName, extra);
+    if (moduleName === 'Tasks' && !isAdmin(actor) && canView(currentActor, moduleName)) return require('./leadAccess').generatedTaskScope(actor, extra);
     const page = requestViewModule(req);
     const restrictedSummary = ['Dashboard', 'Reporting and Analytics'].includes(page) && !canView(currentActor, page);
     if (!canView(currentActor, moduleName) || restrictedSummary) {

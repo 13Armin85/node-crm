@@ -244,4 +244,17 @@ const deleteMany = async (req, res) => {
     }
 }
 
-module.exports = { add, index, view, deleteData, edit, deleteMany, addMany }
+const changeStage = async (req, res) => {
+    try {
+        const definition = await require('../../services/formDefinitions').getDefinition('Opportunities');
+        const stages = definition.fields.find(field => field.name === 'salesStage')?.options || [];
+        if (!stages.some(stage => stage.value === req.body.salesStage)) return res.status(400).json({ code: 'invalid', field: 'salesStage' });
+        const result = await Opprtunities.findByIdAndUpdate(req.params.id, { $set: {
+            salesStage: req.body.salesStage, modifiedBy: req.actor._id, modifiedDate: new Date(),
+        } }, { new: true, runValidators: true });
+        res.status(200).json(result);
+    } catch (error) { res.status(400).json({ code: 'invalid', field: 'salesStage' }); }
+};
+
+module.exports = {
+    changeStage, add, index, view, deleteData, edit, deleteMany, addMany }

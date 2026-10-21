@@ -1,16 +1,49 @@
 {
-  "short_name": "Amard Novin CRM",
+  "short_name": "Amard CRM",
   "name": "Amard Novin CRM",
   "icons": [
     {
-      "src": "brand-logo-ta.png",
-      "sizes": "1254x1254",
+      "src": "/pwa/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/default",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#17325f",
+  "background_color": "#f5f7fb",
+  "id": "/",
+  "scope": "/",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "description": "Amard Novin CRM workspace",
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/default"
+    },
+    {
+      "name": "Tasks",
+      "url": "/task"
+    },
+    {
+      "name": "Logs",
+      "url": "/audit-logs"
+    }
+  ]
 }

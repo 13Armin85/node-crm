@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17325f"><title>Amard Novin CRM</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;background:#f5f7fb;color:#17325f;font:16px/1.9 system-ui,sans-serif}
+main{width:100%;max-width:440px;padding:32px 24px;border:1px solid #dbe5f3;border-radius:24px;background:white;text-align:center;box-shadow:0 16px 48px #17325f12}
+img{width:80px;height:80px;border-radius:20px}h1{font-size:24px;line-height:1.5;margin:20px 0 10px}p{color:#667085}
+button{min-height:48px;width:100%;padding:12px 20px;margin-top:12px;border:0;border-radius:12px;background:#177ddc;color:white;font:inherit;font-weight:700;cursor:pointer}
+button:focus-visible{outline:3px solid #17325f;outline-offset:4px}small{display:block;margin-top:20px;color:#667085}
+@media(prefers-color-scheme:dark){body{background:#080a12;color:#f6f8fb}main{background:#121827;border-color:#334155}p,small{color:#a8b3c7}}
+</style></head><body><main>
+<img src="/pwa/icon-192.png" alt="" width="80" height="80">
+<h1 id="title">Connection unavailable</h1><p id="message">Check your internet connection and try again.</p>
+<button id="retry" type="button">Try again</button><small id="brand">Amard Novin CRM</small>
+</main><script>
+(function(){
+var messages={"en":["Connection unavailable","Check your internet connection and try again. Your CRM information requires a connection to the server.","Try again","Amard Novin CRM"],"fa":["اتصال برقرار نیست","اتصال اینترنت را بررسی کنید و دوباره تلاش کنید. برای دسترسی به اطلاعات سامانه باید به سرور متصل باشید.","تلاش دوباره","سامانهٔ آمارد نوین"],"tr":["Bağlantı kurulamıyor","İnternet bağlantınızı kontrol edip tekrar deneyin. CRM bilgilerinize erişmek için sunucu bağlantısı gerekir.","Tekrar dene","Amard Novin CRM"]};
+var language='en';try{language=localStorage.getItem('crm-language')||'en';}catch(e){}
+var text=messages[language]||messages.en;
+document.documentElement.lang=messages[language]?language:'en';document.documentElement.dir=language==='fa'?'rtl':'ltr';
+['title','message','retry','brand'].forEach(function(id,index){document.getElementById(id).textContent=text[index];});
+document.getElementById('retry').onclick=function(){location.reload();};
+window.addEventListener('online',function(){location.reload();});
+}());
+</script></body></html>

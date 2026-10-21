@@ -1,4 +1,4 @@
-// Each lead record selects exactly one lead, contact or partner customer.
+// A lead is entered independently; legacy customer relations remain optional.
 const relationNames = ['lead', 'contact', 'partnerCustomer'];
 const normalizeLeadRelations = (body, previous = {}) => {
   const relations = Object.fromEntries(relationNames
@@ -17,9 +17,13 @@ const isLeadRelationVisible = (field, values) => {
 };
 
 const validateLeadSelection = values => {
-  if (relationNames.filter(name => values[name]).length !== 1) {
+  if (relationNames.filter(name => values[name]).length > 1) {
     throw Object.assign(new Error('leadSelectionRequired'), { code: 'leadSelectionRequired', field: 'leadRelations' });
   }
 };
 
-module.exports = { normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection };
+const optionalLeadFields = definition => definition?.moduleName === 'Leads'
+  ? { ...definition, fields: definition.fields.map(field => ({ ...field, required: false })) }
+  : definition;
+
+module.exports = { optionalLeadFields, normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection };

@@ -1,3 +1,4 @@
+import ConvertedLeadDetails from "components/relations/ConvertedLeadDetails";
 import { Portal } from '@chakra-ui/react';
 import { safeUrl } from 'services/contentSecurity';
 import { isAdmin } from 'roles';
@@ -692,6 +693,7 @@ const View = () => {
             </Grid>
             <TabPanels>
               <TabPanel pt={4} p={0}>
+                <ConvertedLeadDetails records={data?.convertedLeads} />
                 <CustomView
                   data={contactData?.[0]}
                   fieldData={data}

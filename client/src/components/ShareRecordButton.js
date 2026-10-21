@@ -31,7 +31,7 @@ export default function ShareRecordButton({ module, record, compact = false }) {
     try {
       const result = await postApi('api/record-sharing', { module, recordId: record._id, recipientId: selected });
       if (![200, 201].includes(result?.status)) throw new Error();
-      const next = [...shares.filter(share => share.user?._id !== selected), { user: users.find(user => user._id === selected) }];
+      const next = [...(module === 'Leads' ? [] : shares.filter(share => share.user?._id !== selected)), { user: users.find(user => user._id === selected) }];
       setShares(next); announceRecordSharing(module, record._id, next);
       toast.success(t('Item sent to user'));
     } catch { toast.error(t('Failed to send item')); } finally { setSaving(false); }
@@ -56,7 +56,7 @@ export default function ShareRecordButton({ module, record, compact = false }) {
       <ModalOverlay /><ModalContent dir={direction} className="crm-share-record-modal">
         <ModalHeader>{t(folder ? 'Send folder to user' : 'Send item to user')}</ModalHeader><ModalCloseButton isDisabled={saving} aria-label={t('Close')} />
         <ModalBody>
-          <Text fontSize="sm" mb={4}>{t(folder ? 'This folder and its subfolders are shared, including files added later.' : 'Only this item will be visible to the selected user when the section is hidden.')}</Text>
+          <Text fontSize="sm" mb={4}>{t(module === 'Leads' ? 'pipeline.transfer' : folder ? 'This folder and its subfolders are shared, including files added later.' : 'Only this item will be visible to the selected user when the section is hidden.')}</Text>
           {loading ? <Spinner /> : failed ? <Box role="alert"><Text>{t('Failed to load sharing settings')}</Text><Button mt={2} onClick={load}>{t('Retry')}</Button></Box> : <FormControl>
             <FormLabel>{t('User')}</FormLabel>
             <Input mb={2} value={query} isDisabled={saving} placeholder={t('Search names...')} aria-label={t('Search names...')} onChange={event => setQuery(event.target.value)} />

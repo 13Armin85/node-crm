@@ -1,3 +1,4 @@
+import RecordPagination from "components/pagination/RecordPagination";
 import TableTools, { useVisibleColumns } from 'components/table/TableTools';
 import RecordImportDialog from 'components/table/RecordImportDialog';
 import { exportSpreadsheet } from 'utils/spreadsheet';
@@ -12,7 +13,7 @@ import {
 import { useFormik, getIn, setIn } from "formik";
 import { useParams } from "react-router-dom";
 import {
-  FiChevronLeft, FiChevronRight, FiEdit3, FiEye, FiFilter, FiHome,
+  FiEdit3, FiEye, FiFilter, FiHome,
   FiPlus, FiSearch, FiTrash2, FiUsers, FiX,
 } from "react-icons/fi";
 import Card from "components/card/Card";
@@ -59,7 +60,6 @@ const residenceTableColumns = [
   ['contact', 'Contact'],
 ];
 
-const PAGE_SIZE = 20;
 
 export function EntityPage({ moduleName }) {
   const { t, language, direction } = useLanguage();
@@ -69,6 +69,7 @@ export function EntityPage({ moduleName }) {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({});
@@ -94,14 +95,14 @@ export function EntityPage({ moduleName }) {
   const fetchData = useCallback(async () => {
     setBusy(true);
     setError("");
-    const params = new URLSearchParams({ q: search, page, limit: PAGE_SIZE, sort, order, ...filters });
+    const params = new URLSearchParams({ q: search, page, limit: pageSize, sort, order, ...filters });
     const result = await getApi(`${base}?${params}`);
     if (result.status === 200) {
       setItems(result.data.items);
       setTotal(result.data.total);
     } else setError(result.data?.code || "serverError");
     setBusy(false);
-  }, [base, search, page, sort, order, filters]);
+  }, [base, search, page, pageSize, sort, order, filters]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -151,7 +152,7 @@ export function EntityPage({ moduleName }) {
     ? ["category", "subtype", "transactionType", "district", "neighborhood", "residence", "bedroom", "buildingAge", "occupancyStatus", "floor", "area.type", "sale.status"]
     : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["category", "transactionType", "city", "district", "neighborhood", "constructionStatus", "occupancyStatus", "sale.status"];
   const name = (item) => item.title || item.fullName || item.companyName || item.name || item.propertyType || item._id;
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const dateLocale = language === "fa" ? "fa-IR" : language === "tr" ? "tr-TR" : "en-US";
   const PageIcon = ["Properties", "Residences"].includes(moduleName) ? FiHome : FiUsers;
 
@@ -300,44 +301,44 @@ export function EntityPage({ moduleName }) {
           </Box>
         )}
 
-        <Box className="crm-entity-table-wrap" overflowX="auto" dir={moduleName === "Properties" ? "ltr" : direction}>
+        <Box className="crm-entity-table-wrap crm-records-scroll" overflowX="auto" dir={moduleName === "Properties" ? "ltr" : direction}>
           {busy ? (
             <Flex minH="360px" align="center" justify="center"><Spinner /></Flex>
           ) : (
-            <Table className="crm-entity-table" sx={hiddenColumnStyles} minW={moduleName === "Residences" ? `${Math.max(640, visible.length * 150)}px` : undefined} dir={moduleName === "Properties" ? "ltr" : direction}>
+            <Table className="crm-entity-table crm-mobile-records" role="table" sx={hiddenColumnStyles} minW={moduleName === "Residences" ? `${Math.max(640, visible.length * 150)}px` : undefined} dir={moduleName === "Properties" ? "ltr" : direction}>
               <Thead><Tr>{moduleName === "Properties" && <Th dir={direction} textAlign="center" w="64px">{t("estate.rowNumber")}</Th>}<Th dir={direction}>{t("Name")}</Th><Th dir={direction}>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Residences" && <>
                 <Th dir={direction}>{t("Price")}</Th>
                 {residenceTableColumns.map(([key, fallback]) => <Th key={key} dir={direction} whiteSpace="nowrap">{residenceFieldLabel(key, fallback)}</Th>)}
               </>}{moduleName === "Partner Customers" && <Th>{localized(partnerStatusField?.label || "Status", language)}</Th>}<Th dir={direction}>{t("Created Date")}</Th><Th dir={direction}>{t("Actions")}</Th></Tr></Thead>
               <Tbody>
                 {items.map((item, index) => (
-                  <Tr key={item._id}>
-                    {moduleName === "Properties" && <Td dir="ltr" textAlign="center" fontWeight="700" data-no-translate>{(page - 1) * PAGE_SIZE + index + 1}</Td>}
-                    <Td dir={direction}><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge module={moduleName} record={item} />{["Properties", "Residences"].includes(moduleName) && <PropertyStatusBadge property={item} />}</Box></Flex></Td>
-                    <Td dir={direction} data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : moduleName === "Residences" ? <Box minW="210px" maxW="280px">
+                  <Tr key={item._id} className="crm-record-row" role="row">
+                    {moduleName === "Properties" && <Td role="cell" hidden={!visible.includes("number")} data-label={t("estate.rowNumber")} data-mobile-role="index" dir="ltr" textAlign="center" fontWeight="700" data-no-translate>{(page - 1) * pageSize + index + 1}</Td>}
+                    <Td role="cell" hidden={!visible.includes("name")} data-label={t("Name")} data-mobile-role="primary" dir={direction}><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge module={moduleName} record={item} />{["Properties", "Residences"].includes(moduleName) && <PropertyStatusBadge property={item} />}</Box></Flex></Td>
+                    <Td role="cell" hidden={!visible.includes("summary")} data-label={t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")} data-mobile-role="field" dir={direction} data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : moduleName === "Residences" ? <Box minW="210px" maxW="280px">
                       <Text fontWeight="600">{[item.city, item.district, item.neighborhood].filter(Boolean).join(" · ") || "-"}</Text>
                       {item.address && <Text mt={1} fontSize="xs" color="var(--crm-muted)" whiteSpace="normal">{item.address}</Text>}
                     </Box> : item.phone || "-"}</Td>
                     {moduleName === "Residences" && <>
-                      <Td dir={direction} whiteSpace="nowrap" data-no-translate>{item.price?.amount != null ? <CurrencyAmount amount={item.price.amount} currency={item.price.currency} compact /> : "-"}</Td>
-                      <Td dir={direction}>{residenceOption('transactionType', item.transactionType)}</Td>
-                      <Td dir={direction}>{residenceOption('constructionStatus', item.constructionStatus)}</Td>
-                      <Td dir={direction} data-no-translate>{item.developer || '-'}</Td>
-                      <Td dir={direction} whiteSpace="nowrap">
+                      <Td role="cell" hidden={!visible.includes("price")} data-label={t("Price")} data-mobile-role="field" dir={direction} whiteSpace="nowrap" data-no-translate>{item.price?.amount != null ? <CurrencyAmount amount={item.price.amount} currency={item.price.currency} compact /> : "-"}</Td>
+                      <Td role="cell" hidden={!visible.includes("transactionType")} data-label={residenceFieldLabel("transactionType", "Transaction Type")} data-mobile-role="field" dir={direction}>{residenceOption('transactionType', item.transactionType)}</Td>
+                      <Td role="cell" hidden={!visible.includes("constructionStatus")} data-label={residenceFieldLabel("constructionStatus", "estate.residence.constructionStatus")} data-mobile-role="field" dir={direction}>{residenceOption('constructionStatus', item.constructionStatus)}</Td>
+                      <Td role="cell" hidden={!visible.includes("developer")} data-label={residenceFieldLabel("developer", "estate.residence.developer")} data-mobile-role="field" dir={direction} data-no-translate>{item.developer || '-'}</Td>
+                      <Td role="cell" hidden={!visible.includes("area.value")} data-label={residenceFieldLabel("area.value", "estate.residence.builtArea")} data-mobile-role="field" dir={direction} whiteSpace="nowrap">
                         <Text data-no-translate>{item.area?.value != null ? `${residenceNumber(item.area.value)} m²` : '-'}</Text>
                         {item.area?.value != null && item.area?.type && <Text fontSize="xs" color="var(--crm-muted)">{residenceOption('area.type', item.area.type)}</Text>}
                         {item.totalArea != null && <Text mt={1} fontSize="xs">{residenceFieldLabel('totalArea', 'estate.residence.siteArea')}: <span data-no-translate>{residenceNumber(item.totalArea)} m²</span></Text>}
                       </Td>
-                      <Td dir={direction} whiteSpace="nowrap">
+                      <Td role="cell" hidden={!visible.includes("building")} data-label={residenceFieldLabel("building", "estate.section.building")} data-mobile-role="field" dir={direction} whiteSpace="nowrap">
                         {['blockCount', 'floorCount', 'unitCount'].map(key => <Text key={key} fontSize="xs">{residenceFieldLabel(key, `estate.residence.${key}`)}: <span data-no-translate>{residenceNumber(item[key])}</span></Text>)}
                       </Td>
-                      <Td dir={direction} whiteSpace="nowrap" data-no-translate>{item.maintenanceFee?.amount != null ? <CurrencyAmount amount={item.maintenanceFee.amount} currency={item.maintenanceFee.currency} compact /> : '-'}</Td>
-                      <Td dir={direction} data-no-translate>
+                      <Td role="cell" hidden={!visible.includes("maintenanceFee.amount")} data-label={residenceFieldLabel("maintenanceFee.amount", "estate.residence.maintenanceFee")} data-mobile-role="field" dir={direction} whiteSpace="nowrap" data-no-translate>{item.maintenanceFee?.amount != null ? <CurrencyAmount amount={item.maintenanceFee.amount} currency={item.maintenanceFee.currency} compact /> : '-'}</Td>
+                      <Td role="cell" hidden={!visible.includes("contact")} data-label={residenceFieldLabel("contact", "Contact")} data-mobile-role="field" dir={direction} data-no-translate>
                         <Text dir="ltr" whiteSpace="nowrap">{item.phone || '-'}</Text>
                         {item.email && <Text dir="ltr" mt={1} fontSize="xs">{item.email}</Text>}
                       </Td>
                     </>}
-                    {moduleName === "Partner Customers" && <Td><Box className="selectOpt"><Select size="sm" minW="170px"
+                    {moduleName === "Partner Customers" && <Td role="cell" hidden={!visible.includes("status")} data-label={localized(partnerStatusField?.label || "Status", language)} data-mobile-role="field"><Box className="selectOpt"><Select size="sm" minW="170px"
                       aria-label={`${localized(partnerStatusField?.label || "Status", language)} · ${name(item)}`}
                       className={item.status === "PENDING" ? "pending" : item.status === "ACTIVE" ? "completed" : ["LOST", "INACTIVE"].includes(item.status) ? "onHold" : "inProgress"}
                       value={item.status || ""} isDisabled={!permissions?.update || Boolean(statusSaving) || !partnerStatusField?.options?.length}
@@ -345,8 +346,8 @@ export function EntityPage({ moduleName }) {
                       <option value="" disabled>{t("Select")}</option>
                       {(partnerStatusField?.options || []).map(option => <option key={option.value} value={option.value}>{localized(option.label, language)}</option>)}
                     </Select></Box></Td>}
-                    <Td dir={direction}>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(dateLocale) : "-"}</Td>
-                    <Td dir={direction}>
+                    <Td role="cell" hidden={!visible.includes("createdDate")} data-label={t("Created Date")} data-mobile-role="field" dir={direction}>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(dateLocale) : "-"}</Td>
+                    <Td role="cell" hidden={!visible.includes("actions")} data-label={t("Actions")} data-mobile-role="actions" dir={direction}>
                       <Flex className="crm-row-actions" gap="5px">
                         <ShareRecordButton module={moduleName} record={item} />
                         <Tooltip label={t("Details")}><IconButton size="sm" variant="ghost" colorScheme="blue" aria-label={t("Details")} icon={<FiEye />} onClick={() => open(item, true)} /></Tooltip>
@@ -362,18 +363,15 @@ export function EntityPage({ moduleName }) {
           {!busy && !items.length && <Flex className="crm-empty-state" align="center" justify="center"><Text>{t("No Data Found")}</Text></Flex>}
         </Box>
 
-        <Flex className="crm-entity-pagination" align="center" justify="space-between">
-          <IconButton aria-label={t("Previous Page")} icon={<FiChevronLeft />} isDisabled={page <= 1 || busy} onClick={() => setPage((value) => value - 1)} />
-          <Text><Box as="span" fontWeight="900">{page}</Box> / {pageCount} · {total} {t("records")}</Text>
-          <IconButton aria-label={t("Next Page")} icon={<FiChevronRight />} isDisabled={page >= pageCount || busy} onClick={() => setPage((value) => value + 1)} />
-        </Flex>
+        <RecordPagination page={page} pageCount={pageCount} total={total} pageSize={pageSize} isLoading={busy}
+          onPageChange={setPage} onPageSizeChange={size => { setPageSize(size); setPage(1); }} />
       </Card>
 
       <RecordImportDialog moduleName={moduleName} isOpen={importOpen} onClose={() => setImportOpen(false)} onImported={() => { setPage(1); if (page === 1) fetchData(); }} />
 
       <Modal isOpen={record !== null} onClose={() => setRecord(null)} size="5xl" scrollBehavior="inside">
         <ModalOverlay />
-        <ModalContent className="crm-entity-modal" dir={direction}>
+        <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}`} dir={direction}>
           <ModalHeader>{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
           <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{form}

@@ -69,14 +69,14 @@ test.each(['Contacts', 'Invoices', 'Meetings', 'Calls', 'Emails', 'Properties'])
   expect(getApi).not.toHaveBeenCalled();
 });
 
-test('recipient names load below the item and update immediately after sending and revoking', async () => {
+test('a transferred lead shows only its current recipient and clears that recipient after revocation', async () => {
   getApi.mockImplementation(async path => ({ status: 200, data: path.endsWith('/users') ? users : [{ user: users[0] }] }));
   await act(async () => { ReactDOM.render(<ChakraProvider><div data-testid="item"><SharedRecordBadge module="Leads" record={{ _id: 'record' }} />
     <ShareRecordButton module="Leads" record={{ _id: 'record' }} /></div></ChakraProvider>, container); });
   expect(container.querySelector('.crm-sent-record-label').textContent).toContain('علی کریمی');
   await open(); await choose('two'); await act(async () => Simulate.click(button('Send')));
   expect(container.querySelector('.crm-sent-record-label').textContent).toContain('İpek Yılmaz');
+  expect(container.querySelector('.crm-sent-record-label').textContent).not.toContain('علی کریمی');
   await act(async () => Simulate.click(button('Revoke access')));
-  expect(container.querySelector('.crm-sent-record-label').textContent).not.toContain('İpek Yılmaz');
-  expect(container.querySelector('.crm-sent-record-label').textContent).toContain('علی کریمی');
+  expect(container.querySelector('.crm-sent-record-label')).toBeNull();
 });

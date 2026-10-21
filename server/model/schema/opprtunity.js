@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const Opportunity = new mongoose.Schema({
+    convertedLeads: { type: [mongoose.Schema.Types.Mixed], default: [] },
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     opportunityName: String,
     accountName: {

@@ -63,13 +63,24 @@ test.each([
   {},
   { lead: null, contact: null, partnerCustomer: null },
   { lead: '', contact: '', partnerCustomer: '' },
-])('lead selection is required even when individual relation fields are optional: %p', values => {
+])('lead selection is optional even when no existing customer is selected: %p', values => {
   const definition = { moduleName: 'Leads', fields: [] };
-  expect(validateFormValues(definition, values)).toEqual({ leadRelations: 'leadSelectionRequired' });
+  expect(validateFormValues(definition, values)).toEqual({});
 });
 
 
 test.each(['lead', 'contact', 'partnerCustomer'])('a single %s is sufficient without choosing the other relations', name => {
   const definition = { moduleName: 'Leads', fields: [] };
   expect(validateFormValues(definition, { [name]: '64d33173fd7ff3fa0924a109' })).toEqual({});
+});
+
+
+test('lead core and custom fields remain optional even under old saved requirements', () => {
+  const stale = { moduleName: 'Leads', fields: [
+    { name: 'leadName', type: 'text', required: true },
+    { name: 'leadEmail', type: 'email', required: true },
+    { name: 'score', kind: 'CUSTOM_FIELD', type: 'number', required: true },
+  ] };
+  expect(validateFormValues(stale, {})).toEqual({});
+  expect(validateFormValues(stale, { leadEmail: 'invalid' })).toEqual({ leadEmail: 'invalid' });
 });

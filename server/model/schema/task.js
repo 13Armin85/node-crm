@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 
 const Task = new mongoose.Schema({
+    leadCallFor: { type: mongoose.Schema.Types.ObjectId, ref: 'Leads' },
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     title: String,
     category: String,
@@ -63,6 +64,7 @@ const Task = new mongoose.Schema({
 })
 
 Task.index({ assignedToUser: 1, deleted: 1, status: 1 });
+Task.index({ leadCallFor: 1 }, { unique: true, partialFilterExpression: { deleted: false, leadCallFor: { $type: 'objectId' } } });
 Task.index({ createBy: 1, deleted: 1 });
 
 module.exports = mongoose.model('Tasks', Task, 'Tasks');

@@ -7,7 +7,7 @@ import { formLabel, formValue } from 'utils/formValue';
 import { formatPriceInput } from 'utils/price';
 import { getIn } from 'formik';
 import { useRequiredFields } from 'utils/managedForm';
-import { isLeadRelationVisible, normalizeLeadRelations, LEAD_SELECTION_MESSAGE } from 'utils/leadRelations';
+import { isLeadRelationVisible, normalizeLeadRelations, LEAD_SELECTION_MESSAGE, prepareLeadDefinition } from 'utils/leadRelations';
 import { localized } from 'components/dynamicForm/DynamicFormRenderer';
 
 export const labelOf = (item, type) => {
@@ -72,6 +72,7 @@ export function PropertyMultiSelect({ value = [], items, setFieldValue, busy, er
 
 export default function RelationFields({ values, setFieldValue, contact, lead, partner, properties, definition, formik, excludeLeadId }) {
   const { t, language } = useLanguage();
+  definition = prepareLeadDefinition(definition);
   const exclusive = definition?.moduleName === 'Leads';
   const relationVisible = name => !exclusive || isLeadRelationVisible(name, values);
   const changeRelation = (name, value) => {

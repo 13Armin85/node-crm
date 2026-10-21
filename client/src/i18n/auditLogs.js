@@ -144,6 +144,176 @@ Object.assign(labels, {
 Object.assign(labels, {
   "audit.refresh": ["Refresh", "به‌روزرسانی", "Yenile"],
 });
+Object.assign(labels, {
+  "audit.allHint": [
+    "Read a simple summary of saved actions. Choose a person to view their history.",
+    "خلاصهٔ سادهٔ عملیات ثبت‌شده را ببینید. برای مشاهدهٔ سوابق هر فرد، او را انتخاب کنید.",
+    "Kaydedilen işlemlerin sade özetini okuyun. Geçmişini görmek için bir kişi seçin.",
+  ],
+  "audit.ownHint": [
+    "Only actions you completed and saved appear here.",
+    "در این بخش فقط عملیات نهایی و ذخیره‌شدهٔ خودتان را می‌بینید.",
+    "Burada yalnızca tamamlayıp kaydettiğiniz işlemler görünür.",
+  ],
+  "audit.search": [
+    "Search a person or item name",
+    "جست‌وجوی نام کاربر یا عنوان مورد",
+    "Kişi veya kayıt adı ara",
+  ],
+  "audit.securityHint": [
+    "One summary for each successful save or confirmation.",
+    "هر ذخیره یا تأیید موفق، یک گزارش خلاصه.",
+    "Her başarılı kayıt veya onay için tek bir özet.",
+  ],
+  "audit.activity": ["What happened", "فعالیت انجام‌شده", "Yapılan işlem"],
+  "audit.chooseUser": [
+    "View one person’s history",
+    "مشاهدهٔ سوابق یک کاربر",
+    "Bir kişinin geçmişini görüntüle",
+  ],
+  "audit.chooseUserHint": [
+    "Choosing a user immediately shows only their completed actions.",
+    "با انتخاب کاربر، فقط عملیات ثبت‌شدهٔ همان فرد نمایش داده می‌شود.",
+    "Bir kullanıcı seçtiğinizde yalnızca onun tamamladığı işlemler gösterilir.",
+  ],
+  "audit.userHistory": ["User history", "سوابق این کاربر", "Kullanıcı geçmişi"],
+  "audit.everyoneHistory": [
+    "History of all users",
+    "سوابق تمام کاربران",
+    "Tüm kullanıcıların geçmişi",
+  ],
+  "audit.formerUser": ["Former account", "حساب غیرفعال", "Eski hesap"],
+  "audit.total": ["Completed actions", "عملیات ثبت‌شده", "Tamamlanan işlemler"],
+  "audit.created": ["Creation actions", "عملیات ایجاد", "Oluşturma işlemleri"],
+  "audit.updated": [
+    "Saved edits",
+    "ویرایش‌های ذخیره‌شده",
+    "Kaydedilen düzenlemeler",
+  ],
+  "audit.removed": ["Deletion actions", "عملیات حذف", "Silme işlemleri"],
+  "audit.sharing": ["Sharing", "اشتراک‌گذاری", "Paylaşım"],
+  "audit.generalSection": ["System", "سامانه", "Sistem"],
+  "audit.namedTarget": [
+    "{kind} “{name}”",
+    "{kind} «{name}»",
+    "“{name}” adlı {kind}",
+  ],
+  "audit.unnamedTarget": ["a {kind}", "یک {kind}", "bir {kind}"],
+  "audit.sentence.create": [
+    "{actor} created {target}.",
+    "{actor} {target} را ایجاد کرد.",
+    "{actor}, {target} oluşturdu.",
+  ],
+  "audit.sentence.update": [
+    "{actor} edited and saved {target}.",
+    "{actor} {target} را ویرایش و ذخیره کرد.",
+    "{actor}, {target} düzenleyip kaydetti.",
+  ],
+  "audit.sentence.delete": [
+    "{actor} deleted {target}.",
+    "{actor} {target} را حذف کرد.",
+    "{actor}, {target} sildi.",
+  ],
+  "audit.sentence.rename": [
+    "{actor} renamed {target}.",
+    "{actor} نام {target} را تغییر داد.",
+    "{actor}, {target} adını değiştirdi.",
+  ],
+  "audit.sentence.login": [
+    "{actor} signed in.",
+    "{actor} وارد سامانه شد.",
+    "{actor} oturum açtı.",
+  ],
+  "audit.sentence.logout": [
+    "{actor} signed out.",
+    "{actor} از سامانه خارج شد.",
+    "{actor} oturumu kapattı.",
+  ],
+  "audit.sentence.password": [
+    "{actor} changed their password.",
+    "{actor} رمز عبور خود را تغییر داد.",
+    "{actor} parolasını değiştirdi.",
+  ],
+  "audit.sentence.access": [
+    "{actor} updated access permissions for {target}.",
+    "{actor} دسترسی‌های {target} را تغییر داد.",
+    "{actor}, {target} için erişim izinlerini değiştirdi.",
+  ],
+  "audit.sentence.settings": [
+    "{actor} saved the settings for {target}.",
+    "{actor} تنظیمات {target} را ذخیره کرد.",
+    "{actor}, {target} ayarlarını kaydetti.",
+  ],
+  "audit.sentence.share": [
+    "{actor} shared an item with another user.",
+    "{actor} یک مورد را با کاربر دیگری به اشتراک گذاشت.",
+    "{actor} bir kaydı başka bir kullanıcıyla paylaştı.",
+  ],
+  "audit.sentence.unshare": [
+    "{actor} revoked sharing for an item.",
+    "{actor} اشتراک‌گذاری یک مورد را لغو کرد.",
+    "{actor} bir kaydın paylaşımını kaldırdı.",
+  ],
+  "audit.sentence.move": [
+    "{actor} moved {target}.",
+    "{actor} {target} را جابه‌جا کرد.",
+    "{actor}, {target} taşıdı.",
+  ],
+  "audit.sentence.import": [
+    "{actor} imported {count} items into {section}.",
+    "{actor} {count} مورد را به بخش {section} وارد کرد.",
+    "{actor}, {section} bölümüne {count} kayıt aktardı.",
+  ],
+  "audit.sentence.createMany": [
+    "{actor} created {count} items in {section}.",
+    "{actor} {count} مورد در بخش {section} ایجاد کرد.",
+    "{actor}, {section} bölümünde {count} kayıt oluşturdu.",
+  ],
+  "audit.sentence.updateMany": [
+    "{actor} edited and saved {count} items in {section}.",
+    "{actor} {count} مورد در بخش {section} را ویرایش و ذخیره کرد.",
+    "{actor}, {section} bölümünde {count} kaydı düzenleyip kaydetti.",
+  ],
+  "audit.sentence.deleteMany": [
+    "{actor} deleted {count} items from {section}.",
+    "{actor} {count} مورد از بخش {section} را حذف کرد.",
+    "{actor}, {section} bölümünden {count} kayıt sildi.",
+  ],
+  "audit.kind.user": ["user", "کاربر", "kullanıcı"],
+  "audit.kind.contact": ["contact", "مخاطب", "kişi"],
+  "audit.kind.lead": ["lead", "لید", "potansiyel müşteri"],
+  "audit.kind.task": ["task", "وظیفه", "görev"],
+  "audit.kind.property": ["property", "ملک", "emlak"],
+  "audit.kind.customer": ["customer", "مشتری", "müşteri"],
+  "audit.kind.residence": ["residence", "رزیدانس", "konut"],
+  "audit.kind.document": [
+    "file or folder",
+    "فایل یا پوشه",
+    "dosya veya klasör",
+  ],
+  "audit.kind.form": ["form", "فرم", "form"],
+  "audit.kind.template": ["email template", "قالب ایمیل", "e-posta şablonu"],
+  "audit.kind.email": ["email", "ایمیل", "e-posta"],
+  "audit.kind.call": ["call record", "گزارش تماس", "arama kaydı"],
+  "audit.kind.meeting": ["meeting", "جلسه", "toplantı"],
+  "audit.kind.invoice": ["invoice", "فاکتور", "fatura"],
+  "audit.kind.quote": ["quote", "پیش‌فاکتور", "teklif"],
+  "audit.kind.opportunity": ["opportunity", "فرصت", "fırsat"],
+  "audit.kind.record": ["item", "مورد", "kayıt"],
+});
+Object.assign(labels, {
+  "audit.exportExcel": [
+    "Export as Excel",
+    "خروجی اکسل",
+    "Excel olarak dışa aktar",
+  ],
+  "audit.exportHint": [
+    "Download all activity matching the applied filters and selected user",
+    "دریافت همهٔ لاگ‌ها مطابق فیلترهای اعمال‌شده و کاربر انتخاب‌شده",
+    "Uygulanan filtrelere ve seçilen kullanıcıya uyan tüm etkinlikleri indir",
+  ],
+  "audit.username": ["Username", "نام کاربری", "Kullanıcı adı"],
+});
 export default Object.fromEntries(
   ["en", "fa", "tr"].map((language, index) => [
     language,

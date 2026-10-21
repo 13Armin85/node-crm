@@ -17,9 +17,9 @@ module.exports = ({ field, options, required }) => {
 
   return {
     Leads: [
-      f('leadName', 'text', 'Lead Name', 'نام سرنخ', required),
+      f('leadName', 'text', 'Lead Name', 'نام سرنخ'),
       choice('leadStatus', 'Lead Status', 'وضعیت سرنخ', leadStatuses),
-      f('leadEmail', 'email', 'Lead Email', 'ایمیل سرنخ', required),
+      f('leadEmail', 'email', 'Lead Email', 'ایمیل سرنخ'),
       f('leadMobile', 'phone', 'Lead Mobile', 'موبایل سرنخ'),
       choice('leadCampaign', 'Lead Campaign', 'کمپین سرنخ', ['Referral', 'Online', 'Billboard', 'Activation', 'Agent']),
       choice('leadState', 'Lead State', 'مرحله سرنخ', ['Open', 'Parking', 'Waiting', 'Booked', 'Sealed']),

@@ -109,9 +109,10 @@ const CallAdvanceSearch = (props) => {
         }}
         isOpen={advanceSearch}
         isCentered
+        scrollBehavior="inside"
       >
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent className="crm-advanced-search">
           <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
@@ -127,7 +128,7 @@ const CallAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Sender Name" /></FormLabel>
@@ -153,7 +154,7 @@ const CallAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Realeted To" /></FormLabel>
@@ -182,7 +183,7 @@ const CallAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Recipient" /></FormLabel>

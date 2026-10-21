@@ -99,7 +99,7 @@ const AddImage = (props) => {
       isCentered={useBreakpointValue({ base: false, md: true })}
     >
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent className="crm-record-form">
         <ModalHeader><LocalizedText text="Add Image" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>

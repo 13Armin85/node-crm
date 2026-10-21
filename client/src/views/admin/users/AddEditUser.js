@@ -43,7 +43,6 @@ const AddEditUser = (props) => {
     data,
     userAction,
     selectedId,
-    fetchData,
     setUserAction,
   } = props;
   const [isLoding, setIsLoding] = useState(false);
@@ -94,6 +93,7 @@ const AddEditUser = (props) => {
         if (!String(payload.phoneNumber ?? "").trim()) delete payload.phoneNumber;
         let response = await postApi("api/user/register", payload);
         if (response && response?.status === 200) {
+          toast.success(tr("Saved successfully"), { toastId: "user-save", autoClose: 6000 });
           resetForm();
           setAction((pre) => !pre);
           setUserAction("");
@@ -117,7 +117,7 @@ const AddEditUser = (props) => {
             const updatedUser = updateSessionUser(response.data.user);
             if (updatedUser) dispatch(setUser(updatedUser));
           }
-          fetchData();
+          toast.success(tr("Saved successfully"), { toastId: "user-save", autoClose: 6000 });
 
           setUserAction("");
           setAction((pre) => !pre);
@@ -135,7 +135,7 @@ const AddEditUser = (props) => {
   return (
     <Modal isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent className="crm-record-form">
         <ModalHeader justifyContent="space-between" display="flex">
           {userAction === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="User" /><IconButton onClick={onClose} icon={<CloseIcon />} />
         </ModalHeader>

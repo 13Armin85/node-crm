@@ -117,6 +117,7 @@ router.post('/:module', auth, loadUser, async (req, res, next) => {
           seen.add(key);
         }
         await assertUnique(Model, values);
+        if (name === 'Leads') values = await require('../services/leadWorkflow').normalizeLeadAssignment(values, {}, req.actor);
         const doc = new Model({ ...values, createBy: req.actor._id, modifiedBy: req.actor._id, createdDate: new Date(), updatedDate: new Date(), deleted: false });
         await doc.validate();
         prepared.push(doc);

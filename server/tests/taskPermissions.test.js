@@ -37,14 +37,14 @@ test('ordinary tasks are read-only across direct and generic APIs; persisted adm
     records.set(String(task._id), task);
     return task;
   });
-  t.mock.method(Task, 'findOne', filter => {
-    const task = records.get(String(filter._id));
-    const allowed = !filter.$or || (task && filter.$or.some(clause =>
-      clause.assignedToUser && !(clause.assignedToUser.$exists === false)
-        ? String(task.assignedToUser) === String(clause.assignedToUser)
-        : !task.assignedToUser && String(task.createBy) === String(clause.createBy)));
-    return query(allowed ? task : null);
+  const matches = (task, filter) => Object.entries(filter).every(([key, value]) => {
+    if (key === '$and') return value.every(clause => matches(task, clause));
+    if (key === '$or') return value.some(clause => matches(task, clause));
+    if (value == null) return task[key] == null;
+    if (typeof value === 'object' && '$exists' in value) return (task[key] != null) === value.$exists;
+    return String(task[key]) === String(value);
   });
+  t.mock.method(Task, 'findOne', filter => query([...records.values()].find(task => matches(task, filter)) || null));
   t.mock.method(Task, 'aggregate', async pipeline => { const match = pipeline[0].$match; return [...records.values()].filter(task => !match._id || String(task._id) === String(match._id)); });
   const update = t.mock.method(Task, 'findByIdAndUpdate', async (id, values) => {
     const task = records.get(String(id));

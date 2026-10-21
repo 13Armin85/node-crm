@@ -71,9 +71,9 @@ export function prepareImport(rows, definition, mapping, defaults = {}, moduleNa
       const header = name => Object.keys(row).find(column => key(column) === name);
       values.fullName = [row[header('firstname')], row[header('lastname')]].filter(Boolean).join(' ').trim();
     }
-    if (moduleName === 'Leads' && ['lead', 'contact', 'partnerCustomer'].filter(name => values[name]).length !== 1) errors.push({ row: index + 2, field: 'leadRelations', code: 'leadSelectionRequired' });
+    if (moduleName === 'Leads' && ['lead', 'contact', 'partnerCustomer'].filter(name => values[name]).length > 1) errors.push({ row: index + 2, field: 'leadRelations', code: 'leadSelectionRequired' });
     // Structured invoice/quote rows are validated by their persistence validators.
-    const scalarDefinition = { ...definition, fields: definition.fields.filter(field => !['items', 'installments'].includes(field.name)) };
+    const scalarDefinition = { ...definition, moduleName: moduleName || definition.moduleName, fields: definition.fields.filter(field => !['items', 'installments'].includes(field.name)) };
     errors.push(...flattenErrors(validateFormValues(scalarDefinition, values)).map(error => ({ row: index + 2, ...error })));
     records.push(values);
   });

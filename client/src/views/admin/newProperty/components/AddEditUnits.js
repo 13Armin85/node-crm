@@ -117,7 +117,7 @@ const AddEditUnits = (props) => {
   return (
     <Modal isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent className="crm-record-form">
         <ModalHeader justifyContent="space-between" display="flex">
           {actionType === "Edit" ? tr("Edit") : tr("Add")}<LocalizedText text="Unit" /><IconButton onClick={handelClose} icon={<CloseIcon />} />
         </ModalHeader>

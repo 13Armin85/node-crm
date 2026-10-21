@@ -14,7 +14,7 @@ module.exports = moduleName => async (req, res, next) => {
     if (moduleName === 'Users' && !isAdmin(req.actor) && req.body.role && req.body.role !== req.actor.role) return res.status(403).json({ code: 'forbidden' });
     if (action === 'create') req.body.createBy = req.actor._id;
     else delete req.body.createBy;
-    for (const key of ['_id', '__v', 'deleted', 'roles', 'createdDate', 'updatedDate', 'authVersion']) delete req.body[key];
+    for (const key of ['_id', '__v', 'deleted', 'roles', 'createdDate', 'updatedDate', 'authVersion', 'conversion', 'convertedLeads', 'leadCallFor', 'assignedBy']) delete req.body[key];
     if (moduleName !== 'Users' || !isAdmin(req.actor)) delete req.body.role;
     req.body.modifiedBy = req.actor._id;
     if (!isAdmin(req.actor) && ['Calls', 'Emails', 'Texts'].includes(moduleName)) {
@@ -31,6 +31,7 @@ module.exports = moduleName => async (req, res, next) => {
       if (!previous) return res.status(404).json({ code: 'notFound' });
     }
     if (moduleName === 'Leads') {
+      req.body = await require('../services/leadWorkflow').normalizeLeadAssignment(req.body, previous, req.actor);
       req.body = normalizeLeadRelations(req.body, previous);
       validateLeadSelection(req.body);
       definition = { ...definition, fields: definition.fields.filter(field => isLeadRelationVisible(field, req.body)) };
@@ -55,5 +56,5 @@ module.exports = moduleName => async (req, res, next) => {
     delete req.body.roles;
     if (moduleName !== 'Users' || !isAdmin(req.actor)) delete req.body.role;
     next();
-  } catch (error) { res.status(400).json({ code: error.code || 'invalid', field: error.field }); }
+  } catch (error) { res.status(error.status || 400).json({ code: error.code || 'invalid', field: error.field }); }
 };

@@ -129,9 +129,7 @@ const PhoneModel = (props) => {
         setAssignToContactData(result?.data);
       } else if (values?.category === "Lead" && assignToLeadData?.length <= 0) {
         result = await getApi(
-          isAdmin(user)
-            ? "api/lead/"
-            : `api/lead/?createBy=${user?._id}`,
+          "api/lead/",
         );
         setAssignToLeadData(result?.data);
       }
@@ -205,7 +203,7 @@ const PhoneModel = (props) => {
   return (
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent className="crm-record-form">
         <ModalHeader><LocalizedText text="Add Call" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody>

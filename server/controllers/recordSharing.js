@@ -30,6 +30,10 @@ router.post('/', asyncRoute(async (req, res) => {
   if (!shareableModules.includes(module) || !validId(recordId) || !validId(recipientId)) return res.status(400).json({ code: 'invalid' });
   const [record, recipient] = await Promise.all([existingRecord(module, recordId), User.exists({ _id: recipientId, role: 'user', deleted: { $ne: true } })]);
   if (!record || !recipient) return res.status(404).json({ code: 'notFound' });
+  if (module === 'Leads') {
+    const result = await require('../services/leadWorkflow').assignLead(recordId, recipientId, req.actor);
+    return res.status(result.created ? 201 : 200).json({ shared: true, created: result.created, transferred: true });
+  }
   const filter = { module, recordId, recipient: recipientId };
   let created = false;
   try {
@@ -45,6 +49,10 @@ router.post('/', asyncRoute(async (req, res) => {
 }));
 router.delete('/:module/:recordId/:recipientId', asyncRoute(async (req, res) => {
   if (!shareableModules.includes(req.params.module) || !validId(req.params.recordId) || !validId(req.params.recipientId)) return res.status(400).json({ code: 'invalid' });
+  if (req.params.module === 'Leads') {
+    const lead = await existingRecord('Leads', req.params.recordId);
+    if (lead && String(lead.assignUser) === req.params.recipientId) await require('../services/leadWorkflow').assignLead(lead._id, lead.createBy, req.actor);
+  }
   await Share.deleteOne({ module: req.params.module, recordId: req.params.recordId, recipient: req.params.recipientId });
   res.json({ shared: false });
 }));

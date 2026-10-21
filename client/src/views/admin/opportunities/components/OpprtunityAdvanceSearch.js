@@ -120,9 +120,10 @@ const OpprtunityAdvanceSearch = (props) => {
         }}
         isOpen={advanceSearch}
         isCentered
+        scrollBehavior="inside"
       >
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent className="crm-advanced-search">
           <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
@@ -138,7 +139,7 @@ const OpprtunityAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Opportunity Name" /></FormLabel>
@@ -164,7 +165,7 @@ const OpprtunityAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Account Name" /></FormLabel>
@@ -190,7 +191,7 @@ const OpprtunityAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Opportunity Amount" /></FormLabel>
@@ -216,7 +217,7 @@ const OpprtunityAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Expected Close Date" /></FormLabel>
@@ -242,7 +243,7 @@ const OpprtunityAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Sales Stage" /></FormLabel>

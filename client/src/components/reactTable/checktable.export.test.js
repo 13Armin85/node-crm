@@ -45,3 +45,76 @@ test('hides Excel export when export permission is denied', async () => {
   render({ access: { view: true, export: false } });
   expect(await excelMenu()).toBeUndefined();
 });
+
+test('phone cards expose field labels and retain row selection and actions', () => {
+  const select = jest.fn(), open = jest.fn();
+  render({ selectedValues: [], setSelectedValues: select, columnData: [...columns, {
+    Header: 'Action', accessor: 'action', isSortable: false,
+    cell: ({ row }) => <button onClick={() => open(row.original)}>Open record</button>,
+  }] });
+  const row = container.querySelector('.crm-record-row');
+  expect(row.querySelector('[data-mobile-role="primary"]').dataset.label).toBe('Name');
+  expect(row.querySelector('[data-label="Amount"]').textContent).toBe('10');
+  expect(row.querySelector('[data-mobile-role="actions"]').textContent).toContain('Open record');
+  act(() => { Simulate.change(row.querySelector('input[type="checkbox"]'), { target: { checked: true } }); });
+  expect(select).toHaveBeenCalled();
+  expect(select.mock.calls[0][0]([])).toEqual(['one']);
+  act(() => { Simulate.click(row.querySelector('[data-mobile-role="actions"] button')); });
+  expect(open).toHaveBeenCalledWith(data[0]);
+});
+
+test('phone sorting changes record order and can restore the initial order', () => {
+  render();
+  const sort = container.querySelector('.crm-mobile-table-sort select');
+  expect(sort.getAttribute('aria-label')).toBe('Sort by');
+  act(() => { Simulate.change(sort, { target: { value: JSON.stringify(['amount', true]) } }); });
+  expect([...container.querySelectorAll('[data-mobile-role="primary"]')].map(cell => cell.textContent)).toEqual(['Other', 'Beta', 'Alpha']);
+  act(() => { Simulate.change(sort, { target: { value: '' } }); });
+  expect([...container.querySelectorAll('[data-mobile-role="primary"]')].map(cell => cell.textContent)).toEqual(['Alpha', 'Beta', 'Other']);
+});
+
+test('card labels, sorting and column settings use the readable label of managed form fields', async () => {
+  render({ columnData: columns.map(column => column.accessor === 'name' ? { ...column, Header: { en: 'Customer name', fa: 'Name FA', tr: 'Name TR' } } : column) });
+  expect(container.querySelector('[data-mobile-role="primary"]').dataset.label).toBe('Customer name');
+  expect(container.querySelector('.crm-mobile-table-sort select').textContent).toContain('Customer name');
+  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Alpha');
+  await act(async () => { Simulate.click(container.querySelector('.crm-table-settings')); });
+  const manage = [...document.querySelectorAll('[role="menuitem"]')].find(item => item.textContent.includes('Manage Columns'));
+  await act(async () => { Simulate.click(manage); });
+  expect(document.querySelector('.crm-columns-modal').textContent).toContain('Customer name');
+});
+
+test('record cards paginate five at a time and page-size changes reset to the first page', () => {
+  const records = Array.from({ length: 13 }, (_, index) => ({ _id: String(index), name: `Record ${index + 1}`, amount: index }));
+  render({ allData: records });
+  expect(container.querySelectorAll('.crm-record-row')).toHaveLength(5);
+  act(() => Simulate.click(container.querySelector('button[aria-label="Next Page"]')));
+  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Record 6');
+  act(() => Simulate.change(container.querySelector('.crm-record-pagination select'), { target: { value: '10' } }));
+  expect(container.querySelectorAll('.crm-record-row')).toHaveLength(10);
+  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Record 1');
+  act(() => Simulate.click(container.querySelector('button[aria-label="Next Page"]')));
+  expect(container.querySelectorAll('.crm-record-row')).toHaveLength(3);
+  expect(container.querySelector('button[aria-label="Next Page"]').disabled).toBe(true);
+});
+
+test('preservePage keeps page two and its edited row after records refresh, and clamps after deletion', () => {
+  const records = Array.from({ length: 13 }, (_, index) => ({ _id: String(index), name: `Record ${index + 1}`, amount: index }));
+  render({ allData: records, preservePage: true });
+  act(() => { Simulate.click(container.querySelector('button[aria-label="Next Page"]')); });
+  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Record 6');
+  render({ allData: records.map(record => record._id === '5' ? { ...record, name: 'Edited user' } : record), preservePage: true });
+  expect(container.querySelector('button[aria-current="page"]').textContent).toBe('2');
+  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Edited user');
+  render({ allData: records.slice(0, 3), preservePage: true });
+  expect(container.querySelector('button[aria-current="page"]').textContent).toBe('1');
+  expect(container.querySelectorAll('.crm-record-row')).toHaveLength(3);
+});
+test('the optional Kanban body receives the same searched records as the table and export', () => {
+  const body = jest.fn(records => <div data-testid="board">{records.map(record => record.name).join(',')}</div>);
+  render({ renderRecords: body });
+  expect(container.querySelector('[data-testid="board"]').textContent).toBe('Alpha,Beta,Other');
+  act(() => { Simulate.change(container.querySelector('input[type="text"]'), { target: { value: 'Alpha' } }); });
+  expect(container.querySelector('[data-testid="board"]').textContent).toBe('Alpha');
+  expect(container.querySelector('.crm-data-table')).toBeNull();
+});

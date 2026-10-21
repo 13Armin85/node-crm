@@ -58,9 +58,7 @@ export const FirstStepper = (props) => {
         setAssignToContactData(result?.data);
       } else if (values?.category === "lead" && assignToLeadData <= 0) {
         result = await getApi(
-          isAdmin(user)
-            ? "api/lead/"
-            : `api/lead/?createBy=${user?._id}`
+          "api/lead/"
         );
         setAssignToLeadData(result?.data);
       }

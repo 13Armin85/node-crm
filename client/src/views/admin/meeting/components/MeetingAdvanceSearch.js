@@ -127,9 +127,10 @@ const MeetingAdvanceSearch = (props) => {
         }}
         isOpen={advanceSearch}
         isCentered
+        scrollBehavior="inside"
       >
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent className="crm-advanced-search">
           <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
@@ -145,7 +146,7 @@ const MeetingAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Agenda" /></FormLabel>
@@ -170,7 +171,7 @@ const MeetingAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Create By" /></FormLabel>
@@ -194,7 +195,7 @@ const MeetingAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Date & time" /></FormLabel>
@@ -205,7 +206,7 @@ const MeetingAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="From" /></FormLabel>
@@ -225,7 +226,7 @@ const MeetingAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="To" /></FormLabel>
@@ -247,7 +248,7 @@ const MeetingAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Time Stamp" /></FormLabel>
@@ -258,7 +259,7 @@ const MeetingAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="From" /></FormLabel>
@@ -278,7 +279,7 @@ const MeetingAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="To" /></FormLabel>

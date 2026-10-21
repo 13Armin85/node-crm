@@ -426,7 +426,7 @@ const DocumentPage = () => {
 
       <Modal isOpen={folderModal.isOpen} onClose={folderModal.onClose} isCentered>
         <ModalOverlay />
-        <ModalContent mx={3}>
+        <ModalContent className="crm-record-form" mx={3}>
           <ModalHeader>{t("New folder")}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
@@ -441,7 +441,7 @@ const DocumentPage = () => {
 
       <Modal isOpen={uploadModal.isOpen} onClose={uploadModal.onClose} size="3xl" isCentered scrollBehavior="inside">
         <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(5px)" />
-        <ModalContent borderRadius={{ base: "16px", md: "24px" }} overflow="hidden" mx={3} maxH={{ base: "calc(100vh - 24px)", md: "calc(100vh - 64px)" }}>
+        <ModalContent className="crm-record-form crm-record-form--upload" borderRadius={{ base: "16px", md: "24px" }} overflow="hidden" mx={3} maxH={{ base: "calc(100vh - 24px)", md: "calc(100vh - 64px)" }}>
           <ModalHeader bg="linear-gradient(135deg, #177DDC 0%, #0F66B8 100%)" color="white" py={{ base: 4, md: 5 }} pe={12}>
             <Flex align="center" gap={3}>
               <Flex display={{ base: "none", sm: "flex" }} w="46px" h="46px" bg="whiteAlpha.300" borderRadius="14px" align="center" justify="center" flexShrink={0}><Icon as={FiPlus} boxSize={5} /></Flex>

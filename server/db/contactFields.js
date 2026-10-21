@@ -41,7 +41,7 @@ const contactFields = [
     fixed: true,
     delete: false,
     belongsTo: null,
-    backendType: "Number",
+    backendType: "String",
     isTableField: true,
     options: [],
     validation: [

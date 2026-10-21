@@ -1,3 +1,4 @@
+import RecordMenuButton from "components/table/RecordMenuButton";
 import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -5,7 +6,6 @@ import { DeleteIcon, EditIcon, SearchIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
   Menu,
-  MenuButton,
   MenuItem,
   MenuList,
   Text,
@@ -14,7 +14,6 @@ import {
 import html2pdf from "html2pdf.js";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { CiMenuKebab } from "react-icons/ci";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -67,9 +66,7 @@ const Index = (props) => {
     cell: ({ row, i }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
         <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
-          <MenuButton>
-            <CiMenuKebab />
-          </MenuButton>
+          <RecordMenuButton />
           <Portal><MenuList
             minW={"fit-content"}
            zIndex="popover">

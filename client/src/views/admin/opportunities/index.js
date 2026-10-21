@@ -1,3 +1,8 @@
+import OpportunityKanban, { defaultSalesStages } from "./components/OpportunityKanban";
+import { useFormDefinition } from "utils/managedForm";
+import { FiColumns, FiList } from "react-icons/fi";
+import { putApi } from "services/api";
+import RecordMenuButton from "components/table/RecordMenuButton";
 import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -6,8 +11,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
+  ButtonGroup,
   Menu,
-  MenuButton,
   MenuItem,
   MenuList,
   Text,
@@ -17,7 +22,6 @@ import { getApi, deleteManyApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import { SearchIcon } from "@chakra-ui/icons";
-import { CiMenuKebab } from "react-icons/ci";
 import moment from "moment";
 import { MdLeaderboard } from "react-icons/md";
 import { IoIosContact } from "react-icons/io";
@@ -32,6 +36,10 @@ import ImportModal from "./components/ImportModel";
 
 const Index = (props) => {
   const title = "Opprtunities";
+  const { definition } = useFormDefinition("Opportunities");
+  const stages = definition?.fields.find(field => field.name === 'salesStage')?.options || defaultSalesStages;
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('crm-opportunities-view') || 'kanban');
+  const [savingId, setSavingId] = useState('');
   const [action, setAction] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedValues, setSelectedValues] = useState([]);
@@ -61,9 +69,7 @@ const Index = (props) => {
     cell: ({ row, i }) => (
       <Text fontSize="md" fontWeight="900" textAlign={"center"}>
         <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
-          <MenuButton>
-            <CiMenuKebab />
-          </MenuButton>
+          <RecordMenuButton />
           <Portal><MenuList
             minW={"fit-content"}
            zIndex="popover">
@@ -186,6 +192,19 @@ const Index = (props) => {
       ? [actionHeader]
       : []),
   ];
+  const canMove = record => Boolean(permission?.update && (isAdmin(user) || String(record.createBy?._id || record.createBy) === String(user?._id)));
+  const moveStage = async (id, salesStage) => {
+    if (savingId || !canMove(data.find(record => record._id === id) || {})) return;
+    setSavingId(id);
+    try {
+      const response = await putApi(`api/opportunity/stage/${id}`, { salesStage });
+      if (response?.status === 200) {
+        setData(records => records.map(record => record._id === id ? { ...record, salesStage } : record));
+        toast.success(tr('pipeline.stageSaved'));
+      } else toast.error(tr('pipeline.stageFailed'));
+    } catch { toast.error(tr('pipeline.stageFailed')); }
+    finally { setSavingId(''); }
+  };
   const handleViewOpen = (id) => {
     navigate(`/opportunitiesView/${id}`);
   };
@@ -553,6 +572,13 @@ const Index = (props) => {
   return (
     <div>
       <CommonCheckTable
+        viewControls={<ButtonGroup size="sm" isAttached me={3} my={1}>
+          {[['kanban', FiColumns, 'pipeline.kanban'], ['table', FiList, 'pipeline.table']].map(([mode, Icon, label]) =>
+            <Button key={mode} leftIcon={<Icon />} aria-pressed={viewMode === mode} variant={viewMode === mode ? 'solid' : 'outline'}
+              onClick={() => { setViewMode(mode); localStorage.setItem('crm-opportunities-view', mode); setSelectedValues([]); }}>{tr(label)}</Button>)}
+        </ButtonGroup>}
+        renderRecords={viewMode === 'kanban' ? records => <OpportunityKanban records={records.map(record => data.find(current => current._id === record._id) || record)} stages={stages}
+          canMove={canMove} savingId={savingId} onStageChange={moveStage} onView={handleViewOpen} /> : undefined}
               onImported={() => setAction(current => !current)}
         title={title}
         isLoding={isLoding}

@@ -18,6 +18,7 @@ import PropTypes from "prop-types";
 import { useCallback, useEffect } from "react";
 import {
   FiChevronDown,
+  FiSmartphone,
   FiHome,
   FiList,
   FiLogOut,
@@ -33,6 +34,7 @@ import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect"
 import { useLanguage } from "i18n";
 import { clearUser } from "../../redux/slices/localSlice";
 import { clearAuthSession, scheduleSessionExpiry } from "services/authSession";
+import { usePwa } from "components/pwa/PwaProvider";
 import NotificationsMenu from "./NotificationsMenu";
 import { postApi } from "services/api";
 import ChangePasswordDialog from "./ChangePasswordDialog";
@@ -43,6 +45,7 @@ export default function HeaderLinks() {
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const { t, direction } = useLanguage();
   const passwordDialog = useDisclosure();
+  const pwa = usePwa();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userData = useSelector((state) => state?.user?.user);
@@ -108,6 +111,7 @@ export default function HeaderLinks() {
           )}
           <MenuItem icon={<Icon as={FiUser} />} onClick={() => navigate(`/userView/${storedUser?._id}`)}>{t("Profile Settings")}</MenuItem>
           <MenuItem id="crm-audit-logs-menu" icon={<Icon as={FiList} />} onClick={() => navigate("/audit-logs")}>{t("Logs")}</MenuItem>
+          {!pwa.installed && <MenuItem id="crm-install-app" icon={<Icon as={FiSmartphone} />} onClick={pwa.openInstall}>{t("pwa.installTitle")}</MenuItem>}
           <MenuItem id="crm-change-password-menu" icon={<Icon as={FiLock} />} onClick={passwordDialog.onOpen}>{t("Change Password")}</MenuItem>
           <MenuDivider />
           <MenuItem className="crm-menu-danger" icon={<Icon as={FiLogOut} />} onClick={() => logOut()}>{t("Log out")}</MenuItem>

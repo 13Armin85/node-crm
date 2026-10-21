@@ -37,4 +37,12 @@ const schema = new mongoose.Schema(
 );
 schema.index({ createdAt: -1, _id: -1 });
 schema.index({ actorId: 1, createdAt: -1, _id: -1 });
+// MongoDB expires each log after 14 days, even while the API is offline.
+schema.index(
+  { createdAt: 1 },
+  {
+    name: "audit_log_retention_14_days",
+    expireAfterSeconds: 14 * 24 * 60 * 60,
+  },
+);
 module.exports = mongoose.model("AuditLog", schema);

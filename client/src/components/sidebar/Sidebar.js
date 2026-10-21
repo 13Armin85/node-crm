@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Box, Flex, IconButton, Text } from "@chakra-ui/react";
 import { IoMenuOutline } from "react-icons/io5";
 import BrandLogo from "components/BrandLogo";
@@ -6,6 +7,16 @@ import { useLanguage } from "i18n";
 
 export default function Sidebar({ routes, openSidebar, setOpenSidebar }) {
   const { t, direction } = useLanguage();
+  useEffect(() => {
+    const media = window.matchMedia?.("(max-width: 1279px)");
+    if (!media) return undefined;
+    const previous = document.body.style.overflow;
+    const sync = () => { document.body.style.overflow = openSidebar && media.matches ? "hidden" : previous; };
+    const resized = () => { if (media.matches) setOpenSidebar?.(false); sync(); };
+    sync();
+    media.addEventListener?.("change", resized);
+    return () => { document.body.style.overflow = previous; media.removeEventListener?.("change", resized); };
+  }, [openSidebar, setOpenSidebar]);
 
   return (
     <>

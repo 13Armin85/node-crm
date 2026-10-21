@@ -111,7 +111,7 @@ const AddEditHeading = (props) => {
     <div>
       <Modal onClose={() => handleClose()} isOpen={props.isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent maxWidth={"2xl"}>
+        <ModalContent className="crm-record-form" maxWidth={"2xl"}>
           <ModalHeader>
             {updateData && updateData?.heading ? tr("Edit") : tr("Add")}<LocalizedText text="Heading" /></ModalHeader>
           <ModalCloseButton />

@@ -120,9 +120,10 @@ const InvoiceAdvanceSearch = (props) => {
         }}
         isOpen={advanceSearch}
         isCentered
+        scrollBehavior="inside"
       >
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent className="crm-advanced-search">
           <ModalHeader><LocalizedText text="Advance Search" /></ModalHeader>
           <ModalCloseButton
             onClick={() => {
@@ -138,7 +139,7 @@ const InvoiceAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Invoice Number" /></FormLabel>
@@ -165,7 +166,7 @@ const InvoiceAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Title" /></FormLabel>
@@ -189,7 +190,7 @@ const InvoiceAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Status" /></FormLabel>
@@ -223,7 +224,7 @@ const InvoiceAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Contact Name" /></FormLabel>
@@ -249,7 +250,7 @@ const InvoiceAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Account Name" /></FormLabel>
@@ -275,7 +276,7 @@ const InvoiceAdvanceSearch = (props) => {
                   ms="4px"
                   fontSize="sm"
                   fontWeight="600"
-                  color={"#000"}
+                  color="var(--crm-text)"
                   mb="0"
                   mt={2}
                 ><LocalizedText text="Grand Total" /></FormLabel>

@@ -1,3 +1,4 @@
+import RecordMenuButton from "components/table/RecordMenuButton";
 import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
@@ -9,7 +10,6 @@ import {
   AlertIcon,
   Button,
   Menu,
-  MenuButton,
   MenuItem,
   MenuList,
   Text,
@@ -17,13 +17,12 @@ import {
 import { getApi } from "services/api";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import { SearchIcon } from "@chakra-ui/icons";
-import { CiMenuKebab } from "react-icons/ci";
 import { IoIosArrowBack } from "react-icons/io";
 import UserAdvanceSearch from "./components/userAdvanceSearch";
 import { deleteManyApi } from "services/api";
 import CommonDeleteModel from "components/commonDeleteModel";
 import AddEditUser from "./AddEditUser";
-import { isDeveloper, canEditUser, canDeleteUser } from 'roles';
+import { isDeveloper, isAdmin, canEditUser, canDeleteUser } from 'roles';
 
 const Index = () => {
   const actor = JSON.parse(localStorage.getItem('user') || 'null');
@@ -76,9 +75,7 @@ const Index = () => {
       cell: ({ row }) => (
         <Text fontSize="md" fontWeight="900" textAlign={"center"}>
           <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
-            <MenuButton>
-              <CiMenuKebab />
-            </MenuButton>
+            <RecordMenuButton />
             <Portal><MenuList
               minW={"fit-content"}
              zIndex="popover">
@@ -98,6 +95,7 @@ const Index = () => {
                 onClick={() => navigate(`/userView/${row?.values._id}`)}
                 icon={<ViewIcon mb={1} fontSize={15} />}
               ><LocalizedText text="View" /></MenuItem>
+              {isAdmin(actor) && <MenuItem onClick={() => navigate('/audit-logs?actorId=' + row.original._id)}><LocalizedText text="audit.userHistory" /></MenuItem>}
               {!canDeleteUser(actor, row?.original) ? (
                 ""
               ) : (
@@ -183,6 +181,7 @@ const Index = () => {
         </Alert>
       )}
       <CommonCheckTable
+        preservePage
         title={tr("Users")}
         isLoding={isLoding}
         columnData={tableColumns ?? []}

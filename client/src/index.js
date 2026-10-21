@@ -18,6 +18,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { Provider } from "react-redux";
 import { useSelector } from "react-redux";
 import { store } from "./redux/store";
+import PwaProvider from "components/pwa/PwaProvider";
+import ModalViewport from "components/modal/ModalViewport";
 import AppErrorBoundary from "components/AppErrorBoundary";
 import { LanguageProvider, TranslationBoundary } from "i18n";
 import { RtlProvider } from 'components/rtlProvider/RtlProvider';
@@ -63,6 +65,7 @@ function App() {
 
   return (
     <>
+      <ModalViewport />
       <ToastContainer />
       <Routes>
         {token && user?.role ? (
@@ -91,7 +94,7 @@ ReactDOM.render(
             <ThemeEditorProvider>
               <TranslationBoundary>
                 <Router>
-                  <App />
+                  <PwaProvider><App /></PwaProvider>
                 </Router>
               </TranslationBoundary>
             </ThemeEditorProvider>

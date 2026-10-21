@@ -148,7 +148,7 @@ const Add = (props) => {
     <div>
       <Modal onClose={onClose} isOpen={isOpen} isCentered size="2xl">
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent className="crm-record-form">
           <ModalHeader><LocalizedText text="Add Validation" /></ModalHeader>
           <ModalCloseButton />
           {/* <HSeparator /> */}

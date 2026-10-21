@@ -1,3 +1,7 @@
+import useRecordRefresh from "utils/useRecordRefresh";
+import LeadOwner from "./components/LeadOwner";
+import ConvertLeadButtons from "./components/ConvertLeadButtons";
+import RecordMenuButton from "components/table/RecordMenuButton";
 import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -9,7 +13,6 @@ import {
   GridItem,
   Text,
   Menu,
-  MenuButton,
   MenuItem,
   MenuList,
   useDisclosure,
@@ -22,7 +25,6 @@ import {
   EmailIcon,
   PhoneIcon,
 } from "@chakra-ui/icons";
-import { CiMenuKebab } from "react-icons/ci";
 import { getApi } from "services/api";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import Add from "./Add";
@@ -86,6 +88,7 @@ const Index = () => {
   const [phoneRec, setPhoneRec] = useState({});
 
   const data = useSelector((state) => state?.leadData?.data);
+  useRecordRefresh(() => dispatch(fetchLeadData()));
   const leadStatusValue = (status) =>
     status && typeof status === "object"
       ? status.value || status.key || status.code || ""
@@ -101,9 +104,7 @@ const Index = () => {
   const fetchData = async () => {
     setIsLoding(true);
     let result = await getApi(
-      isAdmin(user)
-        ? "api/lead/"
-        : `api/lead/?createBy=${user?._id}`
+      "api/lead/"
     );
     // setData(result?.data);
     setIsLoding(false);
@@ -168,11 +169,10 @@ const Index = () => {
         isSortable: false,
         center: true,
         cell: ({ row, i }) => (
-          <Text fontSize="md" fontWeight="900" textAlign={"center"}>
+          <Text as="div" fontSize="md" fontWeight="900" textAlign={"center"} display="flex" justifyContent="center" alignItems="center">
+            <ConvertLeadButtons leadId={row.original._id} onConverted={() => { setSelectedValues([]); setAction(current => !current); }} />
             <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
-              <MenuButton>
-                <CiMenuKebab />
-              </MenuButton>
+              <RecordMenuButton />
               <Portal><MenuList
                 minW={"fit-content"}
                zIndex="popover">
@@ -288,6 +288,7 @@ const Index = () => {
                         >
                           {cell?.value || "-"}
                         </Text>
+                        {field.name === "leadName" && <LeadOwner lead={cell.row.original} />}
                       </div>
                     ),
                   }
@@ -304,6 +305,7 @@ const Index = () => {
               ?.map((field) => ({
                 Header: field?.label,
                 accessor: field?.name,
+                ...(field.name === 'leadName' ? { cell: ({ row }) => <><Text>{row.original.leadName || '-'}</Text><LeadOwner lead={row.original} /></> } : {}),
               })) || []
           : []),
         ...(permission?.update || permission?.view || permission?.delete
@@ -372,6 +374,7 @@ const Index = () => {
         {!isLoding && (
           <GridItem colSpan={6}>
             <CommonCheckTable
+              preservePage
               onImported={() => setAction(current => !current)}
               compact
               title={title}

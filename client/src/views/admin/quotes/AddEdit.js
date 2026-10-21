@@ -370,7 +370,7 @@ const AddEdit = (props) => {
 
       <Drawer isOpen={isOpen} size={size}>
         <DrawerOverlay />
-        <DrawerContent>
+        <DrawerContent className="crm-record-form">
           <DrawerHeader
             alignItems={"center"}
             justifyContent="space-between"

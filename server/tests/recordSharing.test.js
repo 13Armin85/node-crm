@@ -19,6 +19,10 @@ test('the sending API restricts modules and returns persisted recipient names to
   t.mock.method(Lead, 'findOne', () => query({ _id: id, leadName: 'Lead' }));
   t.mock.method(PartnerCustomer, 'findOne', () => query({ _id: id, fullName: 'Partner customer' }));
   const save = t.mock.method(Share, 'updateOne', async () => ({ upsertedId: id }));
+  t.mock.method(require('../services/leadWorkflow'), 'assignLead', async (recordId, recipientId) => {
+    await Share.updateOne({ module: 'Leads', recordId, recipient: recipientId }, {});
+    return { created: true };
+  });
   t.mock.method(Share, 'find', () => query([{ recipient, createdAt: new Date() }]));
   t.mock.method(Notification, 'create', async value => value);
   const app = express(); app.use(express.json()); app.use('/sharing', require('../controllers/recordSharing'));

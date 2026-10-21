@@ -107,9 +107,7 @@ const Link = (props) => {
       ]);
     } else if (values?.linkWith === "lead") {
       let result = await getApi(
-        isAdmin(user)
-          ? "api/lead/"
-          : `api/lead/?createBy=${user._id}`,
+        "api/lead/",
       );
       values.createBy = result?._id;
       setData((prevData) => [

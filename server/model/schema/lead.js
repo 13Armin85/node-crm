@@ -6,6 +6,9 @@ const fetchSchemaFields = async () => {
 };
 
 const leadSchema = new mongoose.Schema({
+    assignUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    conversion: { type: mongoose.Schema.Types.Mixed, default: {} },
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Leads', default: null },
     contact: { type: mongoose.Schema.Types.ObjectId, ref: 'Contacts', default: null },
@@ -66,6 +69,8 @@ const leadSchema = new mongoose.Schema({
 const initializeLeadSchema = async () => {
     const schemaFieldsData = await fetchSchemaFields();
     schemaFieldsData[0]?.fields?.forEach((item) => {
+        // Ownership references must keep their schema type and population metadata.
+        if (['createBy', 'assignUser', 'assignedBy'].includes(item.name)) return;
         let fieldData;
 
         if (item.ref) {
@@ -84,5 +89,6 @@ const initializeLeadSchema = async () => {
 };
 
 leadSchema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'Leads' });
+leadSchema.plugin(require('../../services/leadWorkflow').leadWorkflow);
 const Lead = mongoose.model('Leads', leadSchema, 'Leads');
 module.exports = { Lead, initializeLeadSchema };

@@ -1,3 +1,4 @@
+import RecordMenuButton from "components/table/RecordMenuButton";
 import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
@@ -8,14 +9,12 @@ import {
   GridItem,
   Text,
   Menu,
-  MenuButton,
   MenuItem,
   MenuList,
   useDisclosure,
   Flex,
 } from "@chakra-ui/react";
 import { DeleteIcon, ViewIcon, EditIcon } from "@chakra-ui/icons";
-import { CiMenuKebab } from "react-icons/ci";
 import { getApi } from "services/api";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import Add from "./add";
@@ -75,9 +74,7 @@ const Index = () => {
       cell: ({ row }) => (
         <Text fontSize="md" fontWeight="900" textAlign={"center"}>
           <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
-            <MenuButton>
-              <CiMenuKebab />
-            </MenuButton>
+            <RecordMenuButton />
             <Portal><MenuList
               minW={"fit-content"}
              zIndex="popover">

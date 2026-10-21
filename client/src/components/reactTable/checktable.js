@@ -21,6 +21,7 @@ import {
   Grid,
   GridItem,
   Checkbox,
+  Select,
   TagCloseButton,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@chakra-ui/system";
@@ -54,6 +55,13 @@ import { canSendRecord, shareModuleForTitle } from "services/recordSharing";
 import { exportColumns, selectedExportRows } from "utils/exportRecords";
 import { toast } from "react-toastify";
 import { normalizeSearchFields, optionText } from "components/search/searchFields";
+
+const columnLabel = column => {
+  const label = tr(column.Header);
+  return typeof label === "string" || typeof label === "number" ? String(label) : column.id;
+};
+const columnRole = column => columnLabel(column) === "#" ? "index"
+  : ["action", "actions"].includes(column.id?.toLowerCase()) || [tr("Action"), tr("Actions")].includes(columnLabel(column)) ? "actions" : "field";
 
 const CommonCheckTable = (props) => {
   const {
@@ -150,7 +158,9 @@ const CommonCheckTable = (props) => {
     {
       columns,
       data,
-      initialState: { pageIndex: 0 },
+      initialState: { pageIndex: 0, pageSize: 5 },
+      autoResetPage: props.preservePage !== true,
+      autoResetSortBy: props.preservePage !== true,
     },
     useGlobalFilter,
     useSortBy,
@@ -172,8 +182,13 @@ const CommonCheckTable = (props) => {
     nextPage,
     previousPage,
     setPageSize,
-    state: { pageIndex, pageSize },
+    setSortBy,
+    state: { pageIndex, pageSize, sortBy },
   } = tableInstance;
+
+  useEffect(() => {
+    if (props.preservePage && pageIndex >= pageCount && pageIndex > 0) gotoPage(Math.max(0, pageCount - 1));
+  }, [props.preservePage, pageIndex, pageCount, gotoPage]);
 
   if (
     pageOptions &&
@@ -437,6 +452,7 @@ const CommonCheckTable = (props) => {
                   </Box>
                 </Flex>
               )}
+              {props.viewControls}
               {customSearch !== false && (
                 <CustomSearchInput
                   setSearchbox={
@@ -515,7 +531,7 @@ const CommonCheckTable = (props) => {
             className="crm-table-toolbar__actions"
           >
             <TableTools
-              columns={(columnData || []).map((column, index) => ({ id: columnKey(column, index), label: column.Header }))}
+              columns={(columnData || []).map((column, index) => ({ id: columnKey(column, index), label: columnLabel(column) }))}
               visible={visible} onColumnsChange={setVisible}
               onImport={ManageGrid !== false && canImport ? () => setImportOpen(true) : undefined}
               exports={ManageGrid !== false && canExport ? [
@@ -545,14 +561,34 @@ const CommonCheckTable = (props) => {
             </GridItem>
           )}
         </Grid>
+        <Flex className="crm-mobile-table-sort" align="center" gap={2}>
+          <Box as="span" aria-hidden="true"><FaSort /></Box>
+          <Select
+            aria-label={tr("estate.sort")}
+            value={sortBy.length ? JSON.stringify([sortBy[0].id, Boolean(sortBy[0].desc)]) : ""}
+            onChange={event => {
+              const choice = event.target.value ? JSON.parse(event.target.value) : null;
+              setSortBy(choice ? [{ id: choice[0], desc: choice[1] }] : []);
+            }}
+          >
+            <option value="">{tr("estate.sort")}</option>
+            {tableInstance.allColumns.filter(column => column.canSort && column.isSortable !== false && columnRole(column) === "field").flatMap(column => [false, true].map(desc => (
+              <option key={JSON.stringify([column.id, desc])} value={JSON.stringify([column.id, desc])}>
+                {columnLabel(column)} · {tr(desc ? "estate.descending" : "estate.ascending")}
+              </option>
+            )))}
+          </Select>
+        </Flex>
+        {props.renderRecords ? props.renderRecords(rows.map(row => row.original)) : <>
         <Box
           overflowY={"auto"}
           dir={tableDirection}
-          className={`${size ? "small-table-fix-container" : "table-fix-container"} crm-table-scroll`}
+          className={`${size ? "small-table-fix-container" : "table-fix-container"} crm-table-scroll crm-records-scroll`}
         >
           <Table
             {...getTableProps()}
-            className="crm-data-table"
+            className="crm-data-table crm-mobile-records"
+            role="table"
             dir={tableDirection}
             variant="simple"
             color="gray.500"
@@ -640,7 +676,7 @@ const CommonCheckTable = (props) => {
                 page?.map((row, i) => {
                   prepareRow(row);
                   return (
-                    <Tr {...row?.getRowProps()} key={row.id}>
+                    <Tr {...row?.getRowProps()} key={row.id} className="crm-record-row" role="row" aria-selected={selectedValues?.includes(row.original._id) || undefined}>
                       {row?.cells?.map((cell, index) => {
                         let data = "";
                         columnData?.forEach((item) => {
@@ -675,6 +711,7 @@ const CommonCheckTable = (props) => {
                                     (checkBox || checkBox === undefined) && (
                                       <Checkbox
                                         colorScheme="brandScheme"
+                                        aria-label={`${tr("Select")} ${row.index + 1}`}
                                         value={selectedValues}
                                         isChecked={selectedValues?.includes(
                                           cell?.value
@@ -708,18 +745,23 @@ const CommonCheckTable = (props) => {
                         return (
                           <Td
                             {...cell?.getCellProps()}
+                            role="cell"
+                            data-label={columnLabel(cell.column)}
+                            data-mobile-role={columnRole(cell.column) !== "field" ? columnRole(cell.column) : index === row.cells.findIndex(item => columnRole(item.column) === "field") ? "primary" : "field"}
                             key={index}
                             dir={cellDirection}
                             fontSize={{ sm: "14px" }}
                             minW={{ base: "132px", md: "160px", lg: "auto" }}
                             borderColor="transparent"
                           >
-                            {data}
-                            {index === row.cells.findIndex(item => !["_id", "action"].includes(item.column.id)) && <SharedRecordBadge module={sharingModule} record={row.original} />}
+                            <Box className="crm-record-value">
+                              {data}
+                              {index === row.cells.findIndex(item => columnRole(item.column) === "field") && <SharedRecordBadge module={sharingModule} record={row.original} />}
+                            </Box>
                           </Td>
                         );
                       })}
-                      {showSharing && <Td><ShareRecordButton module={sharingModule} record={row.original} /></Td>}
+                      {showSharing && <Td role="cell" data-label={tr("Send to user")} data-mobile-role="sharing"><Box className="crm-record-value"><ShareRecordButton module={sharingModule} record={row.original} /></Box></Td>}
                     </Tr>
                   );
                 })
@@ -727,7 +769,7 @@ const CommonCheckTable = (props) => {
             </Tbody>
           </Table>
         </Box>
-        {data?.length > 5 && (
+        {data?.length > 0 && (
           <Pagination
             gotoPage={gotoPage}
             gopageValue={gopageValue}
@@ -741,10 +783,12 @@ const CommonCheckTable = (props) => {
             nextPage={nextPage}
             pageSize={pageSize}
             pageIndex={pageIndex}
-            dataLength={15}
+            total={rows.length}
+            isLoading={isLoding}
           />
         )}
 
+        </>}
         {/* Manage Columns */}
         {importModule && <RecordImportDialog moduleName={importModule} moduleId={props.importModuleId} isOpen={importOpen} onClose={() => setImportOpen(false)} onImported={props.onImported} />}
 

@@ -1,3 +1,4 @@
+import ConvertedLeadDetails from "components/relations/ConvertedLeadDetails";
 import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -254,6 +255,7 @@ const View = (props) => {
                   <HSeparator />
                 </Box>
               </GridItem>
+              <GridItem colSpan={2}><ConvertedLeadDetails records={data?.convertedLeads} /></GridItem>
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
                   {" "}<LocalizedText text="Opportunity Name" />{" "}

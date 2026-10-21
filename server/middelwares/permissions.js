@@ -18,6 +18,8 @@ const developerOnly = (req, res, next) => isDeveloper(req.actor) ? next() : res.
 const scope = (req, moduleName) => {
   if (req.method === 'GET' && req.params?.id && isAdmin(req.actor)) return {};
   const { readScope, requestModule } = require('../services/recordAccess');
+  moduleName ||= requestModule(req);
+  if (moduleName === 'Leads' && req.method !== 'GET') return require('../services/recordAccess').recordScope(req.actor, 'Leads');
   if (req.method === 'GET') return readScope(req, req.actor, moduleName || requestModule(req));
   if (moduleName === 'Tasks') return require('../services/taskAccess').taskScope(req.actor);
   return isAdmin(req.actor) ? {} : { createBy: req.actor._id };

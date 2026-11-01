@@ -1,4 +1,13 @@
 const messages = {
+  'Record unavailable': ['Record unavailable', 'رکورد در دسترس نیست', 'Kayıt kullanılamıyor'],
+  'assignedBy': ['Assigned by', 'واگذارکننده', 'Atayan'],
+  'estate.optionsRequired': ['A required field must have at least one option.', 'فیلد اجباری باید حداقل یک گزینه داشته باشد.', 'Zorunlu bir alanın en az bir seçeneği olmalıdır.'],
+  'estate.section.ownership': ['Owner and Assigned Agent', 'مالک و کارشناس مسئول', 'Mülk sahibi ve atanan danışman'],
+  'Assigned Property Agent': ['Assigned Property Agent', 'کارشناس مسئول ملک', 'Atanan Gayrimenkul Danışmanı'],
+  'Property Owner': ['Property Owner', 'مالک ملک', 'Mülk Sahibi'],
+  'Unit Floor': ['Unit Floor', 'طبقه واحد', 'Dairenin Katı'],
+  'Create New Property Owner': ['Create New Property Owner', 'ایجاد مالک جدید', 'Yeni Mülk Sahibi Oluştur'],
+  'Save Contact and Select': ['Save Contact and Select', 'ذخیره و انتخاب مخاطب', 'Kişiyi Kaydet ve Seç'],
   'search.apply': ['Apply filters', 'اعمال فیلترها', 'Filtreleri uygula'],
   'search.dates': ['Date filters', 'فیلترهای تاریخ', 'Tarih filtreleri'],
 

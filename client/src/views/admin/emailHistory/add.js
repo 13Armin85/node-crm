@@ -1,3 +1,4 @@
+import { submitEmail } from 'utils/emailSubmission';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { formLabel } from 'utils/formValue';
@@ -23,7 +24,6 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
-import Spinner from "components/spinner/Spinner";
 import ContactModel from "components/commonTableModel/ContactModel";
 import LeadModel from "components/commonTableModel/LeadModel";
 import UserModel from "components/commonTableModel/UserModel";
@@ -31,7 +31,7 @@ import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { LiaMousePointerSolid } from "react-icons/lia";
 import { emailSchema } from "schema";
-import { getApi, postApi } from "services/api";
+import { getApi } from "services/api";
 import dayjs from "dayjs";
 import { fetchEmailTempData } from "../../../redux/slices/emailTempSlice";
 import { useDispatch } from "react-redux";
@@ -43,6 +43,7 @@ import { FirstStepper } from "../newProperty/components/bookedStepperForm/FirstS
 const AddEmailHistory = (props) => {
   const { onClose, isOpen } = props;
   const [isLoding, setIsLoding] = useState(false);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
   const [assignToLeadData, setAssignToLeadData] = useState([]);
   const [assignToContactData, setAssignToContactData] = useState([]);
   const [contactModelOpen, setContactModel] = useState(false);
@@ -56,32 +57,30 @@ const AddEmailHistory = (props) => {
   const dispatch = useDispatch();
 
   const user = JSON.parse(localStorage.getItem("user"));
+  const [sendDate] = useState(() => dayjs().format("YYYY-MM-DDTHH:mm"));
   const todayTime = new Date()?.toISOString()?.split(".")[0];
 
   const initialValues = {
     sender: user?._id,
     recipient: "",
     subject: "",
-    callNotes: "",
+    message: "",
     createByContact: "",
     createByLead: "",
-    property: "",
-    startDate: "",
+    property: [],
+    startDate: sendDate,
     type: "message",
     html: "",
-    category: "contact",
+    category: "Contact",
     // assignTo: '',
     // assignToLead: '',
     createBy: user?._id,
-    salesAgent: "", // sales person user id
+    salesAgent: user?.role === "user" ? user?._id : "",
   };
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: emailSchema,
-    onSubmit: (values, { resetForm }) => {
-      AddData();
-      resetForm();
-    },
+    onSubmit: async (submittedValues, helpers) => { await AddData(submittedValues, helpers); },
   });
   const {
     errors,
@@ -93,81 +92,48 @@ const AddEmailHistory = (props) => {
     setFieldValue,
   } = formik;
 
-  const AddData = async () => {
-    try {
-      setIsLoding(true);
-      let response = await postApi("api/email/add", values);
-      if (response?.status === 200) {
-        props?.onClose();
-        props?.setAction((pre) => !pre);
-      }
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoding(false);
-    }
-  };
-  useEffect(async () => {
-    values.start = props?.date;
-    try {
-      let result;
-      if (values?.category === "Contact" && assignToContactData?.length <= 0) {
-        result = await getApi(
-          isAdmin(user)
-            ? "api/contact/"
-            : `api/contact/?createBy=${user?._id}`
-        );
-        setAssignToContactData(result?.data);
-      } else if (values?.category === "Lead" && assignToLeadData <= 0) {
-        result = await getApi(
-          "api/lead/"
-        );
-        setAssignToLeadData(result?.data);
-      } else if (
-        (values?.category === "property" && console.log(""),
-        assignToProperyData.length <= 0)
-      ) {
-        result = await getApi(
-          isAdmin(user)
-            ? "api/property"
-            : `api/property/?createBy=${user?._id}`
-        );
-        setAssignToPropertyData(result?.data);
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  }, [props, values?.category]);
-
-  const fetchRecipientData = async () => {
-    if (values?.createByContact) {
-      let findEmail = assignToContactData?.find(
-        (item) => item?._id === values?.createByContact
-      );
-      if (findEmail) {
-        setFieldValue("recipient", findEmail?.email);
-      }
-    } else if (values?.createByLead) {
-      let findEmail = assignToLeadData?.find(
-        (item) => item?._id === values?.createByLead
-      );
-      if (findEmail) {
-        setFieldValue("recipient", findEmail?.leadEmail);
-      }
-    } else {
-      setFieldValue("recipient", "");
-    }
-  };
-
-  const fetchData = async () => {
+  const AddData = async (submittedValues, helpers) => {
     setIsLoding(true);
-    const result = await dispatch(fetchEmailTempData());
-    if (result?.payload?.status === 200) {
-      setData(result?.payload?.data);
-    } else {
-      toast.error(tr("Failed to fetch data"), tr("error"));
-    }
-    setIsLoding(false);
+    try {
+      if (await submitEmail(submittedValues, helpers)) {
+        props?.onClose();
+        props?.setAction?.((pre) => !pre);
+      }
+    } finally { setIsLoding(false); }
+  };
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      const contact = values.category === 'Contact';
+      const path = contact ? (isAdmin(user) ? 'api/contact/' : 'api/contact/?createBy=' + user?._id) : 'api/lead/';
+      const response = await getApi(path);
+      if (!active) return;
+      const items = Array.isArray(response?.data) ? response.data : [];
+      if (contact) setAssignToContactData(items); else setAssignToLeadData(items);
+    };
+    load();
+    return () => { active = false; };
+  }, [values.category, user?._id, user?.role]);
+
+  useEffect(() => {
+    let active = true;
+    getApi('api/property').then(response => {
+      if (active) setAssignToPropertyData(Array.isArray(response?.data) ? response.data : []);
+    });
+    return () => { active = false; };
+  }, []);
+  const fetchData = async () => {
+    setTemplatesLoading(true);
+    try {
+      const result = await dispatch(fetchEmailTempData());
+      if (result?.payload?.status === 200 && Array.isArray(result.payload.data)) {
+        setData(result.payload.data);
+      } else {
+        toast.error(tr('Failed to fetch data'));
+      }
+    } catch (_) { toast.error(tr('Failed to fetch data')); }
+    finally { setTemplatesLoading(false); }
   };
 
   const fetchUsersData = async () => {
@@ -186,12 +152,16 @@ const AddEmailHistory = (props) => {
   };
 
   useEffect(() => {
-    if (values?.type === "template") fetchData();
+    if (values?.type === "template" && data.length === 0 && !templatesLoading) fetchData();
   }, [values?.type]);
 
   useEffect(() => {
-    fetchRecipientData();
-  }, [values?.createByContact, values?.createByLead]);
+    const selected = values.createByContact
+      ? assignToContactData.find(item => item._id === values.createByContact)
+      : assignToLeadData.find(item => item._id === values.createByLead);
+    const recipient = (values.createByContact ? selected?.email : selected?.leadEmail) || '';
+    if (recipient !== values.recipient) setFieldValue('recipient', recipient, false);
+  }, [values.createByContact, values.createByLead, values.recipient, assignToContactData, assignToLeadData, setFieldValue]);
 
   useEffect(() => {
     fetchUsersData();
@@ -208,7 +178,7 @@ const AddEmailHistory = (props) => {
   return (
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent className="crm-record-form" height={"580px"}>
+      <ModalContent className="crm-record-form crm-email-form" height={"580px"}>
         <ModalHeader><LocalizedText text="Add Email" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody overflowY={"auto"} height={"400px"}>
@@ -444,14 +414,14 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              ><LocalizedText text="Start Date" /><Text color={"red"}>*</Text>
+              ><LocalizedText text="Start Date" />
               </FormLabel>
               <Input
                 type="datetime-local"
                 fontSize="sm"
                 onChange={handleChange}
                 onBlur={handleBlur}
-                min={dayjs(todayTime).format("YYYY-MM-DD HH:mm")}
+                min={dayjs(todayTime).format("YYYY-MM-DDTHH:mm")}
                 value={values?.startDate}
                 name="startDate"
                 fontWeight="500"
@@ -471,7 +441,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              ><LocalizedText text="Assign To Sales Agent" /><Text color={"red"}>*</Text>
+              ><LocalizedText text="Assign To Sales Agent" />
               </FormLabel>
               <Flex justifyContent={"space-between"}>
                 <Select
@@ -559,7 +529,7 @@ const AddEmailHistory = (props) => {
                 </Stack>
               </RadioGroup>
             </GridItem>
-            <GridItem colSpan={{ base: 12 }}>
+            <GridItem colSpan={{ base: 12 }} className="crm-email-content">
               {values?.type === "message" ? (
                 <>
                   <Textarea
@@ -584,11 +554,12 @@ const AddEmailHistory = (props) => {
                 <Select
                   // value={values.assignTo}
                   name="html"
+                  isDisabled={templatesLoading}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values.html}
                   fontWeight="500"
-                  placeholder={tr("Select Template")}
+                  placeholder={tr(templatesLoading ? "estate.loading" : "Select Template")}
                   // borderColor={errors.assignTo && touched.assignTo ? "red.300" : null}
                 >
                   {data?.map((item) => {
@@ -607,10 +578,11 @@ const AddEmailHistory = (props) => {
           <Button
             variant="brand"
             size="sm"
-            disabled={isLoding ? true : false}
+            isLoading={isLoding}
+            disabled={isLoding || (values.type === "template" && templatesLoading)}
             onClick={handleSubmit}
           >
-            {isLoding ? <Spinner /> : tr("Save")}
+            {tr("Save")}
           </Button>
           <Button
             sx={{

@@ -8,11 +8,63 @@
     6
   ],
   [
-    "Active",
-    1
+    "Name",
+    6
   ],
   [
     "Pending",
+    3
+  ],
+  [
+    "Amount",
+    3
+  ],
+  [
+    "Active",
+    2
+  ],
+  [
+    "Title",
+    2
+  ],
+  [
+    "Save",
+    2
+  ],
+  [
+    "Action",
+    2
+  ],
+  [
+    "Open",
+    2
+  ],
+  [
+    "Created Date",
+    2
+  ],
+  [
+    "Lead Name",
+    2
+  ],
+  [
+    "Lead Email",
+    2
+  ],
+  [
+    "TRY — Turkish Lira (₺)",
+    2
+  ],
+  [
+    "USD — US Dollar ($)",
+    2
+  ],
+  [
+    "EUR — Euro (€)",
+    2
+  ],
+  [
+    "Application render failed",
     1
   ],
   [
@@ -20,15 +72,203 @@
     1
   ],
   [
-    "Error decoding token:",
+    "USD",
     1
   ],
   [
-    "Created Date",
+    "Selected contact",
+    1
+  ],
+  [
+    "New contact",
+    1
+  ],
+  [
+    "Old contact",
+    1
+  ],
+  [
+    "Found",
+    1
+  ],
+  [
+    "Contact One",
+    1
+  ],
+  [
+    "Assigned User",
+    1
+  ],
+  [
+    "Delegated By",
+    1
+  ],
+  [
+    "Old description",
+    1
+  ],
+  [
+    "Old title",
+    1
+  ],
+  [
+    "Deleted field",
+    1
+  ],
+  [
+    "Old notes",
+    1
+  ],
+  [
+    "Notes",
+    1
+  ],
+  [
+    "Installed marker",
+    1
+  ],
+  [
+    "Open installer",
+    1
+  ],
+  [
+    "Reports",
+    1
+  ],
+  [
+    "Open record",
+    1
+  ],
+  [
+    "Status",
     1
   ],
   [
     "Updated Date",
+    1
+  ],
+  [
+    "Custom",
+    1
+  ],
+  [
+    "private",
+    1
+  ],
+  [
+    "audit.exportExcel",
+    1
+  ],
+  [
+    "General",
+    1
+  ],
+  [
+    "Properties",
+    1
+  ],
+  [
+    "Leads",
+    1
+  ],
+  [
+    "Opportunities",
+    1
+  ],
+  [
+    "Partner Customers",
+    1
+  ],
+  [
+    "Contacts",
+    1
+  ],
+  [
+    "Invoices",
+    1
+  ],
+  [
+    "Quotes",
+    1
+  ],
+  [
+    "Tasks",
+    1
+  ],
+  [
+    "Meetings",
+    1
+  ],
+  [
+    "Calls",
+    1
+  ],
+  [
+    "Emails",
+    1
+  ],
+  [
+    "KB",
+    1
+  ],
+  [
+    "Choose test file",
+    1
+  ],
+  [
+    "Delete selected",
+    1
+  ],
+  [
+    "Editor",
+    1
+  ],
+  [
+    "Export as CSV",
+    1
+  ],
+  [
+    "Export as Excel",
+    1
+  ],
+  [
+    "m²",
+    1
+  ],
+  [
+    "Select",
+    1
+  ],
+  [
+    "Test home",
+    1
+  ],
+  [
+    "Score",
+    1
+  ],
+  [
+    "Budget",
+    1
+  ],
+  [
+    "Contacted",
+    1
+  ],
+  [
+    "Qualified",
+    1
+  ],
+  [
+    "Property Viewing",
+    1
+  ],
+  [
+    "Negotiating",
+    1
+  ],
+  [
+    "Lost",
     1
   ],
   [
@@ -37,6 +277,10 @@
   ],
   [
     "Bank Details Not Found",
+    1
+  ],
+  [
+    "Custom stage",
     1
   ]
 ]

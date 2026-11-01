@@ -12,14 +12,17 @@ function searchCondition(fields, query, numericFields = []) {
   const terms = normalize(String(query || '').slice(0, 100)).split(/\s+/).filter(Boolean).slice(0, 12);
   if (!terms.length) return {};
   return { $and: terms.map(term => {
-    const pattern = [...term].map(char => variants[char] || (/\d/.test(char)
-      ? `[${char}${String.fromCharCode(1776 + Number(char))}${String.fromCharCode(1632 + Number(char))}]` : escape(char))).join(ignored);
+    const characters = value => [...value].map(char => variants[char] || (/\d/.test(char)
+      ? `[${char}${String.fromCharCode(1776 + Number(char))}${String.fromCharCode(1632 + Number(char))}]` : escape(char)));
+    const pattern = characters(term).join(ignored);
+    const phonePattern = /^[+\d().-]+$/.test(term) && /\d/.test(term)
+      ? characters(term.replace(/[+().-]/g, '')).join('[\\s().-]*' + ignored) : pattern;
     return { $or: fields.map(field => numericFields.includes(field)
-      ? { $expr: { $regexMatch: { input: { $convert: { input: '$' + field, to: 'string', onError: '', onNull: '' } }, regex: pattern, options: 'i' } } }
+      ? { $expr: { $regexMatch: { input: { $convert: { input: '$' + field, to: 'string', onError: '', onNull: '' } }, regex: /phone|mobile|whatsapp/i.test(field) ? phonePattern : pattern, options: 'i' } } }
       : { [field]: { $regex: pattern, $options: 'i' } }) };
   }) };
 }
-const optionLabel = item => item.title || item.name || item.companyName || item.fullName ||
+const optionLabel = item => item.opportunityName || item.title || item.name || item.companyName || item.fullName ||
   [item.firstName, item.lastName].filter(Boolean).join(' ') || item.username || item.email ||
-  item.leadName || item.folderName || item.propertyType || String(item._id);
+  item.leadName || item.folderName || item.propertyType || '—';
 module.exports = { searchCondition, optionLabel };

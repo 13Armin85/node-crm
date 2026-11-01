@@ -96,7 +96,6 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       transactionType: { 'sale.status': 'AVAILABLE', 'sale.buyerType': null, 'sale.lead': null, 'sale.partnerCustomer': null, 'sale.soldAt': null }, isInsideResidence: { residence: null },
       'sale.status': { 'sale.buyerType': null, 'sale.lead': null, 'sale.partnerCustomer': null, 'sale.soldAt': null },
       'sale.buyerType': { 'sale.lead': null, 'sale.partnerCustomer': null },
-      customerType: { companyName: '', contactPerson: '', taxNumber: '' },
     };
     Object.entries(resets[field.name] || {}).forEach(([key, v]) => formik.setFieldValue(key, v));
   };

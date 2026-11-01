@@ -55,12 +55,14 @@ export default function DataVisibility() {
       '.chakra-select': { paddingLeft: '2rem', paddingRight: '1rem' },
     } : undefined}
   >
-    <Flex align="center" justify="space-between" gap={3} mb={4}><Heading size="lg">{copy.title}</Heading><Button variant="outline" onClick={() => navigate('/admin-setting')}>{copy.back}</Button></Flex>
-    <Text mb={5}>{copy.hint}</Text>
+    <Flex className="crm-page-hero crm-settings-toolbar" align="center" justify="space-between" gap={3} wrap="wrap">
+      <Box><Heading className="crm-page-hero__title" size="lg">{copy.title}</Heading><Text className="crm-page-hero__subtitle">{copy.hint}</Text></Box>
+      <Button variant="outline" onClick={() => navigate('/admin-setting')}>{copy.back}</Button>
+    </Flex>
     {error && <Alert status="error" mb={3}><AlertIcon />{copy.error}{!users.length && <Button ms={3} onClick={load}>{t('Retry')}</Button>}</Alert>}
     {saved && <Alert status="success" mb={3}><AlertIcon />{copy.saved}</Alert>}
     {loading ? <Spinner /> : <>
-      {!users.length ? <Text>{copy.empty}</Text> : <FormControl maxW="420px" mb={5}>
+      {!users.length ? <Text>{copy.empty}</Text> : <FormControl className="crm-settings-user-selector" maxW="420px" mb={5}>
         <FormLabel htmlFor="visibility-user" textAlign="inherit">{copy.user}</FormLabel>
         <Select id="visibility-user" value={selected} isDisabled={saving || dirty} onChange={event => choose(event.target.value)}>
           <option value="">{copy.choose}</option>{users.map(user => <option key={user._id} value={user._id}>{[user.firstName, user.lastName].filter(Boolean).join(' ') || user.username}</option>)}
@@ -73,7 +75,7 @@ export default function DataVisibility() {
           {dirty && <Button variant="ghost" isDisabled={saving} onClick={() => choose(selected)}>{copy.cancel}</Button>}
         </Flex>
         <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={3}>
-          {modules.map((name, index) => <FormControl key={name} display="flex" alignItems="center" justifyContent="space-between" borderWidth="1px" borderRadius="12px" p={4}>
+          {modules.map((name, index) => <FormControl className="crm-settings-permission" key={name} display="flex" alignItems="center" justifyContent="space-between" gap={3} borderWidth="1px" borderRadius="5px" p={3}>
             <Box><FormLabel htmlFor={'visibility-' + index} textAlign="inherit" mb={1}>{t(name)}</FormLabel><Text fontSize="sm" color="gray.500">{visible(draft, name) ? copy.visible : copy.hidden}</Text></Box>
             <Switch id={'visibility-' + index} aria-label={t(name)} isChecked={visible(draft, name)} isDisabled={saving} onChange={event => { setDraft(previous => ({ ...previous, [name]: event.target.checked })); setSaved(false); }} />
           </FormControl>)}

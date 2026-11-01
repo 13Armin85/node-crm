@@ -34,6 +34,7 @@ module.exports = moduleName => async (req, res, next) => {
       req.body = await require('../services/leadWorkflow').normalizeLeadAssignment(req.body, previous, req.actor);
       req.body = normalizeLeadRelations(req.body, previous);
       validateLeadSelection(req.body);
+      await require('../services/leadRelations').validateLeadProperty(req, req.body);
       definition = { ...definition, fields: definition.fields.filter(field => isLeadRelationVisible(field, req.body)) };
     }
     if (typeof req.body.customFields === 'string') req.body.customFields = JSON.parse(req.body.customFields);

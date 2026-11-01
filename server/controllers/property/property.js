@@ -20,6 +20,8 @@ const index = async (req, res) => {
       path: "createBy",
       match: { deleted: false },
     })
+    .populate({ path: 'propertyAgent', select: 'firstName lastName username', match: require('../../services/recordAccess').readScope(req, req.actor, 'Users', { deleted: false }) })
+    .populate({ path: 'propertyOwner', select: 'fullName firstName lastName phoneNumber', match: require('../../services/recordAccess').readScope(req, req.actor, 'Contacts', { deleted: false }) })
     .exec();
 
   const result = allData;

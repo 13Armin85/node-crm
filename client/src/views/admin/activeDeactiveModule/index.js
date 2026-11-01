@@ -73,8 +73,8 @@ const Index = () => {
 
   return (
     <>
-      <Card>
-        <Flex justifyContent={"space-between"} alignItems={"center"} mb={5}>
+      <Card className="crm-settings-panel crm-settings-module-visibility">
+        <Flex className="crm-settings-panel__header" justifyContent={"space-between"} alignItems={"center"} mb={5} wrap="wrap" gap={3}>
           <Box>
             <Text color={"secondaryGray.900"} fontSize="22px" fontWeight="700"><LocalizedText text="Active Deactive Module" /></Text>
           </Box>
@@ -87,7 +87,7 @@ const Index = () => {
           ><LocalizedText text="Back" /></Button>
         </Flex>
         <HSeparator />
-        <Flex mt={5} alignItems={"center"} fontSize="sm">
+        <Flex mt={3} alignItems={"center"} fontSize="sm" width="100%">
           {isLoading ? (
             <Flex
               justifyContent={"center"}
@@ -100,17 +100,17 @@ const Index = () => {
               <Spinner />
             </Flex>
           ) : (
-            <Grid templateColumns="repeat(12, 1fr)" p={3} gap={3}>
+            <Grid className="crm-settings-module-grid" templateColumns="repeat(12, 1fr)" p={0} gap={3} width="100%">
               {values?.length > 0 &&
                 values?.map((item, index) => (
                   <>
-                    <GridItem colSpan={6}>
+                    <GridItem colSpan={8}>
                       <Text fontSize="15px" fontWeight="700">
                         {" "}
                         <LocalizedText text={item?.moduleName} />{" "}
                       </Text>
                     </GridItem>
-                    <GridItem colSpan={6}>
+                    <GridItem colSpan={4} textAlign="end">
                       <Switch
                         onChange={(e) =>
                           setFieldValue(

@@ -19,6 +19,7 @@ test('relation labels use real names for every existing form relation', () => {
   assert.equal(optionLabel({ _id: '1', fullName: 'Contact' }), 'Contact');
   assert.equal(optionLabel({ _id: '1', companyName: 'Company' }), 'Company');
   assert.equal(optionLabel({ _id: '1', folderName: 'Files' }), 'Files');
+  assert.equal(optionLabel({ _id: '6ae380a7f48a9ea51d6e3143', opportunityName: 'Villa sale' }), 'Villa sale');
 });
 
 test('numeric phone searches cast as Mongo expressions instead of unsupported number regex filters', () => {
@@ -28,4 +29,11 @@ test('numeric phone searches cast as Mongo expressions instead of unsupported nu
   assert.equal(numeric.input.$convert.input, '$phoneNumber');
   assert.equal(numeric.input.$convert.to, 'string');
   assert.doesNotThrow(() => User.find(condition).cast(User));
+});
+
+test('phone option searches ignore stored spacing and punctuation', () => {
+  for (const query of ['5551234567', '+905551234567', '555-123-4567']) {
+    const expression = searchCondition(['phoneNumber'], query, ['phoneNumber']).$and[0].$or[0].$expr.$regexMatch;
+    assert(new RegExp(expression.regex, expression.options).test('+90 (555) 123-4567'));
+  }
 });

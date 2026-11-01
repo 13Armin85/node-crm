@@ -32,13 +32,17 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
   Contact.schema.add({ fullName: String, email: String, phoneNumber: String, mobileNumber: String, campaign: String, state: String, message: String, communicationTool: String, listedFor: String });
   // Exercise legacy numeric configuration: initialization must preserve phone text.
   const CustomField = require('../model/schema/customField');
-  await CustomField.create({ moduleName: 'Contacts', fields: [{ name: 'phoneNumber', backendType: 'Number' }] });
+  await CustomField.create({ moduleName: 'Contacts', fields: [{ name: 'phoneNumber', backendType: 'Number' },
+    ...['deleted', 'createBy', 'updatedDate', 'createdDate'].map(name => ({ name, backendType: 'Mixed' }))] });
   await require('../model/schema/contact').initializeContactSchema();
   assert.equal(Contact.schema.path('phoneNumber').instance, 'String');
+  assert.equal(Contact.schema.path('deleted').instance, 'Boolean');
+  assert.equal(Contact.schema.path('createBy').options.ref, 'User');
   const actor = await User.create({ username: 'admin@example.test', password: 'unused', role: 'admin' });
   const other = await User.create({ username: 'other@example.test', password: 'unused', role: 'user' });
   const leadModule = await CustomField.create({ moduleName: 'Leads', fields: require('../db/leadFields').leadFields });
   const app = express(); app.use(express.json()); app.use('/api/lead', require('../controllers/lead/_routes'));
+  app.use('/api/contact', require('../controllers/contact/_routes'));
   app.use('/api/form', require('../controllers/form/_routes'));
   app.use((error, req, res, next) => res.status(500).json({ error: error.message }));
   server = await new Promise(resolve => { const instance = app.listen(0, '127.0.0.1', () => resolve(instance)); });
@@ -54,6 +58,29 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
     leadMobile: '+90 0555 000 ' + sequence, leadCampaign: 'Online', leadState: 'Open', leadMessage: 'All original notes',
     leadStatus: { value: 'qualified', label: 'Qualified' }, communicationTool: 'WhatsApp', listedFor: 'Buy',
     customFields: { budget: 500000, active: false, preferences: ['garden', 'pool'] }, createBy: actor._id, ...extra })).toObject();
+
+  await t.test('repairs hidden converted contacts while retaining explicitly deleted records', async () => {
+    const hidden = await Contact.collection.insertOne({ createBy: actor._id, convertedLeads: [{ leadId: 'legacy', values: { leadName: 'Legacy' } }] });
+    const removed = await Contact.collection.insertOne({ createBy: actor._id, deleted: true, convertedLeads: [{ leadId: 'removed' }] });
+    await require('../model/schema/contact').initializeContactSchema();
+    assert(await Contact.exists({ _id: hidden.insertedId, deleted: false }));
+    assert(await Contact.exists({ _id: removed.insertedId, deleted: true }));
+  });
+
+  await t.test('conversion stays visible even if legacy metadata removes the destination default', async () => {
+    const path = Contact.schema.path('deleted'), originalDefault = path.defaultValue;
+    path.defaultValue = undefined;
+    try {
+      const source = await makeLead();
+      const result = await api(source._id, 'contact');
+      assert.equal(result.status, 200, JSON.stringify(result));
+      assert(await Contact.exists({ _id: result.data.contactId, deleted: false }));
+      const listing = await fetch('http://127.0.0.1:' + server.address().port + '/api/contact', {
+        headers: { Authorization: jwt.sign({ userId: actor._id }, jwtSecret, { expiresIn: '5m' }) },
+      });
+      assert((await listing.json()).some(record => record._id === result.data.contactId));
+    } finally { path.defaultValue = originalDefault; }
+  });
 
   await t.test('users create leads without selections or required fields and can convert them by either action', async () => {
     for (const mode of ['contact', 'contactAndOpportunity']) {
@@ -80,13 +107,23 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
     const call = await Call.create({ createByLead: lead._id, sender: actor._id });
     const quote = await Quote.create({ lead: lead._id, createBy: actor._id });
     const folder = await Document.create({ folderName: 'Lead docs', createBy: actor._id,
-      file: [{ fileName: 'plan.pdf', path: '/test/plan.pdf', linkLead: lead._id, entityType: 'Lead', entityId: lead._id }] });
+      file: [{ fileName: 'plan.pdf', path: '/test/plan.pdf', linkLead: lead._id, entityType: 'Lead', entityId: lead._id,
+        relatedRecords: [{ entityType: 'Lead', entityId: lead._id, label: lead.leadName }] },
+        { fileName: 'legacy.txt', path: '/test/legacy.txt' }] });
+    await Document.collection.updateOne({ _id: folder._id }, { $unset: { 'file.1.relatedRecords': '' } });
     const result = await api(lead._id, 'contact');
     assert.equal(result.status, 200, JSON.stringify(result));
     assert.equal(result.data.opportunityId, null);
     const contact = await Contact.findById(result.data.contactId).lean();
     assert.equal(contact.fullName, lead.leadName); assert.equal(contact.email, lead.leadEmail);
     assert.equal(contact.phoneNumber, lead.leadMobile); assert.equal(contact.campaign, lead.leadCampaign);
+    assert.equal(contact.deleted, false);
+    assert.deepEqual(contact.customFields, lead.customFields);
+    const listing = await fetch('http://127.0.0.1:' + server.address().port + '/api/contact', {
+      headers: { Authorization: jwt.sign({ userId: actor._id }, jwtSecret, { expiresIn: '5m' }) },
+    });
+    assert.equal(listing.status, 200);
+    assert.equal((await listing.json())[0]._id, String(contact._id), 'the transferred contact is visible on the first page');
     assert.deepEqual(contact.convertedLeads[0].values.customFields, lead.customFields);
     assert.deepEqual(contact.convertedLeads[0].values.leadStatus, lead.leadStatus);
     assert.equal((await Lead.findById(lead._id)).deleted, true);
@@ -103,6 +140,9 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
     const file = (await Document.findById(folder._id)).file[0];
     assert.equal(String(file.linkContact), String(contact._id)); assert.equal(file.linkLead, undefined);
     assert.equal(file.entityType, 'Contact');
+    assert.equal(file.relatedRecords[0].entityType, 'Contact');
+    assert.equal(String(file.relatedRecords[0].entityId), String(contact._id));
+    assert.equal(file.relatedRecords[0].label, contact.fullName);
     assert.equal((await api(lead._id, 'contact')).status, 404);
   });
   await t.test('combined transfer creates connected opportunity with original data', async () => {
@@ -115,6 +155,7 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
     assert.equal(opportunity.description, lead.leadMessage);
     assert.equal(opportunity.convertedLeads[0].values.leadEmail, lead.leadEmail);
     assert.deepEqual(opportunity.convertedLeads[0].values.customFields, lead.customFields);
+    assert.deepEqual(opportunity.customFields, lead.customFields);
     assert((await Contact.findById(result.data.contactId)).relatedOpportunities.some(id => String(id) === result.data.opportunityId));
     assert.equal((await Lead.findById(lead._id)).deleted, true);
   });

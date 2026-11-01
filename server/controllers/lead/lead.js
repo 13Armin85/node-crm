@@ -18,6 +18,15 @@ const index = async (req, res) => {
       path: "createBy",
       select: "firstName lastName username",
     })
+    .populate({
+      path: "assignUser",
+      select: "firstName lastName username",
+    })
+    .populate({
+      path: "associatedListing",
+      select: "title name",
+      match: readScope(req, req.actor, "Properties", { deleted: false }),
+    })
     .exec();
 
   const result = allData;

@@ -1,8 +1,12 @@
 # Publish a validated staged build without deleting assets still used by open tabs.
+param(
+    [string]$ReleaseDirectory = (Join-Path $PSScriptRoot '../layout-artifacts/mobile-pwa/release')
+)
 $ErrorActionPreference = 'Stop'
 $crmWorkspace = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$crmRelease = [System.IO.Path]::GetFullPath((Join-Path $crmWorkspace 'layout-artifacts/mobile-pwa/release'))
+$crmRelease = [System.IO.Path]::GetFullPath($ReleaseDirectory)
 $crmLive = [System.IO.Path]::GetFullPath((Join-Path $crmWorkspace 'client/build'))
+if ($crmRelease.Equals($crmLive, [StringComparison]::OrdinalIgnoreCase)) { throw 'Release and live directories must differ.' }
 foreach ($crmDirectory in @($crmRelease, $crmLive)) {
     if (-not $crmDirectory.StartsWith($crmWorkspace + [System.IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Build path is outside the workspace.' }
     if (-not (Test-Path -LiteralPath $crmDirectory -PathType Container)) { throw "Build directory missing: $crmDirectory" }

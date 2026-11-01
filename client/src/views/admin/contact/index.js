@@ -33,6 +33,7 @@ import { fetchContactData } from "../../../redux/slices/contactSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchContactCustomFiled } from "../../../redux/slices/contactCustomFiledSlice";
 import { toast } from "react-toastify";
+import useRecordRefresh from 'utils/useRecordRefresh';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ const Index = () => {
   const [phoneRec, setPhoneRec] = useState({});
 
   const data = useSelector((state) => state?.contactData?.data);
+  useRecordRefresh(() => dispatch(fetchContactData()));
 
   const handleOpenEmail = (id, dataContact) => {
     if (id) {

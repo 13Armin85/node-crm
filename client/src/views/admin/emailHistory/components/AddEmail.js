@@ -1,3 +1,4 @@
+import { submitEmail } from 'utils/emailSubmission';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import {
@@ -23,21 +24,22 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { LiaMousePointerSolid } from "react-icons/lia";
-import Spinner from "components/spinner/Spinner";
 import dayjs from "dayjs";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { emailSchema } from "schema";
-import { postApi, getApi } from "services/api";
+import { getApi } from "services/api";
 import { fetchEmailTempData } from "../../../../redux/slices/emailTempSlice";
 import UserModel from "components/commonTableModel/UserModel";
 
 const AddEmailHistory = (props) => {
   const { onClose, isOpen, fetchData, setAction } = props;
   const user = JSON.parse(localStorage.getItem("user"));
+  const [sendDate] = useState(() => dayjs().format("YYYY-MM-DDTHH:mm"));
   const [isLoding, setIsLoding] = useState(false);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
   const todayTime = new Date()?.toISOString()?.split(".")[0];
   const [data, setData] = useState([]);
   const [assignToSalesData, setAssignToSalesData] = useState([]);
@@ -51,21 +53,18 @@ const AddEmailHistory = (props) => {
     message: "",
     createByContact: props?.id && props?.lead !== true ? props?.id : "",
     createByLead: props?.id && props?.lead === true ? props?.id : "",
-    startDate: "",
+    startDate: sendDate,
     type: "message",
     html: "",
     createBy: user?._id,
-    salesAgent: "", // sales person user id
+    salesAgent: user?.role === "user" ? user?._id : "",
   };
 
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: emailSchema,
     enableReinitialize: true,
-    onSubmit: (values, { resetForm }) => {
-      AddData();
-      resetForm();
-    },
+    onSubmit: async (submittedValues, helpers) => { await AddData(submittedValues, helpers); },
   });
   const {
     errors,
@@ -77,31 +76,26 @@ const AddEmailHistory = (props) => {
     setFieldValue,
   } = formik;
 
-  const AddData = async () => {
-    try {
-      setIsLoding(true);
-      let response = await postApi("api/email/add", values);
-      if (response?.status === 200) {
-        props?.onClose();
-        fetchData(1);
-        // setAction((pre) => !pre)
-      }
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoding(false);
-    }
-  };
-
-  const fetchEmailTemp = async () => {
+  const AddData = async (submittedValues, helpers) => {
     setIsLoding(true);
-    const result = await dispatch(fetchEmailTempData());
-    if (result?.payload?.status === 200) {
-      setData(result?.payload?.data);
-    } else {
-      toast.error(tr("Failed to fetch data"), tr("error"));
-    }
-    setIsLoding(false);
+    try {
+      if (await submitEmail(submittedValues, helpers)) {
+        props?.onClose();
+        fetchData?.(1);
+      }
+    } finally { setIsLoding(false); }
+  };
+  const fetchEmailTemp = async () => {
+    setTemplatesLoading(true);
+    try {
+      const result = await dispatch(fetchEmailTempData());
+      if (result?.payload?.status === 200 && Array.isArray(result.payload.data)) {
+        setData(result.payload.data);
+      } else {
+        toast.error(tr('Failed to fetch data'));
+      }
+    } catch (_) { toast.error(tr('Failed to fetch data')); }
+    finally { setTemplatesLoading(false); }
   };
 
   const fetchUsersData = async () => {
@@ -120,7 +114,7 @@ const AddEmailHistory = (props) => {
   };
 
   useEffect(() => {
-    if (values?.type === "template") fetchEmailTemp();
+    if (values?.type === "template" && data.length === 0 && !templatesLoading) fetchEmailTemp();
   }, [values?.type]);
 
   useEffect(() => {
@@ -138,7 +132,7 @@ const AddEmailHistory = (props) => {
   return (
     <Modal onClose={onClose} isOpen={isOpen} isCentered>
       <ModalOverlay />
-      <ModalContent className="crm-record-form">
+      <ModalContent className="crm-record-form crm-email-form">
         <ModalHeader><LocalizedText text="Send Email" /></ModalHeader>
         <ModalCloseButton />
         <ModalBody><ManagedFormLayout moduleName="Emails" formik={formik}>
@@ -214,14 +208,14 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              ><LocalizedText text="Start Date" /><Text color={"red"}>*</Text>
+              ><LocalizedText text="Start Date" />
               </FormLabel>
               <Input
                 type="datetime-local"
                 fontSize="sm"
                 onChange={handleChange}
                 onBlur={handleBlur}
-                min={dayjs(todayTime).format("YYYY-MM-DD HH:mm")}
+                min={dayjs(todayTime).format("YYYY-MM-DDTHH:mm")}
                 value={values?.startDate}
                 name="startDate"
                 fontWeight="500"
@@ -241,7 +235,7 @@ const AddEmailHistory = (props) => {
                 fontSize="sm"
                 fontWeight="500"
                 mb="8px"
-              ><LocalizedText text="Assign To Sales Agent" /><Text color={"red"}>*</Text>
+              ><LocalizedText text="Assign To Sales Agent" />
               </FormLabel>
               <Flex justifyContent={"space-between"}>
                 <Select
@@ -302,7 +296,7 @@ const AddEmailHistory = (props) => {
                 </Stack>
               </RadioGroup>
             </GridItem>
-            <GridItem colSpan={{ base: 12 }}>
+            <GridItem colSpan={{ base: 12 }} className="crm-email-content">
               {values?.type === "message" ? (
                 <>
                   <Textarea
@@ -327,11 +321,12 @@ const AddEmailHistory = (props) => {
                 <Select
                   // value={values.assignTo}
                   name="html"
+                  isDisabled={templatesLoading}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   value={values?.html}
                   fontWeight="500"
-                  placeholder={tr("Select Template")}
+                  placeholder={tr(templatesLoading ? "estate.loading" : "Select Template")}
                   // borderColor={errors.assignTo && touched.assignTo ? "red.300" : null}
                 >
                   {data?.map((item) => {
@@ -352,9 +347,10 @@ const AddEmailHistory = (props) => {
             size="sm"
             variant="brand"
             onClick={handleSubmit}
-            disabled={isLoding ? true : false}
+            isLoading={isLoding}
+            disabled={isLoding || (values.type === "template" && templatesLoading)}
           >
-            {isLoding ? <Spinner /> : tr("Save")}
+            {tr("Save")}
           </Button>
           <Button
             sx={{

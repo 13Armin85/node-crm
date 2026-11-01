@@ -247,6 +247,12 @@ Hello World|سلام دنیا|Merhaba Dünya
 Physical Address|نشانی محل|Fiziksel Adres
 Preferred Contact Method|روش ارتباط ترجیحی|Tercih Edilen İletişim Yöntemi
 Lead Name|نام لید|Müşteri Adayı Adı
+Lead Owner|کارشناس مسئول سرنخ|Sorumlu Müşteri Adayı Uzmanı
+Related Property|ملک مرتبط|İlgili Gayrimenkul
+Creation Date|تاریخ ثبت|Oluşturma Tarihi
+Responsible Agent|کارشناس مسئول ملک|Sorumlu Gayrimenkul Uzmanı
+For Sale|فروش|Satılık
+For Rent|اجاره|Kiralık
 Lead Email|ایمیل لید|Müşteri Adayı E-postası
 Lead Phone Number|تلفن لید|Müşteri Adayı Telefonu
 Lead Address|نشانی لید|Müşteri Adayı Adresi
@@ -265,7 +271,7 @@ Year Built|سال ساخت|Yapım Yılı
 Property Description|توضیحات ملک|Gayrimenkul Açıklaması
 Website URL|نشانی وب‌سایت|Web Sitesi Bağlantısı
 Bank Details|اطلاعات بانکی|Banka Bilgileri
-Email Send successfully|ایمیل با موفقیت ثبت شد|E-posta başarıyla kaydedildi
+Email Send successfully|ایمیل با موفقیت ارسال شد|E-posta başarıyla gönderildi
 Send Email|ارسال ایمیل|E-posta Gönder
 Text Message|پیام متنی|Metin Mesajı
 Text Msg|پیام متنی|Metin Mesajı
@@ -427,6 +433,16 @@ for (const row of rows.trim().split('\n')) {
   const [en, fa, tr] = row.split('|'); dictionaries.fa[en] = fa; dictionaries.tr[en] = tr;
 }
 const special = {
+  'Delete selected emails from history?': ['ایمیل‌های انتخاب‌شده از سابقه حذف شوند؟', 'Seçili e-postalar geçmişten silinsin mi?'],
+  'Email history deleted successfully': ['ایمیل‌ها از سابقه حذف شدند.', 'E-postalar geçmişten silindi.'],
+  'Could not delete the selected emails. Please try again.': ['حذف ایمیل‌ها انجام نشد؛ دوباره تلاش کنید.', 'Seçili e-postalar silinemedi. Lütfen yeniden deneyin.'],
+  'Email sending is not configured. Contact the administrator.': ['ارسال ایمیل تنظیم نشده است. با مدیر سامانه تماس بگیرید.', 'E-posta gönderimi yapılandırılmamış. Yöneticiyle iletişime geçin.'],
+  'Email could not be sent. Your message has been kept. Please try again.': ['ایمیل ارسال نشد. متن پیام حفظ شده است؛ دوباره تلاش کنید.', 'E-posta gönderilemedi. Mesajınız korundu. Lütfen yeniden deneyin.'],
+  'Message Is required': ['متن پیام الزامی است', 'Mesaj zorunludur'],
+  'Email sent': ['ارسال‌شده', 'Gönderildi'],
+  'Email failed': ['ارسال ناموفق', 'Gönderilemedi'],
+  'Email sending': ['در حال ارسال', 'Gönderiliyor'],
+  'Email recorded': ['ثبت‌شده', 'Kaydedildi'],
   'KDV': ['مالیات بر ارزش افزوده (KDV)', 'KDV'],
   'KDV (%)': ['نرخ مالیات بر ارزش افزوده (%)', 'KDV (%)'],
   'KDV Matrahı': ['مبنای مالیات بر ارزش افزوده', 'KDV Matrahı'],

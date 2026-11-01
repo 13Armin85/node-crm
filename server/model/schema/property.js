@@ -48,6 +48,8 @@ const propertySchema = new mongoose.Schema({
     isInsideResidence: { type: Boolean, default: false },
     residence: { type: mongoose.Schema.Types.ObjectId, ref: 'Residences', default: null },
     bedroom: { type: String, enum: [...require('../../services/estateCatalog').bedrooms, null] },
+    propertyAgent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    propertyOwner: { type: mongoose.Schema.Types.ObjectId, ref: 'Contacts', default: null },
     buildingAge: { type: String, enum: require('../../services/estateCatalog').ages },
     occupancyStatus: { type: String, enum: ['EMPTY', 'TENANTED', 'OWNER_OCCUPIED'] },
     floor: { type: String, enum: require('../../services/estateCatalog').floors },

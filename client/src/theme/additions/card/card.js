@@ -1,12 +1,12 @@
 import { mode } from "@chakra-ui/theme-tools";
 const Card = {
   baseStyle: (props) => ({
-    p: "20px",
+    p: "14px",
     display: "flex",
     flexDirection: "column",
     width: "100%",
     position: "relative",
-    borderRadius: "18px",
+    borderRadius: "6px",
     minWidth: "0px",
     wordWrap: "break-word",
     bg: mode("rgba(255,255,255,0.94)", "rgba(17,24,39,0.92)")(props),
@@ -14,11 +14,7 @@ const Card = {
     borderColor: mode("rgba(15, 102, 184, 0.10)", "rgba(255,255,255,0.08)")(
       props,
     ),
-    boxShadow: mode(
-      "0 12px 35px rgba(25, 42, 75, 0.07)",
-      "0 20px 55px rgba(0,0,0,0.32)",
-    )(props),
-    backdropFilter: "blur(16px)",
+    boxShadow: "none",
     backgroundClip: "border-box",
     transition: "transform .18s ease, box-shadow .18s ease, border-color .18s ease",
     _hover: {

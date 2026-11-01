@@ -9,6 +9,7 @@ import { getApi, postApi } from 'services/api';
 import { toast } from 'react-toastify';
 jest.mock('services/api', () => ({ getApi: jest.fn(), postApi: jest.fn(), deleteApi: jest.fn(), getApiBlob: jest.fn() }));
 jest.mock('react-toastify', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
+jest.mock('./component/Upload', () => props => <input aria-label="Test document file" type="file" onChange={event => props.onFileSelect(Array.from(event.target.files))} />);
 const folders = [
   { _id: 'root', isRoot: true, createBy: 'admin', files: [{ _id: 'root-file', fileName: 'Root.txt' }] },
   { _id: 'parent', folderName: 'Parent', createBy: 'admin', files: [{ _id: 'folder-file', fileName: 'Inside.txt' }] },
@@ -85,4 +86,30 @@ test('a user cannot send or move foreign files or folders', async () => {
   expect(document.querySelector('.crm-share-record-button')).toBeNull();
   expect(document.querySelector('button[aria-label="Move file"]')).toBeNull();
   expect(document.querySelector('button[aria-label="Move folder"]')).toBeNull();
+});
+
+test.each([
+  ['PROPERTIES', 'Property', 'document-property-owner', 'linkContact'],
+  ['LEADS', 'Lead', 'document-related-property', 'linkProperty'],
+  ['CONTACTS', 'Contact', 'document-related-property', 'linkProperty'],
+])('uploading in %s submits the selected related owner or property', async (category, type, secondaryInput, secondaryField) => {
+  getApi.mockImplementation(async path => ({ status: 200, data: path.includes('/definitions/') ? { moduleName: 'Documents', fields: [] }
+    : path === 'api/document' ? folders : path.includes('/related-options?') ? {
+      contacts: type === 'Property' ? [{ value: 'secondary', label: 'Villa Owner' }] : [],
+      properties: type !== 'Property' ? [{ value: 'secondary', label: 'Garden Villa' }] : [],
+    } : [{ _id: 'primary', fullName: 'Owner', title: 'Villa', leadName: 'Lead' }] }));
+  await render();
+  await act(async () => Simulate.click(button('Upload document')));
+  const modal = document.querySelector('.crm-record-form--upload');
+  const categorySelect = [...modal.querySelectorAll('select')].find(select => [...select.options].some(option => option.value === category));
+  await act(async () => Simulate.change(categorySelect, { target: { value: category } }));
+  const primarySelect = [...modal.querySelectorAll('select')].find(select => [...select.options].some(option => option.value === 'primary'));
+  await act(async () => Simulate.change(primarySelect, { target: { value: 'primary' } }));
+  await act(async () => Simulate.change(document.getElementById(secondaryInput), { target: { value: 'secondary' } }));
+  await act(async () => Simulate.change(modal.querySelector('input[type=file]'), { target: { files: [new File(['document'], 'plan.txt', { type: 'text/plain' })] } }));
+  await act(async () => Simulate.click(button('Upload 1 Files')));
+  const [route, payload] = postApi.mock.calls.find(([route]) => route === 'api/document/add');
+  expect(route).toBe('api/document/add'); expect(payload.get('entityType')).toBe(type);
+  expect(payload.get('entityId')).toBe('primary'); expect(payload.get(secondaryField)).toBe('secondary');
+  expect(payload.getAll('files')).toHaveLength(1);
 });

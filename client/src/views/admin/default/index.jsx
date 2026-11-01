@@ -44,59 +44,33 @@ import { useLanguage } from "i18n";
 import CurrencyAmount from "components/CurrencyAmount";
 
 const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, meta, action, mb = 4 }) => {
-  const background = useColorModeValue(
-    "linear-gradient(135deg, #f8faff 0%, #f1f5ff 100%)",
-    "linear-gradient(135deg, rgba(117, 81, 255, .18) 0%, rgba(17, 28, 68, .55) 100%)",
-  );
-  const borderColor = useColorModeValue("#e8edff", "whiteAlpha.200");
-  const titleColor = useColorModeValue("secondaryGray.900", "white");
-  const mutedColor = useColorModeValue("secondaryGray.600", "secondaryGray.300");
-  const metaBg = useColorModeValue("white", "whiteAlpha.100");
-
   return (
     <Flex
       className="crm-dashboard-card-header"
       align={{ base: "flex-start", sm: "center" }}
       justify="space-between"
-      direction={{ base: "column", sm: "row" }}
+      direction="row"
       gap={3}
       mb={mb}
-      p={3}
-      border="1px solid"
-      borderColor={borderColor}
-      borderRadius="16px"
-      bg={background}
-      position="relative"
-      overflow="hidden"
+      pb={3}
+      borderBottom="1px solid var(--crm-border)"
     >
-      <Box
-        position="absolute"
-        insetInlineStart="0"
-        top="10px"
-        bottom="10px"
-        w="4px"
-        borderRadius="full"
-        bg="linear-gradient(180deg, #7551ff 0%, #39b8ff 100%)"
-      />
-      <Flex className="crm-dashboard-card-header__main" align="center" minW={0} ps={2}>
+      <Flex className="crm-dashboard-card-header__main" align="center" minW={0}>
         <Flex
           className="crm-dashboard-card-header__icon"
-          w="42px"
-          h="42px"
+          w="28px"
+          h="28px"
           flexShrink={0}
           align="center"
           justify="center"
-          me={3}
-          color="white"
-          borderRadius="13px"
-          bg="linear-gradient(135deg, #7551ff 0%, #4318ff 100%)"
-          boxShadow="0 8px 18px rgba(67, 24, 255, .24)"
+          me={2}
+          color="var(--crm-primary)"
         >
-          <Icon as={HeaderIcon} w="22px" h="22px" />
+          <Icon as={HeaderIcon} w="18px" h="18px" />
         </Flex>
         <Box className="crm-dashboard-card-header__copy" minW={0}>
-          <Heading className="crm-dashboard-card-header__title" color={titleColor} size="md" lineHeight="1.25">{title}</Heading>
-          {subtitle && <Text className="crm-dashboard-card-header__subtitle" mt={1} color={mutedColor} fontSize="sm">{subtitle}</Text>}
+          <Heading className="crm-dashboard-card-header__title" color="var(--crm-text)" size="sm" lineHeight="1.5">{title}</Heading>
+          {subtitle && <Text className="crm-dashboard-card-header__subtitle" mt={1} color="var(--crm-muted)" fontSize="xs">{subtitle}</Text>}
         </Box>
       </Flex>
       {(meta !== undefined || action) && <Flex className="crm-dashboard-card-header__tools" align="center" gap={2} ps={{ base: 2, sm: 0 }}>
@@ -107,12 +81,11 @@ const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, m
             px={2.5}
             py={1}
             textAlign="center"
-            color="brand.500"
-            bg={metaBg}
-            borderRadius="full"
-            fontSize="sm"
-            fontWeight="800"
-            boxShadow="0 4px 12px rgba(15, 23, 42, .06)"
+            color="var(--crm-primary)"
+            bg="var(--crm-panel-hover)"
+            borderRadius="4px"
+            fontSize="xs"
+            fontWeight="600"
           >
             {meta}
           </Text>
@@ -306,12 +279,13 @@ export default function UserReports() {
         </Flex>
       </Flex>
 
-      <SimpleGrid className="crm-dashboard-stats" columns={{ base: 1, sm: 2, xl: 4 }} gap="16px" mb="20px">
+      <SimpleGrid className="crm-dashboard-stats" columns={{ base: 1, sm: 2, xl: 4 }} gap="12px" mb="12px">
         {(taskView?.create || taskView?.update || taskView?.delete || taskView?.view) && ((isAdmin(user) || tasksModule?.isActive)) &&
           <MiniStatistics
             onClick={() => navigate("/task")}
             startContent={
               <IconBox
+                className="crm-dashboard-stat-icon"
                 w="56px"
                 h="56px"
                 bg={boxBg}
@@ -326,6 +300,7 @@ export default function UserReports() {
             onClick={() => navigate("/contacts")}
             startContent={
               <IconBox
+                className="crm-dashboard-stat-icon"
                 w="56px"
                 h="56px"
                 bg={boxBg}
@@ -342,6 +317,7 @@ export default function UserReports() {
             onClick={() => navigate("/lead")}
             startContent={
               <IconBox
+                className="crm-dashboard-stat-icon"
                 w="56px"
                 h="56px"
                 bg={boxBg}
@@ -358,6 +334,7 @@ export default function UserReports() {
             onClick={() => navigate("/properties")}
             startContent={
               <IconBox
+                className="crm-dashboard-stat-icon"
                 w="56px"
                 h="56px"
                 bg={boxBg}
@@ -372,14 +349,14 @@ export default function UserReports() {
       </SimpleGrid>
 
       {(proprtyView?.view || isAdmin(user)) && (isAdmin(user) || propertiesModule?.isActive) && (
-        <Card className="crm-sales-performance" mb="20px" overflow="hidden">
+        <Card className="crm-dashboard-panel crm-sales-performance" mb="12px" overflow="hidden">
           <DashboardCardHeader
             title={t('dashboard.salesPerformance')}
             subtitle={t('dashboard.salesPerformanceHint')}
             icon={MdAttachMoney}
           />
           {salesLoading ? <Flex minH="180px" align="center" justify="center"><Spinner /></Flex> : <>
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4" mb="6">
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing="3" mb="3">
               <Box className="crm-finance-kpi crm-finance-kpi--success">
                 <Icon as={MdAttachMoney} className="crm-finance-kpi__icon" />
                 <Text className="crm-finance-kpi__label">{t('dashboard.realizedSales')}</Text>
@@ -423,7 +400,7 @@ export default function UserReports() {
         {
           (isAdmin(user) || reportModule?.isActive) && ((isAdmin(user) || emailModule?.isActive) || (isAdmin(user) || callModule?.isActive)) &&
           <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
-            <Card>
+            <Card className="crm-dashboard-panel">
               <DashboardCardHeader
                 title={`${t(((isAdmin(user) || emailModule?.isActive) && (isAdmin(user) || callModule?.isActive)) ? "Email and Call" : (isAdmin(user) || emailModule?.isActive) ? "Email" : (isAdmin(user) || callModule?.isActive) ? "Call" : "")} ${t("Report")}`}
                 icon={MdShowChart}
@@ -438,28 +415,28 @@ export default function UserReports() {
                   />
                 : null}
               />
-              <ReportChart dashboard={"dashboard"} />
+              <Box className="crm-dashboard-chart-body"><ReportChart dashboard={"dashboard"} /></Box>
             </Card>
           </GridItem>
         }
         <GridItem rowSpan={2} colSpan={{ base: 12, md: 6 }}>
-          <Card>
+          <Card className="crm-dashboard-panel">
             <DashboardCardHeader
               title={<LocalizedText text="Module Data Report" />}
               icon={MdOutlineAssessment}
             />
-            <Chart dashboard={"dashboard"} data={data} />
+            <Box className="crm-dashboard-chart-body"><Chart dashboard={"dashboard"} data={data} /></Box>
           </Card>
         </GridItem>
       </Grid>
-      <SimpleGrid gap="20px" columns={{
+      <SimpleGrid className="crm-dashboard-details" gap="12px" columns={{
         base: 1, md: leadView?.view && taskView?.view ? 2 : 2, lg:
           leadView?.view && taskView?.view ? 3 : 2
-      }} my="20px">
+      }} my="12px">
 
         {
           data && data.length > 0 &&
-          <Card >
+          <Card className="crm-dashboard-panel">
             <DashboardCardHeader
               title={<LocalizedText text="Statistics" />}
               icon={MdInsights}
@@ -469,6 +446,7 @@ export default function UserReports() {
               !isLoding ?
                 data && data.length > 0 && data?.map((item, i) => (
                   <Box
+                    className="crm-dashboard-statistic"
                     key={i}
                     bg={statisticsItemBg}
                     border={statisticsItemBorder}
@@ -512,15 +490,15 @@ export default function UserReports() {
           </Card>
         }
 
-        {leadView?.view && ((isAdmin(user) || leadModule?.isActive)) && <Card className="crm-lead-chart">
+        {leadView?.view && ((isAdmin(user) || leadModule?.isActive)) && <Card className="crm-dashboard-panel crm-lead-chart">
           <DashboardCardHeader
             title={<LocalizedText text="Lead Statistics" />}
             icon={MdPieChart}
           />
           {(leadView?.view) &&
             <Grid templateColumns="repeat(12, 1fr)" gap={2}>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box bg={leadStatStyles.total.bg}
+              <GridItem colSpan={6}>
+                <Box className="crm-dashboard-status-tile" bg={leadStatStyles.total.bg}
                   border={leadStatStyles.total.border}
                   borderRadius={"10px"}
                   cursor={"pointer"}
@@ -530,8 +508,8 @@ export default function UserReports() {
                   <Text fontWeight={600} color={leadStatStyles.total.color}><CountUpComponent targetNumber={allData?.leadData?.length || 0} /> </Text>
                 </Box>
               </GridItem>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box bg={leadStatStyles.active.bg}
+              <GridItem colSpan={6}>
+                <Box className="crm-dashboard-status-tile" bg={leadStatStyles.active.bg}
                   border={leadStatStyles.active.border}
                   borderRadius={"10px"}
                   cursor={"pointer"}
@@ -541,8 +519,8 @@ export default function UserReports() {
                   <Text fontWeight={600} color={leadStatStyles.active.color}><CountUpComponent targetNumber={findLeadStatus("active")} /></Text>
                 </Box>
               </GridItem>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box bg={leadStatStyles.pending.bg}
+              <GridItem colSpan={6}>
+                <Box className="crm-dashboard-status-tile" bg={leadStatStyles.pending.bg}
                   border={leadStatStyles.pending.border}
                   onClick={() => navigate('/lead', { state: 'pending' })}
                   borderRadius={"10px"}
@@ -553,8 +531,8 @@ export default function UserReports() {
                 </Box>
               </GridItem>
 
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Box bg={leadStatStyles.sold.bg}
+              <GridItem colSpan={6}>
+                <Box className="crm-dashboard-status-tile" bg={leadStatStyles.sold.bg}
                   border={leadStatStyles.sold.border}
                   borderRadius={"10px"}
                   cursor={"pointer"}
@@ -572,7 +550,7 @@ export default function UserReports() {
 
         </Card>}
 
-        {taskView?.view && ((isAdmin(user) || tasksModule?.isActive)) && <Card >
+        {taskView?.view && ((isAdmin(user) || tasksModule?.isActive)) && <Card className="crm-dashboard-panel">
           <DashboardCardHeader
             title={<LocalizedText text="Task Statistics" />}
             icon={MdTaskAlt}
@@ -580,6 +558,7 @@ export default function UserReports() {
           <Grid templateColumns="repeat(12, 1fr)" gap={2} mb={2}>
             <GridItem colSpan={{ base: 12 }}>
               <Box
+                className="crm-dashboard-status-tile"
                 bg={taskTotalBg}
                 border={taskTotalBorder}
                 onClick={() => navigate('/task')}
@@ -594,6 +573,7 @@ export default function UserReports() {
             <Box my={1.5} key={i}>
               {/* <Flex justifyContent={"space-between"} cursor={'pointer'} onClick={() => navigate('/task', { state: item.status })} alignItems={"center"} padding={4} backgroundColor={"#0b0b0b17"} borderRadius={"10px"}> */}
               <Flex
+                className="crm-dashboard-task-status"
                 justifyContent={"space-between"}
                 cursor={'pointer'}
                 alignItems={"center"}

@@ -16,7 +16,7 @@ const index = async (req, res) => {
     let allData = await Contact.find(query).populate({
         path: 'createBy',
         match: { deleted: false } // Populate only if createBy.deleted is false
-    }).exec()
+    }).sort({ createdDate: -1, _id: -1 }).exec()
 
     const result = allData;
 

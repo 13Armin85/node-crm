@@ -7,7 +7,8 @@ const { getDefinition } = require('./formDefinitions');
 const { syncOpportunity, unlinkLead } = require('./relationshipSync');
 
 const fail = (code, status = 400) => Object.assign(new Error(code), { code, status });
-const usable = value => value !== undefined && value !== null && value !== '';
+const usable = value => value !== undefined && value !== null && value !== ''
+  && (!Array.isArray(value) || value.length > 0);
 const contactValues = lead => ({
   fullName: lead.leadName,
   email: lead.leadEmail,
@@ -37,7 +38,7 @@ const opportunityValues = (lead, contactId) => ({
 
 // Every step is repeatable. Persist destination IDs before writing them, so a
 // failed request can resume on standalone MongoDB without creating duplicates.
-const transferHistory = async (leadId, contactId, snapshot) => {
+const transferHistory = async (leadId, contactId, snapshot, contactLabel) => {
   for (const name of ['email', 'phoneCall']) {
     const Model = require('../model/schema/' + name);
     await Model.updateMany({ createByLead: leadId }, { $set: { createByContact: contactId }, $unset: { createByLead: 1 } });
@@ -53,6 +54,11 @@ const transferHistory = async (leadId, contactId, snapshot) => {
     $set: { 'file.$[linked].linkContact': contactId, 'file.$[linked].entityType': 'Contact', 'file.$[linked].entityId': contactId, 'file.$[linked].category': 'CONTACTS' },
     $unset: { 'file.$[linked].linkLead': 1 },
   }, { arrayFilters: [{ 'linked.linkLead': leadId }] });
+  await require('../model/schema/document').updateMany({ 'file.relatedRecords': { $elemMatch: { entityType: 'Lead', entityId: leadId } } }, {
+    $set: { 'file.$[linked].relatedRecords.$[source].entityType': 'Contact',
+      'file.$[linked].relatedRecords.$[source].entityId': contactId, 'file.$[linked].relatedRecords.$[source].label': contactLabel || '—' },
+  }, { arrayFilters: [{ 'linked.relatedRecords': { $elemMatch: { entityType: 'Lead', entityId: leadId } } },
+    { 'source.entityType': 'Lead', 'source.entityId': leadId }] });
   // Existing opportunities and quotes must keep their customer after conversion.
   const opportunities = await Opportunity.find({ lead: leadId, deleted: false });
   for (const opportunity of opportunities) {
@@ -86,11 +92,12 @@ const convertLead = async (req) => {
     } });
     const definition = await getDefinition('Leads');
     const { conversion, _duplicateKeys, __v, deleted, ...values } = lead;
-    const snapshot = { leadId: String(lead._id), values, fields: (definition?.fields || []).map(({ name, label, kind }) => ({ name, label, kind })) };
+    const snapshot = { leadId: String(lead._id), values, fields: (definition?.fields || []).map(({ name, label, kind, relation, ref, type }) => ({ name, label, kind, relation, ref, type })) };
     let contact = await Contact.findOne({ _id: contactId, deleted: false, ...scope(req, 'Contacts') });
     if (!contact && (lead.contact || await Contact.exists({ _id: contactId }))) throw fail('relationNotFound', 404);
     if (contact && !can(req.actor, 'Contacts', 'update')) throw fail('forbidden', 403);
-    contact ||= new Contact({ _id: contactId, createBy: lead.assignUser || lead.createBy, createdDate: new Date() });
+    contact ||= new Contact({ _id: contactId, createBy: lead.assignUser || lead.createBy,
+      createdDate: new Date(), updatedDate: new Date(), deleted: false });
     // Copy shared schema fields as well as aliases; preserve an existing contact's
     // own values, and retain every original value in its source snapshot.
     const mapped = { ...values, ...contactValues(lead) };
@@ -98,25 +105,32 @@ const convertLead = async (req) => {
       if (['_id', 'createBy', 'createdDate', 'updatedDate', 'customFields', 'relatedLeads', 'relatedOpportunities', 'lead', 'contact'].includes(name)) continue;
       if (Contact.schema.path(name) && usable(value) && !usable(contact.get(name))) contact.set(name, value);
     }
+    contact.customFields = { ...(lead.customFields || {}), ...(contact.customFields || {}) };
     contact.convertedLeads = [...(contact.convertedLeads || []).filter(item => item.leadId !== snapshot.leadId), snapshot];
     if (lead.associatedListing) {
       contact.interestProperty.addToSet(lead.associatedListing);
       contact.relatedProperties.addToSet(lead.associatedListing);
     }
     for (const id of lead.relatedOpportunities || []) contact.relatedOpportunities.addToSet(id);
+    // Visibility is part of the transfer, even with legacy Mixed form metadata.
+    contact.set('deleted', false);
     await contact.save();
+    if (!await Contact.exists({ _id: contactId, deleted: false, 'convertedLeads.leadId': snapshot.leadId })) {
+      throw fail('conversionIncomplete', 409);
+    }
     let opportunity = null;
     if (opportunityId) {
       opportunity = await Opportunity.findOne({ _id: opportunityId, deleted: false, ...scope(req, 'Opportunities') });
       if (!opportunity) {
         if (await Opportunity.exists({ _id: opportunityId })) throw fail('relationNotFound', 404);
         opportunity = new Opportunity({ _id: opportunityId, ...opportunityValues(lead, contactId),
+          customFields: lead.customFields || {},
           createBy: lead.assignUser || lead.createBy, modifiedBy: req.actor._id, convertedLeads: [snapshot] });
         await opportunity.save();
       }
       await syncOpportunity(opportunity);
     }
-    await transferHistory(lead._id, contactId, snapshot);
+    await transferHistory(lead._id, contactId, snapshot, contact.fullName || lead.leadName);
     await unlinkLead(lead._id);
     const done = await Lead.updateOne({ _id: lead._id, 'conversion.lock': lock }, {
       $set: { deleted: true, 'conversion.completedAt': new Date() }, $unset: { 'conversion.lock': 1, 'conversion.lockedAt': 1 },

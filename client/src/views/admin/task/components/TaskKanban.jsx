@@ -104,7 +104,7 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
               <Flex justify="space-between" align="center" mb={3} px={1}>
                 <Flex align="center" gap={2} minW={0}>
                   <Box w="9px" h="9px" flexShrink={0} borderRadius="full" bg={`${column.color}.400`} />
-                  <Text fontWeight="800" fontSize="sm" noOfLines={1}>{t(column.title)}</Text>
+                  <Text fontWeight="800" fontSize="sm" overflowWrap="anywhere">{t(column.title)}</Text>
                 </Flex>
                 <Badge borderRadius="full" colorScheme={column.color}>{items.length}</Badge>
               </Flex>
@@ -144,14 +144,14 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
                                 minW={0}
                                 onDoubleClick={() => onView(task._id)}
                               >
-                                <Flex align="start" justify="space-between" gap={2} mb={2}>
-                                  <Text fontWeight="800" fontSize="sm" noOfLines={2} minW={0}>{task.title}</Text>
+                                <Flex align="start" justify="space-between" wrap="wrap" gap={2} mb={2}>
+                                  <Text className="crm-kanban-card__title" fontWeight="800" fontSize="sm" flex="1 1 120px" minW={0} whiteSpace="pre-wrap" overflowWrap="anywhere">{task.title}</Text>
                                   <Badge flexShrink={0} colorScheme={priorityStyle.scheme}>{t(priority)}</Badge>
                                 </Flex>
-                                {task.description && <Text color={mutedText} fontSize="xs" noOfLines={2} mb={3}>{task.description}</Text>}
+                                {task.description && <Text className="crm-kanban-card__description" color={mutedText} fontSize="xs" whiteSpace="pre-wrap" overflowWrap="anywhere" mb={3}>{task.description}</Text>}
                                 <Flex direction="column" gap={1.5} color={mutedText} fontSize="xs">
-                                  <Flex align="center" gap={1.5} minW={0}><FiUser /><Text noOfLines={1}>{task.assignedToUserName || t("Unassigned")}</Text></Flex>
-                                  {(task.end || task.start) && <Flex align="center" gap={1.5}><FiCalendar /><Text noOfLines={1}>{task.end || task.start}</Text></Flex>}
+                                  <Flex align="start" gap={1.5} minW={0}><FiUser style={{ flexShrink: 0, marginTop: 3 }} /><Text className="crm-kanban-card__assignee" minW={0} overflowWrap="anywhere">{task.assignedToUserName || t("Unassigned")}</Text></Flex>
+                                  {(task.end || task.start) && <Flex align="start" gap={1.5} minW={0}><FiCalendar style={{ flexShrink: 0, marginTop: 3 }} /><Text minW={0} overflowWrap="anywhere">{task.end || task.start}</Text></Flex>}
                                 </Flex>
                                 {canDelegate && <Box mt={3}><AssigneeSelect
                                   searchable={false}
@@ -165,7 +165,7 @@ const TaskKanban = ({ tasks = [], assignees = [], canDelegate = false, onDelegat
                                   }}
                                 /></Box>}
                                 {task.category && task.category !== "None" && (
-                                  <Badge mt={3} colorScheme="brand" variant="subtle" borderRadius="full">
+                                  <Badge className="crm-kanban-card__related" mt={3} maxW="100%" whiteSpace="normal" overflowWrap="anywhere" colorScheme="brand" variant="subtle" borderRadius="full">
                                     {task.assignToName || t(objectValue(task.category))}
                                   </Badge>
                                 )}

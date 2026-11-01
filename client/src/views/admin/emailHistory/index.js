@@ -3,16 +3,17 @@ import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ViewIcon } from "@chakra-ui/icons";
+import { DeleteIcon, ViewIcon } from "@chakra-ui/icons";
 import {
   Button,
   Menu,
   MenuItem,
   MenuList,
+  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { getApi } from "services/api";
+import { deleteManyApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CommonCheckTable from "../../../components/reactTable/checktable";
 import { SearchIcon } from "@chakra-ui/icons";
@@ -29,7 +30,8 @@ const Index = (props) => {
   const title = "Email";
   const [action, setAction] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [selectedId, setDelete] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [selectedValues, setSelectedValues] = useState([]);
   const [advanceSearch, setAdvanceSearch] = useState(false);
   const [getTagValuesOutSide, setGetTagValuesOutside] = useState([]);
@@ -114,6 +116,10 @@ const Index = (props) => {
             ) : (
               ""
             )}
+            {permission?.delete && <MenuItem color="red.500" icon={<DeleteIcon />}
+              onClick={() => { setSelectedValues([row.original._id]); setDeleteOpen(true); }}>
+              <LocalizedText text="Delete" />
+            </MenuItem>}
           </MenuList></Portal>
         </Menu>
       </Text>
@@ -141,6 +147,10 @@ const Index = (props) => {
       ),
     },
     { Header: tr("sender Name"), accessor: "senderName" },
+    { Header: tr("Status"), accessor: "deliveryStatus", cell: cell => tr(
+      cell.value === 'SENT' ? 'Email sent' : cell.value === 'FAILED' ? 'Email failed'
+        : cell.value === 'PENDING' ? 'Email sending' : 'Email recorded'
+    ) },
     {
       Header: tr("Realeted To"),
       accessor: "realeted",
@@ -206,7 +216,7 @@ const Index = (props) => {
   const fetchData = async () => {
     setIsLoding(true);
     const result = await dispatch(fetchEmailsData());
-    let response = [...result?.payload?.data];
+    let response = Array.isArray(result?.payload?.data) ? [...result.payload.data] : [];
 
     response &&
       response?.length > 0 &&
@@ -235,6 +245,22 @@ const Index = (props) => {
       toast.error(tr("Failed to fetch data"), tr("error"));
     }
     setIsLoding(false);
+  };
+
+  const closeDelete = () => { if (!deleting) setDeleteOpen(false); };
+  const deleteEmails = async () => {
+    if (deleting || !selectedValues.length) return;
+    setDeleting(true);
+    try {
+      const response = await deleteManyApi('api/email/deleteMany', selectedValues);
+      if (response?.status === 200) {
+        setSelectedValues([]);
+        setDeleteOpen(false);
+        setAction(previous => !previous);
+        toast.success(tr('Email history deleted successfully'));
+      } else toast.error(tr('Could not delete the selected emails. Please try again.'));
+    } catch (_) { toast.error(tr('Could not delete the selected emails. Please try again.')); }
+    finally { setDeleting(false); }
   };
 
   // const [columns, setColumns] = useState([...tableColumns]);
@@ -269,8 +295,8 @@ const Index = (props) => {
         onOpen={onOpen}
         selectedValues={selectedValues}
         setSelectedValues={setSelectedValues}
-        setDelete={setDelete}
-        deleteMany={true}
+        setDelete={setDeleteOpen}
+        deleteMany={false}
         AdvanceSearch={
           <Button
             variant="outline"
@@ -299,6 +325,17 @@ const Index = (props) => {
         setSearchbox={setSearchboxOutside}
       />
 
+      <Modal isOpen={deleteOpen} onClose={closeDelete} isCentered closeOnOverlayClick={!deleting} closeOnEsc={!deleting}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader><LocalizedText text="Delete" /></ModalHeader>
+          <ModalBody><LocalizedText text="Delete selected emails from history?" /></ModalBody>
+          <ModalFooter gap={2}>
+            <Button colorScheme="red" isLoading={deleting} onClick={deleteEmails}><LocalizedText text="Yes" /></Button>
+            <Button variant="outline" isDisabled={deleting} onClick={closeDelete}><LocalizedText text="No" /></Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
       <AddEmailHistory
         isOpen={isOpen}
         size={"sm"}

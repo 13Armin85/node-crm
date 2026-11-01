@@ -69,8 +69,8 @@ const leadSchema = new mongoose.Schema({
 const initializeLeadSchema = async () => {
     const schemaFieldsData = await fetchSchemaFields();
     schemaFieldsData[0]?.fields?.forEach((item) => {
-        // Ownership references must keep their schema type and population metadata.
-        if (['createBy', 'assignUser', 'assignedBy'].includes(item.name)) return;
+        // Built-in relationships keep their types, defaults and population metadata.
+        if (['createBy', 'assignUser', 'assignedBy', 'lead', 'contact', 'partnerCustomer', 'associatedListing', 'relatedOpportunities'].includes(item.name)) return;
         let fieldData;
 
         if (item.ref) {

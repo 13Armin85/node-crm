@@ -15,7 +15,8 @@ import {
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from 'react-dom';
 import { visibilityCopy } from "views/admin/adminSetting/dataVisibilityCopy";
 import { matchRoutes, useLocation } from "react-router-dom";
 import { getStoredUser } from "services/authSession";
@@ -644,16 +645,30 @@ export default function PageHelp({ route, activeRouteName, routes = [] }) {
   );
   const borderColor = useColorModeValue("secondaryGray.200", "whiteAlpha.200");
   const accentBg = useColorModeValue("brand.50", "whiteAlpha.100");
+  const [toolbar, setToolbar] = useState(null);
+  useEffect(() => {
+    const slot = document.getElementById('crm-page-help-slot');
+    if (slot) { setToolbar(slot); return undefined; }
+    // The header itself mounts through a portal after the page's first effect.
+    const observer = new MutationObserver(() => {
+      const target = document.getElementById('crm-page-help-slot');
+      if (target) { setToolbar(target); observer.disconnect(); }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   if (!pageName) return null;
 
+  const helpButton = <Flex className="crm-page-help-container" justify="flex-end" mb={3}>
+    <Button className="crm-page-help" variant="outline" size="sm" leftIcon={<Icon as={MdHelpOutline} />} onClick={onOpen} aria-label={buttonLabels[language] || buttonLabels.en}>
+      <span className="crm-page-help__label">{buttonLabels[language] || buttonLabels.en}</span>
+    </Button>
+  </Flex>;
+
   return (
     <>
-      <Flex justify="flex-end" mb={3}>
-        <Button className="crm-page-help" variant="outline" size="sm" leftIcon={<Icon as={MdHelpOutline} />} onClick={onOpen} aria-label={buttonLabels[language] || buttonLabels.en}>
-          {buttonLabels[language] || buttonLabels.en}
-        </Button>
-      </Flex>
+      {toolbar ? createPortal(helpButton, toolbar) : helpButton}
       <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
         <ModalOverlay />
         <ModalContent bg={modalBg} dir={language === "fa" ? "rtl" : "ltr"}>

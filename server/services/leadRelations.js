@@ -26,4 +26,14 @@ const optionalLeadFields = definition => definition?.moduleName === 'Leads'
   ? { ...definition, fields: definition.fields.map(field => ({ ...field, required: false })) }
   : definition;
 
-module.exports = { optionalLeadFields, normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection };
+async function validateLeadProperty(req, body) {
+  if (body.associatedListing === undefined) return;
+  const { fail, objectId } = require('./estateValidation');
+  if (body.associatedListing === '' || body.associatedListing === null) { body.associatedListing = null; return; }
+  if (!objectId(body.associatedListing)) fail('associatedListing');
+  const { Property } = require('../model/schema/property');
+  const { readScope } = require('./recordAccess');
+  if (!await Property.exists(readScope(req, req.actor, 'Properties', { _id: body.associatedListing, deleted: false }))) fail('associatedListing', 'relationNotFound');
+}
+
+module.exports = { optionalLeadFields, normalizeLeadRelations, isLeadRelationVisible, validateLeadSelection, validateLeadProperty };

@@ -27,9 +27,13 @@ import ShareRecordButton from "components/ShareRecordButton";
 import SharedRecordBadge from "components/SharedRecordBadge";
 import PropertyStatusBadge from "components/PropertyStatusBadge";
 import { entityExportColumns, loadAllExportRows } from "utils/exportRecords";
+import PropertyOwnerField from './PropertyOwnerField';
+import { normalizeFormValues } from 'utils/managedForm';
+import { formLabel } from 'utils/formValue';
 
 const propertySections = [
   ["estate.section.basic", (name) => ["title", "description", "category", "subtype", "transactionType"].includes(name)],
+  ["estate.section.ownership", name => ['propertyAgent', 'propertyOwner'].includes(name)],
   ["estate.section.pricing", (name) => name.startsWith("price.")],
   ["estate.section.location", (name) => ["district", "neighborhood", "isInsideResidence", "residence"].includes(name)],
   ["estate.section.details", (name) => ["bedroom", "buildingAge", "occupancyStatus", "floor"].includes(name) || name.startsWith("area.")],
@@ -58,6 +62,12 @@ const residenceTableColumns = [
   ['building', 'estate.section.building'],
   ['maintenanceFee.amount', 'estate.residence.maintenanceFee'],
   ['contact', 'Contact'],
+];
+
+const propertyTableColumns = [
+  ['bedroom', 'Number Of Bedrooms'],
+  ['floor', 'Unit Floor'],
+  ['propertyAgent', 'Assigned Property Agent'],
 ];
 
 
@@ -135,7 +145,9 @@ export function EntityPage({ moduleName }) {
     validate: values => validateFormValues(definition, values),
     async onSubmit(values, helpers) {
       setError("");
-      const result = record?._id ? await putApi(`${base}/${record._id}`, values) : await postApi(base, values);
+      const payload = normalizeFormValues(definition, values);
+      const response = record?._id ? await putApi(`${base}/${record._id}`, payload) : await postApi(base, payload);
+      const result = response?.response || response;
       if ([200, 201].includes(result.status)) {
         setRecord(null);
         setNotice("Success");
@@ -190,7 +202,9 @@ export function EntityPage({ moduleName }) {
         return fields.some((field) => isVisible(field, formik.values)) ? (
           <Box className="crm-entity-form-section" key={title}>
             <Heading size="sm" className="crm-entity-form-section__title">{t(title)}</Heading>
-            <DynamicFormRenderer definition={{ ...definition, fields }} formik={formik} readOnly={readOnly} />
+            <DynamicFormRenderer definition={{ ...definition, fields: fields.filter(field => moduleName !== 'Properties' || field.name !== 'propertyOwner') }} formik={formik} readOnly={readOnly} />
+            {moduleName === 'Properties' && fields.filter(field => field.name === 'propertyOwner' && isVisible(field, formik.values)).map(field =>
+              <PropertyOwnerField key={field.name} field={field} formik={formik} readOnly={readOnly} />)}
           </Box>
         ) : null;
       })}
@@ -201,6 +215,10 @@ export function EntityPage({ moduleName }) {
     ...(moduleName === 'Properties' ? [{ id: 'number', label: t('estate.rowNumber') }] : []),
     { id: 'name', label: t('Name') },
     { id: 'summary', label: t(moduleName === 'Properties' ? 'Price' : moduleName === 'Residences' ? 'estate.section.location' : 'Phone') },
+    ...(moduleName === 'Properties' ? propertyTableColumns.map(([id, fallback]) => ({
+      id,
+      label: t(fallback),
+    })) : []),
     ...(moduleName === 'Residences' ? [{ id: 'price', label: t('Price') }, ...residenceTableColumns.map(([id, fallback]) => ({ id, label: residenceFieldLabel(id, fallback) }))] : []),
     ...(moduleName === 'Partner Customers' ? [{ id: 'status', label: localized(partnerStatusField?.label || 'Status', language) }] : []),
     { id: 'createdDate', label: t('Created Date') }, { id: 'actions', label: t('Actions') },
@@ -306,7 +324,7 @@ export function EntityPage({ moduleName }) {
             <Flex minH="360px" align="center" justify="center"><Spinner /></Flex>
           ) : (
             <Table className="crm-entity-table crm-mobile-records" role="table" sx={hiddenColumnStyles} minW={moduleName === "Residences" ? `${Math.max(640, visible.length * 150)}px` : undefined} dir={moduleName === "Properties" ? "ltr" : direction}>
-              <Thead><Tr>{moduleName === "Properties" && <Th dir={direction} textAlign="center" w="64px">{t("estate.rowNumber")}</Th>}<Th dir={direction}>{t("Name")}</Th><Th dir={direction}>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Residences" && <>
+              <Thead><Tr>{moduleName === "Properties" && <Th dir={direction} textAlign="center" w="64px">{t("estate.rowNumber")}</Th>}<Th dir={direction}>{t("Name")}</Th><Th dir={direction}>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Properties" && propertyTableColumns.map(([key, fallback]) => <Th key={key} dir={direction} whiteSpace="nowrap">{t(fallback)}</Th>)}{moduleName === "Residences" && <>
                 <Th dir={direction}>{t("Price")}</Th>
                 {residenceTableColumns.map(([key, fallback]) => <Th key={key} dir={direction} whiteSpace="nowrap">{residenceFieldLabel(key, fallback)}</Th>)}
               </>}{moduleName === "Partner Customers" && <Th>{localized(partnerStatusField?.label || "Status", language)}</Th>}<Th dir={direction}>{t("Created Date")}</Th><Th dir={direction}>{t("Actions")}</Th></Tr></Thead>
@@ -319,6 +337,11 @@ export function EntityPage({ moduleName }) {
                       <Text fontWeight="600">{[item.city, item.district, item.neighborhood].filter(Boolean).join(" · ") || "-"}</Text>
                       {item.address && <Text mt={1} fontSize="xs" color="var(--crm-muted)" whiteSpace="normal">{item.address}</Text>}
                     </Box> : item.phone || "-"}</Td>
+                    {moduleName === "Properties" && <>
+                      <Td role="cell" hidden={!visible.includes("bedroom")} data-label={localized(definition?.fields.find(field => field.name === "bedroom")?.label, language) || t("Number Of Bedrooms")} data-mobile-role="field" dir={direction} data-no-translate>{item.bedroom || "-"}</Td>
+                      <Td role="cell" hidden={!visible.includes("floor")} data-label={t("Unit Floor")} data-mobile-role="field" dir={direction}>{residenceOption("floor", item.floor)}</Td>
+                      <Td role="cell" hidden={!visible.includes("propertyAgent")} data-label={t("Assigned Property Agent")} data-mobile-role="field" dir={direction}>{item.propertyAgent && typeof item.propertyAgent === "object" ? formLabel(item.propertyAgent, "-") : "-"}</Td>
+                    </>}
                     {moduleName === "Residences" && <>
                       <Td role="cell" hidden={!visible.includes("price")} data-label={t("Price")} data-mobile-role="field" dir={direction} whiteSpace="nowrap" data-no-translate>{item.price?.amount != null ? <CurrencyAmount amount={item.price.amount} currency={item.price.currency} compact /> : "-"}</Td>
                       <Td role="cell" hidden={!visible.includes("transactionType")} data-label={residenceFieldLabel("transactionType", "Transaction Type")} data-mobile-role="field" dir={direction}>{residenceOption('transactionType', item.transactionType)}</Td>

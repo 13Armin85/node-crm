@@ -183,8 +183,8 @@ const Index = () => {
 
   return (
     <>
-      <Card>
-        <Flex justifyContent={"space-between"} alignItems={"center"}>
+      <Card className="crm-settings-panel crm-settings-table-fields">
+        <Flex className="crm-settings-panel__header" justifyContent={"space-between"} alignItems={"center"} wrap="wrap" gap={3}>
           <Box>
             <Text color={"secondaryGray.900"} fontSize="22px" fontWeight="700">
               {moduleName ? `${tr(moduleName)} — ${tr("Fields")}` : tr("Select Module")}
@@ -250,7 +250,7 @@ const Index = () => {
             {moduleName ? (
               <>
                 {" "}
-                <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={5}>
+                <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={3}>
                   {fields &&
                     fields?.map((item, i) => (
                       <GridItem colSpan={{ base: 12, md: 6 }} key={item?._id}>

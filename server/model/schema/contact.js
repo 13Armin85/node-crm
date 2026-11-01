@@ -6,7 +6,12 @@ const fetchSchemaFields = async () => {
 };
 
 const contactSchema = new mongoose.Schema({
+    fullName: String,
     phoneNumber: String,
+    mobileNumber: String,
+    physicalAddress: String,
+    assignUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     convertedLeads: { type: [mongoose.Schema.Types.Mixed], default: [] },
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     // 1. Basic Information
@@ -84,9 +89,16 @@ const contactSchema = new mongoose.Schema({
 
 const initializeContactSchema = async () => {
     const schemaFieldsData = await fetchSchemaFields();
+    const protectedFields = new Set(['createBy', 'assignUser', 'assignedBy', 'createdDate', 'updatedDate', 'deleted',
+        'convertedLeads', 'customFields', 'interestProperty', 'quotes', 'relatedLeads', 'relatedOpportunities', 'relatedProperties', 'partnerCustomer']);
     schemaFieldsData[0]?.fields?.forEach((item) => {
-        contactSchema.add({ [item.name]: item.name === 'phoneNumber' ? String : item?.backendType });
+        if (protectedFields.has(item.name)) return;
+        contactSchema.add({ [item.name]: ['phoneNumber', 'mobileNumber'].includes(item.name) ? String
+            : item.ref ? { type: item.backendType, ref: item.ref } : item?.backendType });
     });
+    // Older conversions lost this default when form metadata replaced the system
+    // path with Mixed. Restore visibility only for these undeleted conversions.
+    await Contact.updateMany({ deleted: { $exists: false }, 'convertedLeads.0': { $exists: true } }, { $set: { deleted: false } });
 };
 
 contactSchema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'Contacts' });

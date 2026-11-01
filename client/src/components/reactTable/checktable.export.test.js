@@ -8,6 +8,8 @@ import { configureStore } from '@reduxjs/toolkit';
 import reducer from 'redux/slices/advanceSearchSlice';
 import { exportSpreadsheet } from 'utils/spreadsheet';
 import CommonCheckTable from './checktable';
+import { getApi } from 'services/api';
+jest.mock('services/api', () => ({ getApi: jest.fn() }));
 jest.mock('utils/spreadsheet', () => ({ exportSpreadsheet: jest.fn() }));
 jest.mock('components/search/advanceSearch', () => () => null);
 jest.mock('components/countUpComponent/countUpComponent', () => ({ targetNumber }) => <span>{targetNumber}</span>);
@@ -24,6 +26,20 @@ const excelMenu = async () => {
 const render = props => act(() => {
   const store = configureStore({ reducer: { advanceSearchData: reducer } });
   ReactDOM.render(<Provider store={store}><ChakraProvider><CommonCheckTable pageHeader={false} title="Reports" allData={data} columnData={columns} tableCustomFields={[]} AdvanceSearch={false} addBtn={false} {...props} /></ChakraProvider></Provider>, container);
+});
+
+test('table cells resolve references in both default cells and custom clickable content', async () => {
+  const userId = '6ad5cede20944f7bf63f495d', opportunityId = '6ae1b409f48a9ea51d6dc631';
+  getApi.mockImplementation(async url => ({ status: 200, data: [{ label: url.includes('Users') ? 'Assigned Agent' : 'Villa Sale' }] }));
+  const open = jest.fn();
+  await act(async () => { render({ allData: [{ _id: 'one', assignUser: userId, relatedOpportunities: [opportunityId] }], columnData: [
+    { Header: '#', accessor: '_id' }, { Header: 'Assigned User', accessor: 'assignUser' },
+    { Header: 'Related Opportunities', accessor: 'relatedOpportunities', cell: cell => <button onClick={open}>{cell.value[0]}</button> },
+  ] }); });
+  expect(container.textContent).toContain('Assigned Agent'); expect(container.textContent).toContain('Villa Sale');
+  expect(container.textContent).not.toContain(userId); expect(container.textContent).not.toContain(opportunityId);
+  act(() => Simulate.click([...container.querySelectorAll('button')].find(button => button.textContent === 'Villa Sale')));
+  expect(open).toHaveBeenCalledTimes(1);
 });
 test('exports the filtered rows on pages without selection setters, including reports', async () => {
   render();
@@ -84,15 +100,17 @@ test('card labels, sorting and column settings use the readable label of managed
   expect(document.querySelector('.crm-columns-modal').textContent).toContain('Customer name');
 });
 
-test('record cards paginate five at a time and page-size changes reset to the first page', () => {
+test('compact tables show ten rows by default and keep the selectable five-row pages', () => {
   const records = Array.from({ length: 13 }, (_, index) => ({ _id: String(index), name: `Record ${index + 1}`, amount: index }));
   render({ allData: records });
-  expect(container.querySelectorAll('.crm-record-row')).toHaveLength(5);
-  act(() => Simulate.click(container.querySelector('button[aria-label="Next Page"]')));
-  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Record 6');
-  act(() => Simulate.change(container.querySelector('.crm-record-pagination select'), { target: { value: '10' } }));
   expect(container.querySelectorAll('.crm-record-row')).toHaveLength(10);
+  act(() => Simulate.click(container.querySelector('button[aria-label="Next Page"]')));
+  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Record 11');
+  act(() => Simulate.change(container.querySelector('.crm-record-pagination select'), { target: { value: '5' } }));
+  expect(container.querySelectorAll('.crm-record-row')).toHaveLength(5);
   expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Record 1');
+  act(() => Simulate.click(container.querySelector('button[aria-label="Next Page"]')));
+  expect(container.querySelectorAll('.crm-record-row')).toHaveLength(5);
   act(() => Simulate.click(container.querySelector('button[aria-label="Next Page"]')));
   expect(container.querySelectorAll('.crm-record-row')).toHaveLength(3);
   expect(container.querySelector('button[aria-label="Next Page"]').disabled).toBe(true);
@@ -102,8 +120,8 @@ test('preservePage keeps page two and its edited row after records refresh, and 
   const records = Array.from({ length: 13 }, (_, index) => ({ _id: String(index), name: `Record ${index + 1}`, amount: index }));
   render({ allData: records, preservePage: true });
   act(() => { Simulate.click(container.querySelector('button[aria-label="Next Page"]')); });
-  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Record 6');
-  render({ allData: records.map(record => record._id === '5' ? { ...record, name: 'Edited user' } : record), preservePage: true });
+  expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Record 11');
+  render({ allData: records.map(record => record._id === '10' ? { ...record, name: 'Edited user' } : record), preservePage: true });
   expect(container.querySelector('button[aria-current="page"]').textContent).toBe('2');
   expect(container.querySelector('[data-mobile-role="primary"]').textContent).toBe('Edited user');
   render({ allData: records.slice(0, 3), preservePage: true });

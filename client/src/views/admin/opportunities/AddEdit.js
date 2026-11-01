@@ -1,6 +1,5 @@
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
-import { formLabel } from 'utils/formValue';
 import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
 import { CloseIcon } from "@chakra-ui/icons";
 import {
@@ -33,6 +32,7 @@ import { useSelector } from "react-redux";
 import AccountModel from "../../../components/commonTableModel/AccountModel";
 import { HasAccess } from "../../../redux/accessUtils";
 import RelationFields from "components/relations/RelationFields";
+import { AsyncRelationSelect } from 'components/dynamicForm/DynamicFormRenderer';
 import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
 import { formValue } from 'utils/formValue';
 
@@ -250,11 +250,13 @@ const AddEdit = (props) => {
                     mb="8px"
                   ><LocalizedText text="Account Name" /></FormLabel>
                   <Flex justifyContent={"space-between"}>
-                    <Select
+                    <AsyncRelationSelect
+                      moduleName="Partner Customers"
+                      id="opportunity-account"
                       value={values?.accountName}
                       name="accountName"
                       onBlur={handleBlur}
-                      onChange={handleChange}
+                      onChange={value => setFieldValue('accountName', value || null)}
                       mb={
                         errors?.accountName && touched?.accountName
                           ? undefined
@@ -267,17 +269,7 @@ const AddEdit = (props) => {
                           ? "red.300"
                           : null
                       }
-                    >
-                      {accountList?.length > 0 &&
-                        accountList?.map((item) => {
-                          return (
-                            <option
-                              value={item?._id}
-                              key={item?._id}
-                            >{formLabel(item, item?._id)}</option>
-                          );
-                        })}
-                    </Select>
+                    />
                     <IconButton
                       onClick={() => setAccountModel(true)}
                       ml={2}
@@ -303,11 +295,13 @@ const AddEdit = (props) => {
                     mb="8px"
                   ><LocalizedText text="Assigned User" /></FormLabel>
                   <Flex justifyContent={"space-between"}>
-                    <Select
+                    <AsyncRelationSelect
+                      moduleName="Users"
+                      id="opportunity-assigned-user"
                       value={values?.assignUser}
                       name="assignUser"
                       onBlur={handleBlur}
-                      onChange={handleChange}
+                      onChange={value => setFieldValue('assignUser', value || null)}
                       mb={
                         errors?.assignUser && touched?.assignUser
                           ? undefined
@@ -320,16 +314,7 @@ const AddEdit = (props) => {
                           ? "red.300"
                           : null
                       }
-                    >
-                      {userData?.map((item) => {
-                        return (
-                          <option
-                            value={item?._id}
-                            key={item?._id}
-                          >{`${item?.firstName} ${item?.lastName}`}</option>
-                        );
-                      })}
-                    </Select>
+                    />
                     <IconButton
                       onClick={() => setUserModel(true)}
                       ml={2}

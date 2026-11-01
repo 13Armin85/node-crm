@@ -11,6 +11,11 @@ const router = express.Router();
 const activity = require('../../middelwares/activityNotifications')('Documents');
 
 router.get('/', auth, document.index)
+router.get('/related-options', auth, loadUser, async (req, res) => {
+    try {
+        res.json(await require('../../services/documentRelations').relatedOptions(req, req.query.entityType, req.query.entityId));
+    } catch (error) { res.status(error.status || 400).json({ code: error.code || 'invalid' }); }
+})
 router.post('/folder', auth, activity('record_created', document.createFolder, { createdStatus: 201 }))
 router.post('/add', auth, loadUser, document.upload.array('files'), document.validateUploads, duplicateUploads, dynamicValues, activity('document_uploaded', document.file))
 router.post('/addDocumentContact', auth, document.upload.array('files'), document.validateUploads, duplicateUploads, activity('document_uploaded', document.addDocumentContact))

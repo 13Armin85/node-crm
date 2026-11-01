@@ -22,6 +22,7 @@ import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
 import AdminDataFilter from "components/admin/AdminDataFilter";
+import { isSettingsPage } from "utils/settingsWorkspace";
 import PageHelp from "components/help/PageHelp";
 
 const MainDashboard = React.lazy(() => import("views/admin/default"));
@@ -362,7 +363,7 @@ export default function Dashboard(props) {
             <Box className="crm-workspace-body" pt="100px">
               {getRoute() ? (
                 <Box
-                  className="crm-content"
+                  className={`crm-content${isSettingsPage(location.pathname) ? ' crm-settings-content' : ''}`}
                   mx="auto"
                   pe="20px"
                   minH="84vh"

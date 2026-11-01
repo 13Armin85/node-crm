@@ -10,15 +10,16 @@ const fileSchema = new mongoose.Schema({
     },
     linkContact: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Contact',
+        ref: 'Contacts',
     },
     linkLead: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Lead',
+        ref: 'Leads',
     },  
     linkProperty: { type: mongoose.Schema.Types.ObjectId, ref: 'Properties' },
     linkOpportunity: { type: mongoose.Schema.Types.ObjectId, ref: 'Opportunities' },
     linkPartnerCustomer: { type: mongoose.Schema.Types.ObjectId, ref: 'PartnerCustomers' },
+    relatedRecords: [{ _id: false, entityType: String, entityId: mongoose.Schema.Types.ObjectId, label: String }],
     entityType: { type: String, enum: ['Contact', 'Lead', 'Property', 'Opportunity', 'PartnerCustomer', null], default: null },
     entityId: { type: mongoose.Schema.Types.ObjectId, default: null },
     category: {

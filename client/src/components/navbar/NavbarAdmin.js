@@ -23,6 +23,7 @@ export default function AdminNavbar({ brandText, openSidebar, setOpenSidebar, ..
           <Heading className="crm-header-title" fontSize={{ base: 'md', md: 'xl' }} noOfLines={1}>{brandText}</Heading>
         </Box>
       </Flex>
+      <Box id="crm-page-help-slot" className="crm-header-help" />
       <Box className="crm-header-profile" flexShrink={0}>
         <AdminNavbarLinks {...props} />
       </Box>

@@ -1,4 +1,5 @@
 import { LocalizedText, tr } from 'i18n/runtime';
+import RecordValue from 'components/relations/RecordValue';
 // import React from 'react'
 // import { Grid, GridItem, Box, Heading, Text } from '@chakra-ui/react'
 // import Card from 'components/card/Card'
@@ -529,11 +530,7 @@ const CustomView = ({
                                 )
                               }
                             >
-                              {(fieldData &&
-                                (fieldData[field?.name] !== undefined
-                                  ? fieldData[field?.name]
-                                  : "N/A")) ||
-                                "N/A"}
+                              <RecordValue value={fieldData?.[field?.name]} name={field?.name} field={field} />
                             </Text>
                           )}
                           <FormErrorMessage>
@@ -714,11 +711,7 @@ const CustomView = ({
                             )
                           }
                         >
-                          {(fieldData &&
-                            (fieldData[field?.name] !== undefined
-                              ? fieldData[field?.name]
-                              : "N/A")) ||
-                            "N/A"}
+                          <RecordValue value={fieldData?.[field?.name]} name={field?.name} field={field} />
                         </Text>
                       )}
                       <FormErrorMessage>

@@ -133,8 +133,10 @@ const Index = () => {
   };
 
   return (
-    <div>
-      <Flex justifyContent={"end"} mb={3}>
+    <div className="crm-settings-modules">
+      <Flex className="crm-page-hero crm-settings-toolbar" justify="space-between" align="center" wrap="wrap" gap={3}>
+        <Heading className="crm-page-hero__title"><LocalizedText text="Module" /></Heading>
+        <Flex className="crm-settings-actions" justifyContent="end" wrap="wrap" gap={2}>
         {selectedValues?.length > 0 && (
           <Button
             variant="outline"
@@ -162,6 +164,7 @@ const Index = () => {
           leftIcon={<IoIosArrowBack />}
         >
           {" "}<LocalizedText text="Back" /></Button>
+        </Flex>
       </Flex>
       {isLoding ? (
         <Flex
@@ -183,9 +186,9 @@ const Index = () => {
                 colSpan={{ base: 12, md: 6, lg: 3 }}
                 key={i}
               >
-                <Card>
-                  <Flex alignItems={"center"} justifyContent={"space-between"}>
-                    <Flex>
+                <Card className="crm-settings-record-card">
+                  <Flex className="crm-settings-record-card__header" alignItems={"center"} justifyContent={"space-between"} gap={2} wrap="wrap">
+                    <Flex minW={0} flex="1 1 100px">
                       <Checkbox
                         disabled={
                           item?.moduleName === "Properties" ||

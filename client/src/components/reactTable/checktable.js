@@ -55,6 +55,16 @@ import { canSendRecord, shareModuleForTitle } from "services/recordSharing";
 import { exportColumns, selectedExportRows } from "utils/exportRecords";
 import { toast } from "react-toastify";
 import { normalizeSearchFields, optionText } from "components/search/searchFields";
+import RecordValue, { isRecordId } from 'components/relations/RecordValue';
+
+const readableCell = (node, name) => {
+  if (isRecordId(node)) return <RecordValue name={name} value={node} />;
+  if (Array.isArray(node)) return node.map((item, index) => <span key={index}>{readableCell(item, name)}</span>);
+  if (isValidElement(node)) return node.props.children === undefined ? node
+    : cloneElement(node, {}, readableCell(node.props.children, name));
+  if (node && typeof node === 'object') return <RecordValue name={name} value={node} />;
+  return node;
+};
 
 const columnLabel = column => {
   const label = tr(column.Header);
@@ -158,7 +168,7 @@ const CommonCheckTable = (props) => {
     {
       columns,
       data,
-      initialState: { pageIndex: 0, pageSize: 5 },
+      initialState: { pageIndex: 0, pageSize: 10 },
       autoResetPage: props.preservePage !== true,
       autoResetSortBy: props.preservePage !== true,
     },
@@ -685,7 +695,7 @@ const CommonCheckTable = (props) => {
                               item?.cell &&
                               typeof item?.cell === "function"
                             ) {
-                              const renderedCell = item.cell(cell);
+                              const renderedCell = readableCell(item.cell(cell), cell.column.id);
                               data = (
                                 <Flex
                                   align="center"
@@ -733,9 +743,7 @@ const CommonCheckTable = (props) => {
                                   >
                                     {item?.Header === "#"
                                       ? cell?.row?.index + 1
-                                      : cell?.value
-                                        ? cell?.value
-                                        : "-"}
+                                      : <RecordValue name={cell.column.id} value={cell.value} />}
                                   </Text>
                                 </Flex>
                               );

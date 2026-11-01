@@ -1,45 +1,20 @@
-const { sendEmail } = require('../../middelwares/mail');
 const Email = require('../../model/schema/email');
-const User = require('../../model/schema/user');
 const mongoose = require('mongoose');
+const { createAndSendEmail } = require('../../services/emailDelivery');
 
 const add = async (req, res) => {
     try {
-        const { sender, recipient, property, subject, message, startDate, createByContact, createBy, createByLead, html, type, salesAgent } = req.body;
-
-        if (createByContact && !mongoose.Types.ObjectId.isValid(createByContact)) {
-            return res.status(400).json({ error: 'Invalid createByContact value' });
+        const result = await createAndSendEmail(req);
+        return res.status(200).json({ result });
+    } catch (error) {
+        if (error.name === 'ValidationError' || error.name === 'CastError') {
+            return res.status(400).json({ code: 'invalid', field: error.path || Object.keys(error.errors || {})[0] });
         }
-        if (createByLead && !mongoose.Types.ObjectId.isValid(createByLead)) {
-            return res.status(400).json({ error: 'Invalid createByLead value' });
-        }
-        if (salesAgent && !mongoose.Types.ObjectId.isValid(salesAgent)) {
-            return res.status(400).json({ error: 'Invalid salesAgent value' });
-        }
-
-        const email = { sender, recipient, subject, message, startDate, createBy, html, property, type, salesAgent: new mongoose.Types.ObjectId(salesAgent) || null }
-
-        if (createByContact) {
-            email.createByContact = createByContact;
-        }
-        if (createByLead) {
-            email.createByLead = createByLead;
-        }
-
-        const user = await User.findById({ _id: email.sender });
-        user.emailsent = user.emailsent + 1;
-        await user.save();
-
-        const result = new Email({ ...email, customFields: req.body.customFields });
-        await result.save();
-        // sendEmail(email.recipient, email.subject, email.message, email.html)
-        res.status(200).json({ result });
-    } catch (err) {
-        console.error('Failed to create :', err);
-        res.status(400).json({ err, error: 'Failed to create' });
+        const status = error.status || 500;
+        if (status >= 500) console.error('Email submission failed:', error.code || error.name);
+        return res.status(status).json({ code: error.code && error.status ? error.code : 'serverError', field: error.field });
     }
-}
-
+};
 const index = async (req, res) => {
     try {
         const query = req.query;
@@ -208,4 +183,27 @@ const view = async (req, res) => {
     }
 }
 
-module.exports = { add, index, view }
+const deleteData = async (req, res) => {
+    const { objectId } = require('../../services/estateValidation');
+    if (!objectId(req.params.id)) return res.status(400).json({ code: 'invalid', field: 'id' });
+    try {
+        const result = await Email.findOneAndUpdate({ _id: req.params.id, deleted: false,
+            ...require('../../middelwares/permissions').scope(req, 'Emails') },
+            { $set: { deleted: true } }, { new: true });
+        if (!result) return res.status(404).json({ code: 'notFound' });
+        return res.status(200).json({ result });
+    } catch (_) { return res.status(500).json({ code: 'serverError' }); }
+};
+
+const deleteMany = async (req, res) => {
+    const { objectId } = require('../../services/estateValidation');
+    if (!Array.isArray(req.body) || !req.body.length || req.body.length > 100
+        || req.body.some(id => !objectId(String(id)))) return res.status(400).json({ code: 'invalid' });
+    try {
+        const result = await Email.updateMany({ _id: { $in: req.body }, deleted: false,
+            ...require('../../middelwares/permissions').scope(req, 'Emails') }, { $set: { deleted: true } });
+        return res.status(200).json({ deletedCount: result.modifiedCount });
+    } catch (_) { return res.status(500).json({ code: 'serverError' }); }
+};
+
+module.exports = { add, index, view, deleteData, deleteMany }

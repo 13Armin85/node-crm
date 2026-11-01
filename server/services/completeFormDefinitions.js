@@ -24,10 +24,14 @@ module.exports = ({ field, options, required }) => {
       choice('leadCampaign', 'Lead Campaign', 'کمپین سرنخ', ['Referral', 'Online', 'Billboard', 'Activation', 'Agent']),
       choice('leadState', 'Lead State', 'مرحله سرنخ', ['Open', 'Parking', 'Waiting', 'Booked', 'Sealed']),
       choice('communicationTool', 'Communication Tool', 'روش ارتباط', ['WhatsApp', 'Email', 'Virtual Meet', 'Visit']),
-      choice('listedFor', 'Listed For', 'نوع درخواست', ['Rent', 'Buy']),
+      field('listedFor', 'select', 'Transaction Type', 'نوع معامله', 'İşlem Türü', { options: [
+        { value: 'Rent', label: { en: 'Rent', fa: 'اجاره', tr: 'Kiralama' } },
+        // Keep the existing stored key for historical leads and conversions.
+        { value: 'Buy', label: { en: 'Sale', fa: 'فروش', tr: 'Satış' } },
+      ] }),
       choice('propertyType', 'Property Type', 'نوع ملک', ['Apartment', 'Land', 'Manssonnate']),
       f('leadMessage', 'textarea', 'Lead Message', 'پیام سرنخ'),
-      externalRelation('associatedListing', 'Associated Listing', 'ملک مرتبط', 'Properties'),
+      relation('associatedListing', 'Related Property', 'ملک مرتبط', 'Properties'),
       externalRelation('lead', 'Related Lead', 'سرنخ مرتبط', 'Leads'),
       externalRelation('contact', 'Converted Contact', 'مخاطب مرتبط', 'Contacts'),
       externalRelation('partnerCustomer', 'Partner Customer', 'مشتری همکار', 'Partner Customers'),

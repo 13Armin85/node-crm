@@ -50,6 +50,7 @@ import {
 import { deleteApi, getApi, getApiBlob, postApi } from "services/api";
 import Upload from "./component/Upload";
 import MoveDocumentDialog from "./MoveDocumentDialog";
+import DocumentInformation from './DocumentInformation';
 import ShareRecordButton from "components/ShareRecordButton";
 import SharedRecordBadge from "components/SharedRecordBadge";
 import { HasAccess } from "../../../redux/accessUtils";
@@ -84,7 +85,7 @@ const optionLabel = (item, type) => {
   if (type === "Lead") return item.leadName || item.leadEmail;
   if (type === "Opportunity") return item.opportunityName;
   if (type === "PartnerCustomer") return item.companyName || item.fullName;
-  return [item.firstName, item.lastName].filter(Boolean).join(" ") || item.email;
+  return item.fullName || [item.firstName, item.lastName].filter(Boolean).join(" ") || item.email;
 };
 
 const categoryOf = (file) => file.category || ({
@@ -114,6 +115,10 @@ const DocumentPage = () => {
   const [category, setCategory] = useState("GENERAL");
   const [entityId, setEntityId] = useState("");
   const [entityOptions, setEntityOptions] = useState([]);
+  const [relatedOptions, setRelatedOptions] = useState({ contacts: [], properties: [] });
+  const [relatedContact, setRelatedContact] = useState('');
+  const [relatedProperty, setRelatedProperty] = useState('');
+  const [relationsLoading, setRelationsLoading] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
   const [loading, setLoading] = useState(false);
   const uploadModal = useDisclosure();
@@ -161,15 +166,31 @@ const DocumentPage = () => {
   }, []);
 
   useEffect(() => {
+    let active = true;
     setEntityId("");
     setEntityOptions([]);
     if (!entityType) return;
     getApi(entityEndpoint(entityType)).then((result) => {
       const response = result?.data;
       const data = response?.items || response?.data || response;
-      if (result?.status === 200) setEntityOptions(Array.isArray(data) ? data : []);
+      if (active && result?.status === 200) setEntityOptions(Array.isArray(data) ? data : []);
     });
+    return () => { active = false; };
   }, [entityType]);
+
+  useEffect(() => {
+    let active = true;
+    setRelatedContact(''); setRelatedProperty('');
+    setRelatedOptions({ contacts: [], properties: [] });
+    setRelationsLoading(false);
+    if (!entityId || !['Property', 'Lead', 'Contact'].includes(entityType)) return undefined;
+    setRelationsLoading(true);
+    getApi(`api/document/related-options?entityType=${entityType}&entityId=${encodeURIComponent(entityId)}`)
+      .then(result => { if (active && result?.status === 200) setRelatedOptions(result.data); })
+      .catch(() => {})
+      .finally(() => { if (active) setRelationsLoading(false); });
+    return () => { active = false; };
+  }, [entityType, entityId]);
 
   const children = useMemo(
     () => currentFolder
@@ -227,6 +248,8 @@ const DocumentPage = () => {
     if (entityType && entityId) {
       body.append("entityType", entityType);
       body.append("entityId", entityId);
+      if (relatedContact) body.append('linkContact', relatedContact);
+      if (relatedProperty) body.append('linkProperty', relatedProperty);
     }
     files.forEach((file) => body.append("files", file));
     setLoading(true);
@@ -290,7 +313,7 @@ const DocumentPage = () => {
           {canEditDocuments && <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiFolderPlus />} variant="outline" onClick={folderModal.onOpen}>
             {t("New folder")}
           </Button>}
-          {canEditDocuments && <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiPlus />} variant="brand" onClick={openUpload}>
+          {canEditDocuments && <Button className="crm-page-hero__action" flex={{ base: 1, sm: "initial" }} leftIcon={<FiPlus />} variant="brand" onClick={openUpload}>
             {t("Upload document")}
           </Button>}
         </Flex>
@@ -298,7 +321,7 @@ const DocumentPage = () => {
 
       <Grid templateColumns="repeat(12, minmax(0, 1fr))" gap={{ base: 3, lg: 4 }}>
         <GridItem colSpan={{ base: 12, lg: 3 }} minW={0}>
-          <Card minH={{ base: "auto", lg: "620px" }} p={{ base: 3, md: 4 }}>
+          <Card className="crm-document-panel" minH={{ base: "auto", lg: "620px" }} p={{ base: 3, md: 4 }}>
             <Text fontWeight="800" mb={3}>{t("Folders")}</Text>
             <Flex
               direction={{ base: "row", lg: "column" }}
@@ -337,7 +360,7 @@ const DocumentPage = () => {
         </GridItem>
 
         <GridItem colSpan={{ base: 12, lg: 9 }} minW={0}>
-          <Card minH={{ base: "420px", lg: "620px" }} p={{ base: 3, md: 5 }}>
+          <Card className="crm-document-panel" minH={{ base: "420px", lg: "620px" }} p={{ base: 3, md: 5 }}>
             <Flex justify="space-between" align={{ base: "stretch", sm: "center" }} mb={5} gap={3} direction={{ base: "column", sm: "row" }}>
               <Box minW={0}><Breadcrumb separator={<FiChevronLeft />} overflowX="auto" whiteSpace="nowrap">
                 <BreadcrumbItem>
@@ -394,7 +417,7 @@ const DocumentPage = () => {
                       const fileCategory = categories.find((item) => item.value === categoryOf(file));
                       const isImage = file.mimeType?.startsWith("image/");
                       return (
-                        <Box key={file._id} bg={surface} border="1px solid" borderColor={border} borderRadius="16px" p={4} minW={0}>
+                        <Box key={file._id} className="crm-document-card" bg={surface} border="1px solid" borderColor={border} borderRadius="16px" p={4} minW={0}>
                           <Flex gap={3} minW={0}>
                             <Flex w="42px" h="42px" borderRadius="12px" bg={isImage ? "purple.50" : "blue.50"} align="center" justify="center" flexShrink={0}>
                               <Icon as={isImage ? FiImage : FiFile} color={isImage ? "purple.500" : "blue.500"} boxSize={5} />
@@ -405,6 +428,9 @@ const DocumentPage = () => {
                             </Box>
                           </Flex>
                           <Badge mt={3} colorScheme="brand" borderRadius="full">{t(fileCategory?.label || "General")}</Badge>
+                          <DocumentInformation file={file} category={fileCategory?.label} definition={definition}
+                            folderName={(currentFolder || folders.find(folder => folder._id === file._folderId))?.isRoot ? ''
+                              : (currentFolder || folders.find(folder => folder._id === file._folderId))?.folderName} />
                           <Flex mt={4} gap={2} justify="flex-end">
                             <ShareRecordButton module="Documents" record={file} />
                             {moveButton('file', file, currentFolder || folders.find(folder => folder._id === file._folderId))}
@@ -508,6 +534,19 @@ const DocumentPage = () => {
                   <Box p={3} bg={subtle} borderRadius="12px"><Text fontSize="sm" color="gray.500">{t("This category does not need a related record.")}</Text></Box>
                 )}
               </SimpleGrid>
+              {relationsLoading && <Text mt={3} fontSize="sm">{t('estate.loading')}</Text>}
+              {!!relatedOptions.contacts.length && <Box mt={4}>
+                <FormLabel htmlFor="document-property-owner">{t('Property Owner')}</FormLabel>
+                <Select id="document-property-owner" value={relatedContact} onChange={event => setRelatedContact(event.target.value)} placeholder={t('Select')}>
+                  {relatedOptions.contacts.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </Select>
+              </Box>}
+              {!!relatedOptions.properties.length && <Box mt={4}>
+                <FormLabel htmlFor="document-related-property">{t('Related Properties')}</FormLabel>
+                <Select id="document-related-property" value={relatedProperty} onChange={event => setRelatedProperty(event.target.value)} placeholder={t('Select')}>
+                  {relatedOptions.properties.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </Select>
+              </Box>}
               <Box mt={4}><DynamicFormRenderer definition={customDefinition} formik={documentFormik} customOnly /></Box>
             </Box>
           </ModalBody>

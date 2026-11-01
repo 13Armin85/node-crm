@@ -8,7 +8,8 @@ import { formatPriceInput } from 'utils/price';
 import { getIn } from 'formik';
 import { useRequiredFields } from 'utils/managedForm';
 import { isLeadRelationVisible, normalizeLeadRelations, LEAD_SELECTION_MESSAGE, prepareLeadDefinition } from 'utils/leadRelations';
-import { localized } from 'components/dynamicForm/DynamicFormRenderer';
+import { AsyncRelationSelect, localized } from 'components/dynamicForm/DynamicFormRenderer';
+import RecordValue from './RecordValue';
 
 export const labelOf = (item, type) => {
   if (type === "contact") return formLabel(item.fullName) || formLabel(item) || item.email;
@@ -23,11 +24,11 @@ const RelationSelect = ({ label, name, value, items, type, setFieldValue, error,
   return (
   <GridItem colSpan={{ base: 12, md: 6 }}>
     <FormLabel htmlFor={`relation-${name}`} fontSize="sm" fontWeight="600">{label}{required && <Box as="span" ms={1} color="red.500">*</Box>}</FormLabel>
-    <SearchableSelect id={`relation-${name}`} name={name} value={selected}
-      options={[
-        ...(selected && !items.some(item => String(item._id) === String(selected)) ? [{ value: selected, label: labelOf(value, type) || selected }] : []),
-        ...items.map(item => ({ value: String(item._id), label: labelOf(item, type) })),
-      ]} placeholder={t('Search...')} onChange={value => setFieldValue(name, value || null)} />
+    {selected && !items.some(item => String(item._id) === String(selected)) ? <AsyncRelationSelect id={`relation-${name}`} name={name} value={value}
+      moduleName={({ contact: 'Contacts', lead: 'Leads', partner: 'Partner Customers' })[type]}
+      onChange={value => setFieldValue(name, value || null)} /> : <SearchableSelect id={`relation-${name}`} name={name} value={selected}
+        options={items.map(item => ({ value: String(item._id), label: labelOf(item, type) }))}
+        placeholder={t('Search...')} onChange={value => setFieldValue(name, value || null)} />}
     {error && <Text role="alert" fontSize="sm" color="red.500" mt={1}>{error}</Text>}
   </GridItem>
 );
@@ -49,8 +50,8 @@ export function PropertyMultiSelect({ value = [], items, setFieldValue, busy, er
         {!!selected.length && <Flex flexWrap="wrap" gap={2} mt={3}>
           {selected.map(id => {
             const item = items.find(property => property._id === id) || value.find(property => formValue(property) === id);
-            const label = (item && labelOf(item, 'property')) || id;
-            return <Tag key={id} colorScheme="blue" maxW="100%"><TagLabel data-no-translate>{label}</TagLabel><TagCloseButton aria-label={`${t('Delete')} ${label}`} onClick={() => remove(id)} /></Tag>;
+            const label = item && labelOf(item, 'property');
+            return <Tag key={id} colorScheme="blue" maxW="100%"><TagLabel data-no-translate>{label || <RecordValue value={id} moduleName="Properties" />}</TagLabel><TagCloseButton aria-label={t('Delete')} onClick={() => remove(id)} /></Tag>;
           })}
         </Flex>}
       </Box>

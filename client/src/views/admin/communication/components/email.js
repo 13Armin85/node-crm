@@ -1,3 +1,4 @@
+import { submitEmail } from 'utils/emailSubmission';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -17,10 +18,10 @@ import Spinner from "components/spinner/Spinner";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { BsFillSendFill } from "react-icons/bs";
-import { toast } from "react-toastify";
+
 import { emailSchema } from "schema";
 import { getApi } from "services/api";
-import { postApi } from "services/api";
+
 
 const Email = () => {
   const [data, setData] = useState([]);
@@ -31,19 +32,18 @@ const Email = () => {
   const initialValues = {
     sender: user?._id,
     recipient: "",
+    createByContact: "",
     cc: "",
     bcc: "",
     subject: "",
     message: "",
-    createBy: "",
+    createBy: user?._id,
   };
 
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: emailSchema,
-    onSubmit: (values, { resetForm }) => {
-      AddData();
-    },
+    onSubmit: async (submittedValues, helpers) => { await AddData(submittedValues, helpers); },
   });
 
   const {
@@ -56,34 +56,19 @@ const Email = () => {
     setFieldValue,
   } = formik;
 
-  if (touched?.recipient && errors?.createBy) {
-    toast.error(tr("Please select an authorized recipient"));
-    formik.resetForm();
-  }
-
-  const AddData = async () => {
-    try {
-      setIsLoding(true);
-      let response = await postApi("api/email/add", values);
-      if (response?.status === 200) {
-        toast.success(tr("Email Send successfully"));
-        formik.resetForm();
-      }
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoding(false);
-    }
+  const AddData = async (submittedValues, helpers) => {
+    setIsLoding(true);
+    try { await submitEmail(submittedValues, helpers); }
+    finally { setIsLoding(false); }
   };
-
   const fetchData = async () => {
     let result = await getApi(
       isAdmin(user)
         ? "api/contact/"
         : `api/contact/?createBy=${user?._id}`,
     );
-    values.createBy = result?._id;
-    setData(result?.data);
+
+    setData(Array.isArray(result?.data) ? result.data : []);
   };
 
   useEffect(() => {
@@ -91,14 +76,9 @@ const Email = () => {
   }, []);
 
   useEffect(() => {
-    data?.map((item) => {
-      let recipientExists = item?.email === values?.recipient;
-      if (recipientExists) {
-        values.createBy = item?._id;
-        setFieldValue("createBy", item?._id);
-      }
-    });
-  }, [values]);
+    const selected = data.find(item => item.email?.toLowerCase() === values.recipient?.trim().toLowerCase());
+    setFieldValue('createByContact', selected?._id || '', false);
+  }, [data, values.recipient, setFieldValue]);
 
   return (
     <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -148,7 +128,7 @@ const Email = () => {
                   key={option?._id}
                   cursor={"pointer"}
                   onClick={() => {
-                    setFieldValue("createBy", option?._id);
+                    setFieldValue("createByContact", option?._id);
                     setFieldValue("recipient", option?.email);
                   }}
                 >

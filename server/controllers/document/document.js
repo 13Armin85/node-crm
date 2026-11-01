@@ -29,6 +29,7 @@ const index = async (req, res) => {
     try {
         const access = await actorScope(req);
         if (!access) return res.status(401).json({ message: 'Authentication failed' });
+        req.actor = access.actor;
         const query = { ...access.query, deleted: false };
         if (req.query.parentFolder === 'root') query.parentFolder = null;
         else if (req.query.parentFolder && validId(req.query.parentFolder)) query.parentFolder = req.query.parentFolder;
@@ -36,15 +37,19 @@ const index = async (req, res) => {
         const entityType = req.query.entityType;
         const entityId = req.query.entityId;
         const category = categories.has(req.query.category) ? req.query.category : null;
+        const readable = folders.flatMap(folder => require('../../services/recordSharing').readableDocumentFiles(req, folder));
+        const hydrated = await require('../../services/documentRelations').hydrateDocumentRelations(req, readable);
+        const byId = new Map(hydrated.map(file => [String(file._id), file]));
         const result = folders.map((folder) => {
             let files = require('../../services/recordSharing').readableDocumentFiles(req, folder).map((item) => {
+                item = byId.get(String(item._id)) || item;
                 if (item.entityType) return item;
-                if (item.linkContact) return { ...item, entityType: 'Contact', entityId: item.linkContact };
-                if (item.linkLead) return { ...item, entityType: 'Lead', entityId: item.linkLead };
+                const primary = item.relatedRecords?.[0];
+                if (primary) return { ...item, entityType: primary.entityType, entityId: primary.entityId };
                 return item;
             });
-            if (entityType) files = files.filter((item) => item.entityType === entityType);
-            if (entityId) files = files.filter((item) => String(item.entityId) === String(entityId));
+            if (entityType || entityId) files = files.filter(item => [item, ...(item.relatedRecords || [])].some(record =>
+                (!entityType || record.entityType === entityType) && (!entityId || String(record.entityId) === String(entityId))));
             if (category) files = files.filter((item) => (item.category || categoryForEntity[item.entityType] || 'GENERAL') === category);
             files = files.map(({ path: ignoredPath, ...item }) => item);
             return {
@@ -101,18 +106,6 @@ const entityFields = (body) => {
     return result;
 };
 
-const accessibleRelation = async (actor, relation) => {
-    if (!relation.entityId) return true;
-    const types = {
-        Contact: [require('../../model/schema/contact').Contact, 'Contacts'],
-        Lead: [require('../../model/schema/lead').Lead, 'Leads'],
-        Property: [require('../../model/schema/property').Property, 'Properties'],
-        Opportunity: [require('../../model/schema/opprtunity'), 'Opportunities'],
-        PartnerCustomer: [require('../../model/schema/partnerCustomer'), 'Partner Customers'],
-    };
-    const [model, name] = types[relation.entityType];
-    return Boolean(await model.exists(require('../../services/recordAccess').recordScope(actor, name, { _id: relation.entityId, deleted: false })));
-};
 const file = async (req, res) => {
     try {
         const access = await actorScope(req);
@@ -126,8 +119,8 @@ const file = async (req, res) => {
             if (!folder) folder = new Document({ folderName: '__ROOT__', isRoot: true, createBy: access.actor._id, parentFolder: null, file: [] });
         }
         if (!folder) return res.status(404).json({ message: 'Folder not found or access denied' });
-        const relation = entityFields(req.body);
-        if (!await accessibleRelation(access.actor, relation)) return res.status(404).json({ message: 'Related record not found' });
+        req.actor = access.actor;
+        const relation = await require('../../services/documentRelations').documentRelations(req, entityFields(req.body));
         const category = categories.has(req.body.category)
             ? req.body.category
             : (categoryForEntity[relation.entityType] || 'GENERAL');
@@ -153,7 +146,7 @@ const file = async (req, res) => {
         res.status(200).json({ message: 'Files uploaded successfully', folder });
     } catch (error) {
         if (error.code === 'duplicate' || error.code === 11000) return res.status(409).json({ code: 'duplicate', field: 'files' });
-        res.status(500).json({ message: 'Failed to upload files', error: error.message });
+        res.status(error.status || 400).json({ code: error.code || 'invalid', message: 'Failed to upload files', error: error.message });
     }
 };
 
@@ -221,9 +214,10 @@ const linkDocument = async (req, res) => {
     try {
         const result = await findFile(req, req.params.id);
         if (!result) return res.status(404).json({ message: 'File not found' });
-        const relation = entityFields(req.body);
         const access = await actorScope(req);
-        if (!access || !await accessibleRelation(access.actor, relation)) return res.status(404).json({ message: 'Related record not found' });
+        if (!access) return res.status(401).json({ message: 'Authentication failed' });
+        req.actor = access.actor;
+        const relation = await require('../../services/documentRelations').documentRelations(req, entityFields(req.body));
         if (!relation.entityId) return res.status(400).json({ message: 'Select a valid record' });
         ['linkContact', 'linkLead', 'linkProperty', 'linkOpportunity', 'linkPartnerCustomer'].forEach((key) => { result.found[key] = null; });
         Object.assign(result.found, relation);
@@ -231,7 +225,7 @@ const linkDocument = async (req, res) => {
         await result.folder.save();
         res.status(200).json({ message: 'Document linked successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to link document', error: error.message });
+        res.status(error.status || 400).json({ code: error.code || 'invalid', message: 'Failed to link document', error: error.message });
     }
 };
 

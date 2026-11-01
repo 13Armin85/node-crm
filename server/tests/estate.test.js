@@ -73,12 +73,32 @@ test('loaded lead relations validate and survive an edit payload', () => {
   assert.equal(cleared.partnerCustomer, null);
 });
 const base = () => ({ title: 'Test', category: 'RESIDENTIAL', subtype: 'APARTMENT', transactionType: 'SALE', price: { amount: 0, currency: 'TRY' }, area: { value: 50, type: 'NET' }, sale: { status: 'AVAILABLE' } });
+test('property bedroom layouts accept the bedroom-plus-reception format', () => {
+  const bedroom = defaults.Properties.find(field => field.name === 'bedroom');
+  assert(bedroom.options.some(option => option.value === '1+4'));
+  assert.equal(normalizeProperty({ ...base(), bedroom: '1+4' }).bedroom, '1+4');
+  assert.equal(new (require('../model/schema/property').Property)({
+    ...base(), bedroom: '1+4', createBy: id,
+  }).validateSync(), undefined);
+  assert.equal(defaults.Properties.find(field => field.name === 'propertyAgent').relation, 'Users');
+  assert.equal(defaults.Properties.find(field => field.name === 'propertyOwner').relation, 'Contacts');
+});
 for (const [category, subtype, valid] of [['RESIDENTIAL', 'APARTMENT', true], ['RESIDENTIAL', 'VILLA', true], ['RESIDENTIAL', 'SHOP', false], ['COMMERCIAL', 'SHOP', true], ['COMMERCIAL', 'OFFICE', true], ['COMMERCIAL', 'APARTMENT', false]]) {
   test(`${category} / ${subtype}`, () => valid ? assert.equal(normalizeProperty({ ...base(), category, subtype }).subtype, subtype) : assert.throws(() => normalizeProperty({ ...base(), category, subtype })));
 }
 test('dependent fields clear when the parent changes', () => {
   const p = normalizeProperty({ ...base(), category: 'COMMERCIAL', subtype: 'SHOP', bedroom: '1+1', isInsideResidence: false, residence: id, sale: { status: 'AVAILABLE', lead: id, buyerType: 'LEAD' } });
   assert.equal(p.residence, null); assert.equal(p.bedroom, null); assert.equal(p.sale.lead, null); assert.equal(p.sale.buyerType, null);
+});
+test('residential bedroom layouts retain bedroom-plus-living-room values through validation and model validation', () => {
+  const { bedrooms } = require('../services/estateCatalog');
+  for (const layout of ['2+1', '3+1', '4+2']) {
+    assert.ok(bedrooms.includes(layout));
+    const property = normalizeProperty({ ...base(), bedroom: layout });
+    assert.equal(property.bedroom, layout);
+    const Property = require('../model/schema/property').Property;
+    assert.equal(new Property({ ...property, createBy: id }).validateSync(), undefined);
+  }
 });
 test('sold property requires a valid buyer and only retains the selected relation', () => {
   for (const buyerType of ['LEAD', 'PARTNER_CUSTOMER']) {
@@ -112,6 +132,15 @@ test('builder adds, edits, reorders and removes fields while validating metadata
   assert.deepEqual(validateDefinition({ fields: [] }, current, baseline), []);
   assert.throws(() => validateDefinition({ fields: [...baseline.fields, { ...custom, label: { en: 'Only' } }] }, current, baseline));
 });
+
+test('optional choices may be emptied while active required choices keep at least one option', () => {
+  const field = { name: 'field_choices', kind: 'CUSTOM_FIELD', type: 'select', enabled: true, required: false, options: [],
+    label: { en: 'Choices', fa: 'گزینه‌ها', tr: 'Seçenekler' } };
+  const baseline = { fields: [] };
+  assert.deepEqual(validateDefinition({ fields: [field] }, baseline, baseline)[0].options, []);
+  assert.throws(() => validateDefinition({ fields: [{ ...field, required: true }] }, baseline, baseline), { code: 'optionsRequired', field: 'options' });
+  assert.doesNotThrow(() => validateDefinition({ fields: [{ ...field, required: true, enabled: false }] }, baseline, baseline));
+});
 test('form builder catalogs every CRM data-entry module with unique valid fields', () => {
   const expectedModules = [
     'Properties', 'Partner Customers', 'Residences', 'Leads', 'Contacts',
@@ -127,7 +156,7 @@ test('form builder catalogs every CRM data-entry module with unique valid fields
   }
   assert(defaults.Properties.some(field => field.name === 'lrNo'));
   assert(defaults.Invoices.some(field => field.name === 'quoteStage'));
-  assert(defaults.Leads.some(field => field.name === 'associatedListing' && field.external));
+  assert(defaults.Leads.some(field => field.name === 'associatedListing' && field.relation === 'Properties' && !field.external));
 });
 test('migration preserves explicit values and reports unknown types', () => {
   assert.deepEqual(mapProperty({ category: 'COMMERCIAL', propertyType: 'Apartment', price: { amount: 10 }, listingPrice: 20 }).update, {});

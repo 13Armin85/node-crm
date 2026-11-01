@@ -26,6 +26,7 @@ import DynamicPage from "views/admin/dynamicPage";
 import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
+import { isSettingsPage } from "utils/settingsWorkspace";
 import PageHelp from "components/help/PageHelp";
 import { canViewModule, useModuleVisibility } from "services/moduleVisibility";
 
@@ -284,7 +285,7 @@ export default function User(props) {
             <Box className="crm-workspace-body" pt="100px">
               {getRoute() ? (
                 <Box
-                  className="crm-content"
+                  className={`crm-content${isSettingsPage(location.pathname) ? ' crm-settings-content' : ''}`}
                   mx="auto"
                   pe="20px"
                   minH="84vh"

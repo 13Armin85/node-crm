@@ -96,7 +96,7 @@ Running `--apply` again is safe: migrated customers use `legacyAccountId`, defin
 
 ## Dynamic forms
 
-Super administrators can use **Form Builder** to manage custom fields and translated metadata for each main module. System fields can be reordered, enabled, and configured where allowed, but cannot be deleted or renamed internally. Supported field types include text, textarea, number, currency, select, multiselect, checkbox, radio, date, datetime, email, phone, file, and URL.
+Administrators and developers can use **Form Builder** to manage fields and translated metadata for each main module. Changes, including deleting fields and options, are persisted only by clicking **Save**. Switching modules does not save; unsaved drafts remain available while the builder page stays open. Removing a form field preserves existing CRM records and their stored values. Supported field types include text, textarea, number, currency, select, multiselect, checkbox, radio, date, datetime, email, phone, file, and URL.
 
 Property category, subtype, transaction type, currency, residence, and buyer relations use stable stored codes. Labels and option text are translated independently in English, Persian, and Turkish.
 

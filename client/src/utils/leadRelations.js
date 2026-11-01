@@ -2,11 +2,12 @@ import { formValue } from './formValue';
 
 export const LEAD_SELECTION_MESSAGE = 'Select exactly one: a lead, a partner customer, or a contact.';
 export const LEAD_SELECTION_ERROR = 'leadSelectionRequired';
-// Leads are free entry. Existing relationships stay in stored records but do
-// not appear as customer, property or assignee pickers in the lead form.
+// Lead details and property selection are optional. Legacy customer and
+// assignee relationships remain stored without appearing as customer pickers.
 export const prepareLeadDefinition = definition => definition?.moduleName === 'Leads'
   ? { ...definition, fields: (definition.fields || []).map(field => ({ ...field, required: false,
-      ...(field.kind !== 'CUSTOM_FIELD' && field.relation ? { enabled: false } : {}),
+      ...(field.kind !== 'CUSTOM_FIELD' && field.relation && field.name !== 'associatedListing' ? { enabled: false } : {}),
+      ...(field.kind !== 'CUSTOM_FIELD' && field.name === 'associatedListing' ? { external: false, type: 'select', relation: 'Properties' } : {}),
     })) }
   : definition;
 const relationNames = ['lead', 'contact', 'partnerCustomer'];

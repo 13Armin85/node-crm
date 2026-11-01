@@ -51,6 +51,7 @@ module.exports = async (req, res, next) => {
         req.body = await require('../services/leadWorkflow').normalizeLeadAssignment(req.body, previous || {}, req.actor);
         req.body = normalizeLeadRelations(req.body, previous || {});
         validateLeadSelection(req.body);
+        await require('../services/leadRelations').validateLeadProperty(req, req.body);
         definition = { ...definition, fields: definition.fields.filter(field => isLeadRelationVisible(field, req.body)) };
       }
       const values = validateFields(definition, req.body, previous || {});

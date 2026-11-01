@@ -1,5 +1,5 @@
 import useRecordRefresh from "utils/useRecordRefresh";
-import LeadOwner from "./components/LeadOwner";
+import { leadOwnerName, leadPropertyName, leadPhone, leadTransactionType, leadCreationDate } from 'utils/leadTable';
 import ConvertLeadButtons from "./components/ConvertLeadButtons";
 import RecordMenuButton from "components/table/RecordMenuButton";
 import { Portal } from '@chakra-ui/react';
@@ -260,9 +260,51 @@ const Index = () => {
             </div>
           ),
         },
+        {
+          Header: tr("Lead Name"),
+          accessor: "leadName",
+          cell: ({ row, value }) => (
+            <Text
+              onClick={() => navigate(`/leadView/${row.original._id}`)}
+              color="brand.600"
+              fontSize="sm"
+              fontWeight="700"
+              cursor="pointer"
+            >
+              {value || "-"}
+            </Text>
+          ),
+        },
+        {
+          Header: tr("Lead Owner"),
+          id: "assignUser",
+          accessor: leadOwnerName,
+          cell: ({ value }) => <Text fontSize="sm">{value || tr("Unknown")}</Text>,
+        },
+        {
+          Header: tr("Related Property"),
+          id: "associatedListing",
+          accessor: leadPropertyName,
+          cell: ({ value }) => <Text fontSize="sm">{value || "-"}</Text>,
+        },
+        {
+          Header: tr("Transaction Type"),
+          id: "transactionType",
+          accessor: leadTransactionType,
+          cell: ({ value }) => {
+            const transactionType = typeof value === "string" ? value.toUpperCase() : value;
+            return <Text fontSize="sm">{transactionType === "SALE" ? tr("For Sale") : transactionType === "RENT" ? tr("For Rent") : value || "-"}</Text>;
+          },
+        },
+        { Header: tr("Phone Number"), id: "leadPhoneNumber", accessor: leadPhone, cell: ({ value }) => <Text fontSize="sm" dir="ltr">{value || "-"}</Text> },
+        {
+          Header: tr("Creation Date"),
+          accessor: "createdDate",
+          cell: ({ value }) => <Text fontSize="sm">{leadCreationDate(value)}</Text>,
+        },
         ...(result?.payload?.data && result?.payload?.data?.length > 0
           ? result?.payload?.data[0]?.fields
-              ?.filter((field) => field?.isTableField === true && field?.isView)
+              ?.filter((field) => field?.isTableField === true && field?.isView && !["leadName", "assignUser", "associatedListing", "transactionType", "leadPhoneNumber", "createdDate"].includes(field.name))
               ?.map(
                 (field) =>
                   field?.name !== "leadStatus" && {
@@ -288,7 +330,6 @@ const Index = () => {
                         >
                           {cell?.value || "-"}
                         </Text>
-                        {field.name === "leadName" && <LeadOwner lead={cell.row.original} />}
                       </div>
                     ),
                   }
@@ -300,12 +341,12 @@ const Index = () => {
                 (field) =>
                   field?.isTableField === true &&
                   !field?.isView &&
-                  field?.name !== "leadStatus"
+                  field?.name !== "leadStatus" &&
+                  !["leadName", "assignUser", "associatedListing", "transactionType", "leadPhoneNumber", "createdDate"].includes(field.name)
               )
               ?.map((field) => ({
                 Header: field?.label,
                 accessor: field?.name,
-                ...(field.name === 'leadName' ? { cell: ({ row }) => <><Text>{row.original.leadName || '-'}</Text><LeadOwner lead={row.original} /></> } : {}),
               })) || []
           : []),
         ...(permission?.update || permission?.view || permission?.delete

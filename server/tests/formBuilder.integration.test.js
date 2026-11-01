@@ -85,6 +85,45 @@ test('admin field configuration persists and controls actual forms without chang
       assert.deepEqual(loaded.fields.map(field => field.name), fields.map(field => field.name));
       assert.equal(await FormDefinition.countDocuments(), 2);
     });
+    await t.test('removed system options, system fields and custom fields stay removed after saving and reloading', async () => {
+      for (const [moduleName, fieldName, optionValue] of [['Properties', 'bedroom', '1+4'], ['Leads', 'listedFor', 'Buy']]) {
+        const route = '/estate/definitions/' + moduleName;
+        const definition = (await api('GET', route)).data;
+        const fields = definition.fields.map(field => field.name === fieldName ? { ...field,
+          label: { en: 'Configured label', fa: 'عنوان تنظیم‌شده', tr: 'Yapılandırılan etiket' },
+          options: field.options.filter(option => option.value !== optionValue),
+        } : field);
+        fields.push({ name: 'field_removable', kind: 'CUSTOM_FIELD', type: 'text', enabled: true,
+          label: { en: 'Temporary field', fa: 'فیلد موقت', tr: 'Geçici alan' } });
+        let saved = await api('PUT', route, { ...definition, fields });
+        assert.equal(saved.status, 200, JSON.stringify(saved));
+        const loaded = (await api('GET', route)).data;
+        const field = loaded.fields.find(field => field.name === fieldName);
+        assert(!field.options.some(option => option.value === optionValue));
+        assert.equal(field.label.en, 'Configured label');
+        saved = await api('PUT', route, { ...loaded, fields: loaded.fields.map(field => field.name === fieldName ? { ...field, options: [], defaultValue: undefined } : field) });
+        assert.equal(saved.status, 200, JSON.stringify(saved));
+        assert.deepEqual((await api('GET', route)).data.fields.find(field => field.name === fieldName).options, []);
+        saved = await api('PUT', route, { ...saved.data, fields: saved.data.fields.filter(field => ![fieldName, 'field_removable'].includes(field.name)) });
+        assert.equal(saved.status, 200, JSON.stringify(saved));
+        for (let read = 0; read < 2; read++) {
+          const reloaded = (await api('GET', route)).data;
+          assert(!reloaded.fields.some(field => [fieldName, 'field_removable'].includes(field.name)));
+          assert.equal(reloaded.revision, saved.data.revision);
+        }
+        saved = await api('PUT', route, saved.data);
+        assert.equal(saved.status, 200);
+        assert(!saved.data.fields.some(field => [fieldName, 'field_removable'].includes(field.name)));
+      }
+      assert.deepEqual(await Contact.findById(original._id).lean(), originalRecord);
+    });
+    await t.test('deleting every form field persists an empty definition without removing records', async () => {
+      const definition = (await api('GET', '/estate/definitions/Contacts')).data;
+      const saved = await api('PUT', '/estate/definitions/Contacts', { ...definition, fields: [] });
+      assert.equal(saved.status, 200); assert.deepEqual(saved.data.fields, []);
+      assert.deepEqual((await api('GET', '/estate/definitions/Contacts')).data.fields, []);
+      assert.deepEqual(await Contact.findById(original._id).lean(), originalRecord);
+    });
   } finally {
     if (server) await new Promise(resolve => server.close(resolve));
     assert.equal(mongoose.connection.name, dbName);

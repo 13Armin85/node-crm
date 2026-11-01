@@ -82,3 +82,116 @@ test('older residence edits receive defaults for newly added transaction fields'
   await act(async () => Simulate.click(button('Save')));
   expect(putApi).toHaveBeenCalledWith('api/estate/Residences/old', expect.objectContaining({ transactionType: 'SALE', sale: { status: 'AVAILABLE' } }));
 });
+
+test.each([false, true])('partner company details survive customer type changes before saving (editing: %s)', async editing => {
+  const companyValues = { companyName: 'Example Company', contactPerson: 'Company Contact', taxNumber: '1234567890' };
+  definition = { moduleName: 'Partner Customers', fields: [
+    field('customerType', 'radio', { required: true, defaultValue: 'INDIVIDUAL', options: [
+      { value: 'INDIVIDUAL', label: { en: 'Individual' } }, { value: 'COMPANY', label: { en: 'Company' } },
+    ] }),
+    field('fullName', 'text', { required: true, condition: { customerType: 'INDIVIDUAL' } }),
+    ...Object.keys(companyValues).map(name => field(name, 'text', {
+      required: name === 'companyName', condition: { customerType: 'COMPANY' },
+    })),
+    field('phone', 'phone'),
+  ] };
+  rows = editing ? [{ _id: 'partner-1', customerType: 'COMPANY', ...companyValues }] : [];
+  await render('Partner Customers');
+  await act(async () => Simulate.click(editing ? container.querySelector('button[aria-label="Edit"]') : button('Add New')));
+  const selectType = async value => {
+    const radio = document.querySelector('input[type="radio"][value="' + value + '"]');
+    await act(async () => Simulate.change(radio, { target: { value, checked: true } }));
+  };
+  const fill = async (name, value) => {
+    await act(async () => Simulate.change(document.querySelector('input[name="' + name + '"]'), { target: { value } }));
+  };
+  if (!editing) {
+    await selectType('COMPANY');
+    for (const [name, value] of Object.entries(companyValues)) await fill(name, value);
+  }
+  await fill('phone', '+905551234567');
+  await selectType('INDIVIDUAL');
+  expect(document.querySelector('input[name="companyName"]')).toBeNull();
+  await fill('fullName', 'Individual Name');
+  await selectType('COMPANY');
+  for (const [name, value] of Object.entries(companyValues)) {
+    expect(document.querySelector('input[name="' + name + '"]').value).toBe(value);
+  }
+  expect(document.querySelector('input[name="phone"]').value).toBe('+905551234567');
+  await selectType('INDIVIDUAL');
+  expect(document.querySelector('input[name="fullName"]').value).toBe('Individual Name');
+  await selectType('COMPANY');
+  await act(async () => Simulate.click(button('Save')));
+  const payload = expect.objectContaining({ customerType: 'COMPANY', ...companyValues, phone: '+905551234567' });
+  expect(editing ? putApi : postApi).toHaveBeenCalledWith(editing ? 'api/estate/Partner%20Customers/partner-1' : 'api/estate/Partner%20Customers', payload);
+});
+
+const agentId = '64d33173fd7ff3fa0924a101';
+const ownerId = '64d33173fd7ff3fa0924a102';
+const propertyDefinition = () => ({ moduleName: 'Properties', fields: [
+  field('title', 'text', { required: true }),
+  field('bedroom', 'select', { options: ['1+4', '4+2'].map(value => ({ value, label: { en: value } })) }),
+  field('floor', 'select', { options: [{ value: '3', label: { en: '3' } }] }),
+  field('propertyAgent', 'select', { label: { en: 'Assigned Property Agent' }, relation: 'Users' }),
+  field('propertyOwner', 'select', { label: { en: 'Property Owner' }, relation: 'Contacts' }),
+] });
+const propertyApi = () => {
+  definition = propertyDefinition();
+  getApi.mockImplementation(async path => {
+    if (path.includes('/definitions/Contacts')) return { status: 200, data: { moduleName: 'Contacts', fields: [field('fullName', 'text', { required: true }), field('email', 'email', { required: true }), field('phoneNumber', 'phone', { required: true })] } };
+    if (path.includes('/definitions/')) return { status: 200, data: definition };
+    if (path.includes('/options')) return { status: 200, data: path.includes('/Users/') ? [{ value: agentId, label: 'Assigned Agent' }] : [{ value: ownerId, label: 'Owner Name · +12345678' }] };
+    return { status: 200, data: { items: rows, total: rows.length } };
+  });
+};
+const fillProperty = async () => {
+  for (const [name, value] of [['title', 'New Property'], ['bedroom', '1+4'], ['floor', '3']]) {
+    await act(async () => Simulate.change(document.querySelector(`[name="${name}"]`), { target: { value } }));
+  }
+};
+const chooseRelation = async (name, value) => {
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 350)); });
+  await act(async () => Simulate.focus(document.querySelector(`[name="${name}"]`)));
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 350)); });
+  const option = [...document.querySelectorAll('[role="option"]')].find(option => option.textContent.includes(value));
+  expect(option).toBeDefined();
+  await act(async () => Simulate.click(option));
+};
+
+test('property form saves 1+4 with searchable existing owner and assigned agent selections', async () => {
+  rows = []; propertyApi(); await render('Properties');
+  await act(async () => Simulate.click(button('Add New')));
+  await fillProperty(); await chooseRelation('propertyAgent', 'Assigned Agent'); await chooseRelation('propertyOwner', 'Owner Name');
+  await act(async () => Simulate.click(button('Save')));
+  expect(postApi).toHaveBeenCalledTimes(1);
+  expect(postApi).toHaveBeenCalledWith('api/estate/Properties', expect.objectContaining({ title: 'New Property', bedroom: '1+4', floor: '3', propertyAgent: agentId, propertyOwner: ownerId }));
+}, 20000);
+
+test('new property owner validates contact details, saves a reusable contact and selects it for the property', async () => {
+  rows = []; propertyApi();
+  postApi.mockImplementation(async path => ({ status: 201, data: path.endsWith('/owners') ? { _id: ownerId, fullName: 'New Owner' } : {} }));
+  await render('Properties'); await act(async () => Simulate.click(button('Add New'))); await fillProperty();
+  await act(async () => Simulate.click(button('Create New Property Owner')));
+  await act(async () => Simulate.click(button('Save Contact and Select')));
+  expect(postApi).not.toHaveBeenCalled(); expect(document.body.textContent).toContain('Required');
+  for (const [name, value] of [['fullName', 'New Owner'], ['email', 'owner@example.test'], ['phoneNumber', '+12345678']]) {
+    await act(async () => Simulate.change(document.querySelector(`[name="${name}"]`), { target: { value } }));
+  }
+  await act(async () => Simulate.click(button('Save Contact and Select')));
+  expect(postApi).toHaveBeenCalledWith('api/estate/Properties/owners', expect.objectContaining({ fullName: 'New Owner', email: 'owner@example.test', phoneNumber: '+12345678' }));
+  await act(async () => Simulate.click(button('Save')));
+  expect(postApi).toHaveBeenLastCalledWith('api/estate/Properties', expect.objectContaining({ bedroom: '1+4', propertyOwner: ownerId }));
+}, 20000);
+
+test('property table uses the assigned agent and populated references normalize back to IDs on edit', async () => {
+  propertyApi(); rows = [{ _id: 'property-1', title: 'Existing Property', bedroom: '1+4', floor: '3',
+    createBy: { firstName: 'Creator' }, propertyAgent: { _id: agentId, firstName: 'Assigned', lastName: 'Agent' },
+    propertyOwner: { _id: ownerId, fullName: 'Owner Name' } }];
+  await render('Properties');
+  expect(container.textContent).toContain('Assigned Agent'); expect(container.textContent).not.toContain('Creator');
+  await act(async () => Simulate.click(container.querySelector('button[aria-label="Edit"]')));
+  expect(document.querySelector('[name="bedroom"]').value).toBe('1+4');
+  await act(async () => Simulate.change(document.querySelector('[name="bedroom"]'), { target: { value: '4+2' } }));
+  await act(async () => Simulate.click(button('Save')));
+  expect(putApi).toHaveBeenCalledWith('api/estate/Properties/property-1', expect.objectContaining({ bedroom: '4+2', propertyAgent: agentId, propertyOwner: ownerId }));
+}, 20000);

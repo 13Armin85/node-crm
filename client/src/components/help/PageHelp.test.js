@@ -14,6 +14,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   act(() => { ReactDOM.unmountComponentAtNode(container); });
+  document.getElementById('crm-page-help-slot')?.remove();
   container.remove(); localStorage.clear();
 });
 const render = async (props, path = '/view/task-id') => {
@@ -41,4 +42,24 @@ test('form-builder alias has a specific description', async () => {
   await render({ routes: [{ path: '/form-builder', name: 'estate.formBuilder' }] }, '/form-builder');
   await act(async () => Simulate.click(container.querySelector('.crm-page-help')));
   expect(document.querySelector('[role="dialog"]').textContent).toContain('Custom fields guide');
+});
+
+test('page help moves to the compact header and keeps its working description dialog', async () => {
+  mockLanguage = 'en';
+  const slot = document.createElement('div'); slot.id = 'crm-page-help-slot'; document.body.appendChild(slot);
+  await render({ routes: [{ path: '/contacts', name: 'Contacts' }] }, '/contacts');
+  expect(container.querySelector('.crm-page-help')).toBeNull();
+  expect(slot.querySelector('.crm-page-help').getAttribute('aria-label')).toBe('Page description');
+  await act(async () => Simulate.click(slot.querySelector('.crm-page-help')));
+  expect(document.querySelector('[role=dialog]')).not.toBeNull();
+});
+
+test('page help also moves when the portalled header mounts after the page', async () => {
+  mockLanguage = 'en';
+  await render({ routes: [{ path: '/contacts', name: 'Contacts' }] }, '/contacts');
+  expect(container.querySelector('.crm-page-help')).not.toBeNull();
+  const slot = document.createElement('div'); slot.id = 'crm-page-help-slot';
+  await act(async () => { document.body.appendChild(slot); });
+  expect(container.querySelector('.crm-page-help')).toBeNull();
+  expect(slot.querySelector('.crm-page-help')).not.toBeNull();
 });

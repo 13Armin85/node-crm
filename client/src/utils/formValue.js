@@ -20,7 +20,7 @@ export const formLabel = (value, fallback = "") => {
   }
   const fullName = [value.firstName, value.lastName].filter(part => typeof part === "string" && part.trim()).join(" ");
   if (fullName) return fullName;
-  for (const key of ["companyName", "fullName", "name", "title", "username", "leadName", "label", "text", "value"]) {
+  for (const key of ["companyName", "fullName", "name", "opportunityName", "title", "username", "leadName", "email", "leadEmail", "label", "text", "value"]) {
     if (value[key] != null && value[key] !== value) {
       const label = formLabel(value[key]);
       if (label) return label;

@@ -21,22 +21,22 @@ const languages = ['en', 'fa', 'tr'];
 const emptyLocalized = () => ({ en: '', fa: '', tr: '' });
 
 function Section({ icon, title, description, children }) {
-  const border = useColorModeValue('gray.200', 'whiteAlpha.200');
-  const muted = useColorModeValue('gray.500', 'gray.400');
-  const iconBg = useColorModeValue('brand.50', 'whiteAlpha.100');
-  const headingBg = useColorModeValue('gray.50', 'whiteAlpha.50');
+  const border = 'var(--crm-border)';
+  const muted = 'var(--crm-muted)';
+  const iconBg = 'var(--crm-panel-hover)';
+  const headingBg = 'var(--crm-panel-hover)';
   return (
-    <Box border="1px solid" borderColor={border} borderRadius="18px" overflow="hidden">
-      <Flex align="center" gap="12px" px={{ base: 4, md: 5 }} py="14px" bg={headingBg}>
-        <Flex align="center" justify="center" boxSize="38px" borderRadius="12px" bg={iconBg} color="brand.500" flexShrink={0}>
-          <Icon as={icon} boxSize="20px" />
+    <Box className="crm-builder-section" border="1px solid" borderColor={border} borderRadius="5px" overflow="hidden">
+      <Flex className="crm-builder-section__header" align="center" gap="8px" px={3} py="10px" bg={headingBg}>
+        <Flex align="center" justify="center" boxSize="26px" borderRadius="4px" bg={iconBg} color="var(--crm-primary)" flexShrink={0}>
+          <Icon as={icon} boxSize="17px" />
         </Flex>
         <Box minW="0">
           <Text fontWeight="800" fontSize="sm">{title}</Text>
           {description && <Text color={muted} fontSize="xs" mt="2px">{description}</Text>}
         </Box>
       </Flex>
-      <Box p={{ base: 4, md: 5 }}>{children}</Box>
+      <Box p={3}>{children}</Box>
     </Box>
   );
 }
@@ -54,15 +54,16 @@ export default function FormBuilder() {
   const draft = useRef(null);
   const activeModule = useRef(moduleName);
   const saving = useRef(false);
+  const moduleDrafts = useRef(new Map());
   activeModule.current = moduleName;
   draft.current = definition;
   useEffect(() => () => { activeModule.current = null; }, []);
   const admin = isAdmin(JSON.parse(localStorage.getItem('user') || '{}'));
-  const panelBg = useColorModeValue('white', 'navy.800');
-  const subtleBg = useColorModeValue('gray.50', 'whiteAlpha.50');
-  const border = useColorModeValue('gray.200', 'whiteAlpha.200');
-  const muted = useColorModeValue('gray.500', 'gray.400');
-  const activeBg = useColorModeValue('brand.50', 'whiteAlpha.100');
+  const panelBg = 'var(--crm-panel-solid)';
+  const subtleBg = 'var(--crm-panel-hover)';
+  const border = 'var(--crm-border)';
+  const muted = 'var(--crm-muted)';
+  const activeBg = useColorModeValue('#edf4ff', '#223a5c');
 
   useEffect(() => {
     getApi('api/estate/definitions').then(response => {
@@ -74,6 +75,11 @@ export default function FormBuilder() {
   useEffect(() => {
     let active = true;
     setDefinition(null); setError(''); setSuccess(false); setChanged(false);
+    const cached = moduleDrafts.current.get(moduleName);
+    if (cached) {
+      setDefinition(cached.definition); setSelected(cached.selected); setChanged(true);
+      return undefined;
+    }
     getApi(`api/estate/definitions/${encodeURIComponent(moduleName)}`).then(response => {
       if (!active) return;
       if (response.status === 200) {
@@ -116,7 +122,7 @@ export default function FormBuilder() {
   };
 
   const save = useCallback(async () => {
-    if (saving.current || !draft.current) return false;
+    if (saving.current || !draft.current || !changed) return false;
     const snapshot = draft.current;
     const targetModule = moduleName;
     saving.current = true;
@@ -140,29 +146,26 @@ export default function FormBuilder() {
       if (activeModule.current === targetModule) setError('serverError');
       return false;
     } finally { saving.current = false; if (activeModule.current === targetModule) setBusy(false); }
-  }, [moduleName]);
+  }, [moduleName, changed]);
 
-  useEffect(() => {
-    if (!admin || !changed || busy || error || !definition) return undefined;
-    const complete = definition.fields.every(item =>
-      languages.every(lang => item.label?.[lang]?.trim()) &&
-      (!['select', 'radio', 'multiselect'].includes(item.type) || item.relation ||
-        (item.options?.length && item.options.every(option => option.value && languages.every(lang => option.label?.[lang]?.trim()))))
-    );
-    if (!complete) return undefined;
-    const timer = setTimeout(save, 700);
-    return () => clearTimeout(timer);
-  }, [admin, changed, busy, error, definition, save]);
-
-  const changeModule = async event => {
+  const changeModule = event => {
     const next = event.target.value;
-    if (busy || (changed && !await save())) return;
+    if (busy || next === moduleName) return;
+    if (changed) moduleDrafts.current.set(moduleName, { definition: draft.current, selected });
+    else moduleDrafts.current.delete(moduleName);
     setModuleName(next);
   };
 
   if (!admin) return <Alert status="error" mt="100px"><AlertIcon />{t('estate.forbidden')}</Alert>;
 
   const updateOption = (optionIndex, patch) => update({ options: field.options.map((option, index) => index === optionIndex ? { ...option, ...patch } : option) });
+  const removeOption = optionIndex => {
+    const removed = field.options[optionIndex].value;
+    const defaultValue = Array.isArray(field.defaultValue)
+      ? field.defaultValue.filter(value => value !== removed)
+      : field.defaultValue === removed ? undefined : field.defaultValue;
+    update({ options: field.options.filter((_, index) => index !== optionIndex), defaultValue });
+  };
 
   const localizedEditor = key => (
     <Box key={key}>
@@ -180,16 +183,15 @@ export default function FormBuilder() {
 
   return (
     <Box className="form-builder-page" data-testid="form-builder" pb="30px" dir="ltr">
-      <Box borderRadius="22px" p={{ base: 5, md: 7 }} mb="20px" color="white" bg="linear-gradient(120deg, #4318FF 0%, #7551FF 52%, #00C6FF 130%)" boxShadow="0 18px 45px rgba(67, 24, 255, 0.22)" position="relative" overflow="hidden">
-        <Box position="absolute" boxSize="230px" borderRadius="full" bg="whiteAlpha.100" right="-70px" top="-130px" />
+      <Box className="crm-page-hero crm-builder-heading">
         <Flex direction={{ base: 'column', md: 'row' }} justify="space-between" align={{ base: 'stretch', md: 'center' }} gap="20px" position="relative">
           <Flex align="center" gap="16px">
-            <Flex boxSize={{ base: '52px', md: '62px' }} borderRadius="18px" bg="whiteAlpha.200" align="center" justify="center" flexShrink={0}><Icon as={MdOutlineDynamicForm} boxSize={{ base: '28px', md: '34px' }} /></Flex>
-            <Box><Text color="white" fontSize={{ base: 'xl', md: '2xl' }} fontWeight="900">{t('estate.formBuilder')}</Text><Text mt="5px" color="whiteAlpha.800" fontSize="sm">{t('estate.formBuilderDescription')}</Text></Box>
+            <Flex className="crm-page-hero__icon" align="center" justify="center" flexShrink={0}><Icon as={MdOutlineDynamicForm} boxSize="18px" /></Flex>
+            <Box><Text className="crm-page-hero__title" color="var(--crm-text)">{t('estate.formBuilder')}</Text><Text className="crm-page-hero__subtitle" color={muted}>{t('estate.formBuilderDescription')}</Text></Box>
           </Flex>
           <FormControl maxW={{ base: '100%', md: '300px' }}>
-            <FormLabel fontSize="xs" color="whiteAlpha.800" mb="6px">{t('estate.selectModule')}</FormLabel>
-            <Select data-testid="module-select" aria-label={t('Module')} value={moduleName} isDisabled={busy} onChange={changeModule} bg="white" color="navy.700" border="0" borderRadius="14px" fontWeight="700" h="46px">
+            <FormLabel fontSize="xs" color={muted} mb="5px">{t('estate.selectModule')}</FormLabel>
+            <Select data-testid="module-select" aria-label={t('Module')} value={moduleName} isDisabled={busy} onChange={changeModule} bg={panelBg} color="var(--crm-text)" border="1px solid" borderColor={border} borderRadius="4px" fontWeight="500" h="32px">
               {modules.map(name => <option key={name} value={name}>{t(name)}</option>)}
             </Select>
           </FormControl>
@@ -202,16 +204,16 @@ export default function FormBuilder() {
         <Grid templateColumns={{ base: '1fr', lg: '320px minmax(0, 1fr)' }} gap="20px"><Skeleton height="520px" borderRadius="20px" /><Skeleton height="520px" borderRadius="20px" /></Grid>
       ) : (
         <>
-          <SimpleGrid columns={{ base: 1, sm: 3 }} spacing="12px" mb="20px">
+          <SimpleGrid className="crm-builder-statistics" columns={3} spacing="10px" mb="12px">
             {[[MdViewList, t('estate.totalFields'), fieldCount], [MdAdd, t('estate.customFieldsCount'), customCount], [MdCheckCircle, t('estate.activeFields'), enabledCount]].map(([icon, label, value]) => (
-              <Flex key={label} bg={panelBg} border="1px solid" borderColor={border} borderRadius="16px" p="14px" align="center" gap="12px">
-                <Flex boxSize="40px" borderRadius="12px" bg={activeBg} color="brand.500" align="center" justify="center"><Icon as={icon} boxSize="20px" /></Flex>
+              <Flex className="crm-builder-stat" key={label} bg={panelBg} border="1px solid" borderColor={border} borderRadius="5px" p="12px" align={{ base: 'start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="8px">
+                <Flex boxSize="28px" borderRadius="4px" bg={activeBg} color="var(--crm-primary)" align="center" justify="center" flexShrink={0}><Icon as={icon} boxSize="17px" /></Flex>
                 <Box><Text color={muted} fontSize="xs">{label}</Text><Text fontSize="xl" fontWeight="900">{value}</Text></Box>
               </Flex>
             ))}
           </SimpleGrid>
 
-          <Grid templateColumns={{ base: 'minmax(0, 1fr)', lg: '320px minmax(0, 1fr)' }} gap="20px" alignItems="start">
+          <Grid templateColumns={{ base: 'minmax(0, 1fr)', lg: '280px minmax(0, 1fr)' }} gap="12px" alignItems="start">
             <GridItem>
               <Card data-testid="fields-panel" p="0" overflow="hidden" border="1px solid" borderColor={border} borderRadius="20px">
                 <Flex px="18px" py="16px" align="center" justify="space-between" borderBottom="1px solid" borderColor={border}>
@@ -222,9 +224,9 @@ export default function FormBuilder() {
                   {definition.fields.map((item, index) => {
                     const isActive = selected === index;
                     return (
-                      <Button key={item.name} h="auto" minH="58px" px="10px" py="9px" variant="ghost" bg={isActive ? activeBg : 'transparent'} color={isActive ? 'brand.500' : 'inherit'} border="1px solid" borderColor={isActive ? 'brand.200' : 'transparent'} borderRadius="14px" justifyContent="stretch" onClick={() => setSelected(index)} _hover={{ bg: activeBg }}>
+                      <Button className="crm-builder-field" aria-pressed={isActive} key={item.name} h="auto" minH="44px" px="8px" py="7px" variant="ghost" bg={isActive ? activeBg : 'transparent'} color={isActive ? 'var(--crm-primary)' : 'inherit'} border="1px solid" borderColor={isActive ? 'brand.200' : 'transparent'} borderRadius="4px" justifyContent="stretch" onClick={() => setSelected(index)} _hover={{ bg: activeBg }}>
                         <Icon as={MdDragIndicator} color={isActive ? 'brand.400' : muted} boxSize="20px" flexShrink={0} />
-                        <Box textAlign="left" mx="9px" minW="0" flex="1"><Text fontSize="sm" fontWeight="800" noOfLines={1}>{localized(item.label, language) || t('estate.newField')}</Text><Text color={muted} fontSize="10px" mt="3px" fontWeight="600">{t(`estate.type.${item.type}`)}</Text></Box>
+                        <Box textAlign="left" mx="7px" minW="0" flex="1"><Text fontSize="xs" fontWeight="600" whiteSpace="normal" overflowWrap="anywhere">{localized(item.label, language) || t('estate.newField')}</Text><Text color={muted} fontSize="10px" mt="2px" fontWeight="500">{t(`estate.type.${item.type}`)}</Text></Box>
                       </Button>
                     );
                   })}
@@ -243,7 +245,7 @@ export default function FormBuilder() {
                     <Flex gap="6px" flexShrink={0}>
                       <Tooltip label={t('estate.moveUp')}><IconButton aria-label={t('estate.moveUp')} icon={<MdArrowUpward />} isDisabled={selected === 0} onClick={() => move(-1)} variant="outline" borderRadius="11px" /></Tooltip>
                       <Tooltip label={t('estate.moveDown')}><IconButton aria-label={t('estate.moveDown')} icon={<MdArrowDownward />} isDisabled={selected === definition.fields.length - 1} onClick={() => move(1)} variant="outline" borderRadius="11px" /></Tooltip>
-                      <Tooltip label={t('Delete')}><IconButton aria-label={t('Delete')} icon={<MdDeleteOutline />} onClick={remove} colorScheme="red" variant="ghost" borderRadius="11px" /></Tooltip>
+                      <Tooltip label={t('Delete')}><IconButton data-testid="delete-field" aria-label={t('Delete')} icon={<MdDeleteOutline />} onClick={remove} colorScheme="red" variant="ghost" borderRadius="11px" /></Tooltip>
                     </Flex>
                   </Flex>
 
@@ -271,7 +273,7 @@ export default function FormBuilder() {
                         <Stack spacing="12px">
                           {(field.options || []).map((option, optionIndex) => (
                             <Box border="1px solid" borderColor={border} borderRadius="15px" p="14px" key={optionIndex} bg={panelBg}>
-                              <Flex align="center" justify="space-between" mb="12px"><Text fontWeight="800" fontSize="sm">{t('estate.option')} {optionIndex + 1}</Text><IconButton size="sm" aria-label={t('Delete')} icon={<MdDeleteOutline />} colorScheme="red" variant="ghost" onClick={() => update({ options: field.options.filter((_, index) => index !== optionIndex) })} /></Flex>
+                              <Flex align="center" justify="space-between" mb="12px"><Text fontWeight="800" fontSize="sm">{t('estate.option')} {optionIndex + 1}</Text><IconButton data-testid={`delete-option-${optionIndex}`} size="sm" aria-label={t('Delete')} icon={<MdDeleteOutline />} colorScheme="red" variant="ghost" onClick={() => removeOption(optionIndex)} /></Flex>
                               <FormControl mb="12px"><FormLabel color={muted} fontSize="xs">{t('estate.optionValue')}</FormLabel><Input value={option.value} onChange={event => updateOption(optionIndex, { value: event.target.value })} borderRadius="12px" /></FormControl>
                               <SimpleGrid columns={{ base: 1, md: 3 }} spacing="10px">{languages.map(lang => <FormControl key={lang}><FormLabel color={muted} fontSize="xs">{t(`estate.language.${lang}`)}</FormLabel><Input dir="ltr" value={option.label?.[lang] || ''} onChange={event => updateOption(optionIndex, { label: { ...option.label, [lang]: event.target.value } })} borderRadius="12px" /></FormControl>)}</SimpleGrid>
                             </Box>
@@ -287,7 +289,7 @@ export default function FormBuilder() {
               </GridItem>
             )}
           </Grid>
-                  <Flex position="sticky" bottom="0" zIndex="2" px={{ base: 4, md: 5 }} py="14px" bg={panelBg} borderTop="1px solid" borderColor={border} justify="space-between" align="center" gap="12px">
+                  <Flex className="crm-builder-savebar" position="sticky" bottom="0" zIndex="2" px={3} py="10px" bg={panelBg} borderTop="1px solid" borderColor={border} justify="space-between" align="center" gap="12px">
                     <Flex align="center" gap="7px" color={changed ? 'orange.400' : 'green.400'} minW="0"><Icon as={changed ? MdInfoOutline : MdCheckCircle} flexShrink={0} /><Text fontSize="xs" fontWeight="700" noOfLines={1}>{t(changed ? 'estate.unsavedChanges' : 'estate.allChangesSaved')}</Text></Flex>
                     <Button data-testid="save-form" leftIcon={<MdSave />} variant="brand" isLoading={busy} isDisabled={!changed} onClick={save} borderRadius="12px" px={{ base: 4, md: 7 }} flexShrink={0}>{t('Save')}</Button>
                   </Flex>

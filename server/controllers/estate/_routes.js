@@ -10,6 +10,7 @@ const { Property } = require('../../model/schema/property');
 const PartnerCustomer = require('../../model/schema/partnerCustomer');
 const Residence = require('../../model/schema/residence');
 const { Lead } = require('../../model/schema/lead');
+const { Contact } = require('../../model/schema/contact');
 const FormDefinition = require('../../model/schema/formDefinition');
 const { defaults, legacyModules, getDefinition } = require('../../services/formDefinitions');
 const { validateFields, normalizeProperty, normalizeSale, validateDefinition, objectId, fail, InputError } = require('../../services/estateValidation');
@@ -151,17 +152,32 @@ const relationModules = {
   Documents: { model: require('../../model/schema/document'), search: ['folderName'] },
 };
 const { searchCondition, optionLabel } = require('../../services/relationSearch');
+// Creating an owner creates an ordinary, reusable contact using the same
+// configured contact fields and duplicate checks as the Contacts section.
+router.post('/Properties/owners', permit('Contacts', 'create'), asyncRoute(async (req, res) => {
+  if (!can(req.actor, 'Properties', 'create') && !can(req.actor, 'Properties', 'update')) return res.status(403).json({ code: 'forbidden' });
+  const definition = await getDefinition('Contacts');
+  const values = validateFields(definition, req.body);
+  for (const field of definition.fields.filter(field => field.type === 'file')) {
+    const value = require('../../services/estateValidation').get(values, field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name);
+    for (const item of value || []) if (!await File.exists({ _id: item.id || item._id, ...scope(req, 'Contacts') })) fail(field.name, 'relationNotFound');
+  }
+  const record = await Contact.create({ ...values, createBy: req.actor._id, createdDate: new Date() });
+  await notifyRecordActivity({ module: 'Contacts', record, actorId: req.actor._id, type: 'record_created' });
+  res.status(201).json(record);
+}));
 router.get('/:module/options', permission('view'), asyncRoute(async (req, res) => {
   const requestedModule = ({ Account: 'Partner Customers', Accounts: 'Partner Customers' })[req.params.module] ||
     require('../../services/moduleVisibility').canonicalModule(req.params.module);
   const relation = Object.prototype.hasOwnProperty.call(relationModules, requestedModule) ? relationModules[requestedModule] : null;
   if (!relation) return res.status(404).json({ code: 'notFound' });
-  const numericFields = relation.search.filter(field => relation.model.schema.path(field)?.instance === 'Number');
+  const numericFields = relation.search.filter(field => relation.model.schema.path(field)?.instance === 'Number'
+    || (requestedModule === 'Contacts' && field === 'phoneNumber'));
   const query = { $and: [{ deleted: false }, scope(req, requestedModule), searchCondition(relation.search, req.query.q, numericFields)] };
   if (req.query.id) { if (!objectId(req.query.id)) fail('id'); query._id = req.query.id; }
   const items = await relation.model.find(readScope(req, req.actor, requestedModule, query))
     .select([...relation.search, 'name'].join(' ')).sort({ _id: 1 }).limit(25).lean();
-  res.json(items.map(item => ({ value: String(item._id), label: optionLabel(item) })));
+  res.json(items.map(item => ({ value: String(item._id), label: optionLabel(item) + (requestedModule === 'Contacts' && item.phoneNumber ? ` · ${item.phoneNumber}` : '') })));
 }));
 router.get('/:module', moduleRequired, permission('view'), asyncRoute(async (req, res) => {
   const { model, search, filters, sort } = req.estateModule;
@@ -178,12 +194,26 @@ router.get('/:module', moduleRequired, permission('view'), asyncRoute(async (req
   const page = Math.max(1, Math.min(100000, parseInt(req.query.page, 10) || 1));
   const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 20));
   const sortKey = sort.includes(req.query.sort) ? req.query.sort : 'createdDate';
-  const [items, total] = await Promise.all([model.find(readScope(req, req.actor, req.params.module, query)).sort({ [sortKey]: req.query.order === 'asc' ? 1 : -1, _id: 1 }).skip((page - 1) * limit).limit(limit).lean(), model.countDocuments(readScope(req, req.actor, req.params.module, query))]);
+  const records = model.find(readScope(req, req.actor, req.params.module, query))
+    .sort({ [sortKey]: req.query.order === 'asc' ? 1 : -1, _id: 1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+  if (req.params.module === 'Properties') {
+    records.populate('createBy', 'firstName lastName username');
+    records.populate({ path: 'propertyAgent', select: 'firstName lastName username', match: readScope(req, req.actor, 'Users', { deleted: false }) });
+    records.populate({ path: 'propertyOwner', select: 'fullName firstName lastName phoneNumber', match: readScope(req, req.actor, 'Contacts', { deleted: false }) });
+  }
+  if (req.params.module === 'Leads') {
+    records.populate('assignUser', 'firstName lastName username');
+    records.populate({ path: 'associatedListing', select: 'title name', match: readScope(req, req.actor, 'Properties', { deleted: false }) });
+  }
+  const [items, total] = await Promise.all([records.lean(), model.countDocuments(readScope(req, req.actor, req.params.module, query))]);
   res.json({ items: ['Properties', 'Residences'].includes(req.params.module) ? await withCustomerNames(req, items) : items, total, page, limit });
 }));
 router.get('/:module/:id', moduleRequired, permission('view'), asyncRoute(async (req, res) => {
   if (!objectId(req.params.id)) fail('id');
-  const record = await req.estateModule.model.findOne({ _id: req.params.id, deleted: false, ...scope(req, req.params.module) }).lean();
+  const recordQuery = req.estateModule.model.findOne({ _id: req.params.id, deleted: false, ...scope(req, req.params.module) });
+  const record = await recordQuery.lean();
   if (!record) return res.status(404).json({ code: 'notFound' });
   res.json(['Properties', 'Residences'].includes(req.params.module) ? await withCustomerNames(req, record) : record);
 }));
@@ -204,6 +234,13 @@ async function payload(req, previous = {}) {
     values.name = values.title;
     values.status = values.sale.status === 'SOLD' ? 'Sold' : values.sale.status === 'RENTED' ? 'Rented' : 'Available';
     if (values.residence) await related(req, 'Residences', values.residence, 'residence');
+    for (const [field, moduleName] of [['propertyAgent', 'Users'], ['propertyOwner', 'Contacts']]) {
+      if (values[field] === '') values[field] = null;
+      if (!values[field]) continue;
+      if (!objectId(values[field])) fail(field);
+      const relation = relationModules[moduleName];
+      if (!await relation.model.exists(readScope(req, req.actor, moduleName, { _id: values[field], deleted: false }))) fail(field, 'relationNotFound');
+    }
   }
   if (req.params.module === 'Residences') {
     values.transactionType ||= 'SALE';

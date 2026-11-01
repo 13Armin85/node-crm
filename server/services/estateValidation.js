@@ -127,7 +127,8 @@ function validateDefinition(input, current, baseline) {
     for (const key of ['min', 'max']) if (result[key] != null && (typeof result[key] !== 'number' || !Number.isFinite(result[key]))) fail(key);
     if (result.min != null && result.max != null && result.min > result.max) fail('min');
     if (['select', 'radio', 'multiselect'].includes(result.type) && !result.relation) {
-      if (!result.options?.length || new Set(result.options.map(o => o.value)).size !== result.options.length) fail('options');
+      if (!Array.isArray(result.options) || new Set(result.options.map(o => o.value)).size !== result.options.length) fail('options');
+      if (!result.options.length && result.required && result.enabled !== false) fail('options', 'optionsRequired');
       for (const option of result.options) {
         if (typeof option.value !== 'string' || !option.value) fail('options');
         for (const lang of ['en', 'fa', 'tr']) if (!option.label?.[lang]?.trim()) fail('options', 'translationsRequired');

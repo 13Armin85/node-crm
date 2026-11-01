@@ -19,20 +19,21 @@ export function LanguageSelect({ compact = false }) {
   return (
     <HStack
       className="crm-language-select"
-      spacing={compact ? 1 : 2}
+      spacing={2}
       bg={bg}
       border="1px solid"
       borderColor={borderColor}
-      borderRadius="12px"
-      px={compact ? 2 : 3}
-      py="6px"
-      w={compact ? "128px" : "180px"}
-      minW={compact ? "128px" : "150px"}
+      borderRadius="4px"
+      px={3}
+      py={0}
+      h="40px"
+      w={compact ? "156px" : "180px"}
+      minW={compact ? "156px" : "150px"}
       maxW="100%"
       flexShrink={0}
       data-no-translate
     >
-      {!compact && <Icon as={MdLanguage} color={color} flexShrink={0} />}
+      <Icon as={MdLanguage} color={color} flexShrink={0} boxSize="18px" aria-hidden="true" />
       <Select
         aria-label={t("Language")}
         size="sm"
@@ -40,10 +41,12 @@ export function LanguageSelect({ compact = false }) {
         value={language}
         onChange={(event) => setLanguage(event.target.value)}
         color={color}
-        fontWeight="700"
+        fontWeight="500"
+        fontSize="14px"
+        h="100%"
         w="100%"
         minW="0"
-        iconSize="14px"
+        iconSize="16px"
         cursor="pointer"
         data-no-translate
       >

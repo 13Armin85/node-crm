@@ -2,6 +2,8 @@ import { isAdmin } from 'roles';
 import React from "react";
 import ReactDOM from "react-dom";
 import "assets/css/App.css";
+import "assets/css/CompactWorkspace.css";
+import "assets/css/SettingsWorkspace.css";
 import {
   BrowserRouter as Router,
   Routes,

@@ -5,6 +5,7 @@ import {
   Flex,
   Grid,
   GridItem,
+  Heading,
   Image,
   Modal,
   ModalBody,
@@ -108,8 +109,10 @@ const ChangeImage = () => {
 
   return (
     <>
-      <Card>
-        <Flex justifyContent={"end"}>
+      <Card className="crm-settings-panel crm-settings-images">
+        <Flex className="crm-settings-panel__header" justify="space-between" align="center" wrap="wrap" gap={3}>
+          <Heading><LocalizedText text="Change Images" /></Heading>
+          <Flex className="crm-settings-actions" justifyContent="end" wrap="wrap" gap={2}>
           <Button
             variant="brand"
             size="sm"
@@ -123,6 +126,7 @@ const ChangeImage = () => {
             leftIcon={<IoIosArrowBack />}
             ml={2}
           ><LocalizedText text="Back" /></Button>
+          </Flex>
         </Flex>
         {!(load?.status === "succeeded") ? (
           <Flex
@@ -136,11 +140,11 @@ const ChangeImage = () => {
             <Spinner />
           </Flex>
         ) : (
-          <Card>
+          <Card className="crm-settings-image-list">
             <Grid templateColumns={"repeat(12, 1fr)"} gap={5}>
               {image?.length > 0 &&
                 image?.map((item, i) => (
-                  <GridItem colSpan={{ base: 12, md: 4, lg: 3 }}>
+                  <GridItem colSpan={{ base: 12, md: 4, lg: 3 }} key={item._id || i}>
                     <div className="imageCard">
                       <Image
                         src={item?.authImg}
@@ -148,7 +152,7 @@ const ChangeImage = () => {
                         width={"100%"}
                       />
                       {item?.isActive === true ? (
-                        <Box
+                        <Box className="crm-settings-image-status"
                           backgroundColor={"#422afb"}
                           color={"#fff"}
                           height={"20px"}

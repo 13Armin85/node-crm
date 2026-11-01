@@ -28,6 +28,8 @@ const company = { condition: { customerType: 'COMPANY' } };
 const address = () => [field('district', 'text', 'District', 'منطقه', 'İlçe'), field('neighborhood', 'text', 'Neighborhood', 'محله', 'Mahalle')];
 const defaults = {
   Properties: [
+    field('propertyAgent', 'select', 'Assigned Property Agent', 'کارشناس مسئول ملک', 'Atanan Gayrimenkul Danışmanı', { relation: 'Users' }),
+    field('propertyOwner', 'select', 'Property Owner', 'مالک ملک', 'Mülk Sahibi', { relation: 'Contacts' }),
     field('title', 'text', 'Title', 'عنوان', 'Başlık', required), field('description', 'textarea', 'Description', 'توضیحات', 'Açıklama'),
     field('category', 'select', 'Property Category', 'دسته‌بندی ملک', 'Gayrimenkul Kategorisi', { ...required, options: options(Object.keys(categories)), defaultValue: 'RESIDENTIAL' }),
     field('subtype', 'select', 'Property Subtype', 'نوع ملک', 'Gayrimenkul Türü', { ...required, options: options(Object.values(categories).flat()) }),
@@ -119,6 +121,11 @@ async function getDefinition(moduleName) {
           })),
         } : {}),
         storageType: system.type,
+        // Repair legacy numeric layouts while respecting explicitly saved
+        // select options, including options removed in Form Builder.
+        ...(moduleName === 'Properties' && item.name === 'bedroom' && ['number', 'currency'].includes(item.type) ? {
+          type: system.type, options: system.options,
+        } : {}),
         relation: system.relation,
         condition: system.condition,
         external: Boolean(system.external),

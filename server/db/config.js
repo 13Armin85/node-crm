@@ -69,6 +69,7 @@ const connectDB = async (DATABASE_URL, DATABASE) => {
         );
 
         await initializedSchemas();
+        await require('../services/districtCatalog').importLegacyDistricts();
 
         /* this was temporary  */
         const mockRes = {

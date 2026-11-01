@@ -437,3 +437,11 @@ body .chakra-modal__content :is(.chakra-input, .chakra-select, .chakra-textarea)
   body:has(.crm-shell) { background: #fff !important; }
   .crm-content { min-height: 0 !important; padding: 0 !important; }
 }
+@media (max-width: 767px) {
+  .crm-mobile-records td[data-mobile-role="actions"]:has(.crm-lead-row-actions) { grid-column: 1 / -1; }
+  .crm-lead-row-actions { width: 100%; min-width: 0; flex-wrap: wrap; justify-content: flex-start !important; gap: 8px; }
+  .crm-lead-row-actions > * { max-width: 100%; flex-shrink: 0; }
+  .crm-mobile-records td[data-mobile-role="actions"] .crm-lead-row-actions .crm-record-menu-button { flex: 0 1 auto; min-width: 0 !important; max-width: 100%; }
+  .crm-lead-row-actions .crm-record-menu-button__content { gap: 5px; max-width: 100%; }
+  .crm-catalog-dialog .chakra-modal__footer { flex-wrap: wrap; }
+}

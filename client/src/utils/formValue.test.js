@@ -18,4 +18,6 @@ test('uses a human-readable label instead of undefined or an object', () => {
   expect(formLabel('Ada undefined')).toBe('Ada');
   expect(formLabel('undefined [object Object]', 'fallback')).toBe('fallback');
   expect(formLabel({ unknown: true }, 'fallback')).toBe('fallback');
+  expect(formLabel('6ad5cede20944f7bf63f495d', 'Record unavailable')).toBe('Record unavailable');
+  expect(formLabel({ name: '6ad5cede20944f7bf63f495d', fullName: 'Named customer' })).toBe('Named customer');
 });

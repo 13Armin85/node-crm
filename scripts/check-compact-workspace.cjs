@@ -10,6 +10,11 @@ const puppeteer = require('../server/node_modules/puppeteer');
 require('../server/node_modules/dotenv').config({ path: path.resolve(__dirname, '../server/.env'), quiet: true });
 
 async function main() {
+  // This harness uses a disposable database; notifications must stay local too.
+  require('../server/node_modules/nodemailer').createTransport = () => ({
+    sendMail: async () => ({ accepted: [], rejected: [], messageId: 'isolated-browser-test' }),
+    verify: async () => true,
+  });
   const dbName = 'crm_compact_browser_test_' + crypto.randomUUID().replace(/-/g, '');
   const build = path.resolve(__dirname, process.env.CRM_CHECK_RELEASE_DIRECTORY || '../layout-artifacts/compact-workspace/release');
   const artifacts = path.resolve(__dirname, process.env.CRM_CHECK_ARTIFACT_DIRECTORY || '../layout-artifacts/compact-workspace');
@@ -50,6 +55,7 @@ async function main() {
       customFields: { reference: 'Original custom value ' + mode, budget: 0 }, associatedListing: property._id,
       assignUser: actor._id, createBy: actor._id, deleted: false, createdDate: new Date() }));
     let longTask;
+    if (process.env.CRM_CHECK_LEAD_SEARCH) await require('./check-lead-search-labels.cjs').seed({ actor, leads, CustomField, Property, User });
     if (process.env.CRM_CHECK_DASHBOARD_TASKS || process.env.CRM_CHECK_DIALOG_CONTROLS) {
       const Task = require('../server/model/schema/task');
       const assignee = await User.create({ username: 'task-assignee@example.test', firstName: 'مسئول پیگیری مشتریان و هماهنگی بازدید املاک',
@@ -298,6 +304,8 @@ async function main() {
     }
     if (process.env.CRM_CHECK_DIALOG_CONTROLS) await require('./check-dialog-controls.cjs')({ page, browser, origin, artifacts, measurements });
     if (process.env.CRM_CHECK_SETTINGS) await require('./check-settings-workspace.cjs').check({ page, origin, artifacts, measurements, user });
+    if (process.env.CRM_CHECK_CATALOGS) await require('./check-property-catalogs.cjs')({ page, origin, artifacts, measurements, contacts, leads });
+    if (process.env.CRM_CHECK_LEAD_SEARCH) await require('./check-lead-search-labels.cjs').check({ page, origin, artifacts, measurements, leads });
     await page.evaluate(() => { localStorage.setItem('chakra-ui-color-mode', 'dark'); localStorage.setItem('crm-language', 'en'); });
     await page.setViewport({ width: 1440, height: 960 });
     await page.goto(origin + '/documents', { waitUntil: 'networkidle2' });

@@ -252,7 +252,7 @@ export default function FormBuilder() {
                   <Stack spacing="18px" p={{ base: 4, md: 5 }} bg={subtleBg}>
                     <Section icon={MdOutlineSettings} title={t('estate.fieldSettings')} description={t('estate.fieldSettingsHint')}>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing="18px">
-                        <FormControl><FormLabel fontSize="sm">{t('Type')}</FormLabel><Select data-testid="field-type" value={field.type} onChange={event => update({ type: event.target.value, defaultValue: undefined, options: field.options || [] })} borderRadius="12px" bg={panelBg}>{types.map(type => <option key={type} value={type}>{t(`estate.type.${type}`)}</option>)}</Select></FormControl>
+                        <FormControl><FormLabel fontSize="sm">{t('Type')}</FormLabel><Select data-testid="field-type" isDisabled={Boolean(field.catalog)} value={field.type} onChange={event => update({ type: event.target.value, defaultValue: undefined, options: field.options || [] })} borderRadius="12px" bg={panelBg}>{types.map(type => <option key={type} value={type}>{t(`estate.type.${type}`)}</option>)}</Select></FormControl>
                         <Box><Text fontWeight="700" fontSize="sm" mb="12px">{t('estate.fieldBehavior')}</Text><Flex gap="18px" minH="40px" align="center" flexWrap="wrap"><Checkbox data-testid="field-enabled" isChecked={field.enabled !== false} onChange={event => update({ enabled: event.target.checked })}>{t('estate.enabled')}</Checkbox><Checkbox data-testid="field-required" isChecked={Boolean(field.required)} onChange={event => update({ required: event.target.checked })}>{t('estate.required')}</Checkbox></Flex></Box>
                       </SimpleGrid>
                     </Section>

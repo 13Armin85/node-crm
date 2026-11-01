@@ -45,12 +45,27 @@ test('property layouts, assigned agents, reusable owners and lead relationships 
   };
 
   await FormDefinition.create({ moduleName: 'Properties', fields: defaults.Properties.filter(field => !['propertyAgent', 'propertyOwner'].includes(field.name)).map(field =>
-    field.name === 'bedroom' ? { ...field, type: 'number', options: [] } : field) });
+    field.name === 'bedroom' ? { ...field, type: 'number', options: [] }
+      : field.name === 'district' ? { ...field, type: 'select', options: [{ value: 'şişli', label: { en: 'Sisli', fa: 'شیشلی', tr: 'Şişli' } }] } : field) });
+  const { importLegacyDistricts } = require('../services/districtCatalog');
+  await importLegacyDistricts(); await importLegacyDistricts();
+  const catalog = await api('GET', '/estate/districts');
+  assert.equal(catalog.status, 200); assert.equal(catalog.data.total, 1);
+  const districtOption = (await api('GET', '/estate/districts/options?id=' + encodeURIComponent('Şişli'))).data[0];
+  assert.equal(districtOption.value, 'şişli'); assert.equal(districtOption.label.fa, 'شیشلی');
+  const district = await api('POST', '/estate/districts', { name: 'New property district' });
+  assert.equal(district.status, 201);
+  assert.equal((await api('POST', '/estate/districts', { name: ' new property district ' })).status, 409);
+  assert.equal((await api('POST', '/estate/districts', { name: String(admin._id) })).status, 400);
+  assert.equal((await api('GET', '/estate/districts/options?q=New')).data[0].value, district.data.name);
   const definition = (await api('GET', '/estate/definitions/Properties')).data;
   assert.equal(definition.fields.find(field => field.name === 'bedroom').type, 'select');
   assert(definition.fields.find(field => field.name === 'bedroom').options.some(option => option.value === '1+4'));
   assert.equal(definition.fields.find(field => field.name === 'propertyAgent').relation, 'Users');
   assert.equal(definition.fields.find(field => field.name === 'propertyOwner').relation, 'Contacts');
+  assert.equal(definition.fields.find(field => field.name === 'district').catalog, 'districts');
+  assert.equal(definition.fields.find(field => field.name === 'district').options, undefined);
+  assert(!(await api('GET', '/estate/definitions')).data.includes('Districts'));
   await FormDefinition.create({ moduleName: 'Leads', fields: defaults.Leads.map(field =>
     field.name === 'listedFor' ? { ...field, label: { en: 'Listed For', fa: 'نوع درخواست', tr: 'Listed For' } }
       : field.name === 'associatedListing' ? { ...field, external: true } : field) });
@@ -77,10 +92,22 @@ test('property layouts, assigned agents, reusable owners and lead relationships 
   assert((await api('GET', '/contact')).data.some(contact => contact._id === owner.data._id));
   const payload = { title: 'Bedroom layout test', category: 'RESIDENTIAL', subtype: 'APARTMENT', transactionType: 'SALE',
     price: { amount: 100000, currency: 'TRY' }, area: { value: 90, type: 'NET' }, bedroom: '1+4', floor: '3',
-    propertyAgent: String(agent._id), propertyOwner: owner.data._id };
+    propertyAgent: String(agent._id), propertyOwner: owner.data._id, district: district.data.name };
   const property = await api('POST', '/estate/Properties', payload);
   assert.equal(property.status, 201, JSON.stringify(property));
   assert.equal(property.data.bedroom, '1+4'); assert.equal(property.data.propertyOwner, owner.data._id);
+  assert.equal(property.data.district, district.data.name);
+  assert.equal((await api('DELETE', '/estate/districts/' + district.data._id)).status, 409);
+  const residence = await api('POST', '/estate/Residences', { name: 'New Inline Residence', district: district.data.name });
+  assert.equal(residence.status, 201, JSON.stringify(residence));
+  assert.equal((await api('GET', '/estate/Residences/options?id=' + residence.data._id)).data[0].value, residence.data._id);
+  const withResidence = await api('PUT', '/estate/Properties/' + property.data._id, { isInsideResidence: true, residence: residence.data._id });
+  assert.equal(withResidence.status, 200); assert.equal(withResidence.data.residence, residence.data._id);
+  const unusedDistrict = await api('POST', '/estate/districts', { name: 'Unused area' });
+  assert.equal((await api('DELETE', '/estate/districts/' + unusedDistrict.data._id)).status, 200);
+  assert.equal((await api('GET', '/estate/districts/options?q=Unused')).data.length, 0);
+  await importLegacyDistricts();
+  assert.equal((await api('GET', '/estate/districts/options?q=Unused')).data.length, 0);
   const persisted = await Property.findById(property.data._id).lean();
   assert.equal(persisted.bedroom, '1+4'); assert.equal(String(persisted.propertyAgent), String(agent._id));
   const list = await api('GET', '/estate/Properties');

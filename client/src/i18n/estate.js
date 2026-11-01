@@ -165,6 +165,12 @@ const messages = {
   'estate.language.fa': ['Persian', 'فارسی', 'Farsça'],
   'estate.language.tr': ['Turkish', 'ترکی', 'Türkçe'],
 };
+Object.assign(messages, {
+  Districts: ['Districts', 'مناطق', 'İlçeler'],
+  'Create New District': ['Create New District', 'ایجاد منطقه جدید', 'Yeni ilçe oluştur'],
+  'Create New Residence': ['Create New Residence', 'ایجاد رزیدانس جدید', 'Yeni rezidans oluştur'],
+  'Save and Select': ['Save and Select', 'ذخیره و انتخاب', 'Kaydet ve seç'],
+});
 const types = {
   text: ['Text', 'متن', 'Metin'], textarea: ['Long text', 'متن بلند', 'Uzun metin'], number: ['Number', 'عدد', 'Sayı'], currency: ['Currency', 'مبلغ', 'Para'],
   select: ['Select', 'انتخاب', 'Seçim'], multiselect: ['Multiple choice', 'چندانتخابی', 'Çoklu seçim'], checkbox: ['Checkbox', 'کادر انتخاب', 'Onay kutusu'], radio: ['Single choice', 'تک‌انتخابی', 'Tek seçim'],

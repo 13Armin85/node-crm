@@ -169,7 +169,7 @@ const Index = () => {
         isSortable: false,
         center: true,
         cell: ({ row, i }) => (
-          <Text as="div" fontSize="md" fontWeight="900" textAlign={"center"} display="flex" justifyContent="center" alignItems="center">
+          <Text as="div" className="crm-lead-row-actions" fontSize="md" fontWeight="900" textAlign={"center"} display="flex" justifyContent="center" alignItems="center" flexWrap="wrap" gap={1} minW={0} maxW="100%">
             <ConvertLeadButtons leadId={row.original._id} onConverted={() => { setSelectedValues([]); setAction(current => !current); }} />
             <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
               <RecordMenuButton />
@@ -296,7 +296,7 @@ const Index = () => {
             return <Text fontSize="sm">{transactionType === "SALE" ? tr("For Sale") : transactionType === "RENT" ? tr("For Rent") : value || "-"}</Text>;
           },
         },
-        { Header: tr("Phone Number"), id: "leadPhoneNumber", accessor: leadPhone, cell: ({ value }) => <Text fontSize="sm" dir="ltr">{value || "-"}</Text> },
+        { Header: tr("Lead Mobile"), id: "leadMobile", accessor: leadPhone, cell: ({ value }) => <Text fontSize="sm" dir="ltr">{value || "-"}</Text> },
         {
           Header: tr("Creation Date"),
           accessor: "createdDate",
@@ -304,7 +304,7 @@ const Index = () => {
         },
         ...(result?.payload?.data && result?.payload?.data?.length > 0
           ? result?.payload?.data[0]?.fields
-              ?.filter((field) => field?.isTableField === true && field?.isView && !["leadName", "assignUser", "associatedListing", "transactionType", "leadPhoneNumber", "createdDate"].includes(field.name))
+              ?.filter((field) => field?.isTableField === true && field?.isView && !["leadName", "assignUser", "associatedListing", "transactionType", "leadMobile", "leadPhoneNumber", "createdDate"].includes(field.name))
               ?.map(
                 (field) =>
                   field?.name !== "leadStatus" && {
@@ -342,7 +342,7 @@ const Index = () => {
                   field?.isTableField === true &&
                   !field?.isView &&
                   field?.name !== "leadStatus" &&
-                  !["leadName", "assignUser", "associatedListing", "transactionType", "leadPhoneNumber", "createdDate"].includes(field.name)
+                  !["leadName", "assignUser", "associatedListing", "transactionType", "leadMobile", "leadPhoneNumber", "createdDate"].includes(field.name)
               )
               ?.map((field) => ({
                 Header: field?.label,

@@ -16,7 +16,7 @@ export const formLabel = (value, fallback = "") => {
       .replace(/\[object Object\]|\b(?:undefined|null)\b/gi, " ")
       .replace(/\s+/g, " ")
       .trim();
-    return text || fallback;
+    return /^[a-f\d]{24}$/i.test(text) ? fallback : text || fallback;
   }
   const fullName = [value.firstName, value.lastName].filter(part => typeof part === "string" && part.trim()).join(" ");
   if (fullName) return fullName;

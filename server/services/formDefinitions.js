@@ -137,13 +137,13 @@ async function getDefinition(moduleName) {
     // A saved definition owns its custom fields. Re-importing legacy metadata
     // here resurrected fields that administrators deliberately removed.
     const additions = missing;
-    return optionalLeadFields({
+    return catalogFields(optionalLeadFields({
       ...existing,
       fields: [...mergedExisting, ...additions.map((item, index) => ({
         ...item, locked: false, storageType: item.type,
         order: mergedExisting.length + index,
       }))],
-    });
+    }));
   }
   if (!defaults[moduleName] && !legacyModules.includes(moduleName) && !legacy) return null;
   let fields;
@@ -164,6 +164,11 @@ async function getDefinition(moduleName) {
       return field(name, { String: 'text', Number: 'number', Boolean: 'checkbox', Date: 'datetime' }[path.instance], label, label, label, { required: Boolean(path.isRequired) });
     });
   }
-  return optionalLeadFields({ moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, locked: false, storageType: f.type, order })) });
+  return catalogFields(optionalLeadFields({ moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, locked: false, storageType: f.type, order })) }));
+}
+function catalogFields(definition) {
+  if (!['Properties', 'Residences', 'Partner Customers'].includes(definition.moduleName)) return definition;
+  return { ...definition, fields: definition.fields.map(field => field.name === 'district' && field.kind === 'SYSTEM_FIELD'
+    ? { ...field, type: 'text', storageType: 'text', catalog: 'districts', relation: undefined, options: undefined } : field) };
 }
 module.exports = { defaults, legacyModules, getDefinition, localized, safeName };

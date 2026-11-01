@@ -122,6 +122,9 @@ function validateDefinition(input, current, baseline) {
     };
     if (system) {
       result.kind = 'SYSTEM_FIELD';
+      if (field.name === 'district' && ['Properties', 'Residences', 'Partner Customers'].includes(current.moduleName)) {
+        result.type = 'text'; result.options = undefined; result.relation = undefined;
+      }
     }
     for (const key of ['enabled', 'required', 'integer']) if (result[key] != null && typeof result[key] !== 'boolean') fail(key);
     for (const key of ['min', 'max']) if (result[key] != null && (typeof result[key] !== 'number' || !Number.isFinite(result[key]))) fail(key);

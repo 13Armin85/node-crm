@@ -5,7 +5,7 @@ export const leadOwnerName = lead => {
   return owner && typeof owner === 'object' ? formLabel(owner, '') : '';
 };
 export const leadPropertyName = lead => typeof lead.associatedListing === 'object' ? formLabel(lead.associatedListing, '') : '';
-export const leadPhone = lead => lead.leadPhoneNumber || lead.leadMobile || '';
+export const leadPhone = lead => lead.leadMobile || lead.leadPhoneNumber || '';
 export const leadTransactionType = lead => {
   const value = formValue(lead.listedFor || lead.transactionType || lead.customFields?.transactionType);
   const type = String(value || '').trim().toUpperCase();

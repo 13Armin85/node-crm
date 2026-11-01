@@ -1,10 +1,10 @@
 import FormFeedback from 'components/dynamicForm/FormFeedback';
 import React from 'react';
-import { Alert, AlertIcon, Box, FormControl, FormErrorMessage, FormLabel, GridItem, Text } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, FormControl, FormErrorMessage, FormLabel, GridItem, Select, Text } from '@chakra-ui/react';
 import { useFormDefinition, useRequiredFields } from 'utils/managedForm';
 import { getIn } from 'formik';
 import { translate, useLanguage } from 'i18n';
-import DynamicFormRenderer, { localized, isVisible } from './DynamicFormRenderer';
+import DynamicFormRenderer, { AsyncRelationSelect, localized, isVisible } from './DynamicFormRenderer';
 import { formLabel, formValue } from 'utils/formValue';
 
 const findNames = node => {
@@ -35,6 +35,8 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
   const configure = (node, currentField) => {
     if (!React.isValidElement(node)) return node;
     const type = typeof node.type === 'string' ? node.type : node.type?.displayName || node.type?.name || '';
+    // Component identity also works in production, where Chakra display names are removed.
+    const select = node.type === Select || type === 'select' || type === 'Select';
     // React components inside a native option can be stringified by the browser.
     if (type === 'option') return React.cloneElement(node, {
       ...(node.props.value !== undefined ? { value: formValue(node.props.value) } : {}),
@@ -49,6 +51,12 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
       return <GridItem key={node.key || name} colSpan={node.props.colSpan} order={field.order}><DynamicFormRenderer definition={{ ...definition, fields: [field] }} formik={formik} /></GridItem>;
     }
     const activeField = isContainer ? field : currentField;
+    if (field?.relation && !field.external && select) {
+      return <AsyncRelationSelect key={node.key || name} id={node.props.id || `field-${name}`} name={name}
+        moduleName={field.relation} value={node.props.value} disabled={node.props.isDisabled || node.props.disabled}
+        onBlur={node.props.onBlur || formik.handleBlur}
+        onChange={value => node.props.onChange ? node.props.onChange({ target: { name, value } }) : formik.setFieldValue(name, value || null)} />;
+    }
     if ((node.type === FormLabel || /FormLabel/.test(type)) && activeField) return React.cloneElement(node, {}, <>{localized(activeField.label, language)}{activeField.required && <Box as="span" color="red.500" ms={1}>*</Box>}</>);
     // The configured field owns one error message below its widget.
     if (activeField && (node.type === FormErrorMessage || ((node.type === Text || type === 'Text') && ['red', 'red.500'].includes(node.props.color)))) return null;
@@ -56,7 +64,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     if (field && typeof node.props.name === 'string' && field.placeholder) patch.placeholder = localized(field.placeholder, language);
     if (/^(Select|Input|Textarea|select|input|textarea)$/.test(type) && node.props.value != null) {
       patch.value = typeof node.props.value === 'object'
-        ? (type === 'Select' || type === 'select' ? formValue(node.props.value) : formLabel(node.props.value))
+        ? (select ? formValue(node.props.value) : formLabel(node.props.value))
         : formValue(node.props.value);
     }
     if (isContainer && field) patch.order = field.order;

@@ -249,20 +249,7 @@ const leadFields = [
     backendType: "Mixed",
     isTableField: false,
     isView: false,
-    options: [
-      {
-        name: "From Project 1",
-        value: "From Project 1",
-      },
-      {
-        name: "Project 2",
-        value: "Project 2",
-      },
-      {
-        name: "Project 3",
-        value: "Project 3",
-      },
-    ],
+    options: [],
     validation: [
       {
         require: false,
@@ -283,20 +270,7 @@ const leadFields = [
     backendType: "Mixed",
     isTableField: false,
     isView: false,
-    options: [
-      {
-        name: "From Project 1",
-        value: "From Project 1",
-      },
-      {
-        name: "Project 2",
-        value: "Project 2",
-      },
-      {
-        name: "Project 3",
-        value: "Project 3",
-      },
-    ],
+    options: [],
     validation: [
       {
         require: false,

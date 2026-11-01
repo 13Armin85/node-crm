@@ -30,6 +30,8 @@ import { entityExportColumns, loadAllExportRows } from "utils/exportRecords";
 import PropertyOwnerField from './PropertyOwnerField';
 import { normalizeFormValues } from 'utils/managedForm';
 import { formLabel } from 'utils/formValue';
+import RecordValue from 'components/relations/RecordValue';
+import CatalogRecordDialog from './CatalogRecordDialog';
 
 const propertySections = [
   ["estate.section.basic", (name) => ["title", "description", "category", "subtype", "transactionType"].includes(name)],
@@ -74,6 +76,9 @@ const propertyTableColumns = [
 export function EntityPage({ moduleName }) {
   const { t, language, direction } = useLanguage();
   const [permissions] = HasAccess([moduleName]);
+  const [districtPermissions, residencePermissions] = HasAccess(['Districts', 'Residences']);
+  const [creatingRelated, setCreatingRelated] = useState(null);
+  const [relatedVersion, setRelatedVersion] = useState(0);
   const { id } = useParams();
   const { definition, definitionError } = useFormDefinition(moduleName);
   const [items, setItems] = useState([]);
@@ -163,7 +168,7 @@ export function EntityPage({ moduleName }) {
   const filterNames = moduleName === "Properties"
     ? ["category", "subtype", "transactionType", "district", "neighborhood", "residence", "bedroom", "buildingAge", "occupancyStatus", "floor", "area.type", "sale.status"]
     : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["category", "transactionType", "city", "district", "neighborhood", "constructionStatus", "occupancyStatus", "sale.status"];
-  const name = (item) => item.title || item.fullName || item.companyName || item.name || item.propertyType || item._id;
+  const name = (item) => formLabel(item) || t('Record unavailable');
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const dateLocale = language === "fa" ? "fa-IR" : language === "tr" ? "tr-TR" : "en-US";
   const PageIcon = ["Properties", "Residences"].includes(moduleName) ? FiHome : FiUsers;
@@ -202,7 +207,11 @@ export function EntityPage({ moduleName }) {
         return fields.some((field) => isVisible(field, formik.values)) ? (
           <Box className="crm-entity-form-section" key={title}>
             <Heading size="sm" className="crm-entity-form-section__title">{t(title)}</Heading>
-            <DynamicFormRenderer definition={{ ...definition, fields: fields.filter(field => moduleName !== 'Properties' || field.name !== 'propertyOwner') }} formik={formik} readOnly={readOnly} />
+            <DynamicFormRenderer definition={{ ...definition, fields: fields.filter(field => moduleName !== 'Properties' || field.name !== 'propertyOwner') }} formik={formik} readOnly={readOnly} refreshKey={relatedVersion}
+              fieldActions={{
+                ...(districtPermissions?.create ? { district: <Button size="sm" variant="outline" mt={2} leftIcon={<FiPlus />} onClick={() => setCreatingRelated('Districts')}>{t('Create New District')}</Button> } : {}),
+                ...(moduleName === 'Properties' && residencePermissions?.create ? { residence: <Button size="sm" variant="outline" mt={2} leftIcon={<FiPlus />} onClick={() => setCreatingRelated('Residences')}>{t('Create New Residence')}</Button> } : {}),
+              }} />
             {moduleName === 'Properties' && fields.filter(field => field.name === 'propertyOwner' && isVisible(field, formik.values)).map(field =>
               <PropertyOwnerField key={field.name} field={field} formik={formik} readOnly={readOnly} />)}
           </Box>
@@ -398,7 +407,7 @@ export function EntityPage({ moduleName }) {
           <ModalHeader>{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
           <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{form}
-            {readOnly && record?.createBy && <Text mt={4}>{t("estate.createdBy")}: <span data-no-translate>{typeof record.createBy === "object" ? record.createBy.username || record.createBy._id : record.createBy}</span></Text>}
+            {readOnly && record?.createBy && <Text mt={4}>{t("estate.createdBy")}: <RecordValue name="createBy" value={record.createBy} /></Text>}
           </ModalBody>
           <ModalFooter><Stack direction="row">{!readOnly && <Button variant="brand" isLoading={formik.isSubmitting} isDisabled={!definition} onClick={formik.handleSubmit}>{t("Save")}</Button>}<Button onClick={() => setRecord(null)}>{t("Close")}</Button></Stack></ModalFooter>
         </ModalContent>
@@ -408,6 +417,10 @@ export function EntityPage({ moduleName }) {
         <ModalOverlay />
         <ModalContent dir={direction}><ModalHeader>{t("Delete")}</ModalHeader><ModalBody>{t("estate.confirmDelete")}</ModalBody><ModalFooter><Button colorScheme="red" onClick={remove}>{t("Delete")}</Button><Button ms={2} onClick={() => setDeleting(null)}>{t("Cancel")}</Button></ModalFooter></ModalContent>
       </Modal>
+      {creatingRelated && <CatalogRecordDialog moduleName={creatingRelated} onClose={() => setCreatingRelated(null)} onCreated={item => {
+        formik.setFieldValue(creatingRelated === 'Districts' ? 'district' : 'residence', creatingRelated === 'Districts' ? item.name : item._id);
+        setRelatedVersion(value => value + 1);
+      }} />}
     </Box>
   );
 }

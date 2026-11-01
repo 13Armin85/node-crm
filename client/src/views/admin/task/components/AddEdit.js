@@ -35,6 +35,7 @@ import moment from "moment";
 import { putApi } from "services/api";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
+import { formLabel } from 'utils/formValue';
 
 const selectionValue = (value) => {
   if (!value || typeof value !== "object") return value || "";
@@ -486,9 +487,7 @@ const AddEdit = (props) => {
                         {assignToContactData?.map((item) => {
                           return (
                             <option value={item?._id} key={item?._id}>
-                              {values?.category === "Contact"
-                                ? `${item?.firstName} ${item?.lastName}`
-                                : item?.leadName}
+                              {formLabel(item) || tr('Record unavailable')}
                             </option>
                           );
                         })}

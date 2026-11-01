@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, GridItem, Input, FormLabel } from '@chakra-ui/react';
+import { Grid, GridItem, Input, Select, FormLabel } from '@chakra-ui/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import ManagedFormLayout from './ManagedFormLayout';
 import { LocalizedText } from 'i18n/runtime';
@@ -16,6 +16,20 @@ test('renders native option labels as text rather than React objects', () => {
   expect(view).toContain('>Paid</option>');
   expect(view).not.toContain('[object Object]');
   expect(view).not.toContain('undefined');
+});
+
+test('related record fields use a name picker even without development component names', () => {
+  const id = '6ad5cede20944f7bf63f495d';
+  const definition = { fields: [{ name: 'assignTo', kind: 'SYSTEM_FIELD', type: 'select', relation: 'Contacts' }] };
+  const displayName = Select.displayName;
+  Select.displayName = undefined;
+  try {
+    const view = renderToStaticMarkup(<ManagedFormLayout moduleName="Tasks" definition={definition} formik={{ values: { assignTo: id } }}>
+      <GridItem><Select name="assignTo" value={id} onChange={() => {}}><option value={id}>{id}</option></Select></GridItem>
+    </ManagedFormLayout>);
+    expect(view).toContain('role="combobox"');
+    expect(view).not.toContain(id);
+  } finally { Select.displayName = displayName; }
 });
 
 test('disabled fields remove the complete Chakra grid item without hiding neighboring fields', () => {

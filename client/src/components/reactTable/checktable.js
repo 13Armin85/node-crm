@@ -54,7 +54,7 @@ import SharedRecordBadge from "components/SharedRecordBadge";
 import { canSendRecord, shareModuleForTitle } from "services/recordSharing";
 import { exportColumns, selectedExportRows } from "utils/exportRecords";
 import { toast } from "react-toastify";
-import { normalizeSearchFields, optionText } from "components/search/searchFields";
+import { normalizeSearchFields, optionText, matchesSelectValue } from "components/search/searchFields";
 import RecordValue, { isRecordId } from 'components/relations/RecordValue';
 
 const readableCell = (node, name) => {
@@ -230,7 +230,7 @@ const CommonCheckTable = (props) => {
             const itemValue = item[field?.name];
 
             if (field?.type === "select") {
-              return !fieldValue || itemValue === fieldValue;
+              return matchesSelectValue(itemValue, fieldValue);
             } else if (field?.type === "number") {
               return (
                 [null, undefined, ""]?.includes(fieldValue) ||
@@ -277,7 +277,7 @@ const CommonCheckTable = (props) => {
         result?.push({
           name: [field?.name],
           value: field?.type === "select"
-            ? optionText(field?.options?.find(option => String(option?.value) === String(values[field?.name]))) || values[field?.name]
+            ? optionText(field?.options?.find(option => String(option?.value) === String(values[field?.name]))) || (field.ref || field.relation ? tr('Record unavailable') : values[field?.name])
             : values[field?.name],
         });
       }

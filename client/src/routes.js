@@ -10,6 +10,7 @@ import {
 // icon
 import React from "react";
 import { PropertiesPage, PartnerCustomersPage, ResidencesPage } from 'views/admin/estate/EntityPage';
+import DistrictsPage from 'views/admin/estate/DistrictsPage';
 import FormBuilder from 'views/admin/estate/FormBuilder';
 import { AiFillFolderOpen, AiOutlineMail } from "react-icons/ai";
 import { FaCalendarAlt, FaRupeeSign, FaTasks, FaWpforms , FaPiggyBank} from "react-icons/fa";
@@ -313,6 +314,10 @@ const routes = [
       />
     ),
     component: ResidencesPage,
+  },
+  {
+    name: 'Districts', layout: [ROLE_PATH.admin, ROLE_PATH.user], path: '/districts',
+    icon: <Icon as={RiAccountCircleFill} width="20px" height="20px" color="inherit" />, component: DistrictsPage,
   },
   // --------------- Quotes Routes --------------------
   // {

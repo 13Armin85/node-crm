@@ -9,7 +9,8 @@ test('lead columns use assigned users, related property titles and stored reques
   expect(leadTransactionType({ listedFor: { value: 'Rent' } })).toBe('RENT');
   expect(leadTransactionType({ transactionType: 'SALE', listedFor: 'Rent' })).toBe('RENT');
   expect(leadTransactionType({ transactionType: 'RENT', listedFor: 'Buy' })).toBe('SALE');
-  expect(leadPhone({ leadPhoneNumber: '+12345', leadMobile: '+67890' })).toBe('+12345');
+  expect(leadPhone({ leadPhoneNumber: '+12345', leadMobile: '+67890' })).toBe('+67890');
+  expect(leadPhone({ leadPhoneNumber: '+12345' })).toBe('+12345');
 });
 
 test('optional and missing lead data render safely', () => {

@@ -33,6 +33,7 @@ const uploadRoot = path.resolve(__dirname, '../../uploads/estate');
 const { createUpload, validateUploads, withinRoot, fileResponseHeaders } = require('../../services/secureFiles');
 const upload = createUpload({ directory: uploadRoot, kind: 'estate', maxFiles: 10 });
 router.use(auth, loadUser);
+router.use('/districts', require('./districts'));
 router.get('/definitions', asyncRoute(async (req, res) => {
   const legacy = await require('../../model/schema/customField').find({ deleted: false }).select('moduleName').lean();
   res.json([...new Set([...Object.keys(defaults), ...legacyModules, ...legacy.map(m => m.moduleName)])].filter(name => !['Account', 'Accounts', 'Payments'].includes(name)));

@@ -43,8 +43,8 @@ export function FileInput({ value = [], onChange, disabled }) {
     </Stack>)}
   </Stack>;
 }
-export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, name, disabled }) {
-  const { t } = useLanguage();
+export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, name, disabled, refreshKey = 0 }) {
+  const { t, language } = useLanguage();
   const selectedValue = formValue(value);
   const [query, setQuery] = useState('');
   const [options, setOptions] = useState([]);
@@ -60,7 +60,7 @@ export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, n
       if (active && result?.status === 200 && Array.isArray(result.data)) setSelected(result.data[0] || null);
     }).catch(() => {});
     return () => { active = false; };
-  }, [moduleName, selectedValue]);
+  }, [moduleName, selectedValue, refreshKey]);
   useEffect(() => {
     let active = true;
     if (disabled) { setBusy(false); return undefined; }
@@ -75,16 +75,16 @@ export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, n
       finally { if (active) setBusy(false); }
     }, 300);
     return () => { active = false; clearTimeout(timer); };
-  }, [moduleName, query, disabled]);
+  }, [moduleName, query, disabled, refreshKey]);
   const all = selected && !options.some(option => String(formValue(option.value)) === String(selectedValue)) ? [selected, ...options] : options;
   return <SearchableSelect id={id} name={name} value={selectedValue} disabled={disabled} busy={busy} error={error} noResults={!options.length}
-    options={all.map(option => ({ value: formValue(option.value), label: formLabel(option.label, formValue(option.value)) }))}
+    options={all.map(option => ({ value: formValue(option.value), label: formLabel(localized(option.label, language), t('Record unavailable')) }))}
     onSearch={setQuery} onBlur={onBlur} onChange={next => {
       setSelected(all.find(option => String(formValue(option.value)) === next) || null);
       onChange(next); setQuery('');
     }} />;
 }
-export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false }) {
+export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false, fieldActions = {}, refreshKey = 0, idPrefix = 'field' }) {
   const { language, t } = useLanguage();
   const [user] = useState(() => JSON.parse(localStorage.getItem('user')));
   useRequiredFields(readOnly ? [] : (definition?.fields || []).filter(field => !field.external && (!customOnly || field.kind === 'CUSTOM_FIELD')), formik);
@@ -107,13 +107,13 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       return (!customOnly || field.kind === 'CUSTOM_FIELD') && !field.external && isVisible(field, formik.values);
     }).map(field => {
       const path = fieldPath(field); const value = getIn(formik.values, path); const error = getIn(formik.errors, path);
-      const label = localized(field.label, language); const id = `field-${path}`;
+      const label = localized(field.label, language); const id = `${idPrefix}-${path}`;
       let options = field.options || [];
       if (field.name === 'subtype') options = options.filter(o => (formik.values.category === 'COMMERCIAL' ? ['SHOP', 'OFFICE'] : ['APARTMENT', 'RESIDENCE', 'VILLA']).includes(o.value));
       if (field.name === 'sale.status') options = options.filter(o => o.value === 'AVAILABLE' || o.value === (formik.values.transactionType === 'RENT' ? 'RENTED' : 'SOLD'));
       const common = { id, name: path, value: formValue(value) || formLabel(value), onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly };
       let control;
-      if (field.relation) control = <AsyncRelationSelect id={id} name={path} moduleName={field.relation} value={value} onChange={v => change(field, v)} onBlur={formik.handleBlur} disabled={readOnly} />;
+      if (field.relation || field.catalog) control = <AsyncRelationSelect id={id} name={path} moduleName={field.relation || field.catalog} value={value} onChange={v => change(field, v)} onBlur={formik.handleBlur} disabled={readOnly} refreshKey={refreshKey} />;
       else if (field.type === 'file') control = <FileInput value={value || []} onChange={v => change(field, v)} disabled={readOnly} />;
       else if (field.type === 'currency' && readOnly) control = <CurrencyAmount amount={value} currency={getIn(formik.values, field.name.endsWith('.amount') ? field.name.replace(/\.amount$/, '.currency') : 'currency') || 'TRY'} />;
       else if (field.type === 'currency') control = <PriceInput {...common} value={value} onValueChange={v => change(field, v)} />;
@@ -140,6 +140,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       return <FormControl className="crm-dynamic-field" key={path} isRequired={field.required} isInvalid={Boolean(error)} data-read-only={readOnly ? "true" : "false"}>
         {field.type !== 'checkbox' && <FormLabel htmlFor={id}>{label}</FormLabel>}
         <Box>{control}</Box>
+        {!readOnly && fieldActions[field.name]}
         {field.helpText && <FormHelperText>{localized(field.helpText, language)}</FormHelperText>}
         <FormErrorMessage>{error ? localized(field.validationMessage, language) || (['required', 'invalid', 'relationNotFound', 'duplicate'].includes(error) ? t(`estate.${error}`) : error) : ''}</FormErrorMessage>
       </FormControl>;

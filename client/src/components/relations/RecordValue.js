@@ -7,9 +7,10 @@ export const isRecordId = value => typeof value === 'string' && /^[a-f\d]{24}$/i
 const modules = {
   assignUser: 'Users', assignedBy: 'Users', createBy: 'Users', modifiedBy: 'Users', propertyAgent: 'Users',
   assignedToUser: 'Users', delegatedBy: 'Users', salesAgent: 'Users', sender: 'Users',
+  assignedTo: 'Users', residence: 'Residences', assignTo: 'Contacts', assignToLead: 'Leads',
   contact: 'Contacts', linkContact: 'Contacts', propertyOwner: 'Contacts', relatedContacts: 'Contacts',
   lead: 'Leads', linkLead: 'Leads', relatedLeads: 'Leads',
-  associatedListing: 'Properties', properties: 'Properties', relatedProperties: 'Properties', interestProperty: 'Properties', linkProperty: 'Properties',
+  associatedListing: 'Properties', property: 'Properties', properties: 'Properties', relatedProperties: 'Properties', interestProperty: 'Properties', linkProperty: 'Properties',
   partnerCustomer: 'Partner Customers', partnerCustomers: 'Partner Customers', accountName: 'Partner Customers',
   relatedOpportunities: 'Opportunities', opportunities: 'Opportunities', linkOpportunity: 'Opportunities', quotes: 'Quotes',
 };

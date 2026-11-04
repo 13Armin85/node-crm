@@ -1,4 +1,5 @@
 import RecordMenuButton from "components/table/RecordMenuButton";
+import ContactToOpportunityButton from 'components/record/ContactToOpportunityButton';
 import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import { useEffect, useState } from "react";
@@ -159,7 +160,7 @@ const Index = () => {
               Header: field?.label,
               accessor: field?.name,
               cell: (cell) => (
-                <div className="selectOpt">
+                <div className="selectOpt crm-contact-name-cell">
                   <Text
                     onClick={() => {
                       navigate(`/contactView/${cell?.row?.original?._id}`);
@@ -178,13 +179,16 @@ const Index = () => {
                   >
                     {cell?.value || "-"}
                   </Text>
+                  {field.name === 'fullName' && <ContactToOpportunityButton compact contactId={cell.row.original._id} />}
                 </div>
               ),
             })) || []
         : []),
       ...(result?.payload?.data?.[0]?.fields || []) // Check if fields is defined, if not, use empty array
         ?.filter((field) => field?.isTableField === true && !field?.isView) // Filter out fields where isTableField is true
-        ?.map((field) => ({ Header: field?.label, accessor: field?.name })),
+        ?.map((field) => ({ Header: field?.label, accessor: field?.name,
+          ...(field.name === 'fullName' ? { cell: cell => <div className="crm-contact-name-cell"><Text>{cell.value || '—'}</Text><ContactToOpportunityButton compact contactId={cell.row.original._id} /></div> } : {}),
+        })),
       ...(permission?.update || permission?.view || permission?.delete
         ? [actionHeader]
         : []),

@@ -35,6 +35,8 @@ const notificationRoute = require("./notification/_routes")
 
 //Api`s
 router.use('/audit-logs', require('./auditLog'));
+router.use('/record-workspace', require('./recordWorkspace'));
+router.use('/profile', require('./profile'));
 router.use('/record-sharing', require('./recordSharing'));
 router.use('/import', require('./importRecords'));
 router.use('/visibility', require('./visibility'));

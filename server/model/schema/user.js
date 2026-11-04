@@ -27,6 +27,12 @@ const user = new mongoose.Schema({
     phoneNumber: { type: Number },
     firstName: String,
     lastName: String,
+    bio: { type: String, maxlength: 2000 },
+    jobTitle: { type: String, maxlength: 120 },
+    department: { type: String, maxlength: 120 },
+    website: { type: String, maxlength: 500 },
+    avatarFilename: String,
+    avatarVersion: String,
     updatedDate: {
         type: Date,
         default: Date.now

@@ -29,12 +29,13 @@ import { toast } from "react-toastify";
 import { downloadApiFile, getApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
 import CustomView from "utils/customView";
+import RecordWorkspace from 'components/record/RecordWorkspace';
 import { useLocation } from "react-router-dom";
 import { FaFilePdf } from "react-icons/fa";
 import html2pdf from "html2pdf.js";
 import moment from "moment";
 
-const View = () => {
+const View = ({ module }) => {
   const param = useParams();
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -51,7 +52,6 @@ const View = () => {
   const [leadData, setLeadData] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
-  const module = location.state.module;
   const size = "lg";
 
   const pathName = (name) => {
@@ -230,4 +230,20 @@ const View = () => {
   );
 };
 
-export default withLocalization(View);
+const DynamicWorkspace = props => {
+  const location = useLocation();
+  const [module, setModule] = useState(location.state?.module);
+  useEffect(() => {
+    let active = true;
+    if (location.state?.module) { setModule(location.state.module); return; }
+    getApi('api/custom-field').then(result => {
+      const slug = decodeURIComponent(location.pathname.split('/')[1]).toLowerCase();
+      const found = result?.data?.find(item => item.moduleName?.toLowerCase().replace(/ /g, '-') === slug);
+      if (active) setModule(found);
+    });
+    return () => { active = false; };
+  }, [location.pathname, location.state]);
+  if (!module) return <Spinner />;
+  return <RecordWorkspace moduleName={module.moduleName}><View {...props} module={module} /></RecordWorkspace>;
+};
+export default withLocalization(DynamicWorkspace);

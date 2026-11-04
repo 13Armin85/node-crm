@@ -1,0 +1,93 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const mongoose = require('mongoose');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+test('record workspace, notes, profiles and full contact conversion enforce access and preserve data', { skip: process.env.ESTATE_INTEGRATION !== '1' }, async t => {
+  const dbName = 'crm_record_workspace_test_' + crypto.randomUUID().replace(/-/g, '');
+  await mongoose.connect('mongodb://127.0.0.1:27017', { dbName, serverSelectionTimeoutMS: 5000 });
+  let server, avatarFile;
+  t.after(async () => {
+    if (server) await new Promise(resolve => server.close(resolve));
+    if (avatarFile) await fs.promises.unlink(avatarFile).catch(() => {});
+    assert.equal(mongoose.connection.name, dbName); assert(dbName.startsWith('crm_record_workspace_test_'));
+    await mongoose.connection.dropDatabase(); await mongoose.disconnect();
+  });
+  const User = require('../model/schema/user');
+  const CustomField = require('../model/schema/customField');
+  const { Contact, initializeContactSchema } = require('../model/schema/contact');
+  const Opportunity = require('../model/schema/opprtunity');
+  const Note = require('../model/schema/recordNote');
+  await CustomField.create({ moduleName: 'Contacts', fields: require('../db/contactFields').contactFields });
+  await initializeContactSchema(); await Note.init(); await Opportunity.init();
+  const admin = await User.create({ firstName: 'Workspace', lastName: 'Admin', username: 'admin@example.test', password: 'unused', role: 'admin' });
+  const owner = await User.create({ firstName: 'Record', lastName: 'Owner', username: 'owner@example.test', password: 'unused', role: 'user' });
+  const other = await User.create({ firstName: 'Other', lastName: 'Person', username: 'other@example.test', password: 'unused', role: 'user' });
+  const contact = await Contact.create({ fullName: 'Complete Contact', email: 'customer@example.test', phoneNumber: '+905551234567', physicalAddress: 'Original address',
+    customFields: { budget: 0, checked: false, preferences: ['Garden', 'Pool'] }, convertedLeads: [{ leadId: 'original-lead', values: { leadMessage: 'Original lead message' } }], createBy: owner._id });
+  const app = express(); app.use(express.json());
+  app.use('/api/record-workspace', require('../controllers/recordWorkspace'));
+  app.use('/api/profile', require('../controllers/profile'));
+  app.use('/api/contact', require('../controllers/contact/_routes'));
+  app.use('/api/form', require('../controllers/form/_routes'));
+  app.use((err, req, res, next) => res.status(err.status || 500).json({ code: err.code || 'serverError' }));
+  server = await new Promise(resolve => { const instance = app.listen(0, '127.0.0.1', () => resolve(instance)); });
+  const base = 'http://127.0.0.1:' + server.address().port;
+  const api = async (actor, method, route, body) => {
+    const response = await fetch(base + '/api' + route, { method, headers: { Authorization: jwt.sign({ userId: actor._id }, require('../config/auth').jwtSecret, { expiresIn: '5m' }), ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }) }, ...(body ? { body: body instanceof FormData ? body : JSON.stringify(body) } : {}) });
+    return { status: response.status, data: (response.headers.get('content-type') || '').includes('json') ? await response.json() : await response.arrayBuffer() };
+  };
+  const recordPath = '/record-workspace/Contacts/' + contact._id;
+  assert.equal((await api(other, 'GET', recordPath)).status, 404);
+  const info = await api(owner, 'GET', recordPath); assert.equal(info.status, 200); assert(info.data.editable); assert(info.data.definition.fields.length > 10);
+  const edited = await api(owner, 'PUT', '/form/edit/' + contact._id, { moduleId: info.data.legacyModuleId, fullName: 'Updated Contact' });
+  assert.equal(edited.status, 200, JSON.stringify(edited));
+  assert.equal((await Contact.findById(contact._id)).fullName, 'Updated Contact');
+  for (const [moduleName, filename, original, changes] of [
+    ['Calls', 'phoneCall', { recipient: 'Customer', callNotes: 'Original call' }, { callNotes: 'Updated call' }],
+    ['Emails', 'email', { recipient: 'customer@example.test', subject: 'Original subject', message: 'Original body' }, { subject: 'Updated subject' }],
+  ]) {
+    const Model = require('../model/schema/' + filename);
+    const activity = await Model.create({ ...original, sender: owner._id, createBy: owner._id });
+    const activityPath = '/record-workspace/' + moduleName + '/' + activity._id;
+    const saved = await api(owner, 'PUT', activityPath, changes);
+    assert.equal(saved.status, 200, JSON.stringify(saved));
+    const reloaded = await Model.findById(activity._id).lean();
+    for (const [key, value] of Object.entries(changes)) assert.equal(reloaded[key], value);
+    assert.equal(String(reloaded.sender), String(owner._id));
+    assert.equal((await api(other, 'PUT', activityPath, changes)).status, 404);
+  }
+  assert.equal((await api(other, 'POST', recordPath + '/notes', { text: 'Forbidden', clientId: 'forbidden' })).status, 404);
+  const posted = await api(owner, 'POST', recordPath + '/notes', { text: 'یادداشت ترکی فارسی English', clientId: 'first-note', author: admin._id, createdAt: '2000-01-01' });
+  assert.equal(posted.status, 201); assert.equal(posted.data.author._id, String(owner._id)); assert.equal(posted.data.authorName, 'Record Owner');
+  assert(new Date(posted.data.createdAt) > new Date('2026-01-01'));
+  await api(owner, 'POST', recordPath + '/notes', { text: 'Retry', clientId: 'first-note' });
+  assert.equal(await Note.countDocuments({ record: contact._id }), 1);
+  await api(admin, 'POST', recordPath + '/notes', { text: 'Admin reply', clientId: 'reply' });
+  const history = await api(owner, 'GET', recordPath + '/notes'); assert.equal(history.data.items.length, 2); assert.equal(history.data.items[1].author.firstName, 'Workspace');
+  const profile = await api(owner, 'PUT', '/profile/me', { firstName: 'Updated', bio: 'My biography', jobTitle: 'Sales advisor', department: 'CRM', role: 'developer', username: 'attack@example.test' });
+  assert.equal(profile.status, 200); assert.equal(profile.data.role, 'user'); assert.equal(profile.data.username, owner.username); assert.equal(profile.data.bio, 'My biography');
+  assert.equal((await api(owner, 'PUT', '/profile/me', { website: 'javascript:alert(1)' })).status, 400);
+  const publicProfile = await api(other, 'GET', '/profile/' + owner._id);
+  assert.equal(publicProfile.status, 200); assert.equal(publicProfile.data.jobTitle, 'Sales advisor'); assert.equal(publicProfile.data.role, undefined); assert.equal(publicProfile.data.password, undefined);
+  const image = new FormData(); image.append('avatar', new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')], { type: 'image/png' }), 'avatar.png');
+  const uploaded = await api(owner, 'POST', '/profile/me/avatar', image); assert.equal(uploaded.status, 200, JSON.stringify(uploaded));
+  const persistedOwner = await User.findById(owner._id).lean(); avatarFile = path.resolve(__dirname, '../uploads/profile', persistedOwner.avatarFilename);
+  assert.equal((await api(other, 'GET', '/profile/' + owner._id + '/avatar')).status, 200);
+  const withAvatar = await api(owner, 'GET', recordPath + '/notes'); assert.equal(withAvatar.data.items[0].author.avatarVersion, uploaded.data.avatarVersion);
+  const converted = await api(owner, 'POST', '/contact/to-opportunity/' + contact._id, {}); assert.equal(converted.status, 200, JSON.stringify(converted));
+  const retry = await api(owner, 'POST', '/contact/to-opportunity/' + contact._id, {}); assert.equal(retry.data.opportunityId, converted.data.opportunityId);
+  const opportunity = await Opportunity.findById(converted.data.opportunityId).lean(); assert.equal(opportunity.opportunityName, 'Updated Contact'); assert.equal(String(opportunity.contact), String(contact._id));
+  assert.equal(opportunity.convertedContacts[0].values.physicalAddress, 'Original address'); assert.deepEqual(opportunity.customFields, contact.customFields);
+  assert.equal(opportunity.convertedLeads[0].values.leadMessage, 'Original lead message'); assert.equal(await Note.countDocuments({ module: 'Opportunities', record: opportunity._id }), 2);
+  assert.equal((await Contact.findById(contact._id)).deleted, false); assert((await Contact.findById(contact._id)).relatedOpportunities.some(id => String(id) === String(opportunity._id)));
+  assert.equal((await api(other, 'POST', '/contact/to-opportunity/' + contact._id, {})).status, 404);
+  const bulk = await Note.insertMany(Array.from({ length: 53 }, (_, index) => ({ module: 'Contacts', record: contact._id, author: owner._id, authorName: 'Updated Owner', text: 'History ' + index, clientId: 'bulk-' + index })));
+  const recent = await api(owner, 'GET', recordPath + '/notes'); assert.equal(recent.data.items.length, 50); assert(recent.data.before);
+  const older = await api(owner, 'GET', recordPath + '/notes?before=' + recent.data.before); assert.equal(older.data.items.length, 5);
+  assert(!older.data.items.some(note => recent.data.items.some(item => item._id === note._id)));
+  assert.equal(bulk.length, 53);
+});

@@ -590,10 +590,10 @@ const View = () => {
           <Heading size="lg" mt={0} m={3}>
             {data?.fullName || ""}
           </Heading>
-          <Tabs onChange={handleTabChange} index={selectedTab}>
+          <Box className="crm-contact-detail-sections">
             <Grid templateColumns="repeat(12, 1fr)" mb={3} gap={1}>
               <GridItem colSpan={{ base: 12, md: 6 }}>
-                <TabList
+                <Flex className="crm-contact-section-links"
                   sx={{
                     width: "100%",
                     overflowX: "auto",
@@ -615,13 +615,13 @@ const View = () => {
                     },
                   }}
                 >
-                  <Tab><LocalizedText text="Information" /></Tab>
+                  <Button variant="ghost" onClick={() => document.getElementById('contact-section-0')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><LocalizedText text="Information" /></Button>
                   {(emailAccess?.view ||
                     callAccess?.view ||
                     taskAccess?.view ||
-                    meetingAccess?.view) && <Tab><LocalizedText text="Communication" /></Tab>}
-                  <Tab><LocalizedText text="Document" /></Tab>
-                </TabList>
+                    meetingAccess?.view) && <Button variant="ghost" onClick={() => document.getElementById('contact-section-1')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><LocalizedText text="Communication" /></Button>}
+                  <Button variant="ghost" onClick={() => document.getElementById('contact-section-2')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><LocalizedText text="Document" /></Button>
+                </Flex>
               </GridItem>
               <GridItem
                 colSpan={{ base: 12, md: 6 }}
@@ -691,8 +691,8 @@ const View = () => {
                 </Flex>
               </GridItem>
             </Grid>
-            <TabPanels>
-              <TabPanel pt={4} p={0}>
+            <Box className="crm-contact-section-list">
+              <Box className="crm-contact-section" id="contact-section-0" pt={4} p={0}>
                 <ConvertedLeadDetails records={data?.convertedLeads} />
                 <CustomView
                   data={contactData?.[0]}
@@ -762,8 +762,8 @@ const View = () => {
                     </Grid>
                   </Card>
                 </GridItem>
-              </TabPanel>
-              <TabPanel pt={4} p={0}>
+              </Box>
+              <Box className="crm-contact-section" id="contact-section-1" pt={4} p={0}>
                 <GridItem colSpan={{ base: 12 }}>
                   <Grid templateColumns={{ base: "1fr" }} gap={4}>
                     <Grid templateColumns={"repeat(12, 1fr)"} gap={4}>
@@ -1112,8 +1112,8 @@ const View = () => {
                     </Grid>
                   </Grid>
                 </GridItem>
-              </TabPanel>
-              <TabPanel pt={4} p={0}>
+              </Box>
+              <Box className="crm-contact-section" id="contact-section-2" pt={4} p={0}>
                 <GridItem colSpan={{ base: 12 }}>
                   <Card minH={"40vh"}>
                     <Flex
@@ -1159,9 +1159,9 @@ const View = () => {
                     </VStack>
                   </Card>
                 </GridItem>
-              </TabPanel>
+              </Box>
 
-              <TabPanel pt={4} p={0}>
+              <Box className="crm-contact-section" id="contact-section-3" pt={4} p={0}>
                 <GridItem colSpan={{ base: 12 }}>
                   <Card>
                     <Grid templateColumns={{ base: "1fr" }} gap={4}>
@@ -1306,9 +1306,9 @@ const View = () => {
                     </Grid>
                   </Card>
                 </GridItem>
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+              </Box>
+            </Box>
+          </Box>
 
           {(isAdmin(user) ||
             permission?.update ||

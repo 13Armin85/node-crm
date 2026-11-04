@@ -20,6 +20,7 @@ jest.mock('components/navbar/NavbarAdmin.js', () => () => null);
 jest.mock('components/footer/FooterAdmin.js', () => () => null);
 jest.mock('components/help/PageHelp', () => () => null);
 jest.mock('views/admin/dynamicPage', () => () => null);
+jest.mock('views/admin/dynamicPage/DynamicPageview', () => () => <div data-testid="custom-record-detail">Custom record</div>);
 jest.mock('routes.js', () => {
   const Page = () => null;
   const layout = ['/user'];
@@ -76,6 +77,12 @@ test('ordinary users see each static or dynamic sidebar item once', async () => 
   expect(paths).toEqual(['/default', '/task', '/calender', '/custom-module']);
   expect(container.querySelectorAll('#crm-sidebar .is-active')).toHaveLength(1);
   expect(configuredRoutes).toHaveLength(7);
+});
+
+test('ordinary users can open a custom record directly after its route loads', async () => {
+  await render('/custom-module/record-id');
+  expect(container.querySelector('[data-testid="custom-record-detail"]')).not.toBeNull();
+  expect(sidebarLinks().filter(link => link.getAttribute('href') === '/custom-module')).toHaveLength(1);
 });
 
 test('repeated navigation keeps the item count fixed and selects exactly the clicked item', async () => {

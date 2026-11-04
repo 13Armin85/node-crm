@@ -11,6 +11,8 @@ import {
 import React from "react";
 import { PropertiesPage, PartnerCustomersPage, ResidencesPage } from 'views/admin/estate/EntityPage';
 import DistrictsPage from 'views/admin/estate/DistrictsPage';
+import ProfilePage from 'views/admin/profile/ProfilePage';
+import { withRecordWorkspace } from 'components/record/RecordWorkspace';
 import FormBuilder from 'views/admin/estate/FormBuilder';
 import { AiFillFolderOpen, AiOutlineMail } from "react-icons/ai";
 import { FaCalendarAlt, FaRupeeSign, FaTasks, FaWpforms , FaPiggyBank} from "react-icons/fa";
@@ -661,4 +663,14 @@ const routes = [
   },
 ];
 
-export default routes;
+const detailModules = {
+  '/leadView/:id': 'Leads', '/contactView/:id': 'Contacts', '/propertyView/:id': 'Properties',
+  '/opportunitiesView/:id': 'Opportunities', '/partner-customers/:id': 'Partner Customers',
+  '/invoicesView/:id': 'Invoices', '/view/:id': 'Tasks', '/metting/:id': 'Meetings',
+  '/phone-call/:id': 'Calls', '/Email/:id': 'Emails', '/email-template/:id': 'Email Template', '/userView/:id': 'Users',
+};
+routes.push(
+  { name: 'profile.title', layout: [ROLE_PATH.admin, ROLE_PATH.user], path: '/profile', under: 'profile', component: ProfilePage },
+  { name: 'profile.title', layout: [ROLE_PATH.admin, ROLE_PATH.user], path: '/profile/:id', under: 'profile', component: ProfilePage },
+);
+export default routes.map(route => detailModules[route.path] ? { ...route, component: withRecordWorkspace(route.component, detailModules[route.path]) } : route);

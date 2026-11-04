@@ -32,6 +32,7 @@ import { normalizeFormValues } from 'utils/managedForm';
 import { formLabel } from 'utils/formValue';
 import RecordValue from 'components/relations/RecordValue';
 import CatalogRecordDialog from './CatalogRecordDialog';
+import RecordFields from 'components/record/RecordFields';
 
 const propertySections = [
   ["estate.section.basic", (name) => ["title", "description", "category", "subtype", "transactionType"].includes(name)],
@@ -406,10 +407,10 @@ export function EntityPage({ moduleName }) {
         <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}`} dir={direction}>
           <ModalHeader>{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
-          <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{form}
+          <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{readOnly ? <RecordFields definition={definition} record={record} /> : form}
             {readOnly && record?.createBy && <Text mt={4}>{t("estate.createdBy")}: <RecordValue name="createBy" value={record.createBy} /></Text>}
           </ModalBody>
-          <ModalFooter><Stack direction="row">{!readOnly && <Button variant="brand" isLoading={formik.isSubmitting} isDisabled={!definition} onClick={formik.handleSubmit}>{t("Save")}</Button>}<Button onClick={() => setRecord(null)}>{t("Close")}</Button></Stack></ModalFooter>
+          <ModalFooter><Stack direction="row">{readOnly && permissions?.update && <Button variant="brand" leftIcon={<FiEdit3 />} onClick={() => setReadOnly(false)}>{t('details.edit')}</Button>}{!readOnly && <Button variant="brand" isLoading={formik.isSubmitting} isDisabled={!definition} onClick={formik.handleSubmit}>{t("Save")}</Button>}<Button onClick={() => setRecord(null)}>{t("Close")}</Button></Stack></ModalFooter>
         </ModalContent>
       </Modal>
 

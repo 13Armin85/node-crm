@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 
 const Opportunity = new mongoose.Schema({
     convertedLeads: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    convertedContacts: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    sourceContact: { type: mongoose.Schema.Types.ObjectId, ref: 'Contacts' },
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     opportunityName: String,
     accountName: {
@@ -49,6 +51,7 @@ const Opportunity = new mongoose.Schema({
 })
 
 Opportunity.index({ contact: 1, deleted: 1 });
+Opportunity.index({ sourceContact: 1 }, { unique: true, partialFilterExpression: { sourceContact: { $type: 'objectId' } } });
 Opportunity.index({ lead: 1, deleted: 1 });
 Opportunity.index({ accountName: 1, deleted: 1 });
 

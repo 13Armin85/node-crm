@@ -38,6 +38,7 @@ import { usePwa } from "components/pwa/PwaProvider";
 import NotificationsMenu from "./NotificationsMenu";
 import { postApi } from "services/api";
 import ChangePasswordDialog from "./ChangePasswordDialog";
+import ProfileAvatar from 'components/profile/ProfileAvatar';
 
 export default function HeaderLinks() {
   const panelBg = useColorModeValue("white", "#121a2b");
@@ -92,7 +93,7 @@ export default function HeaderLinks() {
           px={{ base: "4px", md: "7px" }}
         >
           <Flex align="center" gap="10px" textAlign="start">
-            <Avatar name={userName} size="sm" className="crm-profile-avatar" />
+            <ProfileAvatar user={loginUser} size="sm" className="crm-profile-avatar" />
             <Box className="crm-profile-meta">
               <Text color={textColor} fontSize="sm" fontWeight="800" lineHeight="1.2" noOfLines={1}>{userName}</Text>
               <Text color={mutedColor} fontSize="11px" lineHeight="1.35" noOfLines={1}>{userRole}</Text>
@@ -105,6 +106,7 @@ export default function HeaderLinks() {
             <Text fontSize="sm" fontWeight="800" color={textColor}>{userName}</Text>
           </Box>
           <MenuDivider />
+          <MenuItem icon={<Icon as={FiUser} />} onClick={() => navigate('/profile')}>{t('profile.my')}</MenuItem>
           <MenuItem icon={<Icon as={FiHome} />} onClick={() => navigate("/admin/")}>{t("Home")}</MenuItem>
           {isAdmin(loginUser) && (
             <MenuItem icon={<Icon as={FiSettings} />} onClick={() => navigate("/admin-setting")}>{t("Admin Settings")}</MenuItem>

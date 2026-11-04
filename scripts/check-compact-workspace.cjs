@@ -55,6 +55,7 @@ async function main() {
       customFields: { reference: 'Original custom value ' + mode, budget: 0 }, associatedListing: property._id,
       assignUser: actor._id, createBy: actor._id, deleted: false, createdDate: new Date() }));
     let longTask;
+    if (process.env.CRM_CHECK_RECORDS) await require('./check-record-workspace.cjs').seed({ actor, contacts, leads, property, User });
     if (process.env.CRM_CHECK_LEAD_SEARCH) await require('./check-lead-search-labels.cjs').seed({ actor, leads, CustomField, Property, User });
     if (process.env.CRM_CHECK_DASHBOARD_TASKS || process.env.CRM_CHECK_DIALOG_CONTROLS) {
       const Task = require('../server/model/schema/task');
@@ -306,6 +307,7 @@ async function main() {
     if (process.env.CRM_CHECK_SETTINGS) await require('./check-settings-workspace.cjs').check({ page, origin, artifacts, measurements, user });
     if (process.env.CRM_CHECK_CATALOGS) await require('./check-property-catalogs.cjs')({ page, origin, artifacts, measurements, contacts, leads });
     if (process.env.CRM_CHECK_LEAD_SEARCH) await require('./check-lead-search-labels.cjs').check({ page, origin, artifacts, measurements, leads });
+    if (process.env.CRM_CHECK_RECORDS) await require('./check-record-workspace.cjs').check({ page, origin, artifacts, measurements, contacts, leads, property, user });
     await page.evaluate(() => { localStorage.setItem('chakra-ui-color-mode', 'dark'); localStorage.setItem('crm-language', 'en'); });
     await page.setViewport({ width: 1440, height: 960 });
     await page.goto(origin + '/documents', { waitUntil: 'networkidle2' });
@@ -323,6 +325,7 @@ async function main() {
   } finally {
     if (browser) await browser.close();
     if (server) await new Promise(resolve => server.close(resolve));
+    if (process.env.CRM_CHECK_RECORDS) await require('./check-record-workspace.cjs').cleanup();
     assert.equal(mongoose.connection.name, dbName); assert(dbName.startsWith('crm_compact_browser_test_'));
     await mongoose.connection.dropDatabase(); await mongoose.disconnect();
   }

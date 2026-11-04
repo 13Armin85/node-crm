@@ -42,6 +42,7 @@ export default function Dashboard(props) {
 
   // let routes = newRoutes;
   const [routes, setRoutes] = useState(newRoutes);
+  const [catalogReady, setCatalogReady] = useState(false);
   const route = useSelector((state) => state?.route?.data);
   const modules = useSelector((state) => state?.modules?.data);
   const dispatch = useDispatch();
@@ -207,9 +208,8 @@ export default function Dashboard(props) {
   }, [route, modules]);
 
   useEffect(() => {
-    dispatch(fetchRouteData());
+    Promise.all([dispatch(fetchRouteData()), dispatch(fetchModules())]).then(() => setCatalogReady(true));
     dispatch(fetchImage());
-    dispatch(fetchModules());
   }, [dispatch]);
 
   useEffect(() => {
@@ -391,7 +391,7 @@ export default function Dashboard(props) {
                   >
                     <Routes>
                       {getRoutes(routes)}
-                      <Route path="/*" element={<Navigate to="/default" />} />
+                      <Route path="/*" element={catalogReady ? <Navigate to="/default" /> : <Spinner />} />
                     </Routes>
                   </Suspense>
                 </Box>

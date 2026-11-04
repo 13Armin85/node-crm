@@ -7,6 +7,10 @@ import React, {
   useState,
 } from "react";
 import estate from './estate';
+import recordDetails from './recordDetails';
+import moment from 'moment';
+import 'moment/locale/fa';
+import 'moment/locale/tr';
 import notificationMessages from './notifications';
 import taskSearchMessages from './taskSearch';
 import exportMessages from './exports';
@@ -646,6 +650,8 @@ export const translate = (value, language = "en") => {
   return value;
 };
 
+Object.keys(recordDetails).forEach(language => Object.assign(dictionaries[language], recordDetails[language]));
+
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(
     () => localStorage.getItem("crm-language") || "en",
@@ -667,12 +673,17 @@ export function LanguageProvider({ children }) {
   }, [language, direction]);
 
   const value = useMemo(
-    () => ({
+    () => {
+      // Legacy detail views format dates during render, so their locale must
+      // change before the new context value reaches those views.
+      moment.locale(language);
+      return ({
       language,
       direction,
       setLanguage,
       t: (text) => translate(text, language),
-    }),
+      });
+    },
     [direction, language, setLanguage],
   );
 

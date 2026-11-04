@@ -10,6 +10,9 @@ const router = express.Router();
 const activity = require('../../middelwares/activityNotifications')('Contacts');
 
 router.get('/', auth, loadUser, permit('Contacts', 'view'), guarded.list, contact.index)
+router.post('/to-opportunity/:id', auth, loadUser, permit('Contacts', 'view'), async (req, res, next) => {
+  try { res.json(await require('../../services/contactConversion').convertContact(req)); } catch (error) { next(error); }
+});
 router.post('/add', auth, loadUser, dynamicValues, activity('record_created', contact.add))
 router.post('/addMany', auth, loadUser, permit('Contacts', 'create'), guarded.createMany, activity('record_created', contact.addMany))
 router.post('/add-property-interest/:id', auth, loadUser, permit('Contacts', 'update'), guarded.record(Contact), activity('record_updated', contact.addPropertyInterest))

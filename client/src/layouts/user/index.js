@@ -23,6 +23,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchImage } from "../../redux/slices/imageSlice";
 import { getApi } from "services/api";
 import DynamicPage from "views/admin/dynamicPage";
+import DynamicPageview from "views/admin/dynamicPage/DynamicPageview";
 import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
@@ -37,6 +38,7 @@ export default function User(props) {
   const [fixed] = useState(false);
   const [toggleSidebar, setToggleSidebar] = useState(false);
   const [route, setRoute] = useState();
+  const [catalogReady, setCatalogReady] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1280,
   );
@@ -52,6 +54,7 @@ export default function User(props) {
   const fetchRoute = async () => {
     let response = await getApi("api/route/");
     setRoute(response?.data);
+    setCatalogReady(true);
   };
 
   useEffect(() => {
@@ -87,6 +90,7 @@ export default function User(props) {
         icon: <Icon as={LuChevronRightCircle} width="20px" height="20px" color="inherit" />,
         component: DynamicPage,
       });
+      dynamicRoutes.push({ name, parentName: name, under: name, layout: [ROLE_PATH.user], path: path + '/:id', component: DynamicPageview });
     }
 
     const seenPaths = new Set();
@@ -312,7 +316,7 @@ export default function User(props) {
                   >
                     <Routes key={JSON.stringify([visibilityState.visibility, visibilityState.accessibleModules])}>
                       {getRoutes(routes)}
-                      <Route path="/*" element={routes.length ? <Navigate to={(routes.find(item => !item.under) || routes[0]).path} replace /> : <Text>{t("estate.forbidden")}</Text>} />
+                      <Route path="/*" element={!catalogReady ? <Spinner /> : routes.length ? <Navigate to={(routes.find(item => !item.under) || routes[0]).path} replace /> : <Text>{t("estate.forbidden")}</Text>} />
                     </Routes>
                   </Suspense>
                 </Box>

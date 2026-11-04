@@ -105,7 +105,10 @@ Property category, subtype, transaction type, currency, residence, and buyer rel
 ```powershell
 cd server
 npm run check
+npm run check:dependencies
 npm test
+# All MongoDB integration suites, using isolated temporary test databases:
+npm run test:integration
 
 cd ..\client
 npm run lint
@@ -133,6 +136,8 @@ Remove-Item Env:ESTATE_INTEGRATION
 ```
 
 ## Security and storage
+
+Backend hardening, operational limits, performance measurements and deployment checks are documented in [Backend security and performance](docs/backend-hardening.md).
 
 All estate endpoints require JWT authentication and enforce module/action permissions. Ordinary users can view all shared CRM records, documents, reports and account profiles. Tasks remain private to their assigned user, including across dashboard, calendar and generic form reads. Administrative mutations and task delegation remain restricted; existing record mutation ownership checks are preserved. Upload metadata is stored in MongoDB while files are written below `server/uploads`, which is excluded from version control. Use persistent protected storage for that directory in production.
 

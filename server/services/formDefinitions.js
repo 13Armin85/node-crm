@@ -114,6 +114,11 @@ async function getDefinition(moduleName) {
         : null;
       return system ? {
         ...item,
+        ...(moduleName === 'Contacts' && item.name === 'state' ? {
+          label: Object.fromEntries(Object.entries(item.label || system.label).map(([language, label]) => [
+            language, ['State', 'state', 'مرحله'].includes(label) ? system.label[language] || system.label.en : label,
+          ])),
+        } : {}),
         // Repair generated invoice labels while retaining administrator-written labels.
         ...(moduleName === 'Invoices' && /^(billing|shipping)(Street|City|State|PostalCode|Country)$|^(subtotal|discount|tax|ptax|shipping|shippingTax|total|grandTotal)$/.test(item.name) ? {
           label: Object.fromEntries(Object.entries(item.label || system.label).map(([language, label]) => {

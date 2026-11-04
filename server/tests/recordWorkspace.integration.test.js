@@ -43,6 +43,7 @@ test('record workspace, notes, profiles and full contact conversion enforce acce
   const recordPath = '/record-workspace/Contacts/' + contact._id;
   assert.equal((await api(other, 'GET', recordPath)).status, 404);
   const info = await api(owner, 'GET', recordPath); assert.equal(info.status, 200); assert(info.data.editable); assert(info.data.definition.fields.length > 10);
+  assert.deepEqual(info.data.definition.fields.find(field => field.name === 'state').label, { en: 'Lead stage', fa: 'مرحله سرنخ', tr: 'Müşteri adayı aşaması' });
   const edited = await api(owner, 'PUT', '/form/edit/' + contact._id, { moduleId: info.data.legacyModuleId, fullName: 'Updated Contact' });
   assert.equal(edited.status, 200, JSON.stringify(edited));
   assert.equal((await Contact.findById(contact._id)).fullName, 'Updated Contact');
@@ -52,6 +53,8 @@ test('record workspace, notes, profiles and full contact conversion enforce acce
   const preserved = await Contact.findById(contact._id).lean();
   assert.equal(preserved.state, 'OBSOLETE_STAGE'); assert.equal(preserved.communicationTool, 'OBSOLETE_TOOL');
   assert.equal((await api(owner, 'PUT', '/form/edit/' + contact._id, { moduleId: info.data.legacyModuleId, state: 'NEW_INVALID_STAGE' })).status, 400);
+  assert.equal((await api(owner, 'PUT', '/form/edit/' + contact._id, { moduleId: info.data.legacyModuleId, state: 'Booked' })).status, 200);
+  assert.equal((await api(owner, 'GET', recordPath)).data.record.state, 'Booked');
   for (const [moduleName, filename, original, changes] of [
     ['Calls', 'phoneCall', { recipient: 'Customer', callNotes: 'Original call' }, { callNotes: 'Updated call' }],
     ['Emails', 'email', { recipient: 'customer@example.test', subject: 'Original subject', message: 'Original body' }, { subject: 'Updated subject' }],
@@ -97,6 +100,7 @@ test('record workspace, notes, profiles and full contact conversion enforce acce
   const converted = await api(owner, 'POST', '/contact/to-opportunity/' + contact._id, {}); assert.equal(converted.status, 200, JSON.stringify(converted));
   const retry = await api(owner, 'POST', '/contact/to-opportunity/' + contact._id, {}); assert.equal(retry.data.opportunityId, converted.data.opportunityId);
   const opportunity = await Opportunity.findById(converted.data.opportunityId).lean(); assert.equal(opportunity.opportunityName, 'Updated Contact'); assert.equal(String(opportunity.contact), String(contact._id));
+  assert.equal(opportunity.convertedContacts[0].values.state, 'Booked');
   assert.equal(opportunity.convertedContacts[0].values.physicalAddress, 'Original address'); assert.deepEqual(opportunity.customFields, contact.customFields);
   assert.equal(opportunity.convertedLeads[0].values.leadMessage, 'Original lead message'); assert.equal(await Note.countDocuments({ module: 'Opportunities', record: opportunity._id }), 2);
   assert.equal((await Contact.findById(contact._id)).deleted, false); assert((await Contact.findById(contact._id)).relatedOpportunities.some(id => String(id) === String(opportunity._id)));

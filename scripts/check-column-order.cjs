@@ -13,8 +13,8 @@ exports.check=async({page,origin,artifacts,user})=>{
   const save=async()=>{const expected=(await rows()).filter(row=>row.checked).map(row=>row.label);await page.$eval('.crm-columns-modal .chakra-modal__footer button',el=>el.click());await page.waitForSelector('.crm-columns-modal',{hidden:true});assert.deepEqual(await headers(),expected);return expected;};
   const stored=moduleName=>page.evaluate((id,name)=>JSON.parse(localStorage.getItem('crm-table-columns:'+id+':'+name)),user._id,moduleName);
   await page.setViewport({width:1440,height:950});await go('/contacts');await page.waitForSelector('td[data-label="Budget review"]');
-  assert(!(await headers()).some(label=>['State','Lead stage','Lead State'].includes(label)),'Contact rows must not show a lead stage');
-  await open();let initial=await rows();assert(!initial.some(row=>['state','leadStage','leadState'].includes(row.id)));
+  assert((await headers()).includes('Lead stage'),'Contact rows show the lead stage');
+  await open();let initial=await rows();assert(initial.some(row=>row.id==='state'&&row.checked));
   const before=initial.map(row=>row.id);
   await page.evaluate(async()=>{
     const source=document.querySelector('[data-column-id="fullName"] [draggable]'),target=document.querySelector('[data-column-id="email"]'),dataTransfer=new DataTransfer();
@@ -51,5 +51,5 @@ exports.check=async({page,origin,artifacts,user})=>{
     await page.screenshot({path:path.join(artifacts,'opportunity-stages-'+language+'.png')});
   }
   await go('/default');await page.waitForSelector('.crm-finance-kpi .crm-currency__usd');
-  console.log('PASS: drag and arrows reorder table columns left to right; hidden columns and order persist per module; new fields append; contacts omit stages; opportunity cards and rows show stages; mobile controls and currency conversion remain usable.');
+  console.log('PASS: drag and arrows reorder table columns left to right; hidden columns and order persist per module; new fields append; contacts show lead stages; opportunity cards and rows show stages; mobile controls and currency conversion remain usable.');
 };

@@ -275,6 +275,8 @@ router.delete('/:module/:id', moduleRequired, permission('delete'), asyncRoute(a
 }));
 router.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
+  const failures = require('../../middelwares/securityHeaders');
+  if (failures.databaseUnavailable(error)) return failures.errorHandler(error, req, res, next);
   const status = error.code === 11000 ? 409 : error.status || (error.name === 'ValidationError' || error.name === 'CastError' || error instanceof multer.MulterError ? 400 : 500);
   if (status === 500) console.error('Estate API:', error.message);
   res.status(status).json({ code: error.code === 11000 ? 'duplicate' : (typeof error.code === 'string' ? error.code : status === 500 ? 'serverError' : 'invalid'), field: error.field });

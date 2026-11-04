@@ -70,7 +70,7 @@ test('record import validates complete batches, permissions, relationships and p
       ['Properties', { title: 'Imported Property', category: 'RESIDENTIAL', subtype: 'VILLA', transactionType: 'SALE', price: { amount: 1500000.5, currency: 'TRY' }, area: { value: 120, type: 'NET' } }],
       ['Residences', { name: 'Import Residence', city: 'Istanbul', maintenanceFee: { amount: 0, currency: 'USD' } }],
       ['Partner Customers', { customerType: 'COMPANY', companyName: 'Imported company', phone: '+90 555 333 4444' }],
-      ['Opportunities', { opportunityName: 'Imported opportunity', opportunityAmount: 0 }],
+      ['Opportunities', { opportunityName: 'Imported opportunity', opportunityAmount: 0, amount: 0, commission: 0 }],
       ['Invoices', { title: 'Imported invoice', invoiceDate: '2026-10-18', currency: 'USD', items: [{ productName: 'Service', qty: 2, rate: 10.5, discount: 0, discountType: 'none' }], ptax: '20' }],
       ['Quotes', { description: 'Imported quote', amount: 0, installments: [{ no: 1, months: 'January', per: 10, total: 10.5 }] }],
       ['Opportunity Project', { name: 'Imported project', requirement: 'Imported requirement' }],

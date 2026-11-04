@@ -86,10 +86,15 @@ test('explicit full visibility and per-user controls cover all HTTP surfaces', {
     ['bank-details', 'Bank Details', require('../model/schema/bankDetails'), await insert(require('../model/schema/bankDetails'), { bankName: 'Shared bank' })],
     ['opportunityproject', 'Opportunity Project', require('../model/schema/opportunityproject'), await insert(require('../model/schema/opportunityproject'), { name: 'Shared project' })],
   ];
-  await t.test('existing general data is shared by default on list and detail routes', async () => {
+  await t.test('general visibility shares ordinary data while leads remain assigned to their owner', async () => {
     for (const [path, name, Model, record] of modules) {
       const listed = await api('GET', '/' + path);
       assert.equal(listed.status, 200, path + JSON.stringify(listed));
+      if (name === 'Leads') {
+        assert(!ids(apiRows(listed)).includes(String(record._id)), 'Unassigned administrator leads remain private');
+        assert.equal((await api('GET', '/lead/view/' + record._id)).status, 404);
+        continue;
+      }
       assert(ids(apiRows(listed)).includes(String(record._id)), name + ' shared list');
       if (!['document', 'quotes', 'email-temp'].includes(path)) {
         const detailPath = path.startsWith('estate/') ? '/' + path + '/' + record._id : '/' + path + '/view/' + record._id;
@@ -105,7 +110,7 @@ test('explicit full visibility and per-user controls cover all HTTP surfaces', {
     assert.equal((await api('GET', '/visibility', null, admin)).data.users.length, 2);
     const dashboard = (await api('GET', '/status')).data.data;
     assert.deepEqual(ids(dashboard.taskData), allTaskIds);
-    assert.equal(dashboard.leadData.length, 1);
+    assert.equal(dashboard.leadData.length, 0);
     assert((await api('GET', '/calendar')).data.some(row => String(row.id) === String(meeting._id)));
     const totals = (await api('GET', '/reporting/line-chart')).data;
     assert.equal(totals.find(row => row.name === 'Opportunities').length, 1);
@@ -166,7 +171,9 @@ test('explicit full visibility and per-user controls cover all HTTP surfaces', {
     const report = (await api('GET', '/reporting')).data;
     assert(report.every(row => row.emailsent === 0 && row.outboundcall === 0));
     for (const path of ['/contact/view/' + contact._id, '/lead/view/' + lead._id]) {
-      const detail = (await api('GET', path)).data;
+      const response = await api('GET', path);
+      if (path.startsWith('/lead/')) { assert.equal(response.status, 404); continue; }
+      const detail = response.data;
       assert.equal((detail.contact || detail.lead).relatedOpportunities.length, 0);
       for (const key of ['EmailHistory', 'phoneCallHistory', 'meetingHistory', 'Email', 'phoneCall', 'meeting', 'quotes', 'invoice']) {
         if (detail[key]) assert.equal(detail[key].length, 0, key);
@@ -198,7 +205,7 @@ test('explicit full visibility and per-user controls cover all HTTP surfaces', {
     const otherLead = await insert(require('../model/schema/lead').Lead, { leadName: 'Other user lead', createBy: other._id });
     const leadModule = await CustomField.create({ moduleName: 'Leads', fields: [] });
     const allLeadIds = ids([lead, ownLead, otherLead]);
-    assert.deepEqual(ids((await api('GET', '/lead')).data), allLeadIds, 'ordinary users keep shared lead visibility');
+    assert.deepEqual(ids((await api('GET', '/lead')).data), ids([ownLead]), 'general visibility never widens lead ownership');
     for (const manager of [admin, developer]) {
       for (const [person, expected] of [[ordinary, ownLead], [other, otherLead], [admin, lead]]) {
         const filteredLeads = await api('GET', '/lead', null, manager, person._id);

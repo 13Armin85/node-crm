@@ -24,10 +24,13 @@ test('contact name aliases use their actual related record and produce only one 
   const columns=mergeFormColumns([{accessor:'contactName',Header:'Contact'}],{fields:[field('contact',{relation:'Contacts',type:'select'})]},'Opportunities','en');
   expect(columns).toHaveLength(1);expect(columns[0].accessor({contact:'contact-id',contactName:'Alice'})).toBe('contact-id');
 });
-test('lead stages belong to opportunity rows rather than contact rows',()=>{
+test('lead stages are available in both contact and opportunity rows',()=>{
   const fields=[field('fullName'),field('state'),field('leadStage',{options:[{value:'Booked',label:{en:'Booked'}}]})];
   const contactColumns=mergeFormColumns([{accessor:'fullName'},{accessor:'state'},{accessor:'leadStage'}],{fields},'Contacts','en');
-  expect(contactColumns.map(column=>column.id)).toEqual(['fullName']);
+  expect(contactColumns.map(column=>column.id)).toEqual(['fullName','state','leadStage']);
+  expect(contactColumns.find(column=>column.id==='state').accessor({state:'Waiting'})).toBe('Waiting');
+  const hidden=mergeFormColumns([],{fields:[field('state',{enabled:false})]},'Contacts','en');
+  expect(hidden).toHaveLength(0);
   const opportunityColumns=mergeFormColumns([],{fields:[field('opportunityName'),fields[2]]},'Opportunities','en');
   expect(opportunityColumns.find(column=>column.id==='leadStage').accessor({leadStage:'Booked'})).toBe('Booked');
 });

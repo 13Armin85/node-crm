@@ -12,9 +12,7 @@ import { getApi } from 'services/api';
 import { recordValue } from 'utils/exportRecords';
 
 const protectedFields = new Set(['_id','__v','password','authVersion','avatarFilename','avatarVersion','deleted','_duplicateKeys','customFields']);
-const contactStageFields = new Set(['state', 'leadState', 'leadStage']);
-export const tableFields = (definition, moduleName = definition?.moduleName) => [...(definition?.fields || [])].filter(field => field.enabled !== false && !protectedFields.has(field.name)
-  && !(moduleName === 'Contacts' && contactStageFields.has(field.name))).sort((a,b)=>(a.order||0)-(b.order||0));
+export const tableFields = definition => [...(definition?.fields || [])].filter(field => field.enabled !== false && !protectedFields.has(field.name)).sort((a,b)=>(a.order||0)-(b.order||0));
 export const tableFieldValue = (record,field) => getIn(record,fieldPath(field)) ?? getIn(record,field.name);
 const paths = { Contacts:'/contactView/', Leads:'/leadView/', Users:'/userView/', Properties:'/propertyView/', Opportunities:'/opportunitiesView/', 'Partner Customers':'/partner-customers/', Invoices:'/invoicesView/', Tasks:'/view/', Meetings:'/metting/', Calls:'/phone-call/', Emails:'/Email/' };
 const primaryNames = { Contacts:'fullName', Leads:'leadName', Opportunities:'opportunityName', Properties:'title', Residences:'name', 'Partner Customers':'fullName', Users:'firstName' };
@@ -43,7 +41,6 @@ export function mergeFormColumns(base,definition,moduleName,language) {
   const fields=tableFields(definition,moduleName), used=new Set(), removed=new Set(definition.removedFields||[]);
   const columns=base.flatMap(column=>{
     const name=typeof column.accessor==='string'?column.accessor:column.id;
-    if(moduleName==='Contacts'&&contactStageFields.has(name))return[];
     if(!name || ['_id','action','actions','transferToOpportunity'].includes(name))return[column];
     const matchName = moduleName==='Leads'&&name==='leadName'?'leadName':aliases[name]||name;
     const field=fields.find(field=>fieldPath(field)===matchName||field.name===matchName);

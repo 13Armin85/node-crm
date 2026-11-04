@@ -2,6 +2,7 @@ const assert = require('node:assert/strict'), path = require('node:path'), fs = 
 let actorId;
 exports.seed = async ({ actor, contacts }) => {
   actorId=actor._id;
+  await require('../server/model/schema/contact').Contact.updateMany({}, { $set: { state: 'Booked' } });
   await require('../server/model/schema/contact').Contact.updateOne({ _id: contacts[0]._id }, { $set: { state:'OBSOLETE_STAGE', communicationTool:'OBSOLETE_TOOL', convertedLeads: [{ leadId: 'original', values: { leadName: 'Original converted customer', leadMobile: '+905552222222', leadMessage: 'Original request' }, fields: [{ name: 'leadName', label: 'Lead Name' }, { name: 'leadMobile', label: 'Lead Mobile' }] }] } });
 };
 exports.cleanup = async () => {
@@ -25,8 +26,22 @@ exports.check = async ({ page, origin, artifacts, contacts, user }) => {
     await page.click('.crm-field-editor-actions button'); assert.equal((await saved).status(),200);
     await go('/contactView/'+contacts[0]._id); await page.waitForFunction(value=>document.querySelector('[data-record-field="fullName"] dd')?.textContent===value,{},value);
     assert(await page.$eval('.crm-converted-details',el=>el.textContent.includes('Original converted customer')),'The original source snapshot must remain intact');
+    const field='[data-record-field="state"]';
+    await (await page.$(field+' dd')).click({count:2});await page.waitForSelector('.crm-field-editor select[name="state"]');
+    const stage={en:'Booked',fa:'Waiting',tr:'Sealed'}[language];
+    await page.select('.crm-field-editor select[name="state"]',stage);
+    const stageLabel=await page.$eval('.crm-field-editor select[name="state"]',el=>el.selectedOptions[0].textContent);
+    const stageSaved=page.waitForResponse(r=>r.url().includes('/api/form/edit/')&&r.request().method()==='PUT');
+    await page.click('.crm-field-editor-actions button');assert.equal((await stageSaved).status(),200);
+    await go('/contactView/'+contacts[0]._id);await page.waitForFunction(label=>document.querySelector('[data-record-field="state"] dd')?.textContent===label,{},stageLabel);
+    assert.equal((await require('../server/model/schema/contact').Contact.findById(contacts[0]._id).lean()).state,stage);
     await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+2,{timeout:3000});
     await page.screenshot({path:path.join(artifacts,'converted-contact-'+language+'.png')});
+    await go('/contacts');
+    const stageTitle={en:'Lead stage',fa:'مرحله سرنخ',tr:'Müşteri adayı aşaması'}[language];
+    await page.waitForSelector('td[data-label="'+stageTitle+'"]');
+    assert(await page.$$eval('td[data-label="'+stageTitle+'"]',cells=>cells.some(cell=>cell.textContent.trim()&&cell.textContent.trim()!=='—')));
+    await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+2,{timeout:3000});
   }
   await page.setViewport({width:1440,height:950}); await go('/profile'); await page.select('.crm-language-select select','en'); await page.waitForSelector('#profile-photo');
   const image = path.join(artifacts,'avatar-fixture.png');fs.writeFileSync(image,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=','base64'));
@@ -41,5 +56,5 @@ exports.check = async ({ page, origin, artifacts, contacts, user }) => {
   await go('/profile'); await page.waitForSelector('#profile-photo'); assert.equal(await page.$('.crm-profile-summary img'),null);
   const author=await require('../server/model/schema/user').findById(user._id).lean();assert.equal(author.avatarFilename,undefined);
   await page.screenshot({path:path.join(artifacts,'profile-photo-removed.png')});
-  console.log('PASS: converted contact first-field double-click saves in three languages and mobile sizes; photo deletion clears profile, session and persisted file metadata.');
+  console.log('PASS: contact names and lead stages save by double-click and appear in translated tables in three languages and mobile sizes; photo deletion remains functional.');
 };

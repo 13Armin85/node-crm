@@ -2,7 +2,7 @@ const { categories, ages, bedrooms, floors, fieldTypes } = require('./estateCata
 const { safeName } = require('./formDefinitions');
 const { normalizeRoomPlan, isRoomPlanField, roomPlanMatches } = require('./roomPlans');
 class InputError extends Error {
-  constructor(code, field) { super(code); this.code = code; this.field = field; this.status = 400; }
+  constructor(code, field) { super(code); this.name = 'InputError'; this.code = code; this.field = field; this.status = 400; }
 }
 const fail = (field, code = 'invalid') => { throw new InputError(code, field); };
 const get = (object, path) => path.split('.').reduce((value, key) => value?.[key], object);

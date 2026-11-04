@@ -12,6 +12,7 @@ const PartnerCustomer = require('../../model/schema/partnerCustomer');
 const Opportunity = require('../../model/schema/opprtunity');
 const { dateRange, buildBuckets, aggregateTimeline } = require('../../services/reportTimeline');
 const { reportTimeoutMS } = require('../../config/runtime');
+const { databaseUnavailable, errorHandler } = require('../../middelwares/securityHeaders');
 
 const getActor = (req) => req.actor || User.findOne({ _id: req.user.userId, deleted: false });
 
@@ -40,6 +41,7 @@ const index = async (req, res) => {
             completedTasks: countFor(3, user._id, 'completed'),
         })));
     } catch (error) {
+        if (databaseUnavailable(error)) return errorHandler(error, req, res, () => {});
         res.status(500).json({ message: 'Failed to load report', error: error.message });
     }
 };
@@ -67,6 +69,7 @@ const lineChart = async (req, res) => {
             { name: 'Completed Tasks', length: completed, color: 'green' },
         ]);
     } catch (error) {
+        if (databaseUnavailable(error)) return errorHandler(error, req, res, () => {});
         res.status(500).json({ message: 'Failed to load analytics', error: error.message });
     }
 };
@@ -100,6 +103,7 @@ const data = async (req, res) => {
             Text: [{ totalTextSent: texts.total, TextMessages: buckets.map((date) => ({ date, TextSentCount: texts.counts.get(date) || 0 })) }],
         });
     } catch (error) {
+        if (databaseUnavailable(error)) return errorHandler(error, req, res, () => {});
         res.status(500).json({ message: 'Failed to build chart', error: error.message });
     }
 };

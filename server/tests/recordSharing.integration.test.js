@@ -21,7 +21,7 @@ test('individual grants expose only own and explicitly sent records with sending
     assert.equal(mongoose.connection.name, dbName); assert(dbName.startsWith('crm_sharing_test_'));
     await mongoose.connection.dropDatabase(); await mongoose.disconnect();
   });
-  t.mock.method(require('../middelwares/mail'), 'sendEmail', async () => null);
+  t.mock.method(require('../middelwares/mail'), 'sendEmail', async () => '250 accepted by isolated test stub');
   const app = express(); app.use(express.json());
   const { securityHeaders, hideInternalErrors, errorHandler } = require('../middelwares/securityHeaders');
   app.use(securityHeaders, hideInternalErrors); app.use('/api', require('../controllers/route')); app.use(errorHandler);
@@ -101,12 +101,16 @@ test('individual grants expose only own and explicitly sent records with sending
       assert(!ids(rows(await api('GET', route, null, other))).includes(String(sent._id)), module);
       assert.equal((await api('GET', route + (module === 'Partner Customers' ? '?q=Foreign' : '?_id=' + foreign._id))).status, 200);
       assert.deepEqual(rows(await api('GET', route + (module === 'Partner Customers' ? '?q=Foreign' : '?_id=' + foreign._id))), [], module);
-      if (['Contacts', 'Leads', 'Opportunities', 'Invoices'].includes(module)) {
+      if (module === 'Leads') {
+        // Lead sending transfers responsibility; only managers may transfer it again.
+        assert.equal(String((await sharing.modelFor('Leads').findById(sent._id)).assignUser), String(user._id));
+        assert.equal((await api('PUT', route + '/edit/' + sent._id, { assignUser: String(other._id) })).status, 403);
+      } else if (['Contacts', 'Opportunities', 'Invoices'].includes(module)) {
         assert.equal((await api('PUT', route + '/edit/' + sent._id, { title: 'Denied' })).status, 404, module);
         assert.equal((await api('DELETE', route + '/delete/' + sent._id)).status, 404, module);
       }
     }
-    assert.equal(await Notification.countDocuments({ recipient: user._id, type: 'record_shared' }), 3);
+    assert.equal(await Notification.countDocuments({ recipient: user._id, type: 'record_shared' }), 2);
     const metadata = await CustomField.create({ moduleName: 'Leads', fields: [] });
     const generic = await api('GET', '/form?moduleId=' + metadata._id);
     assert.deepEqual(ids(generic.data.data), ids([fixtures.Leads.own, fixtures.Leads.sent]));
@@ -149,7 +153,7 @@ test('individual grants expose only own and explicitly sent records with sending
     await Notification.create({ recipient: other._id, module: 'Leads', entityId: fixtures.Leads.sent._id, type: 'record_shared', message: 'Other inbox' });
     const inbox = (await api('GET', '/notification')).data;
     assert.equal(inbox.unreadCount, 4); assert.equal(inbox.notifications.length, 4);
-    assert(inbox.notifications.every(row => row.type === 'record_shared'));
+    assert(inbox.notifications.every(row => ['record_shared', 'task_assigned'].includes(row.type)));
     assert.equal((await api('PUT', '/notification/' + invisible._id + '/read')).status, 404);
     const item = inbox.notifications[0];
     assert.equal((await api('PUT', '/notification/' + item._id + '/read', null, other)).status, 404);
@@ -187,7 +191,7 @@ test('individual grants expose only own and explicitly sent records with sending
     assert.equal((await send('Leads', removed._id)).status, 404);
     assert.equal((await api('PUT', '/visibility/' + user._id, { visibility: { Leads: true } })).status, 403);
     assert.equal((await api('PUT', '/visibility/' + user._id, { visibility: { Leads: true } }, developer)).status, 200);
-    assert.deepEqual(ids((await api('GET', '/lead')).data), ids(Object.values(fixtures.Leads)));
+    assert.deepEqual(ids((await api('GET', '/lead')).data), ids([fixtures.Leads.own, fixtures.Leads.sent]));
     assert.equal((await api('PUT', '/visibility/' + user._id, { visibility: { Leads: false } }, admin)).status, 200);
     await api('PUT', '/user/edit/' + user._id, { moduleVisibility: { Leads: true } });
     assert.equal((await api('GET', '/visibility/me')).data.visibility.Leads, false);
@@ -214,8 +218,8 @@ test('individual grants expose only own and explicitly sent records with sending
     const payloads = {
       Contacts: { firstName: 'New own contact', lastName: 'Test' },
       Leads: { leadName: 'New own lead' },
-      Opportunities: { opportunityName: 'New own opportunity' },
-      Invoices: { title: 'New own invoice' },
+      Opportunities: { opportunityName: 'New own opportunity', opportunityAmount: 0, amount: 0, commission: 0 },
+      Invoices: { title: 'New own invoice', invoiceDate: '2026-10-18', currency: 'TRY', items: [{ productName: 'Service', qty: 1, rate: 10 }] },
       Meetings: { agenda: 'New own meeting', dateTime: '2026-10-12T12:00:00Z' },
       Calls: { recipient: '12345', callNotes: 'New own call', callDuration: '1' },
       Emails: { recipient: 'test@example.test', subject: 'New own email', message: 'Test' },

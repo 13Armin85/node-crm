@@ -89,6 +89,29 @@ test('security boundaries withstand unauthorized records, injection, uploads and
     }
     assert.equal((await api('GET', '/notification')).status, 200);
   });
+  await t.test('compressed and malformed bodies stay bounded without crashing subsequent requests', async () => {
+    const { gzipSync } = require('node:zlib');
+    const login = gzipSync(JSON.stringify({ username: 'compression@example.test', password: 'incorrect' }));
+    const raw = (body, encoding = 'gzip') => fetch(base + '/user/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Encoding': encoding }, body,
+    });
+    assert.equal((await raw(login)).status, 401, 'Valid compressed requests retain their normal behavior');
+    for (const body of [Buffer.concat([login, Buffer.from('trailing invalid bytes')]), Buffer.from('invalid gzip')]) {
+      const response = await raw(body);
+      assert.equal(response.status, 400);
+      assert(!JSON.stringify(await response.json()).includes('stack'));
+    }
+    assert.equal((await raw(gzipSync(JSON.stringify({ padding: 'x'.repeat(1024 * 1024 + 1) })))).status, 413);
+    assert.equal((await raw(login, 'unsupported')).status, 415);
+    const multipart = await fetch(base + '/document/add', {
+      method: 'POST', headers: { Authorization: token(first), 'Content-Type': 'multipart/form-data; boundary=test-boundary' },
+      body: '--test-boundary\r\nContent-Disposition: form-data; name="files"; filename="incomplete.txt"\r\n',
+    });
+    assert.equal(multipart.status, 400);
+    const healthy = await api('GET', '/notification');
+    assert.equal(healthy.status, 200);
+    assert.match(healthy.headers.get('cache-control'), /private, no-store/);
+  });
   await t.test('legacy records enforce ownership without relying on form definitions', async () => {
     const models = [
       ['bank-details', require('../model/schema/bankDetails'), { accountName: 'Protected account' }, { accountName: 'stolen' }],

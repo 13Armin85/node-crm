@@ -17,8 +17,6 @@ app.disable('etag');
 app.set('trust proxy', 'loopback');
 const { securityHeaders, mutationLimiter, hideInternalErrors, errorHandler, privateResponse } = require('./middelwares/securityHeaders');
 app.use(securityHeaders, hideInternalErrors);
-app.use('/api', privateResponse);
-app.use(bodyParser.json({ limit: '1mb' }));
 const allowedOrigins = String(process.env.CORS_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean);
 app.use(cors((req, callback) => {
     const origin = req.get('origin');
@@ -27,8 +25,10 @@ app.use(cors((req, callback) => {
     try { const url = new URL(origin); sameOrigin = ['http:', 'https:'].includes(url.protocol) && url.host === req.get('host'); } catch {}
     callback(null, { origin: sameOrigin || allowedOrigins.includes(origin) });
 }));
+app.use('/api', privateResponse, mutationLimiter);
+app.use(bodyParser.json({ limit: '1mb' }));
 //API Routes
-app.use('/api', mutationLimiter, route);
+app.use('/api', route);
 app.use(errorHandler);
 
 

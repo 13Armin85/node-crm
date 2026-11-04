@@ -43,7 +43,7 @@ module.exports = ({ field, options, required }) => {
       f('email', 'email', 'Email', 'ایمیل', required),
       f('phoneNumber', 'phone', 'Phone Number', 'شماره تلفن', required),
       choice('campaign', 'Campaign', 'کمپین', ['Referral', 'Online', 'Billboard', 'Activation', 'Agent']),
-      choice('state', 'State', 'مرحله', ['Open', 'Parking', 'Waiting', 'Booked', 'Sealed']),
+      field('state', 'select', 'Lead stage', 'مرحله سرنخ', 'Müşteri adayı aşaması', { options: options(['Open', 'Parking', 'Waiting', 'Booked', 'Sealed']) }),
       choice('communicationTool', 'Communication Tool', 'روش ارتباط', ['WhatsApp', 'Email', 'Virtual Meet', 'Visit']),
       choice('listedFor', 'Listed For', 'نوع درخواست', ['Rent', 'Buy']),
       f('message', 'textarea', 'Message', 'پیام'),

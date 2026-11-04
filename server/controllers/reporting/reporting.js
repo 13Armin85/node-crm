@@ -10,6 +10,8 @@ const TextMsg = require('../../model/schema/textMsg');
 const Task = require('../../model/schema/task');
 const PartnerCustomer = require('../../model/schema/partnerCustomer');
 const Opportunity = require('../../model/schema/opprtunity');
+const { dateRange, buildBuckets, aggregateTimeline } = require('../../services/reportTimeline');
+const { reportTimeoutMS } = require('../../config/runtime');
 
 const getActor = (req) => req.actor || User.findOne({ _id: req.user.userId, deleted: false });
 
@@ -25,16 +27,17 @@ const index = async (req, res) => {
             Call.aggregate([{ $match: readScope(req, actor, 'Calls', { sender: { $in: ids }, deleted: { $ne: true } }) }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
             TextMsg.aggregate([{ $match: readScope(req, actor, 'Texts', { sender: { $in: ids } }) }, { $group: { _id: '$sender', count: { $sum: 1 } } }]),
             Task.aggregate([{ $match: readScope(req, actor, 'Tasks', { deleted: false }) }, { $group: { _id: { $ifNull: ['$assignedToUser', '$createBy'] }, total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } } } }]),
-        ]);
-        const countFor = (rows, id, key = 'count') => rows.find((row) => String(row._id) === String(id))?.[key] || 0;
+        ].map(query => query.option({ maxTimeMS: reportTimeoutMS })));
+        const counts = [emails, calls, texts, tasks].map(rows => new Map(rows.map(row => [String(row._id), row])));
+        const countFor = (index, id, key = 'count') => counts[index].get(String(id))?.[key] || 0;
         res.status(200).json(users.map((user) => ({
             ...user,
             name: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username,
-            emailsent: countFor(emails, user._id),
-            outboundcall: countFor(calls, user._id),
-            textsent: countFor(texts, user._id),
-            tasks: countFor(tasks, user._id, 'total'),
-            completedTasks: countFor(tasks, user._id, 'completed'),
+            emailsent: countFor(0, user._id),
+            outboundcall: countFor(1, user._id),
+            textsent: countFor(2, user._id),
+            tasks: countFor(3, user._id, 'total'),
+            completedTasks: countFor(3, user._id, 'completed'),
         })));
     } catch (error) {
         res.status(500).json({ message: 'Failed to load report', error: error.message });
@@ -53,7 +56,7 @@ const lineChart = async (req, res) => {
             PartnerCustomer.countDocuments(readScope(req, actor, 'Partner Customers', { deleted: false })),
             Task.countDocuments(readScope(req, actor, 'Tasks', { deleted: false })),
             Task.countDocuments(readScope(req, actor, 'Tasks', { deleted: false, status: 'completed' })),
-        ]);
+        ].map(query => query.maxTimeMS(reportTimeoutMS)));
         res.status(200).json([
             { name: 'Leads', length: leads, color: 'orange' },
             { name: 'Contacts', length: contacts, color: 'blue' },
@@ -68,48 +71,17 @@ const lineChart = async (req, res) => {
     }
 };
 
-const startOfWeek = (date) => {
-    const result = new Date(date);
-    const day = result.getUTCDay() || 7;
-    result.setUTCDate(result.getUTCDate() - day + 1);
-    result.setUTCHours(0, 0, 0, 0);
-    return result;
-};
-
-const dateKey = (value, weekly) => {
-    const date = weekly ? startOfWeek(value) : new Date(value);
-    return date.toISOString().slice(0, 10);
-};
-
-const buildBuckets = (start, end, weekly) => {
-    const buckets = [];
-    const cursor = weekly ? startOfWeek(start) : new Date(start);
-    cursor.setUTCHours(0, 0, 0, 0);
-    while (cursor <= end) {
-        buckets.push(cursor.toISOString().slice(0, 10));
-        cursor.setUTCDate(cursor.getUTCDate() + (weekly ? 7 : 1));
-    }
-    return buckets;
-};
-
-const countTimeline = (rows, buckets, weekly) => {
-    const counts = Object.fromEntries(buckets.map((key) => [key, 0]));
-    rows.forEach((row) => {
-        const key = dateKey(row.timestamp, weekly);
-        if (Object.prototype.hasOwnProperty.call(counts, key)) counts[key] += 1;
-    });
-    return counts;
-};
-
 const data = async (req, res) => {
     try {
         const actor = await getActor(req);
         if (!actor) return res.status(401).json({ message: 'Authentication failed' });
-        const start = new Date(`${req.body.startDate}T00:00:00.000Z`);
-        const end = new Date(`${req.body.endDate}T23:59:59.999Z`);
-        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+        const range = dateRange(req.body);
+        if (!range) {
             return res.status(400).json({ message: 'Invalid date range' });
         }
+        const { start, end } = range;
+        const weekly = req.body.filter === 'week';
+        if (req.query.sender !== undefined && !/^[a-f\d]{24}$/i.test(String(req.query.sender))) return res.status(400).json({ code: 'invalid', field: 'sender' });
         const requestedSender = req.dataSubject || (mongoose.Types.ObjectId.isValid(req.query.sender)
             ? new mongoose.Types.ObjectId(req.query.sender) : null);
         const match = { timestamp: { $gte: start, $lte: end }, deleted: { $ne: true } };
@@ -117,19 +89,15 @@ const data = async (req, res) => {
         const textMatch = { timestamp: match.timestamp };
         if (requestedSender) textMatch.sender = requestedSender;
         const [emails, calls, texts] = await Promise.all([
-            Email.find(readScope(req, actor, 'Emails', match)).select('timestamp').lean(),
-            Call.find(readScope(req, actor, 'Calls', match)).select('timestamp').lean(),
-            TextMsg.find(readScope(req, actor, 'Texts', textMatch)).select('timestamp').lean(),
+            aggregateTimeline(Email, readScope(req, actor, 'Emails', match), weekly),
+            aggregateTimeline(Call, readScope(req, actor, 'Calls', match), weekly),
+            aggregateTimeline(TextMsg, readScope(req, actor, 'Texts', textMatch), weekly),
         ]);
-        const weekly = req.body.filter === 'week';
         const buckets = buildBuckets(start, end, weekly);
-        const emailCounts = countTimeline(emails, buckets, weekly);
-        const callCounts = countTimeline(calls, buckets, weekly);
-        const textCounts = countTimeline(texts, buckets, weekly);
         res.status(200).json({
-            Email: [{ totalEmails: emails.length, Emails: buckets.map((date) => ({ date, Emailcount: emailCounts[date] })) }],
-            Call: [{ totalCall: calls.length, Calls: buckets.map((date) => ({ date, Callcount: callCounts[date] })) }],
-            Text: [{ totalTextSent: texts.length, TextMessages: buckets.map((date) => ({ date, TextSentCount: textCounts[date] })) }],
+            Email: [{ totalEmails: emails.total, Emails: buckets.map((date) => ({ date, Emailcount: emails.counts.get(date) || 0 })) }],
+            Call: [{ totalCall: calls.total, Calls: buckets.map((date) => ({ date, Callcount: calls.counts.get(date) || 0 })) }],
+            Text: [{ totalTextSent: texts.total, TextMessages: buckets.map((date) => ({ date, TextSentCount: texts.counts.get(date) || 0 })) }],
         });
     } catch (error) {
         res.status(500).json({ message: 'Failed to build chart', error: error.message });

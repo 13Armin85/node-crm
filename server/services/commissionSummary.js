@@ -1,6 +1,6 @@
 const Opportunity = require('../model/schema/opprtunity');
-const { outcome } = require('./opportunityMetrics');
 const { readScope } = require('./recordAccess');
+const { reportTimeoutMS } = require('../config/runtime');
 const currencies = ['TRY', 'USD', 'EUR'];
 function since(now, period) {
   const date = new Date(now);
@@ -20,24 +20,50 @@ async function commissionSummary(req, now = new Date()) {
   const earliest = start < teamStart ? start : teamStart;
   const date = { $ifNull: ['$closedAt', '$createdDate'] };
   const currencyMatch = currency === 'TRY' ? { $or:[{currency:'TRY'},{currency:null},{currency:''}] } : currency === 'USD' ? {currency:{$in:['USD','$']}} : {currency};
-  const records = await Opportunity.find(readScope(req, req.actor, 'Opportunities', { deleted:false, ...currencyMatch, $expr:{$and:[{$gte:[date,earliest]},{$lte:[date,now]}]} })).select('salesStage commission amount opportunityAmount closedAt createdDate assignUser createBy').lean();
+  // Separate the fallback date branches so MongoDB can use their range indexes.
+  const match = readScope(req, req.actor, 'Opportunities', { deleted: false, $and: [currencyMatch, { $or: [
+    { closedAt: { $gte: earliest, $lte: now } },
+    { closedAt: null, createdDate: { $gte: earliest, $lte: now } },
+  ] }] });
+  const nonnegative = input => ({ $max: [0, { $convert: { input, to: 'double', onError: 0, onNull: 0 } }] });
+  const stage = { $convert: { input: '$salesStage', to: 'string', onError: '', onNull: '' } };
+  const [summary] = await Opportunity.aggregate([
+    { $match: match },
+    { $project: {
+      effectiveDate: date,
+      commission: nonnegative('$commission'),
+      salesAmount: nonnegative({ $ifNull: ['$amount', '$opportunityAmount'] }),
+      userId: { $ifNull: ['$assignUser', '$createBy'] },
+      state: { $switch: { branches: [
+        { case: { $regexMatch: { input: stage, regex: /(^|[/\s_-])(won|win|sold)$/i } }, then: 'sold' },
+        { case: { $regexMatch: { input: stage, regex: /(^|[/\s_-])(lost|loss)$/i } }, then: 'lost' },
+      ], default: 'available' } },
+    } },
+    { $facet: {
+      buckets: [
+        { $match: { effectiveDate: { $gte: start } } },
+        { $group: { _id: '$state', count: { $sum: 1 }, amount: { $sum: '$commission' } } },
+      ],
+      sellers: [
+        { $match: { state: 'sold', effectiveDate: { $gte: teamStart }, userId: { $ne: null } } },
+        { $group: { _id: '$userId', soldCount: { $sum: 1 }, commission: { $sum: '$commission' }, salesAmount: { $sum: '$salesAmount' } } },
+      ],
+    } },
+  ]).option({ maxTimeMS: reportTimeoutMS });
   const buckets = Object.fromEntries(['sold','available','lost','total'].map(key => [key,{count:0,values:[{currency,amount:0}]}]));
-  const sellers = new Map();
-  for (const record of records) {
-    const effective = new Date(record.closedAt || record.createdDate), commission = Math.max(0, Number(record.commission) || 0);
-    const state = outcome(record.salesStage), key = state === 'won' ? 'sold' : state === 'lost' ? 'lost' : 'available';
-    if (effective >= start) for (const name of [key,'total']) { buckets[name].count++; buckets[name].values[0].amount += commission; }
-    if (state === 'won' && effective >= teamStart) {
-      const userId = String(record.assignUser || record.createBy || ''); if (!userId) continue;
-      const seller = sellers.get(userId) || {userId,soldCount:0,commission:0,salesAmount:0};
-      seller.soldCount++; seller.commission += commission; seller.salesAmount += Math.max(0,Number(record.amount ?? record.opportunityAmount)||0); sellers.set(userId,seller);
-    }
+  for (const bucket of summary?.buckets || []) {
+    buckets[bucket._id].count = bucket.count;
+    buckets[bucket._id].values[0].amount = bucket.amount;
+    buckets.total.count += bucket.count;
+    buckets.total.values[0].amount += bucket.amount;
   }
-  const users = await require('../model/schema/user').find({_id:{$in:[...sellers.keys()]}}).select('firstName lastName username').lean();
+  const sellers = (summary?.sellers || []).map(({ _id, ...seller }) => ({ userId: String(_id), ...seller }));
+  const ids = sellers.map(seller => seller.userId).filter(id => /^[a-f\d]{24}$/i.test(id));
+  const users = ids.length ? await require('../model/schema/user').find({_id:{$in:ids}}).select('firstName lastName username').lean() : [];
   const names = new Map(users.map(user=>[String(user._id), [user.firstName,user.lastName].filter(Boolean).join(' ') || user.username]));
   const round = value => Math.round((value + Number.EPSILON) * 100) / 100;
   for (const bucket of Object.values(buckets)) bucket.values[0].amount = round(bucket.values[0].amount);
-  const bySeller = [...sellers.values()].sort((a,b)=>b.commission-a.commission || b.soldCount-a.soldCount || a.userId.localeCompare(b.userId)).map((person,index)=>({...person,commission:round(person.commission),salesAmount:round(person.salesAmount),rank:index+1,name:names.get(person.userId)||'',values:[{currency,amount:round(person.commission)}],salesValues:[{currency,amount:round(person.salesAmount)}]}));
+  const bySeller = sellers.sort((a,b)=>b.commission-a.commission || b.soldCount-a.soldCount || a.userId.localeCompare(b.userId)).map((person,index)=>({...person,commission:round(person.commission),salesAmount:round(person.salesAmount),rank:index+1,name:names.get(person.userId)||'',values:[{currency,amount:round(person.commission)}],salesValues:[{currency,amount:round(person.salesAmount)}]}));
   return {...buckets,bySeller,period,teamMonths,currency,start,teamStart,end:now};
 }
 module.exports = { commissionSummary, since };

@@ -46,10 +46,12 @@ const initializedSchemas = async () => {
 const connectDB = async (DATABASE_URL, DATABASE) => {
     try {
         const DB_OPTIONS = {
+            ...require('../config/runtime').databaseOptions,
             dbName: DATABASE
         }
 
         mongoose.set("strictQuery", false);
+        mongoose.set('bufferTimeoutMS', 5000);
         await mongoose.connect(DATABASE_URL, DB_OPTIONS);
         // Wait for the retention index before accepting API traffic.
         await AuditLog.init();

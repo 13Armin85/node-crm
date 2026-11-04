@@ -48,4 +48,6 @@ const email = new mongoose.Schema({
   },
 });
 
+email.index({ timestamp: 1, sender: 1 });
+email.index({ sender: 1, timestamp: 1 });
 module.exports = mongoose.model("Emails", email, "Emails");

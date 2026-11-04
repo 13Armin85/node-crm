@@ -19,4 +19,6 @@ const TextMsg = new mongoose.Schema({
     }
 })
 
+TextMsg.index({ timestamp: 1, sender: 1 });
+TextMsg.index({ sender: 1, timestamp: 1 });
 module.exports = mongoose.model('TextMsg', TextMsg, 'TextMsg');

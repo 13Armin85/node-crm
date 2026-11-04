@@ -82,7 +82,10 @@ const legacyModules = [
 ];
 const safeName = name => /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)*$/.test(name) && !name.split('.').some(part => ['__proto__', 'prototype', 'constructor', 'password', 'roles', 'createBy', 'deleted'].includes(part));
 async function getDefinition(moduleName) {
-  const legacy = await CustomField.findOne({ moduleName, deleted: false }).lean();
+  const [legacy, existing] = await Promise.all([
+    CustomField.findOne({ moduleName, deleted: false }).lean(),
+    FormDefinition.findOne({ moduleName }).lean(),
+  ]);
   const mapLegacyFields = (kind = 'SYSTEM_FIELD') => (legacy?.fields || [])
     .filter(item => safeName(item.name)
       && !item.delete
@@ -103,7 +106,6 @@ async function getDefinition(moduleName) {
         }),
       kind,
     }));
-  const existing = await FormDefinition.findOne({ moduleName }).lean();
   if (existing) {
     const baseline = defaults[moduleName] || [];
     const mergedExisting = existing.fields.map(item => {

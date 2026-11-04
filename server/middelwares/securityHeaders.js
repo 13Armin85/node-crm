@@ -29,9 +29,19 @@ const errorHandler = (error, req, res, next) => {
   if (error.code === 'uploadBusy') return res.status(409).json({ code: 'uploadBusy', field: 'files' });
   if (error.code === 'duplicate' || error.code === 11000) return res.status(409).json({ code: 'duplicate', field: error.field });
   if (error.type === 'entity.too.large' || error.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ code: 'tooLarge' });
+  if (error.type === 'encoding.unsupported') return res.status(415).json({ code: 'unsupportedEncoding' });
+  if (error.code === 50 || ['MongoServerSelectionError', 'MongoNetworkError', 'MongoNetworkTimeoutError', 'MongoWaitQueueTimeoutError', 'MongooseServerSelectionError'].includes(error.name)) return res.status(503).json({ code: 'temporarilyUnavailable', message: 'Please try again later' });
+  if (error.name === 'InputError') return res.status([400, 403, 409].includes(error.status) ? error.status : 400).json({ code: error.code, field: error.field });
+  if ([401, 403, 404].includes(error.status)) return res.status(error.status).json({ code: ({401:'unauthorized',403:'forbidden',404:'notFound'})[error.status] });
   if (error.status === 400 || error.name === 'MulterError' || error.name === 'ValidationError' || error.name === 'CastError') return res.status(400).json({ code: 'invalid' });
   console.error('Request failed:', error.name || 'Error');
   res.status(500).json({ code: 'internalError', message: 'Request failed' });
+};
+const privateResponse = (req, res, next) => {
+  res.set('Cache-Control', 'private, no-store');
+  res.vary('Authorization');
+  res.vary('X-CRM-Data-User');
+  next();
 };
 const hideInternalErrors = (req, res, next) => {
   const json = res.json.bind(res);
@@ -45,4 +55,4 @@ const hideInternalErrors = (req, res, next) => {
   };
   next();
 };
-module.exports = { securityHeaders, mutationLimiter, loginLimiter, hideInternalErrors, errorHandler };
+module.exports = { securityHeaders, mutationLimiter, loginLimiter, hideInternalErrors, errorHandler, privateResponse };

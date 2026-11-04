@@ -57,5 +57,7 @@ Opportunity.index({ contact: 1, deleted: 1 });
 Opportunity.index({ sourceContact: 1 }, { unique: true, partialFilterExpression: { sourceContact: { $type: 'objectId' } } });
 Opportunity.index({ lead: 1, deleted: 1 });
 Opportunity.index({ accountName: 1, deleted: 1 });
+Opportunity.index({ deleted: 1, closedAt: 1, currency: 1 });
+Opportunity.index({ deleted: 1, createdDate: 1, currency: 1 });
 
 module.exports = mongoose.model('Opportunities', Opportunity, 'Opportunities');

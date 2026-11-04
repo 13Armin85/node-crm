@@ -4,6 +4,9 @@ const SOURCE_URL = process.env.TCMB_EXCHANGE_RATE_URL || 'https://www.tcmb.gov.t
 const HOURLY_BASE_URL = process.env.TCMB_HOURLY_RATE_URL || 'https://www.tcmb.gov.tr/reeskontkur';
 const CACHE_MS = Math.max(60_000, Number(process.env.EXCHANGE_RATE_CACHE_MS) || 5 * 60_000);
 let cached = null;
+let inFlight = null;
+let retryAfter = 0;
+let lastFailure = null;
 
 const tagValue = (xml, tag) => {
   const match = xml.match(new RegExp(`<${tag}>([^<]+)</${tag}>`, 'i'));
@@ -46,21 +49,41 @@ const parseTcmbHourlyUsd = xml => {
   return { base: 'TRY', quote: 'USD', buying: rate.buying, selling: null, tryPerUsd: rate.tryPerUnit, usdPerTry: 1 / rate.tryPerUnit, sourceDate: rate.sourceDate, sourceHour: rate.sourceHour, publishedAt: rate.publishedAt };
 };
 
-const requestXml = url => new Promise((resolve, reject) => {
+const requestXml = (url, deadline) => new Promise((resolve, reject) => {
+  const timeoutMS = Math.min(8000, deadline - Date.now());
+  if (timeoutMS <= 0) return reject(new Error('TCMB request timed out'));
+  let timer;
+  const done = (error, body) => {
+    clearTimeout(timer);
+    if (error) reject(error); else resolve(body);
+  };
   const request = https.get(url, { headers: { 'User-Agent': 'NodeCRM/1.0', Accept: 'application/xml,text/xml' } }, response => {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       response.resume();
       const error = new Error(`TCMB request failed with ${response.statusCode}`);
       error.statusCode = response.statusCode;
-      return reject(error);
+      return done(error);
     }
     let body = '';
+    let bytes = 0;
     response.setEncoding('utf8');
-    response.on('data', chunk => { body += chunk; });
-    response.on('end', () => resolve(body));
+    response.on('data', chunk => {
+      bytes += Buffer.byteLength(chunk);
+      if (bytes > 512 * 1024) {
+        const error = new Error('TCMB response is too large');
+        done(error);
+        request.destroy(error);
+      }
+      else body += chunk;
+    });
+    response.on('error', done);
+    response.on('aborted', () => done(new Error('TCMB response interrupted')));
+    response.on('end', () => done(null, body));
   });
-  request.setTimeout(8000, () => request.destroy(new Error('TCMB request timed out')));
-  request.on('error', reject);
+  // Total elapsed deadline also covers slow trickle responses, not just idleness.
+  timer = setTimeout(() => request.destroy(new Error('TCMB request timed out')), timeoutMS);
+  timer.unref();
+  request.on('error', done);
 });
 
 const istanbulParts = date => Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
@@ -86,10 +109,10 @@ const hourlyCandidates = (now = new Date()) => {
   return candidates;
 };
 
-const getLatestHourly = async () => {
+const getLatestHourly = async deadline => {
   for (const url of hourlyCandidates()) {
     try {
-      const xml = await requestXml(url);
+      const xml = await requestXml(url, deadline);
       const usd = parseTcmbHourlyUsd(xml);
       const eur = parseTcmbHourlyCurrency(xml, 'EUR');
       return { ...usd, tryPerEur: eur.tryPerUnit };
@@ -103,22 +126,33 @@ const getLatestHourly = async () => {
 const getTryUsdRate = async () => {
   const now = Date.now();
   if (cached && now - cached.cachedAt < CACHE_MS) return { ...cached.value, stale: false };
-  try {
+  if (inFlight) return inFlight;
+  if (now < retryAfter) {
+    if (cached) return { ...cached.value, stale: true };
+    throw lastFailure;
+  }
+  // All simultaneous dashboard requests share one refresh, including fallback.
+  inFlight = (async () => { try {
     let value;
     try {
-      value = { ...await getLatestHourly(), source: 'TCMB hourly', fetchedAt: new Date().toISOString() };
+      value = { ...await getLatestHourly(now + 12000), source: 'TCMB hourly', fetchedAt: new Date().toISOString() };
     } catch (hourlyError) {
-      const xml = await requestXml(SOURCE_URL);
+      const xml = await requestXml(SOURCE_URL, now + 20000);
       const usd = parseTcmbUsd(xml);
       const eur = parseTcmbCurrency(xml, 'EUR');
       value = { ...usd, tryPerEur: eur.tryPerUnit, source: 'TCMB daily', fetchedAt: new Date().toISOString() };
     }
-    cached = { value, cachedAt: now };
+    cached = { value, cachedAt: Date.now() };
+    retryAfter = 0;
+    lastFailure = null;
     return { ...value, stale: false };
   } catch (error) {
+    lastFailure = error;
+    retryAfter = Date.now() + 30000;
     if (cached) return { ...cached.value, stale: true };
     throw error;
-  }
+  } finally { inFlight = null; } })();
+  return inFlight;
 };
 
 module.exports = { getTryUsdRate, parseTcmbUsd, parseTcmbHourlyUsd, hourlyCandidates };

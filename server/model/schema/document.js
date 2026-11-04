@@ -68,6 +68,7 @@ const documentSchema = new mongoose.Schema({
 
 documentSchema.index({ createBy: 1, parentFolder: 1, folderName: 1, deleted: 1 });
 documentSchema.index({ createBy: 1, isRoot: 1, deleted: 1 });
+documentSchema.index({ parentFolder: 1, deleted: 1, isRoot: 1 });
 
 // Create the model for the main document
 

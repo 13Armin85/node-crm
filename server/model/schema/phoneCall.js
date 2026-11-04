@@ -42,4 +42,6 @@ const phoneCall = new mongoose.Schema({
   },
 });
 
+phoneCall.index({ timestamp: 1, sender: 1 });
+phoneCall.index({ sender: 1, timestamp: 1 });
 module.exports = mongoose.model("Calls", phoneCall, "Calls");

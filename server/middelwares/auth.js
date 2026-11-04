@@ -33,7 +33,11 @@ const auth = async (req, res, next) => {
         if (viewModule && !canRead(req.actor, viewModule)) return res.status(403).json({ code: 'forbidden', module: viewModule });
         next();
     } catch (err) {
-        return res.status(401).json({ code: 'unauthorized', message: 'Authentication failed. Invalid token.' })
+        if (['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError'].includes(err.name)) {
+            return res.status(401).json({ code: 'unauthorized', message: 'Authentication failed. Invalid token.' });
+        }
+        // Database/sharing failures must not masquerade as an expired session.
+        return next(err);
     }
 }
 

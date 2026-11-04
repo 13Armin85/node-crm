@@ -20,27 +20,30 @@ const loadShares = async actor => {
   if (actor?.role !== 'user') return [];
   const shares = await RecordShare.find({ recipient: actor._id, module: { $in: shareableModules } }).select('module recordId').lean();
   const documentIds = new Set(shares.filter(share => share.module === 'Documents').map(share => String(share.recordId)));
-  if (!documentIds.size || !await modelFor('Documents').exists({ _id: { $in: [...documentIds] }, isRoot: { $ne: true }, deleted: false })) return shares;
-  const folders = await modelFor('Documents').find({ deleted: false }).select('_id parentFolder isRoot file._id file.deleted').lean();
-  const children = new Map();
-  for (const folder of folders) {
-    const parent = String(folder.parentFolder || '');
-    if (!children.has(parent)) children.set(parent, []);
-    children.get(parent).push(folder);
-  }
-  const pending = folders.filter(folder => !folder.isRoot && documentIds.has(String(folder._id)));
+  if (!documentIds.size) return shares;
+  const Document = modelFor('Documents');
+  const fields = '_id file._id file.deleted';
+  let pending = await Document.find({ _id: { $in: [...documentIds] }, isRoot: { $ne: true }, deleted: false }).select(fields).lean();
   const visited = new Set();
   while (pending.length) {
-    const folder = pending.pop(), id = String(folder._id);
-    if (visited.has(id)) continue;
-    visited.add(id);
-    for (const recordId of [folder._id, ...(folder.file || []).filter(file => !file.deleted).map(file => file._id)]) {
-      if (!documentIds.has(String(recordId))) {
-        documentIds.add(String(recordId));
-        shares.push({ module: 'Documents', recordId });
+    const parents = [];
+    for (const folder of pending) {
+      const id = String(folder._id);
+      if (visited.has(id)) continue;
+      visited.add(id);
+      parents.push(folder._id);
+      for (const recordId of [folder._id, ...(folder.file || []).filter(file => !file.deleted).map(file => file._id)]) {
+        if (!documentIds.has(String(recordId))) {
+          documentIds.add(String(recordId));
+          shares.push({ module: 'Documents', recordId });
+        }
       }
     }
-    pending.push(...(children.get(id) || []).filter(child => !child.isRoot));
+    pending = [];
+    // Only read descendants of granted folders, never the entire document store.
+    for (let offset = 0; offset < parents.length; offset += 500) {
+      pending.push(...await Document.find({ parentFolder: { $in: parents.slice(offset, offset + 500) }, isRoot: { $ne: true }, deleted: false }).select(fields).lean());
+    }
   }
   return shares;
 };

@@ -36,6 +36,14 @@ router.post('/me/avatar', upload.single('avatar'), validateUploads(root), run(as
   await User.updateOne({ _id: req.actor._id }, { $set: { avatarFilename: req.file.filename, avatarVersion: version, updatedDate: new Date() } });
   res.json({ _id: req.actor._id, avatarVersion: version });
 }));
+router.delete('/me/avatar', run(async (req, res) => {
+  const previous = await User.findByIdAndUpdate(req.actor._id, {
+    $unset: { avatarFilename: 1 }, $set: { avatarVersion: '', updatedDate: new Date() },
+  }).select('avatarFilename').lean();
+  const filename = previous?.avatarFilename && withinRoot(root, path.join(root, previous.avatarFilename));
+  if (filename) await fs.promises.unlink(filename).catch(error => { if (error.code !== 'ENOENT') throw error; });
+  res.json({ _id: req.actor._id, avatarVersion: '' });
+}));
 router.get('/:id/avatar', run(async (req, res) => {
   if (!objectId(req.params.id)) return res.status(400).json({ code: 'invalid' });
   const user = await User.findOne({ _id: req.params.id, deleted: false }).select('avatarFilename').lean();

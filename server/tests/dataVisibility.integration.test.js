@@ -52,7 +52,7 @@ test('explicit full visibility and per-user controls cover all HTTP surfaces', {
   });
   const partner = await insert(require('../model/schema/partnerCustomer'), { customerType: 'INDIVIDUAL', fullName: 'Shared partner' });
   const residence = await insert(require('../model/schema/residence'), { name: 'Shared residence' });
-  const opportunity = await insert(require('../model/schema/opprtunity'), { opportunityName: 'Shared opportunity' });
+  const opportunity = await insert(require('../model/schema/opprtunity'), { opportunityName: 'Shared opportunity', salesStage: 'Prospecting', commission: 50, currency: 'TRY', createdDate: new Date() });
   const folder = await insert(require('../model/schema/document'), { folderName: 'Shared folder', file: [] });
   const meeting = await insert(require('../model/schema/meeting'), { agenda: 'Shared meeting', dateTime: '2026-10-07T12:00:00Z' });
   await insert(require('../model/schema/email'), { sender: admin._id, subject: 'Shared email', timestamp: new Date('2026-10-07T12:00:00Z') });

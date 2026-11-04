@@ -46,6 +46,12 @@ test('record workspace, notes, profiles and full contact conversion enforce acce
   const edited = await api(owner, 'PUT', '/form/edit/' + contact._id, { moduleId: info.data.legacyModuleId, fullName: 'Updated Contact' });
   assert.equal(edited.status, 200, JSON.stringify(edited));
   assert.equal((await Contact.findById(contact._id)).fullName, 'Updated Contact');
+  await Contact.updateOne({ _id: contact._id }, { $set: { state: 'OBSOLETE_STAGE', communicationTool: 'OBSOLETE_TOOL' } });
+  const partial = await api(owner, 'PUT', '/form/edit/' + contact._id, { moduleId: info.data.legacyModuleId, fullName: 'Updated Contact' });
+  assert.equal(partial.status, 200, JSON.stringify(partial));
+  const preserved = await Contact.findById(contact._id).lean();
+  assert.equal(preserved.state, 'OBSOLETE_STAGE'); assert.equal(preserved.communicationTool, 'OBSOLETE_TOOL');
+  assert.equal((await api(owner, 'PUT', '/form/edit/' + contact._id, { moduleId: info.data.legacyModuleId, state: 'NEW_INVALID_STAGE' })).status, 400);
   for (const [moduleName, filename, original, changes] of [
     ['Calls', 'phoneCall', { recipient: 'Customer', callNotes: 'Original call' }, { callNotes: 'Updated call' }],
     ['Emails', 'email', { recipient: 'customer@example.test', subject: 'Original subject', message: 'Original body' }, { subject: 'Updated subject' }],
@@ -78,6 +84,16 @@ test('record workspace, notes, profiles and full contact conversion enforce acce
   const persistedOwner = await User.findById(owner._id).lean(); avatarFile = path.resolve(__dirname, '../uploads/profile', persistedOwner.avatarFilename);
   assert.equal((await api(other, 'GET', '/profile/' + owner._id + '/avatar')).status, 200);
   const withAvatar = await api(owner, 'GET', recordPath + '/notes'); assert.equal(withAvatar.data.items[0].author.avatarVersion, uploaded.data.avatarVersion);
+  assert.equal((await api(other, 'DELETE', '/profile/' + owner._id + '/avatar')).status, 404);
+  assert.equal((await api(owner, 'GET', '/profile/' + owner._id + '/avatar')).status, 200);
+  const removed = await api(owner, 'DELETE', '/profile/me/avatar');
+  assert.equal(removed.status, 200); assert.equal(removed.data.avatarVersion, '');
+  assert.equal(fs.existsSync(avatarFile), false);
+  const withoutAvatar = await User.findById(owner._id).lean();
+  assert.equal(withoutAvatar.avatarFilename, undefined); assert.equal(withoutAvatar.avatarVersion, '');
+  assert.equal((await api(owner, 'GET', '/profile/' + owner._id + '/avatar')).status, 404);
+  assert.equal((await api(owner, 'GET', recordPath + '/notes')).data.items[0].author.avatarVersion, '');
+  assert.equal((await api(owner, 'DELETE', '/profile/me/avatar')).status, 200);
   const converted = await api(owner, 'POST', '/contact/to-opportunity/' + contact._id, {}); assert.equal(converted.status, 200, JSON.stringify(converted));
   const retry = await api(owner, 'POST', '/contact/to-opportunity/' + contact._id, {}); assert.equal(retry.data.opportunityId, converted.data.opportunityId);
   const opportunity = await Opportunity.findById(converted.data.opportunityId).lean(); assert.equal(opportunity.opportunityName, 'Updated Contact'); assert.equal(String(opportunity.contact), String(contact._id));

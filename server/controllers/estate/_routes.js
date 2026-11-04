@@ -88,49 +88,8 @@ router.get('/files/:id', asyncRoute(async (req, res) => {
   res.download(safePath, path.basename(file.name));
 }));
 router.get('/dashboard/sales-summary', asyncRoute(async (req, res) => {
-  if (!can(req.actor, 'Properties', 'view')) return res.status(403).json({ code: 'forbidden' });
-  const match = readScope(req, req.actor, 'Properties', { deleted: false, transactionType: 'SALE' });
-  const [summary] = await Property.aggregate([
-    { $match: match },
-    { $project: {
-      amount: { $ifNull: ['$price.amount', 0] },
-      currency: { $ifNull: ['$price.currency', 'TRY'] },
-      status: { $ifNull: ['$sale.status', 'AVAILABLE'] },
-      seller: { $ifNull: ['$sale.soldBy', '$createBy'] },
-    } },
-    { $facet: {
-      totals: [
-        { $group: { _id: { status: '$status', currency: '$currency' }, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
-        { $sort: { '_id.currency': 1 } },
-      ],
-      sellers: [
-        { $match: { status: 'SOLD' } },
-        { $group: { _id: { seller: '$seller', currency: '$currency' }, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
-        { $group: { _id: '$_id.seller', soldCount: { $sum: '$count' }, values: { $push: { currency: '$_id.currency', amount: '$amount' } } } },
-        { $lookup: { from: 'User', localField: '_id', foreignField: '_id', as: 'user' } },
-        { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-        { $project: {
-          _id: 0,
-          userId: { $toString: '$_id' },
-          name: { $let: {
-            vars: { fullName: { $trim: { input: { $concat: [{ $ifNull: ['$user.firstName', ''] }, ' ', { $ifNull: ['$user.lastName', ''] }] } } } },
-            in: { $cond: [{ $ne: ['$$fullName', ''] }, '$$fullName', { $ifNull: ['$user.username', ''] }] },
-          } },
-          soldCount: 1,
-          values: 1,
-        } },
-        { $sort: { soldCount: -1, name: 1 } },
-      ],
-    } },
-  ]);
-  const bucket = status => {
-    const rows = (summary?.totals || []).filter(item => item._id.status === status);
-    return {
-      count: rows.reduce((total, item) => total + item.count, 0),
-      values: rows.map(item => ({ currency: item._id.currency, amount: item.amount })),
-    };
-  };
-  res.json({ sold: bucket('SOLD'), available: bucket('AVAILABLE'), bySeller: summary?.sellers || [] });
+  if (!can(req.actor, 'Dashboard', 'view')) return res.status(403).json({ code: 'forbidden' });
+  res.json(await require('../../services/commissionSummary').commissionSummary(req));
 }));
 router.get('/dashboard/exchange-rate', asyncRoute(async (req, res) => {
   try {
@@ -186,6 +145,11 @@ router.get('/:module', moduleRequired, permission('view'), asyncRoute(async (req
   const q = String(req.query.q || '').slice(0, 100);
   query.$and.push(...(searchCondition(search, q).$and || []));
   for (const key of filters) if (typeof req.query[key] === 'string' && req.query[key]) query[key] = req.query[key];
+  if (req.params.module === 'Properties' && query.bedroom) {
+    const plan = require('../../services/roomPlans').normalizeRoomPlan(query.bedroom);
+    const aliases = /^\d+\+\d+$/.test(plan) ? [plan, plan.split('+').reverse().join('+')] : [plan];
+    query.bedroom = { $in: [...new Set(aliases)] };
+  }
   if (['Properties', 'Residences'].includes(req.params.module) && (req.query.priceMin || req.query.priceMax)) {
     query['price.amount'] = {};
     for (const [key, operator] of [['priceMin', '$gte'], ['priceMax', '$lte']]) if (req.query[key]) {
@@ -227,10 +191,12 @@ async function payload(req, previous = {}) {
   if (!['Properties', 'Partner Customers', 'Residences'].includes(req.params.module)) throw Object.assign(new Error('forbidden'), { status: 403, code: 'forbidden' });
   const definition = await getDefinition(req.params.module);
   // Merge nested objects for PATCH-like updates while validating the entire result.
-  const body = { ...previous, ...req.body };
-  for (const key of ['price', 'area', 'sale', 'maintenanceFee', 'customFields']) body[key] = { ...previous[key], ...req.body[key] };
+  const body = { ...req.body };
+  for (const key of ['price', 'area', 'sale', 'maintenanceFee', 'customFields']) if (req.body[key] !== undefined) body[key] = { ...previous[key], ...req.body[key] };
   let values = validateFields(definition, body, previous);
   if (req.params.module === 'Properties') {
+    values.area ||= {};
+    values.area.type ||= previous.area?.type || 'NET';
     values = normalizeProperty(values);
     values.name = values.title;
     values.status = values.sale.status === 'SOLD' ? 'Sold' : values.sale.status === 'RENTED' ? 'Rented' : 'Available';

@@ -1,3 +1,4 @@
+import WorkspaceInformation, { LegacyInformationOnly } from 'components/record/WorkspaceInformation';
 import { Portal } from '@chakra-ui/react';
 import { safeUrl } from 'services/contentSecurity';
 import { isAdmin } from 'roles';
@@ -236,7 +237,7 @@ const TaskView = (props) => {
                   <HSeparator />
                 </Box>
               </GridItem>
-              <GridItem colSpan={{ base: 2, md: 1 }}>
+              <WorkspaceInformation><GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
                   {" "}<LocalizedText text="Task Title" />{" "}
                 </Text>
@@ -519,7 +520,7 @@ const TaskView = (props) => {
                     {data?.notes ? data?.notes : " - "}
                   </Text>
                 )}
-              </GridItem>
+              </GridItem></WorkspaceInformation>
             </Grid>
           </Card>
         </GridItem>

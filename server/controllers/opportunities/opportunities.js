@@ -4,15 +4,17 @@ const User = require('../../model/schema/user')
 const mongoose = require('mongoose');
 const { syncOpportunity, unlinkOpportunity } = require('../../services/relationshipSync');
 
+const metrics = require('../../services/opportunityMetrics');
+const definition = () => require('../../services/formDefinitions').getDefinition('Opportunities');
 const add = async (req, res) => {
     try {
-        const result = new Opprtunities(req.body);
+        const result = new Opprtunities(metrics.normalizeOpportunity(req.body, {}, await definition(), true));
         await result.save();
         await syncOpportunity(result);
         res.status(200).json(result);
     } catch (err) {
         console.error('Failed to create :', err);
-        res.status(400).json({ err, error: 'Failed to create' });
+        res.status(400).json({ code: err.code || 'invalid', field: err.field });
     }
 }
 const addMany = async (req, res) => {
@@ -21,12 +23,13 @@ const addMany = async (req, res) => {
             ...item,
             account: item.account ? item.account : null
         }))
-        const insertedOppotunity = await Opprtunities.insertMany(data);
+        const configured = await definition();
+        const insertedOppotunity = await Opprtunities.insertMany(data.map(item => metrics.normalizeOpportunity(item, {}, configured, true)));
 
         res.status(200).json(insertedOppotunity);
     } catch (err) {
         console.error('Failed to create Opprtunities :', err);
-        res.status(400).json({ error: 'Failed to create Opprtunities' });
+        res.status(400).json({ code: err.code || 'invalid', field: err.field });
     }
 };
 const index = async (req, res) => {
@@ -96,6 +99,7 @@ const index = async (req, res) => {
                     accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] },
                     contactName: { $ifNull: ['$contactData.fullName', { $trim: { input: { $concat: [{ $ifNull: ['$contactData.firstName', ''] }, ' ', { $ifNull: ['$contactData.lastName', ''] }] } } }] },
                     leadName: '$leadData.leadName',
+                    leadStage: { $ifNull: ['$leadStage', { $ifNull: ['$leadData.leadState', { $ifNull: ['$leadData.leadStatus', { $ifNull: [{ $arrayElemAt: ['$contactData.convertedLeads.values.leadState', 0] }, { $ifNull: [{ $arrayElemAt: ['$contactData.convertedLeads.values.leadStatus', 0] }, '$contactData.state'] }] }] }] }] },
                     propertyNames: '$propertyData.title'
                 }
             },
@@ -112,7 +116,8 @@ const index = async (req, res) => {
             },
         ]);
 
-        res.status(200).json(result);
+        const configured = await definition();
+        res.status(200).json(result.map(record => metrics.decorateOpportunity(record, configured)));
     } catch (err) {
         console.error('Failed :', err);
         res.status(400).json({ err, error: 'Failed ' });
@@ -186,6 +191,7 @@ const view = async (req, res) => {
                     accountName2: { $ifNull: ['$accountData.companyName', '$accountData.fullName'] },
                     contactName: { $ifNull: ['$contactData.fullName', { $trim: { input: { $concat: [{ $ifNull: ['$contactData.firstName', ''] }, ' ', { $ifNull: ['$contactData.lastName', ''] }] } } }] },
                     leadName: '$leadData.leadName',
+                    leadStage: { $ifNull: ['$leadStage', { $ifNull: ['$leadData.leadState', { $ifNull: ['$leadData.leadStatus', { $ifNull: [{ $arrayElemAt: ['$contactData.convertedLeads.values.leadState', 0] }, { $ifNull: [{ $arrayElemAt: ['$contactData.convertedLeads.values.leadStatus', 0] }, '$contactData.state'] }] }] }] }] },
                     propertyNames: '$propertyData.title'
                 }
             },
@@ -202,7 +208,7 @@ const view = async (req, res) => {
             },
         ])
 
-        res.status(200).json(response[0])
+        res.status(200).json(metrics.decorateOpportunity(response[0], await definition()))
     } catch (err) {
         console.error('Failed :', err);
         res.status(400).json({ err, error: 'Failed ' });
@@ -211,17 +217,19 @@ const view = async (req, res) => {
 const edit = async (req, res) => {
     try {
 
+        const previous = await Opprtunities.findById(req.params.id).lean();
+        const payload = metrics.normalizeOpportunity(req.body, previous || {}, await definition());
         let result = await Opprtunities.findOneAndUpdate(
             { _id: req.params.id },
-            { $set: req.body },
-            { new: true }
+            { $set: payload },
+            { new: true, runValidators: true }
         );
         if (result) await syncOpportunity(result);
 
         res.status(200).json(result);
     } catch (err) {
         console.error('Failed to create Opprtunities:', err);
-        res.status(400).json({ error: 'Failed to create Opprtunities : ', err });
+        res.status(400).json({ code: err.code || 'invalid', field: err.field });
     }
 }
 const deleteData = async (req, res) => {
@@ -249,8 +257,10 @@ const changeStage = async (req, res) => {
         const definition = await require('../../services/formDefinitions').getDefinition('Opportunities');
         const stages = definition.fields.find(field => field.name === 'salesStage')?.options || [];
         if (!stages.some(stage => stage.value === req.body.salesStage)) return res.status(400).json({ code: 'invalid', field: 'salesStage' });
+        const previous = await Opprtunities.findById(req.params.id).lean();
+        const changes = metrics.normalizeOpportunity({ salesStage: req.body.salesStage }, previous || {}, definition);
         const result = await Opprtunities.findByIdAndUpdate(req.params.id, { $set: {
-            salesStage: req.body.salesStage, modifiedBy: req.actor._id, modifiedDate: new Date(),
+            ...changes, modifiedBy: req.actor._id, modifiedDate: new Date(),
         } }, { new: true, runValidators: true });
         res.status(200).json(result);
     } catch (error) { res.status(400).json({ code: 'invalid', field: 'salesStage' }); }

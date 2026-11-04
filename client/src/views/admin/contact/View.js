@@ -592,37 +592,7 @@ const View = () => {
           </Heading>
           <Box className="crm-contact-detail-sections">
             <Grid templateColumns="repeat(12, 1fr)" mb={3} gap={1}>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <Flex className="crm-contact-section-links"
-                  sx={{
-                    width: "100%",
-                    overflowX: "auto",
-                    border: "none",
-                    "& button:focus": { boxShadow: "none" },
-                    "& button": {
-                      margin: { sm: "0 3px", md: "0 5px" },
-                      padding: { sm: "5px", md: "8px" },
-                      fontSize: { sm: "12px", md: "16px" },
-                      border: "2px solid #8080803d",
-                      borderTopLeftRadius: "10px",
-                      borderTopRightRadius: "10px",
-                      borderBottom: 0,
-                    },
-                    '& button[aria-selected="true"]': {
-                      border: "2px solid brand.200",
-                      borderBottom: 0,
-                      zIndex: "0",
-                    },
-                  }}
-                >
-                  <Button variant="ghost" onClick={() => document.getElementById('contact-section-0')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><LocalizedText text="Information" /></Button>
-                  {(emailAccess?.view ||
-                    callAccess?.view ||
-                    taskAccess?.view ||
-                    meetingAccess?.view) && <Button variant="ghost" onClick={() => document.getElementById('contact-section-1')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><LocalizedText text="Communication" /></Button>}
-                  <Button variant="ghost" onClick={() => document.getElementById('contact-section-2')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><LocalizedText text="Document" /></Button>
-                </Flex>
-              </GridItem>
+
               <GridItem
                 colSpan={{ base: 12, md: 6 }}
                 mt={{ sm: "3px", md: "5px" }}
@@ -693,7 +663,6 @@ const View = () => {
             </Grid>
             <Box className="crm-contact-section-list">
               <Box className="crm-contact-section" id="contact-section-0" pt={4} p={0}>
-                <ConvertedLeadDetails records={data?.convertedLeads} />
                 <CustomView
                   data={contactData?.[0]}
                   fieldData={data}
@@ -702,6 +671,7 @@ const View = () => {
                   fetchData={fetchData}
                   id="reports"
                 />
+                <ConvertedLeadDetails records={data?.convertedLeads} />
                 <GridItem colSpan={{ base: 12 }} mt={4}>
                   <Card>
                     <Grid templateColumns={{ base: "1fr" }} gap={4}>

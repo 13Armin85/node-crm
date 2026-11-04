@@ -1,3 +1,4 @@
+import WorkspaceInformation, { LegacyInformationOnly } from 'components/record/WorkspaceInformation';
 import { LocalizedText } from 'i18n/runtime';
 import {
   Button,
@@ -99,7 +100,7 @@ const View = () => {
         <HSeparator />
         <div>
           <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={2}>
-            <GridItem colSpan={{ base: 12, md: 6 }}>
+            <WorkspaceInformation><GridItem colSpan={{ base: 12, md: 6 }}>
               <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
                 {" "}<LocalizedText text="Template Name" />{" "}
               </Text>
@@ -110,7 +111,7 @@ const View = () => {
                 {" "}<LocalizedText text="Description" />{" "}
               </Text>
               <Text>{description ? description : " - "}</Text>
-            </GridItem>
+            </GridItem></WorkspaceInformation>
             <GridItem colSpan={{ base: 12, md: 12 }} mt={2}>
               <EmailEditor ref={emailEditorRef} />
             </GridItem>

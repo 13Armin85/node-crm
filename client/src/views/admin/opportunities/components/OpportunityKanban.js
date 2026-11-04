@@ -1,4 +1,6 @@
-import { Box, Button, Flex, Select, Text } from '@chakra-ui/react';
+import { Box, Button, Flex, Select, Text, Link } from '@chakra-ui/react';
+import { Link as RouterLink } from 'react-router-dom';
+import { stageProbability } from 'utils/opportunityMetrics';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import { createPortal } from 'react-dom';
 import { FiArrowUpRight, FiBriefcase, FiCalendar, FiCheckCircle, FiColumns, FiGrid, FiLayers, FiUser, FiXCircle } from 'react-icons/fi';
@@ -29,7 +31,7 @@ const closeDate = value => {
     ? new Intl.DateTimeFormat(locale(), { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(date) : null;
 };
 
-export default function OpportunityKanban({ records = [], stages = [], canMove, savingId, onStageChange, onView }) {
+export default function OpportunityKanban({ records = [], stages = [], leadStages = [], canMove, savingId, onStageChange, onView }) {
   const card = (record, tone, dragging = false) => {
     const amount = formatAmount(record);
     const date = closeDate(record.expectedCloseDate);
@@ -44,12 +46,18 @@ export default function OpportunityKanban({ records = [], stages = [], canMove, 
         <span>{record.opportunityName || tr('Untitled')}</span><FiArrowUpRight aria-hidden="true" />
       </Button>
       {(record.contactName || record.accountName2) && <Box className="crm-opportunity-card__details">
-        {record.contactName && <Text><FiUser aria-hidden="true" /><span>{record.contactName}</span></Text>}
+        {record.contactName && <Text><FiUser aria-hidden="true" /><Link as={RouterLink} to={'/contactView/'+record.contact} onClick={event=>event.stopPropagation()}>{record.contactName}</Link></Text>}
         {record.accountName2 && record.accountName2 !== record.contactName && <Text><FiBriefcase aria-hidden="true" /><span>{record.accountName2}</span></Text>}
       </Box>}
       {amount !== null && <Box className="crm-opportunity-card__amount">
-        <Text>{tr('pipeline.dealValue')}</Text><Text data-no-translate dir="auto">{amount}</Text>
+        <Text>{tr('finance.announcedPrice')}</Text><Text data-no-translate dir="auto">{amount}</Text>
       </Box>}
+      <Box className="crm-opportunity-card__details">
+        <Text>{tr('finance.customerOffer')}: <span data-no-translate>{formatAmount({...record,opportunityAmount:record.amount,amount:null})||'—'}</span></Text>
+        <Text>{tr('finance.commission')}: <span data-no-translate>{formatAmount({...record,opportunityAmount:record.commission,amount:null})||'—'}</span></Text>
+        <Text data-opportunity-lead-stage>{tr('finance.leadStage')}: {tr(leadStages.find(stage=>stage.value===record.leadStage)?.label || record.leadStage || 'finance.unknownStage')}</Text>
+        <Text>{tr('finance.successProbability')}: <strong data-no-translate>{stageProbability(stageValue(record),stages)}%</strong></Text>
+      </Box>
       {(date || assigned) && <Flex className="crm-opportunity-card__meta" wrap="wrap">
         {assigned && <Text title={assigned}><FiUser aria-hidden="true" /><span>{assigned}</span></Text>}
         {date && <Text title={tr('Expected Close Date')}><FiCalendar aria-hidden="true" /><span>{date}</span></Text>}

@@ -4,6 +4,7 @@ import { getApi } from 'services/api';
 import { formValue } from './formValue';
 import { isLeadRelationVisible, normalizeLeadRelations, hasLeadSelection, LEAD_SELECTION_ERROR, prepareLeadDefinition } from './leadRelations';
 import { FORM_DEFINITION_CHANGED, FORM_DEFINITION_STORAGE_KEY } from 'services/formDefinitionEvents';
+import { isRoomPlanField, roomPlanMatches } from './roomPlans';
 
 export function useFormDefinition(moduleName, enabled = true) {
   const [definition, setDefinition] = useState(null);
@@ -54,6 +55,8 @@ export function normalizeFormValues(definition, values) {
     let next = value;
     if (field.relation) next = Array.isArray(value)
       ? value.map(formValue).filter(Boolean) : formValue(value) || null;
+    else if (field.type === 'multiselect') next = (Array.isArray(value) ? value : value ? [value] : []).map(item => isRoomPlanField(field) ? field.options?.find(option => roomPlanMatches(option.value, item))?.value || item : item);
+    else if (isRoomPlanField(field)) next = field.options?.find(option => roomPlanMatches(option.value, value))?.value || value;
     else if (['number', 'currency'].includes(field.type) && value !== '' && value != null) next = Number(value);
     else if (field.type === 'phone' && typeof value === 'number') next = String(value);
     normalized = setIn(normalized, path, next);
@@ -83,7 +86,7 @@ export function validateFormValues(definition, values) {
     else if (field.type === 'email') invalid = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     else if (field.type === 'phone') invalid = !/^[+\d\s().-]{3,30}$/.test(value);
     else if (['date', 'datetime'].includes(field.type)) invalid = !Number.isFinite(Date.parse(value));
-    else if (['select', 'radio', 'multiselect'].includes(field.type)) invalid = (Array.isArray(value) ? value : [value]).some(item => !field.options?.some(option => option.value === item));
+    else if (['select', 'radio', 'multiselect'].includes(field.type)) invalid = (Array.isArray(value) ? value : [value]).some(item => !field.options?.some(option => isRoomPlanField(field) ? roomPlanMatches(option.value, item) : option.value === item));
     if (invalid) errors = setIn(errors, path, 'invalid');
   }
   return errors;

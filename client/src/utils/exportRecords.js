@@ -33,6 +33,7 @@ export const entityExportColumns = (definition, language, t) => [
   ...((definition?.fields || []).filter(field => field.enabled !== false && field.name !== "createdDate").map(field => ({
     Header: typeof field.label === 'object' ? field.label[language] || field.label.en || field.name : t(field.label || field.name),
     accessor: field.kind === 'CUSTOM_FIELD' ? 'customFields.' + field.name : field.name,
+    field,
     format: value => {
       if (typeof value === 'boolean') return t(value ? 'Yes' : 'No');
       if (field.options?.length) {

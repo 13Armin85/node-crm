@@ -25,7 +25,7 @@ exports.cleanup = async () => {
   await fs.promises.unlink(filename).catch(() => {});
 };
 exports.check = async ({ page, origin, artifacts, measurements, contacts, leads, property, user }) => {
-  const go = async route => { console.log('Record browser check:', route); await page.goto(origin + route, { waitUntil: 'networkidle2' }); };
+  const go = async route => { console.log('Record browser check:', route); await page.goto(origin + route, { waitUntil: 'networkidle2' }); if (process.env.CRM_RECORD_CSS_PREVIEW) await page.addStyleTag({ path: path.resolve(__dirname, '../client/src/assets/css/RecordWorkspace.css') }); };
   const fill = async (selector, value) => {
     await page.focus(selector); await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
     await page.keyboard.press('Backspace'); await page.type(selector, value);
@@ -41,11 +41,11 @@ exports.check = async ({ page, origin, artifacts, measurements, contacts, leads,
     // Check the settled layout after that transition rather than its intermediate width.
     await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth + 2, { timeout: 3000 }).catch(() => {});
     const size = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth }));
-    if (size.scroll > size.width + 1) console.log('Overflow elements', await page.$$eval('.crm-content *', elements => elements.filter(el => el.getBoundingClientRect().right > innerWidth + 1).slice(-25).map(el => ({ tag: el.tagName, cls: el.className, text: el.textContent.slice(0,70), width: el.getBoundingClientRect().width, right: el.getBoundingClientRect().right, minWidth: getComputedStyle(el).minWidth, display: getComputedStyle(el).display, columns: getComputedStyle(el).gridTemplateColumns }))));
+    if (size.scroll > size.width + 2) console.log('Overflow elements', await page.$$eval('.crm-content *', elements => elements.filter(el => el.getBoundingClientRect().right > innerWidth + 2).slice(-25).map(el => ({ tag: el.tagName, cls: el.className, text: el.textContent.slice(0,70), width: el.getBoundingClientRect().width, right: el.getBoundingClientRect().right, minWidth: getComputedStyle(el).minWidth, display: getComputedStyle(el).display, columns: getComputedStyle(el).gridTemplateColumns }))));
     assert(size.scroll <= size.width + 2, label + ' overflow ' + JSON.stringify(size)); measurements.push({ label, ...size });
   };
   if (process.env.CRM_RECORD_LAYOUT_ONLY) {
-    for (const route of ['/metting/' + fixture.meeting._id, '/phone-call/' + fixture.call._id, '/Email/' + fixture.email._id, '/userView/' + user._id]) {
+    for (const route of ['/metting/' + fixture.meeting._id, '/phone-call/' + fixture.call._id, '/Email/' + fixture.email._id, '/userView/' + user._id, '/invoicesView/' + fixture.invoice._id, '/email-template/' + fixture.template._id, '/follow-up-records/' + fixture.custom._id]) {
       await page.setViewport({ width: 320, height: 740 }); await go(route); await noOverflow(route);
     }
     await go('/metting/' + fixture.meeting._id); await page.waitForSelector('.crm-detail-legacy #reports');

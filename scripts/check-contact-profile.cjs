@@ -1,0 +1,45 @@
+const assert = require('node:assert/strict'), path = require('node:path'), fs = require('node:fs');
+let actorId;
+exports.seed = async ({ actor, contacts }) => {
+  actorId=actor._id;
+  await require('../server/model/schema/contact').Contact.updateOne({ _id: contacts[0]._id }, { $set: { state:'OBSOLETE_STAGE', communicationTool:'OBSOLETE_TOOL', convertedLeads: [{ leadId: 'original', values: { leadName: 'Original converted customer', leadMobile: '+905552222222', leadMessage: 'Original request' }, fields: [{ name: 'leadName', label: 'Lead Name' }, { name: 'leadMobile', label: 'Lead Mobile' }] }] } });
+};
+exports.cleanup = async () => {
+  const user=await require('../server/model/schema/user').findById(actorId).select('avatarFilename').lean();
+  if(!user?.avatarFilename)return;
+  const root=path.resolve(__dirname,'../server/uploads/profile'), file=path.resolve(root,user.avatarFilename);
+  assert.equal(path.dirname(file),root);await fs.promises.unlink(file).catch(()=>{});
+};
+exports.check = async ({ page, origin, artifacts, contacts, user }) => {
+  const go = async route => { console.log('Contact/profile browser:', route); await page.goto(origin + route, { waitUntil:'networkidle2' }); };
+  const fill = async (selector,value) => { await page.focus(selector); await page.keyboard.down('Control');await page.keyboard.press('KeyA');await page.keyboard.up('Control');await page.keyboard.press('Backspace');await page.type(selector,value); };
+  const click = async (selector,label) => page.$$eval(selector,(els,label)=>els.find(el=>el.textContent.trim()===label).click(),label);
+  for (const [language,width] of [['en',1440],['fa',375],['tr',320]]) {
+    await go('/contacts'); await page.select('.crm-language-select select',language); await page.setViewport({width,height:900});
+    await go('/contactView/'+contacts[0]._id); await page.waitForSelector('.crm-record-field--editable');
+    const order = await page.evaluate(() => ({ firstEditable:document.querySelector('.crm-record-field').classList.contains('crm-record-field--editable'), info:document.querySelector('.crm-record-information').getBoundingClientRect().top, history:document.querySelector('.crm-converted-details').getBoundingClientRect().top }));
+    assert(order.firstEditable && order.history > order.info, 'Current editable contact fields must appear before the original lead history');
+    await (await page.$('.crm-record-field dd')).click({count:2}); await page.waitForSelector('.crm-field-editor input[name="fullName"]');
+    const value='Updated converted customer '+language; await fill('.crm-field-editor input[name="fullName"]',value);
+    const saved=page.waitForResponse(r=>r.url().includes('/api/form/edit/')&&r.request().method()==='PUT');
+    await page.click('.crm-field-editor-actions button'); assert.equal((await saved).status(),200);
+    await go('/contactView/'+contacts[0]._id); await page.waitForFunction(value=>document.querySelector('[data-record-field="fullName"] dd')?.textContent===value,{},value);
+    assert(await page.$eval('.crm-converted-details',el=>el.textContent.includes('Original converted customer')),'The original source snapshot must remain intact');
+    await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+2,{timeout:3000});
+    await page.screenshot({path:path.join(artifacts,'converted-contact-'+language+'.png')});
+  }
+  await page.setViewport({width:1440,height:950}); await go('/profile'); await page.select('.crm-language-select select','en'); await page.waitForSelector('#profile-photo');
+  const image = path.join(artifacts,'avatar-fixture.png');fs.writeFileSync(image,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=','base64'));
+  const uploaded=page.waitForResponse(r=>r.url().endsWith('/api/profile/me/avatar')&&r.request().method()==='POST');
+  await (await page.$('#profile-photo')).uploadFile(image); assert.equal((await uploaded).status(),200);
+  await page.waitForSelector('.crm-profile-summary img'); await page.waitForSelector('#profile-remove-photo');
+  const removed=page.waitForResponse(r=>r.url().endsWith('/api/profile/me/avatar')&&r.request().method()==='DELETE');
+  await page.click('#profile-remove-photo');assert.equal((await removed).status(),200);
+  await page.waitForFunction(()=>!document.querySelector('.crm-profile-summary img')&&!document.querySelector('#profile-remove-photo'));
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('user')).avatarVersion),'');
+  assert.equal(await page.$('header img[src^="blob:"]'),null,'Navbar must stop displaying the deleted photo');
+  await go('/profile'); await page.waitForSelector('#profile-photo'); assert.equal(await page.$('.crm-profile-summary img'),null);
+  const author=await require('../server/model/schema/user').findById(user._id).lean();assert.equal(author.avatarFilename,undefined);
+  await page.screenshot({path:path.join(artifacts,'profile-photo-removed.png')});
+  console.log('PASS: converted contact first-field double-click saves in three languages and mobile sizes; photo deletion clears profile, session and persisted file metadata.');
+};

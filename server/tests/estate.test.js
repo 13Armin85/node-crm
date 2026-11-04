@@ -6,6 +6,19 @@ const { mapProperty } = require('../scripts/migrate-estate');
 const { can } = require('../middelwares/permissions');
 const id = '64d33173fd7ff3fa0924a109';
 
+test('partial edits retain old choices while validating changes and newly visible requirements', () => {
+  const definition = { fields: [
+    { name: 'fullName', type: 'text', required: true },
+    { name: 'state', type: 'select', options: [{ value: 'ACTIVE' }] },
+    { name: 'reason', type: 'text', required: true, condition: { state: 'ACTIVE' } },
+  ] };
+  const original = { fullName: 'Original', state: 'REMOVED_OPTION', customFields: { retained: 'Original value' } };
+  assert.deepEqual(validateFields(definition, { fullName: 'Changed' }, original, { partial: true }), { fullName: 'Changed', customFields: original.customFields });
+  assert.throws(() => validateFields(definition, { state: 'INVALID' }, original, { partial: true }), error => error.field === 'state');
+  assert.throws(() => validateFields(definition, { state: 'ACTIVE' }, original, { partial: true }), error => error.field === 'reason' && error.code === 'required');
+  assert.equal(validateFields(definition, { state: 'ACTIVE', reason: 'Reason' }, original, { partial: true }).reason, 'Reason');
+});
+
 test('lead and partner customer statuses share the customer follow-up stages', () => {
   const leadOptions = defaults.Leads.find(field => field.name === 'leadStatus').options;
   const partnerOptions = defaults['Partner Customers'].find(field => field.name === 'status').options;

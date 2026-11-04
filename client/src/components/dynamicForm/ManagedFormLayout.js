@@ -1,6 +1,6 @@
 import FormFeedback from 'components/dynamicForm/FormFeedback';
 import React from 'react';
-import { Alert, AlertIcon, Box, FormControl, FormErrorMessage, FormLabel, GridItem, Select, Text } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, FormControl, FormErrorMessage, FormLabel, Grid, GridItem, Select, Text } from '@chakra-ui/react';
 import { useFormDefinition, useRequiredFields } from 'utils/managedForm';
 import { getIn } from 'formik';
 import { translate, useLanguage } from 'i18n';
@@ -48,7 +48,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     const isContainer = node.type === GridItem || node.type === FormControl || /GridItem|FormControl/.test(type);
     if ((definition?.removedFields?.includes(name) || (field && !isVisible(field, formik?.values || {}))) && (isContainer || typeof node.props.name === 'string')) return null;
     if (isContainer && field && !field.external && field.storageType && field.type !== field.storageType) {
-      return <GridItem key={node.key || name} colSpan={node.props.colSpan} order={field.order}><DynamicFormRenderer definition={{ ...definition, fields: [field] }} formik={formik} /></GridItem>;
+      return <GridItem key={node.key || name} className="crm-managed-replacement" data-field-path={name} colSpan={node.props.colSpan} order={field.order}><DynamicFormRenderer definition={{ ...definition, fields: [field] }} formik={formik} /></GridItem>;
     }
     const activeField = isContainer ? field : currentField;
     if (field?.relation && !field.external && select) {
@@ -61,13 +61,17 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     // The configured field owns one error message below its widget.
     if (activeField && (node.type === FormErrorMessage || ((node.type === Text || type === 'Text') && ['red', 'red.500'].includes(node.props.color)))) return null;
     const patch = {};
+    if (field?.readOnly && typeof node.props.name === 'string') patch.isReadOnly = true;
+    // A shared grid lets custom, system and relation fields obey the same order,
+    // even when the original form placed them in separate visual groups.
+    if (node.type === Grid || (isContainer && !field && names.some(name => fields.some(field => field.name === name)))) patch.display = 'contents';
     if (field && typeof node.props.name === 'string' && field.placeholder) patch.placeholder = localized(field.placeholder, language);
     if (/^(Select|Input|Textarea|select|input|textarea)$/.test(type) && node.props.value != null) {
       patch.value = typeof node.props.value === 'object'
         ? (select ? formValue(node.props.value) : formLabel(node.props.value))
         : formValue(node.props.value);
     }
-    if (isContainer && field) patch.order = field.order;
+    if (isContainer && field) { patch.order = field.order; patch['data-field-path'] = field.name; }
     if (node.props.children) patch.children = React.Children.map(node.props.children, child => configure(child, activeField));
     if (field && /^(Select|select)$/.test(type) && field.options && !field.relation) {
       patch.children = [<option key="empty" value="">{t('Select')}</option>, ...field.options.map(option => <option key={option.value} value={option.value}>{localized(option.label, language)}</option>)];
@@ -82,7 +86,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     }
     return React.cloneElement(node, patch);
   };
-  return <><FormFeedback formik={formik} />{(failed || definitionError) && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
+  return <Grid className="crm-managed-layout" templateColumns="repeat(12, minmax(0, 1fr))" gap={3}><FormFeedback formik={formik} />{(failed || definitionError) && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
     {includeCustom && definition && <Box className="crm-managed-fields" mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
-  </>;
+  </Grid>;
 }

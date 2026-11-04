@@ -6,6 +6,7 @@ export default function ConvertedLeadDetails({ records, title }) {
   if (!records?.length) return null;
   return <Box my={4} className="crm-detail-surface crm-converted-details">
     <Text fontWeight="bold" mb={3}>{title || tr('leadConversion.original')}</Text>
+    <Text fontSize="sm" color="var(--crm-muted)" mb={3}>{tr('details.sourceHistoryHint')}</Text>
     {records.map(record => {
       const fields = record.fields || [];
       const { customFields = {}, ...values } = record.values || {};

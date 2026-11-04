@@ -56,6 +56,12 @@ async function main() {
       assignUser: actor._id, createBy: actor._id, deleted: false, createdDate: new Date() }));
     let longTask;
     if (process.env.CRM_CHECK_RECORDS) await require('./check-record-workspace.cjs').seed({ actor, contacts, leads, property, User });
+    if (process.env.CRM_CHECK_INLINE_DETAILS) await require('./check-inline-details.cjs').seed({ actor, contacts, leads, property, User });
+    if (process.env.CRM_CHECK_CONTACT_PROFILE) await require('./check-contact-profile.cjs').seed({ actor, contacts });
+    if (process.env.CRM_CHECK_COMMISSION_TABLES) await require('./check-commission-tables.cjs').seed({ actor, contacts, leads, property, User });
+    if (process.env.CRM_CHECK_DASHBOARD_CURRENCY) await require('./check-dashboard-currency.cjs').seed({ actor, contacts, leads, property, User });
+    if (process.env.CRM_CHECK_COLUMN_ORDER) await require('./check-column-order.cjs').seed({ actor, contacts, leads, property, User });
+    if (process.env.CRM_CHECK_TABLE_SPACING) await require('./check-table-spacing.cjs').seed({ actor, contacts, leads, property, User });
     if (process.env.CRM_CHECK_LEAD_SEARCH) await require('./check-lead-search-labels.cjs').seed({ actor, leads, CustomField, Property, User });
     if (process.env.CRM_CHECK_DASHBOARD_TASKS || process.env.CRM_CHECK_DIALOG_CONTROLS) {
       const Task = require('../server/model/schema/task');
@@ -92,7 +98,7 @@ async function main() {
     });
     await page.setRequestInterception(true);
     page.on('request', req => req.url().includes('/dashboard/exchange-rate')
-      ? req.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ rate: 34, source: 'Test fixture' }) }).catch(() => {})
+      ? req.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ rate: 34, tryPerUsd: 34, tryPerEur: 37, source: 'Test fixture' }) }).catch(() => {})
       : req.continue().catch(() => {}));
     await page.evaluateOnNewDocument((user, token) => {
       localStorage.setItem('user', JSON.stringify(user)); localStorage.setItem('token', token);
@@ -308,6 +314,12 @@ async function main() {
     if (process.env.CRM_CHECK_CATALOGS) await require('./check-property-catalogs.cjs')({ page, origin, artifacts, measurements, contacts, leads });
     if (process.env.CRM_CHECK_LEAD_SEARCH) await require('./check-lead-search-labels.cjs').check({ page, origin, artifacts, measurements, leads });
     if (process.env.CRM_CHECK_RECORDS) await require('./check-record-workspace.cjs').check({ page, origin, artifacts, measurements, contacts, leads, property, user });
+    if (process.env.CRM_CHECK_INLINE_DETAILS) await require('./check-inline-details.cjs').check({ page, origin, artifacts, measurements, contacts, leads, property, user });
+    if (process.env.CRM_CHECK_CONTACT_PROFILE) await require('./check-contact-profile.cjs').check({ page, origin, artifacts, contacts, user });
+    if (process.env.CRM_CHECK_COMMISSION_TABLES) await require('./check-commission-tables.cjs').check({ page, origin, artifacts, contacts, user });
+    if (process.env.CRM_CHECK_DASHBOARD_CURRENCY) await require('./check-dashboard-currency.cjs').check({ page, origin, artifacts });
+    if (process.env.CRM_CHECK_COLUMN_ORDER) await require('./check-column-order.cjs').check({ page, origin, artifacts, user });
+    if (process.env.CRM_CHECK_TABLE_SPACING) await require('./check-table-spacing.cjs').check({ page, origin, artifacts });
     await page.evaluate(() => { localStorage.setItem('chakra-ui-color-mode', 'dark'); localStorage.setItem('crm-language', 'en'); });
     await page.setViewport({ width: 1440, height: 960 });
     await page.goto(origin + '/documents', { waitUntil: 'networkidle2' });
@@ -326,6 +338,7 @@ async function main() {
     if (browser) await browser.close();
     if (server) await new Promise(resolve => server.close(resolve));
     if (process.env.CRM_CHECK_RECORDS) await require('./check-record-workspace.cjs').cleanup();
+    if (process.env.CRM_CHECK_CONTACT_PROFILE) await require('./check-contact-profile.cjs').cleanup();
     assert.equal(mongoose.connection.name, dbName); assert(dbName.startsWith('crm_compact_browser_test_'));
     await mongoose.connection.dropDatabase(); await mongoose.disconnect();
   }

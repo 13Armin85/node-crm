@@ -108,6 +108,7 @@ router.post('/:module', auth, loadUser, async (req, res, next) => {
             if (await Model.exists({ invoiceNumber: values.invoiceNumber, deleted: { $ne: true } })) throw Object.assign(new Error('duplicate'), { code: 'duplicate', field: 'invoiceNumber' });
           }
         }
+        if (name === 'Opportunities') values = require('../services/opportunityMetrics').normalizeOpportunity(values, {}, definition, true);
         const fingerprint = crypto.createHash('sha256').update(JSON.stringify(values)).digest('hex');
         if (seen.has(fingerprint)) throw Object.assign(new Error('duplicate'), { code: 'duplicate' });
         seen.add(fingerprint);

@@ -44,7 +44,10 @@ module.exports = moduleName => async (req, res, next) => {
       || moduleName === 'Meetings'
       || (moduleName !== 'Documents' && (definition._id
         || !(defaults[moduleName] || []).some(system => system.name === field.name && system.required))));
-    validateRequiredFields({ ...definition, fields: configuredFields }, req.body, previous);
+    const { get, visible } = require('../services/estateValidation');
+    validateRequiredFields({ ...definition, fields: configuredFields.filter(field => action === 'create'
+      || get(req.body, field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name) !== undefined
+      || (!visible(field, previous) && visible(field, { ...previous, ...req.body }))) }, req.body, previous);
     if (moduleName === 'Invoices') await require('../services/invoiceProperty').validateInvoiceProperty(req, req.body, previous);
     const values = validateFields({ ...definition, fields: definition.fields.filter(f => f.kind === 'CUSTOM_FIELD') }, req.body, previous);
     for (const field of definition.fields.filter(f => f.kind === 'CUSTOM_FIELD' && f.type === 'file')) for (const file of values.customFields[field.name] || []) {

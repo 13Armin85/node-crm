@@ -34,7 +34,7 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     const FormDefinition = require('../model/schema/formDefinition');
     for (const [key, value] of Object.entries(residencePayload)) {
       if (key === 'completionDate') assert.equal(residence.data[key].slice(0, 10), value);
-      else assert.deepEqual(residence.data[key], value, key);
+      else assert.deepEqual(residence.data[key], key === 'unitTypes' ? ['1+1', '3+1'] : value, key);
     }
     const changedFee = await api('PUT', `/estate/Residences/${residence.data._id}`, { maintenanceFee: { amount: 75 } });
     assert.deepEqual(changedFee.data.maintenanceFee, { amount: 75, currency: 'USD' });
@@ -48,18 +48,18 @@ test('authenticated estate CRUD, role permissions, definitions, relations and fi
     assert.equal(expandedResidence.data.fields.length, defaults.Residences.length);
     assert.equal(expandedResidence.data.fields.find(field => field.name === 'unitCount').integer, true);
     await FormDefinition.deleteOne({ moduleName: 'Residences' });
-    // Older saved definitions must pick up new statuses and discard removed defaults.
+    // Saved definitions retain the administrator's explicit choices and defaults.
     await FormDefinition.create({ moduleName: 'Leads', fields: defaults.Leads.map(field => field.name === 'leadStatus'
       ? { ...field, defaultValue: 'rented', options: [...field.options, { value: 'sold', label: { en: 'Sold', fa: 'Sold', tr: 'Sold' } }, { value: 'rented', label: { en: 'Rented', fa: 'Rented', tr: 'Rented' } }] } : field) });
     const leadDefinition = await api('GET', '/estate/definitions/Leads');
     const leadStatus = leadDefinition.data.fields.find(field => field.name === 'leadStatus');
-    assert.equal(leadStatus.defaultValue, '');
-    assert.deepEqual(leadStatus.options, defaults.Leads.find(field => field.name === 'leadStatus').options);
+    assert.equal(leadStatus.defaultValue, 'rented');
+    assert(leadStatus.options.some(option => option.value === 'rented'));
     await FormDefinition.create({ moduleName: 'Partner Customers', fields: defaults['Partner Customers'].map(field => field.name === 'status'
       ? { ...field, options: field.options.filter(option => ['ACTIVE', 'INACTIVE'].includes(option.value)) } : field) });
     const partnerDefinition = await api('GET', '/estate/definitions/Partner%20Customers');
     const partnerStatuses = partnerDefinition.data.fields.find(field => field.name === 'status').options;
-    assert.deepEqual(partnerStatuses, defaults['Partner Customers'].find(field => field.name === 'status').options);
+    assert.deepEqual(partnerStatuses.map(option => option.value), ['ACTIVE', 'INACTIVE']);
     for (const option of partnerStatuses) {
       const changed = await api('PUT', `/estate/Partner%20Customers/${partner.data._id}`, { status: option.value });
       assert.equal(changed.status, 200, JSON.stringify(changed));

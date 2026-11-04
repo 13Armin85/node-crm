@@ -1,5 +1,6 @@
 const { categories, ages, bedrooms, floors, fieldTypes } = require('./estateCatalog');
 const { safeName } = require('./formDefinitions');
+const { normalizeRoomPlan, isRoomPlanField, roomPlanMatches } = require('./roomPlans');
 class InputError extends Error {
   constructor(code, field) { super(code); this.code = code; this.field = field; this.status = 400; }
 }
@@ -19,13 +20,13 @@ function validateValue(field, value) {
   } else if (field.type === 'checkbox') {
     if (typeof value !== 'boolean' || (field.required && !value)) fail(field.name);
   } else if (field.type === 'multiselect') {
-    if (!Array.isArray(value) || value.some(v => !field.options?.some(o => o.value === v))) fail(field.name);
+    if (!Array.isArray(value) || value.some(v => !field.options?.some(o => isRoomPlanField(field) ? roomPlanMatches(o.value, v) : o.value === v))) fail(field.name);
   } else if (field.type === 'file') {
     if (!Array.isArray(value) || value.some(v => !v || !objectId(v.id || v._id))) fail(field.name);
   } else {
     if (typeof value !== 'string' || value.length > 20000) fail(field.name);
     if (field.required && !value.trim()) fail(field.name, 'required');
-    if (['select', 'radio'].includes(field.type) && !field.relation) oneOf(value, field.options?.map(o => o.value) || [], field.name);
+    if (['select', 'radio'].includes(field.type) && !field.relation && !(isRoomPlanField(field) && field.options?.some(option => roomPlanMatches(option.value, value)))) oneOf(value, field.options?.map(o => o.value) || [], field.name);
     if (field.relation && !objectId(value)) fail(field.name);
     if (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) fail(field.name);
     if (field.type === 'phone' && !/^[+\d\s().-]{3,30}$/.test(value)) fail(field.name);
@@ -42,20 +43,30 @@ function validateRequiredFields(definition, body, existing = {}) {
     if (empty(value) || (typeof value === 'string' && !value.trim()) || (field.type === 'checkbox' && value !== true)) fail(path, 'required');
   }
 }
-function validateFields(definition, body, existing = {}) {
+function validateFields(definition, body, existing = {}, { partial = false } = {}) {
   const output = { customFields: { ...(existing.customFields || {}) } };
   const values = { ...existing, ...body };
   for (const field of definition.fields) {
     if (!safeName(field.name)) fail(field.name);
     const path = field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
     let value = get(body, path);
-    if (value === undefined) value = get(existing, path);
+    // A single-field edit must not revalidate obsolete choices on other fields.
+    // A controlling change still validates any fields that become visible.
+    if (partial && value === undefined && (visible(field, existing) || !visible(field, values))) continue;
+    if (value === undefined) {
+      value = get(existing, path);
+      // Partial edits reuse persisted BSON values; validate their API representation.
+      if (field.relation && value != null) value = Array.isArray(value) ? value.map(String) : String(value);
+      else if (['date', 'datetime'].includes(field.type) && value instanceof Date) value = value.toISOString();
+      else if (field.type === 'multiselect' && typeof value === 'string') value = value ? [value] : [];
+    }
     if (value === undefined) value = field.defaultValue;
     if (!visible(field, values)) continue;
     try { validateValue(field, value); } catch (error) {
       if (error instanceof InputError) error.field = path;
       throw error;
     }
+    if (isRoomPlanField(field) && value != null && value !== '') value = Array.isArray(value) ? [...new Set(value.map(normalizeRoomPlan))] : normalizeRoomPlan(value);
     if (value !== undefined) set(output, path, value);
   }
   return output;

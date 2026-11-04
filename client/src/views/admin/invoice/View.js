@@ -1,3 +1,4 @@
+import WorkspaceInformation, { LegacyInformationOnly } from 'components/record/WorkspaceInformation';
 import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -388,7 +389,7 @@ const View = (props) => {
                 </Box>
               </GridItem>
 
-              <GridItem colSpan={{ base: 2, md: 1 }}>
+              <WorkspaceInformation><GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold">{tr('Property')}</Text>
                 <Text data-no-translate>{data?.propertyName || data?.property || '-'}</Text>
               </GridItem>
@@ -1216,7 +1217,7 @@ const View = (props) => {
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Grand Total" /></Text>
                 <CurrencyAmount amount={data?.grandTotal} currency={data?.currency} />
-              </GridItem>
+              </GridItem></WorkspaceInformation>
             </Grid>
           </Card>
         </GridItem>

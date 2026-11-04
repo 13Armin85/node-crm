@@ -5,6 +5,7 @@ const { categories, ages, bedrooms, floors } = require('./estateCatalog');
 const { partnerCustomerStatuses } = require('./customerStatuses');
 const { constructionStatuses, amenities } = require('./residenceCatalog');
 const labels = {
+  Open: ['Open', 'باز', 'Açık'], Parking: ['Parking', 'توقف موقت', 'Bekletildi'], Waiting: ['Waiting', 'در انتظار', 'Beklemede'], Booked: ['Booked', 'رزروشده', 'Rezerve'], Sealed: ['Sealed', 'نهایی‌شده', 'Kesinleşti'],
   ...constructionStatuses, ...amenities,
   RESIDENTIAL: ['Residential', 'مسکونی', 'Konut'], COMMERCIAL: ['Commercial', 'تجاری', 'Ticari'],
   APARTMENT: ['Apartment', 'آپارتمان', 'Daire'], RESIDENCE: ['Residence', 'رزیدانس', 'Rezidans'], VILLA: ['Villa', 'ویلا', 'Villa'],
@@ -137,13 +138,13 @@ async function getDefinition(moduleName) {
     // A saved definition owns its custom fields. Re-importing legacy metadata
     // here resurrected fields that administrators deliberately removed.
     const additions = missing;
-    return catalogFields(optionalLeadFields({
+    return catalogFields(opportunityFields(optionalLeadFields({
       ...existing,
       fields: [...mergedExisting, ...additions.map((item, index) => ({
         ...item, locked: false, storageType: item.type,
         order: mergedExisting.length + index,
       }))],
-    }));
+    })));
   }
   if (!defaults[moduleName] && !legacyModules.includes(moduleName) && !legacy) return null;
   let fields;
@@ -164,7 +165,14 @@ async function getDefinition(moduleName) {
       return field(name, { String: 'text', Number: 'number', Boolean: 'checkbox', Date: 'datetime' }[path.instance], label, label, label, { required: Boolean(path.isRequired) });
     });
   }
-  return catalogFields(optionalLeadFields({ moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, locked: false, storageType: f.type, order })) }));
+  return catalogFields(opportunityFields(optionalLeadFields({ moduleName, revision: 0, fields: fields.map((f, order) => ({ ...f, locked: false, storageType: f.type, order })) })));
+}
+function opportunityFields(definition) {
+  if (definition.moduleName !== 'Opportunities') return definition;
+  const mandatory = ['opportunityAmount', 'amount', 'commission'];
+  const fields = definition.fields.map(item => mandatory.includes(item.name) ? { ...item, label: defaults.Opportunities.find(field => field.name === item.name).label, type: 'currency', min: 0, required: true, enabled: true } : item.name === 'probability' ? { ...item, readOnly: true } : item);
+  for (const name of mandatory) if (!fields.some(field => field.name === name)) fields.push({ ...defaults.Opportunities.find(field => field.name === name), order: fields.length });
+  return { ...definition, fields };
 }
 function catalogFields(definition) {
   if (!['Properties', 'Residences', 'Partner Customers'].includes(definition.moduleName)) return definition;

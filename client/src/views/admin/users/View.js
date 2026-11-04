@@ -1,3 +1,4 @@
+import WorkspaceInformation, { LegacyInformationOnly } from 'components/record/WorkspaceInformation';
 import { Portal } from '@chakra-ui/react';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -177,7 +178,7 @@ const View = () => {
             </Grid>
             <HSeparator />
             <Grid templateColumns={"repeat(2, 1fr)"} gap={4} mt="5">
-              <GridItem colSpan={{ base: 2, md: 1 }}>
+              <WorkspaceInformation><GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
                   {" "}<LocalizedText text="First Name" />{" "}
                 </Text>
@@ -202,7 +203,7 @@ const View = () => {
               <GridItem colSpan={{ base: 2, md: 1 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}><LocalizedText text="Role" /></Text>
                 <Text textTransform="capitalize">{data?.role ? tr({ developer: 'Developer', admin: 'Admin', user: 'User' }[data.role]) : ' - '}</Text>
-              </GridItem>
+              </GridItem></WorkspaceInformation>
             </Grid>
           </Card>
 

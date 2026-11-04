@@ -56,6 +56,7 @@ import { exportColumns, selectedExportRows } from "utils/exportRecords";
 import { toast } from "react-toastify";
 import { normalizeSearchFields, optionText, matchesSelectValue } from "components/search/searchFields";
 import RecordValue, { isRecordId } from 'components/relations/RecordValue';
+import { useFormTableColumns, prepareTableExport } from 'components/table/FormTableFields';
 
 const readableCell = (node, name) => {
   if (isRecordId(node)) return <RecordValue name={name} value={node} />;
@@ -70,8 +71,8 @@ const columnLabel = column => {
   const label = tr(column.Header);
   return typeof label === "string" || typeof label === "number" ? String(label) : column.id;
 };
-const columnRole = column => columnLabel(column) === "#" ? "index"
-  : ["action", "actions"].includes(column.id?.toLowerCase()) || [tr("Action"), tr("Actions")].includes(columnLabel(column)) ? "actions" : "field";
+const columnRole = column => column.mobileRole || (columnLabel(column) === "#" ? "index"
+  : ["action", "actions"].includes(column.id?.toLowerCase()) || [tr("Action"), tr("Actions")].includes(columnLabel(column)) ? "actions" : "field");
 
 const CommonCheckTable = (props) => {
   const {
@@ -106,7 +107,7 @@ const CommonCheckTable = (props) => {
     addBtn,
     exportColumn,
     pageHeader = true,
-    tableDirection,
+    tableDirection = 'ltr',
   } = props;
   const { direction } = useLanguage();
   const cellDirection = tableDirection ? direction : undefined;
@@ -121,7 +122,10 @@ const CommonCheckTable = (props) => {
   const [displaySearchData, setDisplaySearchData] = useState(false);
   const [searchedData, setSearchedData] = useState([]);
 
-  const { columns, visible, setVisible } = useVisibleColumns(columnData || []);
+  const knownModules=['Contacts','Leads','Properties','Residences','Partner Customers','Opportunities','Invoices','Quotes','Users','Tasks','Meetings','Calls','Emails','Email Template','Bank Details','Opportunity Project'];
+  const formModule=props.moduleName||props.importModule||sharingModule||importModuleFor(title,tr)||knownModules.find(name=>name===title||tr(name)===title);
+  const formColumns=useFormTableColumns(formModule,columnData||[]);
+  const { columns, visible, order, setVisible } = useVisibleColumns(formColumns,formModule);
   const [importOpen, setImportOpen] = useState(false);
   const importModule = props.importModule || importModuleFor(title, tr);
   const canImport = Boolean(importModule && (access?.create || access === true) && access?.import !== false);
@@ -370,7 +374,7 @@ const CommonCheckTable = (props) => {
   const downloadCsvOrExcel = async (extension) => {
     try {
       await commonUtils.convertJsonToCsvOrExcel({
-        jsonArray: recordsToExport, csvColumns, fileName: title || "data", extension,
+        jsonArray: recordsToExport, csvColumns: await prepareTableExport(csvColumns,recordsToExport,tr,localStorage.getItem('crm-language')||'en'), fileName: title || "data", extension,
         rightToLeft: localStorage.getItem("crm-language") === "fa",
       });
     } catch {
@@ -541,8 +545,8 @@ const CommonCheckTable = (props) => {
             className="crm-table-toolbar__actions"
           >
             <TableTools
-              columns={(columnData || []).map((column, index) => ({ id: columnKey(column, index), label: columnLabel(column) }))}
-              visible={visible} onColumnsChange={setVisible}
+              columns={formColumns.map((column, index) => ({ id: columnKey(column, index), label: columnLabel(column) }))}
+              visible={visible} order={order} onColumnsChange={setVisible}
               onImport={ManageGrid !== false && canImport ? () => setImportOpen(true) : undefined}
               exports={ManageGrid !== false && canExport ? [
                 { label: selectedValues?.length ? 'Export Selected Data as CSV' : 'Export as CSV', disabled: !recordsToExport.length || isLoding, onClick: () => handleExportLeads('csv') },
@@ -614,6 +618,7 @@ const CommonCheckTable = (props) => {
                           column?.getSortByToggleProps()
                       )}
                       dir={cellDirection}
+                      data-mobile-role={columnRole(column)}
                       pe="10px"
                       key={index}
                       borderColor={borderColor}
@@ -685,12 +690,13 @@ const CommonCheckTable = (props) => {
               ) : (
                 page?.map((row, i) => {
                   prepareRow(row);
+                  row.values._id = row.original._id;
                   return (
                     <Tr {...row?.getRowProps()} key={row.id} className="crm-record-row" role="row" aria-selected={selectedValues?.includes(row.original._id) || undefined}>
                       {row?.cells?.map((cell, index) => {
                         let data = "";
-                        columnData?.forEach((item) => {
-                          if (cell?.column?.Header === item?.Header) {
+                        columns.forEach((item) => {
+                          if ((item.id || item.accessor) === cell.column.id) {
                             if (
                               item?.cell &&
                               typeof item?.cell === "function"

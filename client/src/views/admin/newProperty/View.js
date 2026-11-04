@@ -632,37 +632,9 @@ const View = () => {
           <Heading size="lg" mt={0} m={3}>
             {data?.name || ""}
           </Heading>
-          <Tabs onChange={handleTabChange} index={selectedTab}>
+          <Box className="crm-unified-record-details">
             <Grid templateColumns={"repeat(12, 1fr)"} mb={3} gap={1}>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <TabList
-                  sx={{
-                    border: "none",
-                    "& button:focus": { boxShadow: "none" },
-                    "& button": {
-                      margin: { sm: "0 3px", md: "0 5px" },
-                      padding: { sm: "5px", md: "8px" },
-                      border: "2px solid #8080803d",
-                      borderTopLeftRadius: "10px",
-                      borderTopRightRadius: "10px",
-                      borderBottom: 0,
-                      fontSize: { sm: "12px", md: "16px" },
-                    },
-                    '& button[aria-selected="true"]': {
-                      border: "2px solid brand.200",
-                      borderBottom: 0,
-                      zIndex: "0",
-                    },
-                  }}
-                >
-                  <Tab><LocalizedText text="Information" /></Tab>
-                  {(emailAccess?.view || callAccess?.view) && (
-                    <Tab><LocalizedText text="Communication" /></Tab>
-                  )}
-                  <Tab><LocalizedText text="Units" /></Tab>
-                  <Tab><LocalizedText text="Gallery" /></Tab>
-                </TabList>
-              </GridItem>
+
               <GridItem
                 colSpan={{ base: 12, md: 6 }}
                 mt={{ sm: "3px", md: "5px" }}
@@ -731,8 +703,8 @@ const View = () => {
               </GridItem>
             </Grid>
 
-            <TabPanels>
-              <TabPanel pt={4} p={0}>
+            <Box>
+              <Box className="crm-detail-section" mt={4}>
                 <CustomView
                   data={propertyData?.[0]}
                   fieldData={data}
@@ -773,10 +745,10 @@ const View = () => {
                     </Grid>
                   </GridItem>
                 )}
-              </TabPanel>
+              </Box>
 
               {/* communication */}
-              <TabPanel pt={4} p={0}>
+              <Box className="crm-detail-section" mt={4}>
                 <GridItem colSpan={{ base: 4 }}>
                   <Grid
                     overflow={"hidden"}
@@ -829,9 +801,9 @@ const View = () => {
                     </Grid>
                   </Grid>
                 </GridItem>
-              </TabPanel>
+              </Box>
 
-              <TabPanel pt={4} p={0}>
+              <Box className="crm-detail-section" mt={4}>
                 <CommonCheckTable
                   title={tr("Units")}
                   isLoding={isLoding}
@@ -1035,9 +1007,9 @@ const View = () => {
                     </Card>
                   )
                 )}
-              </TabPanel>
+              </Box>
 
-              <TabPanel pt={4} p={0}>
+              <Box className="crm-detail-section" mt={4}>
                 <Grid templateColumns="repeat(12, 1fr)" gap={3}>
                   <GridItem colSpan={{ base: 12, md: 6 }}>
                     <Card>
@@ -1375,9 +1347,9 @@ const View = () => {
                     </Card>
                   </GridItem>
                 </Grid>
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+              </Box>
+            </Box>
+          </Box>
 
           {(permission?.delete ||
             permission?.update ||

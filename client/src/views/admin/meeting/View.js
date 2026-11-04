@@ -1,3 +1,4 @@
+import WorkspaceInformation, { LegacyInformationOnly } from 'components/record/WorkspaceInformation';
 import AddMeeting from './components/Addmeeting';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -139,7 +140,7 @@ const View = () => {
                       <HSeparator />
                     </Box>
                   </GridItem>
-                  <GridItem colSpan={{ base: 2, md: 1 }}>
+                  <WorkspaceInformation><GridItem colSpan={{ base: 2, md: 1 }}>
                     <Text
                       fontSize="sm"
                       fontWeight="bold"
@@ -284,7 +285,7 @@ const View = () => {
                                 );
                               })
                             : "-"}
-                  </GridItem>
+                  </GridItem></WorkspaceInformation>
                   {/* <Grid templateColumns={'repeat(2, 1fr)'} gap={4} id="reports">
 
                                     </Grid> */}

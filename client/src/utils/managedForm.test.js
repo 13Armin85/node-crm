@@ -2,6 +2,17 @@ import { normalizeFormValues, validateFormValues } from './managedForm';
 
 const contact = '64d33173fd7ff3fa0924a109';
 const partner = '64d33173fd7ff3fa0924a110';
+test('stored room aliases select the configured option and residence multiselects keep old scalar values', () => {
+  const definition = { fields: [
+    { name: 'bedroom', kind: 'SYSTEM_FIELD', type: 'select', options: [{ value: '1+2' }] },
+    { name: 'unitTypes', kind: 'SYSTEM_FIELD', type: 'multiselect', options: [{ value: '1+3' }] },
+    { name: 'constructionStatus', type: 'multiselect', options: [{ value: 'READY' }] },
+  ] };
+  const values = { bedroom: '۲ + ۱', unitTypes: ['3+1'], constructionStatus: 'READY' };
+  expect(normalizeFormValues(definition, values)).toEqual({ bedroom: '1+2', unitTypes: ['1+3'], constructionStatus: ['READY'] });
+  expect(validateFormValues(definition, values)).toEqual({});
+  expect(validateFormValues(definition, { bedroom: '5+5' })).toEqual({ bedroom: 'invalid' });
+});
 const definition = { fields: [
   { name: 'leadName', type: 'text', required: true },
   { name: 'legacyRequired', type: 'text', required: true, enabled: false },

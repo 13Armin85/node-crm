@@ -35,6 +35,7 @@ import RelationFields from "components/relations/RelationFields";
 import { AsyncRelationSelect } from 'components/dynamicForm/DynamicFormRenderer';
 import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
 import { formValue } from 'utils/formValue';
+import { stageProbability } from 'utils/opportunityMetrics';
 
 const AddEdit = (props) => {
   const { definition, definitionError } = useFormDefinition('Opportunities');
@@ -59,10 +60,12 @@ const AddEdit = (props) => {
     opportunityAmount:
       type === "edit" ? opprtunityDetails?.opportunityAmount : "",
     amount: type === "edit" ? opprtunityDetails?.amount : "",
+    commission: type === 'edit' ? opprtunityDetails?.commission ?? '' : '',
+    leadStage: type === 'edit' ? opprtunityDetails?.leadStage || '' : definition?.fields.find(field=>field.name==='leadStage')?.defaultValue || 'Open',
     expectedCloseDate:
       type === "edit" ? (opprtunityDetails?.expectedCloseDate || '').slice(0, 10) : "",
     nextStep: type === "edit" ? opprtunityDetails?.nextStep : "",
-    salesStage: type === "edit" ? opprtunityDetails?.salesStage : "",
+    salesStage: type === "edit" ? opprtunityDetails?.salesStage : definition?.fields.find(field=>field.name==='salesStage')?.options?.[0]?.value || 'Prospecting',
     probability: type === "edit" ? opprtunityDetails?.probability : "",
     description: type === "edit" ? opprtunityDetails?.description : "",
     contact: type === "edit" ? formValue(opprtunityDetails?.contact) || null : null,
@@ -143,6 +146,7 @@ const AddEdit = (props) => {
     handleSubmit,
     setFieldValue,
   } = formik;
+  useEffect(() => { formik.setFieldValue('probability', stageProbability(formik.values.salesStage, definition?.fields.find(field => field.name === 'salesStage')?.options), false); }, [formik.values.salesStage, definition]); // eslint-disable-line react-hooks/exhaustive-deps
   const fetchData = async () => {
     setIsLoding(true);
     let result = await getApi("api/user/options");
@@ -483,6 +487,16 @@ const AddEdit = (props) => {
                   {" "}
                   {errors?.amount && touched?.amount && errors?.amount}
                 </Text>
+              </GridItem>
+              <GridItem colSpan={{ base: 12, md: 6 }}>
+                <FormLabel><LocalizedText text="finance.commission" /></FormLabel>
+                <Input name="commission" type="number" min={0} step="0.01" value={values.commission} onChange={handleChange} onBlur={handleBlur} />
+              </GridItem>
+              <GridItem colSpan={{ base: 12, md: 6 }}>
+                <FormLabel><LocalizedText text="finance.leadStage" /></FormLabel>
+                <Select name="leadStage" value={values.leadStage} onChange={handleChange} onBlur={handleBlur}>
+                  {(definition?.fields.find(field => field.name === 'leadStage')?.options || []).map(option => <option key={option.value} value={option.value}>{tr(option.label)}</option>)}
+                </Select>
               </GridItem>
               <GridItem colSpan={{ base: 12, md: 6 }}>
                 <FormLabel

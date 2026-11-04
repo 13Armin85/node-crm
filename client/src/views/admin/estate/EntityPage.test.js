@@ -37,6 +37,15 @@ test('partner status dropdown saves from the table and displays the persisted va
   expect(putApi).toHaveBeenCalledWith('api/estate/Partner%20Customers/partner-1', { status: 'CONTACTED' });
   expect(select().value).toBe('CONTACTED'); expect(select().disabled).toBe(false);
 });
+test('saved column order applies equally to estate headers and their record values', async () => {
+  rows = [{ _id: 'residence-1', name: 'Garden Residence', city: 'Istanbul' }];
+  definition = { moduleName: 'Residences', fields: [field('name'), field('city')] };
+  localStorage.setItem('crm-table-columns::Residences', JSON.stringify({ hidden: [], order: ['city', 'name'] }));
+  await render('Residences');
+  expect([...container.querySelectorAll('th')].slice(0,2).map(item=>item.textContent)).toEqual(['city','name']);
+  expect([...container.querySelectorAll('.crm-record-row td')].slice(0,2).map(item=>item.textContent)).toEqual(['Istanbul','Garden Residence']);
+  expect(container.querySelector('table').getAttribute('dir')).toBe('ltr');
+});
 test('a rejected status change retains the saved value and shows an error', async () => {
   putApi.mockResolvedValue({ response: { status: 400, data: { code: 'invalid', field: 'status' } } });
   await render('Partner Customers');
@@ -49,11 +58,11 @@ test('users without update permission see a disabled status dropdown', async () 
   expect(container.querySelector('select[aria-label="Status · Alice"]').disabled).toBe(true);
   expect(putApi).not.toHaveBeenCalled();
 });
-test('residence form groups details and blocks incomplete or fractional counts before saving', async () => {
+test('residence form preserves configured order and blocks incomplete or fractional counts before saving', async () => {
   rows = []; definition = { moduleName: 'Residences', fields: [field('name', 'text', { required: true }), field('city'), field('unitCount', 'number', { integer: true, min: 1 }), field('amenities', 'multiselect', { options: [{ value: 'POOL', label: { en: 'Pool' } }] }), field('phone'), field('notes')] };
   await render('Residences');
   await act(async () => Simulate.click(button('Add New')));
-  expect(document.body.textContent).toContain('Building and Units'); expect(document.body.textContent).toContain('Management and Maintenance');
+  expect([...document.querySelectorAll('.crm-dynamic-field')].map(item => item.dataset.fieldPath)).toEqual(['name', 'city', 'unitCount', 'amenities', 'phone', 'notes']);
   await act(async () => Simulate.click(button('Save')));
   expect(postApi).not.toHaveBeenCalled(); expect(document.body.textContent).toContain('Required');
   await act(async () => Simulate.change(document.querySelector('input[name="name"]'), { target: { value: 'Residence' } }));

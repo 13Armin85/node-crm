@@ -38,10 +38,11 @@ import useRecordRefresh from 'utils/useRecordRefresh';
 
 const Index = () => {
   const navigate = useNavigate();
-  const [permission, emailAccess, callAccess] = HasAccess([
+  const [permission, emailAccess, callAccess, opportunityAccess] = HasAccess([
     "Contacts",
     "Emails",
     "Calls",
+    "Opportunities",
   ]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const dispatch = useDispatch();
@@ -179,16 +180,17 @@ const Index = () => {
                   >
                     {cell?.value || "-"}
                   </Text>
-                  {field.name === 'fullName' && <ContactToOpportunityButton compact contactId={cell.row.original._id} />}
                 </div>
               ),
             })) || []
         : []),
       ...(result?.payload?.data?.[0]?.fields || []) // Check if fields is defined, if not, use empty array
         ?.filter((field) => field?.isTableField === true && !field?.isView) // Filter out fields where isTableField is true
-        ?.map((field) => ({ Header: field?.label, accessor: field?.name,
-          ...(field.name === 'fullName' ? { cell: cell => <div className="crm-contact-name-cell"><Text>{cell.value || '—'}</Text><ContactToOpportunityButton compact contactId={cell.row.original._id} /></div> } : {}),
-        })),
+        ?.map((field) => ({ Header: field?.label, accessor: field?.name })),
+      ...(opportunityAccess?.create ? [{
+        Header: 'contactTransfer.send', accessor: 'transferToOpportunity', mobileRole: 'actions', isSortable: false,
+        cell: ({ row }) => <ContactToOpportunityButton compact contactId={row.original._id} />,
+      }] : []),
       ...(permission?.update || permission?.view || permission?.delete
         ? [actionHeader]
         : []),

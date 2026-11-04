@@ -18,11 +18,11 @@ export const labelOf = (item, type) => {
   return formLabel(item.companyName) || formLabel(item.fullName) || formLabel(item.name) || item.email;
 };
 
-const RelationSelect = ({ label, name, value, items, type, setFieldValue, error, required }) => {
+const RelationSelect = ({ label, name, value, items, type, setFieldValue, error, required, order }) => {
   const { t } = useLanguage();
   const selected = formValue(value);
   return (
-  <GridItem colSpan={{ base: 12, md: 6 }}>
+  <GridItem colSpan={{ base: 12, md: 6 }} order={order} data-field-path={name}>
     <FormLabel htmlFor={`relation-${name}`} fontSize="sm" fontWeight="600">{label}{required && <Box as="span" ms={1} color="red.500">*</Box>}</FormLabel>
     {selected && !items.some(item => String(item._id) === String(selected)) ? <AsyncRelationSelect id={`relation-${name}`} name={name} value={value}
       moduleName={({ contact: 'Contacts', lead: 'Leads', partner: 'Partner Customers' })[type]}
@@ -34,7 +34,7 @@ const RelationSelect = ({ label, name, value, items, type, setFieldValue, error,
 );
 };
 
-export function PropertyMultiSelect({ value = [], items, setFieldValue, busy, error }) {
+export function PropertyMultiSelect({ value = [], items, setFieldValue, busy, error, order }) {
   const { t, language } = useLanguage();
   const [query, setQuery] = useState('');
   const selected = Array.isArray(value) ? [...new Set(value.map(formValue).filter(Boolean))] : [];
@@ -42,7 +42,7 @@ export function PropertyMultiSelect({ value = [], items, setFieldValue, busy, er
   const normalize = text => String(text || '').toLocaleLowerCase().replace(/ي/g, 'ی').replace(/ك/g, 'ک').trim();
   const filtered = [...items].sort((a, b) => String(labelOf(a, 'property') || '').localeCompare(String(labelOf(b, 'property') || ''), language, { numeric: true }))
     .filter(item => normalize([labelOf(item, 'property'), item.propertyAddress, item.district, item.neighborhood, item._id].filter(Boolean).join(' ')).includes(normalize(query)));
-  return <GridItem colSpan={12}>
+  return <GridItem colSpan={12} order={order} data-field-path="properties">
     <FormLabel htmlFor="related-property-search" fontSize="sm" fontWeight="600">{t('Related Properties')}</FormLabel>
     <Box borderWidth="1px" borderRadius="lg" overflow="hidden">
       <Box p={3} borderBottomWidth="1px">
@@ -129,15 +129,15 @@ export default function RelationFields({ values, setFieldValue, contact, lead, p
   }, [contact, lead, partner, properties]);
 
   return (
-    <Grid templateColumns="repeat(12, 1fr)" gap={3} mt={3}>
+    <Grid className="crm-relation-fields-grid" templateColumns="repeat(12, 1fr)" gap={3} mt={3}>
       {failed && <GridItem colSpan={12}><Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert></GridItem>}
-      {contact && enabled('contact') && <RelationSelect label={label('contact', 'Related Contact')} name="contact" error={errorFor("contact")} required={required("contact")} value={values.contact} items={options.contacts} type="contact" setFieldValue={changeRelation} />}
-      {lead && enabled('lead') && <RelationSelect label={label('lead', definition?.moduleName === 'Leads' ? 'Related Lead' : 'Lead')} name="lead" error={errorFor("lead")} required={required("lead")} value={values.lead} items={options.leads.filter(item => item._id !== excludeLeadId)} type="lead" setFieldValue={changeRelation} />}
-      {partner && enabled('partnerCustomer') && <RelationSelect label={label('partnerCustomer', 'Partner Customer')} name="partnerCustomer" error={errorFor("partnerCustomer")} required={required("partnerCustomer")} value={values.partnerCustomer} items={options.partners} type="partner" setFieldValue={changeRelation} />}
+      {contact && enabled('contact') && <RelationSelect order={definition?.fields.find(field => field.name === 'contact')?.order} label={label('contact', 'Related Contact')} name="contact" error={errorFor("contact")} required={required("contact")} value={values.contact} items={options.contacts} type="contact" setFieldValue={changeRelation} />}
+      {lead && enabled('lead') && <RelationSelect order={definition?.fields.find(field => field.name === 'lead')?.order} label={label('lead', definition?.moduleName === 'Leads' ? 'Related Lead' : 'Lead')} name="lead" error={errorFor("lead")} required={required("lead")} value={values.lead} items={options.leads.filter(item => item._id !== excludeLeadId)} type="lead" setFieldValue={changeRelation} />}
+      {partner && enabled('partnerCustomer') && <RelationSelect order={definition?.fields.find(field => field.name === 'partnerCustomer')?.order} label={label('partnerCustomer', 'Partner Customer')} name="partnerCustomer" error={errorFor("partnerCustomer")} required={required("partnerCustomer")} value={values.partnerCustomer} items={options.partners} type="partner" setFieldValue={changeRelation} />}
       {exclusive && formik?.errors?.leadRelations && formik?.submitCount > 0 && <GridItem colSpan={12}>
         <Text role="alert" data-testid="lead-selection-error" fontSize="sm" color="red.500">{t(LEAD_SELECTION_MESSAGE)}</Text>
       </GridItem>}
-      {properties && enabled('properties') && <PropertyMultiSelect error={errorFor("properties")} value={values.properties || []} items={options.properties} setFieldValue={setFieldValue} busy={busy} />}
+      {properties && enabled('properties') && <PropertyMultiSelect order={definition?.fields.find(field => field.name === 'properties')?.order} error={errorFor("properties")} value={values.properties || []} items={options.properties} setFieldValue={setFieldValue} busy={busy} />}
     </Grid>
   );
 }

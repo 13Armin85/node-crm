@@ -1,3 +1,4 @@
+import CommissionPerformance from './components/CommissionPerformance';
 import { isAdmin } from 'roles';
 import { canViewModule } from "services/moduleVisibility";
 import { LocalizedText } from 'i18n/runtime';
@@ -41,7 +42,6 @@ import CountUpComponent from "../../../../src/components/countUpComponent/countU
 import Spinner from 'components/spinner/Spinner';
 import { useSelector } from "react-redux";
 import { useLanguage } from "i18n";
-import CurrencyAmount from "components/CurrencyAmount";
 
 const DashboardCardHeader = ({ title, subtitle, icon: HeaderIcon = MdInsights, meta, action, mb = 4 }) => {
   return (
@@ -139,8 +139,6 @@ export default function UserReports() {
 
   const [allData, setAllData] = useState([]);
   const [data, setData] = useState([]);
-  const [salesSummary, setSalesSummary] = useState(null);
-  const [salesLoading, setSalesLoading] = useState(true);
   const navigate = useNavigate();
   const modules = useSelector((state) => state?.modules?.data)
   const [contactsView, taskView, leadView, proprtyView] = HasAccess(["Contacts", "Tasks", "Leads", "Properties"]);
@@ -159,15 +157,8 @@ export default function UserReports() {
     }
     setIsLoding(false);
   }
-  const fetchSalesSummary = async () => {
-    setSalesLoading(true);
-    const result = await getApi('api/estate/dashboard/sales-summary');
-    if (result?.status === 200) setSalesSummary(result.data);
-    setSalesLoading(false);
-  };
   useEffect(() => {
     fetchProgressChart()
-    fetchSalesSummary()
   }, [])
 
 
@@ -235,7 +226,6 @@ export default function UserReports() {
     Property: '/properties',
   };
   const maxStatisticLength = Math.max(...(data || []).map((item) => item?.length || 0), 1);
-  const moneyValues = values => <CurrencyAmount values={values || []} compact fontSize={{ base: 'lg', md: 'xl' }} fontWeight="900" lineHeight="1.3" />;
 
   useEffect(() => {
     fetchData();
@@ -348,53 +338,7 @@ export default function UserReports() {
           />}
       </SimpleGrid>
 
-      {(proprtyView?.view || isAdmin(user)) && (isAdmin(user) || propertiesModule?.isActive) && (
-        <Card className="crm-dashboard-panel crm-sales-performance" mb="12px" overflow="hidden">
-          <DashboardCardHeader
-            title={t('dashboard.salesPerformance')}
-            subtitle={t('dashboard.salesPerformanceHint')}
-            icon={MdAttachMoney}
-          />
-          {salesLoading ? <Flex minH="180px" align="center" justify="center"><Spinner /></Flex> : <>
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing="3" mb="3">
-              <Box className="crm-finance-kpi crm-finance-kpi--success">
-                <Icon as={MdAttachMoney} className="crm-finance-kpi__icon" />
-                <Text className="crm-finance-kpi__label">{t('dashboard.realizedSales')}</Text>
-                <Box className="crm-finance-kpi__value">{moneyValues(salesSummary?.sold?.values)}</Box>
-                <Text className="crm-finance-kpi__meta">{salesSummary?.sold?.count || 0} {t('dashboard.soldProperties')}</Text>
-              </Box>
-              <Box className="crm-finance-kpi crm-finance-kpi--warning">
-                <Icon as={MdOutlineInventory2} className="crm-finance-kpi__icon" />
-                <Text className="crm-finance-kpi__label">{t('dashboard.unsoldOpportunity')}</Text>
-                <Box className="crm-finance-kpi__value">{moneyValues(salesSummary?.available?.values)}</Box>
-                <Text className="crm-finance-kpi__meta">{salesSummary?.available?.count || 0} {t('dashboard.availableProperties')}</Text>
-              </Box>
-              <Box className="crm-finance-kpi crm-finance-kpi--info">
-                <Icon as={MdPeopleAlt} className="crm-finance-kpi__icon" />
-                <Text className="crm-finance-kpi__label">{t('dashboard.teamSales')}</Text>
-                <Text className="crm-finance-kpi__count">{salesSummary?.bySeller?.length || 0}</Text>
-                <Text className="crm-finance-kpi__meta">{t('dashboard.teamMember')}</Text>
-              </Box>
-            </SimpleGrid>
-            <Box className="crm-team-sales-table" overflowX="auto" dir={direction}>
-              <DashboardCardHeader
-                title={t('dashboard.teamSales')}
-                icon={MdPeopleAlt}
-                meta={salesSummary?.bySeller?.length || 0}
-                mb={3}
-              />
-              {salesSummary?.bySeller?.length ? <Table size="sm" className="crm-mobile-records" role="table">
-                <Thead><Tr><Th>{t('dashboard.teamMember')}</Th><Th isNumeric>{t('dashboard.soldCount')}</Th><Th>{t('dashboard.salesAmount')}</Th></Tr></Thead>
-                <Tbody>{salesSummary.bySeller.map(person => <Tr key={person.userId} className="crm-record-row" role="row">
-                  <Td role="cell" data-label={t("dashboard.teamMember")} data-mobile-role="primary" fontWeight="800" data-no-translate>{person.name || person.userId}</Td>
-                  <Td role="cell" data-label={t("dashboard.soldCount")} data-mobile-role="field" isNumeric fontWeight="800">{person.soldCount}</Td>
-                  <Td role="cell" data-label={t("dashboard.salesAmount")} data-mobile-role="field">{moneyValues(person.values)}</Td>
-                </Tr>)}</Tbody>
-              </Table> : <Text py="8" textAlign="center" color={statisticsMutedColor}>{t('dashboard.noSales')}</Text>}
-            </Box>
-          </>}
-        </Card>
-      )}
+      <CommissionPerformance />
 
       <Grid className="crm-dashboard-charts" templateColumns="repeat(12, 1fr)" gap={4}>
         {

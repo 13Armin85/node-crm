@@ -11,6 +11,7 @@ import {
 } from "@chakra-ui/icons";
 import {
   Button,
+  Box,
   Flex,
   Grid,
   GridItem,
@@ -440,42 +441,14 @@ const View = () => {
             {data?.leadName || ""}
           </Heading>
           <LeadOwner lead={data} />
-          <Tabs onChange={handleTabChange} index={selectedTab}>
+          <Box className="crm-unified-record-details">
             <Grid templateColumns={"repeat(12, 1fr)"} mb={3} gap={1}>
-              <GridItem colSpan={{ base: 12, md: 6 }}>
-                <TabList
-                  sx={{
-                    border: "none",
-                    "& button:focus": { boxShadow: "none" },
-                    "& button": {
-                      margin: { sm: "0 3px", md: "0 5px" },
-                      padding: { sm: "5px", md: "8px" },
-                      border: "2px solid #8080803d",
-                      borderTopLeftRadius: "10px",
-                      borderTopRightRadius: "10px",
-                      borderBottom: 0,
-                      fontSize: { sm: "12px", md: "16px" },
-                    },
-                    '& button[aria-selected="true"]': {
-                      border: "2px solid brand.200",
-                      borderBottom: 0,
-                      zIndex: "0",
-                    },
-                  }}
-                >
-                  <Tab><LocalizedText text="Information" /></Tab>
-                  {(emailAccess?.view ||
-                    callAccess?.view ||
-                    taskAccess?.view ||
-                    meetingAccess?.view) && <Tab><LocalizedText text="Communication" /></Tab>}
-                  <Tab><LocalizedText text="Document" /></Tab>
-                </TabList>
-              </GridItem>
+
               <GridItem
-                colSpan={{ base: 12, md: 6 }}
+                colSpan={12}
                 mt={{ sm: "3px", md: "5px" }}
               >
-                <Flex justifyContent={"right"}>
+                <Flex justifyContent={"right"} flexWrap="wrap" gap={2}>
                   <ConvertLeadButtons leadId={param.id} onConverted={() => navigate("/lead")} />
                   <Menu>
                     {(isAdmin(user) ||
@@ -543,8 +516,8 @@ const View = () => {
               </GridItem>
             </Grid>
 
-            <TabPanels>
-              <TabPanel pt={4} p={0}>
+            <Box>
+              <Box className="crm-detail-section" mt={4}>
                 <CustomView
                   data={leadData?.[0]}
                   fieldData={data ? data : []}
@@ -604,8 +577,8 @@ const View = () => {
                     deleteMany={true}
                   />
                 </Card>
-              </TabPanel>
-              <TabPanel pt={4} p={0}>
+              </Box>
+              <Box className="crm-detail-section" mt={4}>
                 <GridItem colSpan={{ base: 4 }}>
                   <Grid
                     overflow={"hidden"}
@@ -846,8 +819,8 @@ const View = () => {
                     </Grid>
                   </Grid>
                 </GridItem>
-              </TabPanel>
-              <TabPanel pt={4} p={0}>
+              </Box>
+              <Box className="crm-detail-section" mt={4}>
                 <GridItem colSpan={{ base: 4 }}>
                   <Card minH={"50vh"}>
                     <Flex
@@ -893,9 +866,9 @@ const View = () => {
                     </VStack>
                   </Card>
                 </GridItem>
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+              </Box>
+            </Box>
+          </Box>
           {(isAdmin(user) ||
             permission?.update ||
             permission?.delete) && (

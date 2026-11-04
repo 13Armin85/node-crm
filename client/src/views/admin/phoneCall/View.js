@@ -1,3 +1,4 @@
+import WorkspaceInformation, { LegacyInformationOnly } from 'components/record/WorkspaceInformation';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
@@ -138,7 +139,7 @@ const View = () => {
                       <HSeparator />
                     </Box>
                   </GridItem>
-                  <GridItem colSpan={{ base: 2, md: 1 }}>
+                  <WorkspaceInformation><GridItem colSpan={{ base: 2, md: 1 }}>
                     <Text
                       fontSize="sm"
                       fontWeight="bold"
@@ -227,8 +228,8 @@ const View = () => {
                     </Text>
                     <Text>
                       {data?.createBy
-                        ? tr("contact")
-                        : data?.createByLead && "lead"}
+                        ? tr("Contact")
+                        : data?.createByLead && tr("Lead")}
                     </Text>
                   </GridItem>
 
@@ -304,7 +305,7 @@ const View = () => {
                     <pre style={{ whiteSpace: "pre-wrap" }}>
                       {data?.salesAgentName ? data?.salesAgentName : " - "}
                     </pre>
-                  </GridItem>
+                  </GridItem></WorkspaceInformation>
                   {/* <GridItem colSpan={{ base: 2 }}>
                                         <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}> Call Notes </Text>
                                         <pre style={{ whiteSpace: 'pre-wrap' }}>{data?.callNotes ? data?.callNotes : ' - '}</pre>
@@ -314,7 +315,7 @@ const View = () => {
             </GridItem>
           </Grid>
 
-          <Card mt={3}>
+          <LegacyInformationOnly><Card mt={3}>
             <Grid templateColumns="repeat(6, 1fr)" gap={1}>
               <GridItem colSpan={{ base: 2 }}>
                 <Text fontSize="sm" fontWeight="bold" color={"blackAlpha.900"}>
@@ -325,7 +326,7 @@ const View = () => {
                 </pre>
               </GridItem>
             </Grid>
-          </Card>
+          </Card></LegacyInformationOnly>
 
           <Grid templateColumns="repeat(2, 1fr)" gap={1} mt={3}>
             <GridItem colSpan={{ base: 2 }}>

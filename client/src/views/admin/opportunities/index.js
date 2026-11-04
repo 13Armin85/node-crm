@@ -199,7 +199,7 @@ const Index = (props) => {
     try {
       const response = await putApi(`api/opportunity/stage/${id}`, { salesStage });
       if (response?.status === 200) {
-        setData(records => records.map(record => record._id === id ? { ...record, salesStage } : record));
+        setData(records => records.map(record => record._id === id ? { ...record, ...response.data } : record));
         toast.success(tr('pipeline.stageSaved'));
       } else toast.error(tr('pipeline.stageFailed'));
     } catch { toast.error(tr('pipeline.stageFailed')); }
@@ -577,7 +577,7 @@ const Index = (props) => {
             <Button key={mode} leftIcon={<Icon />} aria-pressed={viewMode === mode} variant={viewMode === mode ? 'solid' : 'outline'}
               onClick={() => { setViewMode(mode); localStorage.setItem('crm-opportunities-view', mode); setSelectedValues([]); }}>{tr(label)}</Button>)}
         </ButtonGroup>}
-        renderRecords={viewMode === 'kanban' ? records => <OpportunityKanban records={records.map(record => data.find(current => current._id === record._id) || record)} stages={stages}
+        renderRecords={viewMode === 'kanban' ? records => <OpportunityKanban records={records.map(record => data.find(current => current._id === record._id) || record)} stages={stages} leadStages={definition?.fields.find(field=>field.name==='leadStage')?.options||[]}
           canMove={canMove} savingId={savingId} onStageChange={moveStage} onView={handleViewOpen} /> : undefined}
               onImported={() => setAction(current => !current)}
         title={title}

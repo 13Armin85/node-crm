@@ -54,7 +54,7 @@ module.exports = async (req, res, next) => {
         await require('../services/leadRelations').validateLeadProperty(req, req.body);
         definition = { ...definition, fields: definition.fields.filter(field => isLeadRelationVisible(field, req.body)) };
       }
-      const values = validateFields(definition, req.body, previous || {});
+      const values = validateFields(definition, req.body, previous || {}, { partial: action === 'update' });
       if (module.moduleName === 'Invoices') await require('../services/invoiceProperty').validateInvoiceProperty(req, values, previous || {});
       for (const field of (definition?.fields || []).filter(field => field.type === 'file')) {
         for (const file of values.customFields?.[field.name] || []) {
@@ -68,6 +68,7 @@ module.exports = async (req, res, next) => {
       }
       if (module.moduleName === 'Leads') { extras.lead = req.body.lead; if (req.body.assignedBy) extras.assignedBy = req.body.assignedBy; }
       req.body = { ...values, ...extras, moduleId, ...(action === 'create' ? { createBy: req.actor._id } : {}) };
+      if (module.moduleName === 'Opportunities') req.body = require('../services/opportunityMetrics').normalizeOpportunity(req.body, previous || {}, definition, action === 'create');
     }
     if (action === 'delete' && !req.params.id && (!Array.isArray(req.body?.ids) || req.body.ids.length > 100)) return res.status(400).json({ code: 'invalid', field: 'ids' });
     if (Array.isArray(req.body?.ids) && model) {

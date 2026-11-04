@@ -95,7 +95,7 @@ test('property layouts, assigned agents, reusable owners and lead relationships 
     propertyAgent: String(agent._id), propertyOwner: owner.data._id, district: district.data.name };
   const property = await api('POST', '/estate/Properties', payload);
   assert.equal(property.status, 201, JSON.stringify(property));
-  assert.equal(property.data.bedroom, '1+4'); assert.equal(property.data.propertyOwner, owner.data._id);
+  assert.equal(property.data.bedroom, '4+1'); assert.equal(property.data.propertyOwner, owner.data._id);
   assert.equal(property.data.district, district.data.name);
   assert.equal((await api('DELETE', '/estate/districts/' + district.data._id)).status, 409);
   const residence = await api('POST', '/estate/Residences', { name: 'New Inline Residence', district: district.data.name });
@@ -109,12 +109,12 @@ test('property layouts, assigned agents, reusable owners and lead relationships 
   await importLegacyDistricts();
   assert.equal((await api('GET', '/estate/districts/options?q=Unused')).data.length, 0);
   const persisted = await Property.findById(property.data._id).lean();
-  assert.equal(persisted.bedroom, '1+4'); assert.equal(String(persisted.propertyAgent), String(agent._id));
+  assert.equal(persisted.bedroom, '4+1'); assert.equal(String(persisted.propertyAgent), String(agent._id));
   const list = await api('GET', '/estate/Properties');
   assert.equal(list.data.items[0].floor, '3'); assert.equal(list.data.items[0].propertyAgent.firstName, 'Property');
   assert.equal(list.data.items[0].propertyOwner.fullName, ownerPayload.fullName);
   const fetched = await api('GET', '/estate/Properties/' + property.data._id);
-  assert.equal(fetched.data.propertyAgent, String(agent._id)); assert.equal(fetched.data.bedroom, '1+4');
+  assert.equal(fetched.data.propertyAgent, String(agent._id)); assert.equal(fetched.data.bedroom, '4+1');
   for (const [field, value] of [['bedroom', '1-4'], ['propertyAgent', 'bad-id'], ['propertyOwner', String(new mongoose.Types.ObjectId())]]) {
     const invalid = await api('PUT', '/estate/Properties/' + property.data._id, { [field]: value });
     assert.equal(invalid.status, 400); assert.equal(invalid.data.field, field);

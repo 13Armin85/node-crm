@@ -1,11 +1,16 @@
 const mongoose = require('mongoose');
-const { constructionStatuses, amenities } = require('../../services/residenceCatalog');
+const { amenities } = require('../../services/residenceCatalog');
 const { ages, bedrooms } = require('../../services/estateCatalog');
 const optionalEnum = values => ({ type: String, enum: values, set: value => value === '' ? undefined : value });
 const count = min => ({ type: Number, min, validate: value => value == null || Number.isInteger(value) });
 const schema = new mongoose.Schema({
   name: { type: String, required: true, trim: true }, description: String, developer: String,
-  constructionStatus: optionalEnum(Object.keys(constructionStatuses)),
+  constructionStatus: {
+    type: mongoose.Schema.Types.Mixed,
+    set: value => value === '' ? undefined : value,
+    // Form Builder owns the permitted choices, including administrator-added ones.
+    validate: value => value == null || (Array.isArray(value) ? value : [value]).every(item => typeof item === 'string' && item.length > 0 && item.length <= 20000),
+  },
   category: optionalEnum(['RESIDENTIAL', 'COMMERCIAL']),
   transactionType: { type: String, enum: ['SALE', 'RENT'], default: 'SALE' },
   price: { amount: { type: Number, min: 0 }, currency: { type: String, enum: ['TRY', 'USD', 'EUR', ''], default: 'TRY' } },

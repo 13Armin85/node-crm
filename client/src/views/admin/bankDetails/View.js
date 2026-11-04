@@ -1,3 +1,4 @@
+import WorkspaceInformation from 'components/record/WorkspaceInformation';
 import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
@@ -192,43 +193,14 @@ const View = () => {
           <Heading size="lg" mt={0} m={3}>
             {bankDataDetails?.accountName || ""}
           </Heading>
-          <Tabs
-            onChange={handleTabChange}
-            index={selectedTab}
-            style={{
-              background: "#ffffff",
-              borderRadius: "20px",
-              padding: "20px",
-            }}
-          >
+          <Box className="crm-unified-record-details">
             <Grid
               templateColumns={"repeat(4, 1fr)"}
               mb={3}
               gap={1}
               id="reports"
             >
-              <GridItem colSpan={{ base: 4 }}>
-                <TabList
-                  sx={{
-                    border: "none",
-                    "& button:focus": { boxShadow: "none" },
-                    "& button": {
-                      margin: { sm: "0 3px", md: "0 5px" },
-                      padding: { sm: "5px", md: "8px" },
-                      border: "2px solid #8080803d",
-                      borderTopLeftRadius: "10px",
-                      borderTopRightRadius: "10px",
-                      borderBottom: 0,
-                      fontSize: { sm: "12px", md: "16px" },
-                    },
-                    '& button[aria-selected="true"]': {
-                      border: "2px solid brand.200",
-                      borderBottom: 0,
-                      zIndex: "0",
-                    },
-                  }}
-                ></TabList>
-              </GridItem>
+
               <GridItem
                 colSpan={{ base: 2, md: 4 }}
                 mt={{ sm: "3px", md: "5px" }}
@@ -311,7 +283,7 @@ const View = () => {
                   </Box>
                 </GridItem>
               </GridItem>
-              <GridItem colSpan={{ base: 4, md: 2 }} mt={3}>
+              <WorkspaceInformation><GridItem colSpan={{ base: 4, md: 2 }} mt={3}>
                 <Box>
                   <Text
                     fontSize="sm"
@@ -545,9 +517,9 @@ const View = () => {
                   )}
                 </Box>
               </GridItem>
-              <Grid></Grid>
+              <Grid></Grid></WorkspaceInformation>
             </Grid>
-          </Tabs>
+          </Box>
 
           {(isAdmin(user) ||
             permission?.update ||

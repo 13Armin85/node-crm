@@ -1,3 +1,4 @@
+import WorkspaceInformation, { LegacyInformationOnly } from 'components/record/WorkspaceInformation';
 import { sanitizeHtml } from 'services/contentSecurity';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
@@ -148,7 +149,7 @@ const View = () => {
                       <HSeparator />
                     </Box>
                   </GridItem>
-                  <GridItem colSpan={{ base: 2, md: 1 }}>
+                  <WorkspaceInformation><GridItem colSpan={{ base: 2, md: 1 }}>
                     <Text
                       fontSize="sm"
                       fontWeight="bold"
@@ -229,7 +230,7 @@ const View = () => {
                     <Text>
                       {data?.createBy
                         ? tr("Contact")
-                        : data?.createByLead && "Lead"}
+                        : data?.createByLead && tr("Lead")}
                     </Text>
                   </GridItem>
 
@@ -303,7 +304,7 @@ const View = () => {
                     <Text>
                       {data?.salesAgentName ? data?.salesAgentName : " - "}
                     </Text>
-                  </GridItem>
+                  </GridItem></WorkspaceInformation>
                   {/* <GridItem colSpan={{ base: 2 }} >
                                         <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}> Message </Text>
                                         {
@@ -318,7 +319,7 @@ const View = () => {
             </GridItem>
           </Grid>
 
-          <Card mt={3}>
+          <LegacyInformationOnly><Card mt={3}>
             <Grid templateColumns="repeat(6, 1fr)" gap={1}>
               <GridItem
                 colSpan={{ base: 2 }}
@@ -358,7 +359,7 @@ const View = () => {
                 </pre>
               </GridItem>
             </Grid>
-          </Card>
+          </Card></LegacyInformationOnly>
 
           <Grid templateColumns="repeat(2, 1fr)" gap={1} mt={3}>
             <GridItem colSpan={{ base: 2 }}>

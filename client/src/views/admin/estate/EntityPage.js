@@ -1,3 +1,4 @@
+import { tableFields, TableFieldValue, tableFieldValue, prepareTableExport } from 'components/table/FormTableFields';
 import RecordPagination from "components/pagination/RecordPagination";
 import TableTools, { useVisibleColumns } from 'components/table/TableTools';
 import RecordImportDialog from 'components/table/RecordImportDialog';
@@ -17,11 +18,10 @@ import {
   FiPlus, FiSearch, FiTrash2, FiUsers, FiX,
 } from "react-icons/fi";
 import Card from "components/card/Card";
-import DynamicFormRenderer, { isVisible, fieldPath, localized } from "components/dynamicForm/DynamicFormRenderer";
+import DynamicFormRenderer, { fieldPath, localized } from "components/dynamicForm/DynamicFormRenderer";
 import { useLanguage } from "i18n";
 import { getApi, postApi, putApi, deleteApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
-import CurrencyAmount from "components/CurrencyAmount";
 import { useFormDefinition, validateFormValues } from "utils/managedForm";
 import ShareRecordButton from "components/ShareRecordButton";
 import SharedRecordBadge from "components/SharedRecordBadge";
@@ -33,48 +33,10 @@ import { formLabel } from 'utils/formValue';
 import RecordValue from 'components/relations/RecordValue';
 import CatalogRecordDialog from './CatalogRecordDialog';
 import RecordFields from 'components/record/RecordFields';
-
-const propertySections = [
-  ["estate.section.basic", (name) => ["title", "description", "category", "subtype", "transactionType"].includes(name)],
-  ["estate.section.ownership", name => ['propertyAgent', 'propertyOwner'].includes(name)],
-  ["estate.section.pricing", (name) => name.startsWith("price.")],
-  ["estate.section.location", (name) => ["district", "neighborhood", "isInsideResidence", "residence"].includes(name)],
-  ["estate.section.details", (name) => ["bedroom", "buildingAge", "occupancyStatus", "floor"].includes(name) || name.startsWith("area.")],
-  ["estate.section.files", (name) => name === "files"],
-  ["estate.section.sale", (name) => name.startsWith("sale.")],
-  ["estate.section.additional", (name, field) => field.kind === "CUSTOM_FIELD"],
-];
-
-const residenceSections = [
-  ['estate.section.basic', name => ['name', 'description', 'developer', 'constructionStatus', 'category', 'transactionType'].includes(name)],
-  ['estate.section.pricing', name => name.startsWith('price.')],
-  ['estate.section.sale', name => name.startsWith('sale.')],
-  ['estate.section.location', name => ['country', 'city', 'district', 'neighborhood', 'address', 'postalCode', 'mapUrl'].includes(name)],
-  ['estate.section.building', name => ['constructionYear', 'buildingAge', 'completionDate', 'blockCount', 'floorCount', 'unitCount', 'totalArea', 'unitTypes', 'occupancyStatus'].includes(name) || name.startsWith('area.')],
-  ['estate.section.amenities', name => ['amenities', 'heatingType', 'parkingCapacity'].includes(name)],
-  ['estate.section.management', name => ['managementCompany', 'contactPerson', 'phone', 'email', 'website'].includes(name) || name.startsWith('maintenanceFee.')],
-  ['estate.section.files', name => name === 'files'],
-  ['estate.section.additional', (name, field) => name === 'notes' || field.kind === 'CUSTOM_FIELD'],
-];
-
-const residenceTableColumns = [
-  ['transactionType', 'Transaction Type'],
-  ['constructionStatus', 'estate.residence.constructionStatus'],
-  ['developer', 'estate.residence.developer'],
-  ['area.value', 'estate.residence.builtArea'],
-  ['building', 'estate.section.building'],
-  ['maintenanceFee.amount', 'estate.residence.maintenanceFee'],
-  ['contact', 'Contact'],
-];
-
-const propertyTableColumns = [
-  ['bedroom', 'Number Of Bedrooms'],
-  ['floor', 'Unit Floor'],
-  ['propertyAgent', 'Assigned Property Agent'],
-];
-
+import { RecordEditingContext, useRecordEditing, saveRecordChanges } from 'components/record/recordEditing';
 
 export function EntityPage({ moduleName }) {
+  const outerEditing = useRecordEditing();
   const { t, language, direction } = useLanguage();
   const [permissions] = HasAccess([moduleName]);
   const [districtPermissions, residencePermissions] = HasAccess(['Districts', 'Residences']);
@@ -144,6 +106,7 @@ export function EntityPage({ moduleName }) {
       }
     }
   }
+  initialValues = normalizeFormValues(definition, initialValues);
 
   const formik = useFormik({
     initialValues,
@@ -171,7 +134,6 @@ export function EntityPage({ moduleName }) {
     : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["category", "transactionType", "city", "district", "neighborhood", "constructionStatus", "occupancyStatus", "sale.status"];
   const name = (item) => formLabel(item) || t('Record unavailable');
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const dateLocale = language === "fa" ? "fa-IR" : language === "tr" ? "tr-TR" : "en-US";
   const PageIcon = ["Properties", "Residences"].includes(moduleName) ? FiHome : FiUsers;
 
   const remove = async () => {
@@ -179,14 +141,6 @@ export function EntityPage({ moduleName }) {
     if (result.status === 200) { setDeleting(null); setNotice("Success"); fetchData(); }
     else { setError(result.data?.code || "serverError"); setDeleting(null); }
   };
-
-  const residenceFieldLabel = (key, fallback) => localized(definition?.fields.find(field => field.name === key)?.label, language) || t(fallback);
-  const residenceOption = (key, value) => {
-    if (value == null || value === '') return '-';
-    const option = definition?.fields.find(field => field.name === key)?.options?.find(option => option.value === value);
-    return option ? localized(option.label, language) : t(value);
-  };
-  const residenceNumber = value => value == null || value === '' ? '-' : Number(value).toLocaleString(dateLocale);
 
   const partnerStatusField = definition?.fields.find(field => field.name === 'status');
   const updatePartnerStatus = async (item, status) => {
@@ -200,46 +154,35 @@ export function EntityPage({ moduleName }) {
     } catch { setError('serverError'); }
     finally { setStatusSaving(null); }
   };
-  const formSections = moduleName === 'Properties' ? propertySections : moduleName === 'Residences' ? residenceSections : null;
-  const form = definition && formSections ? (
-    <Stack spacing={5}>
-      {formSections.map(([title, matches]) => {
-        const fields = definition.fields.filter((field) => matches(field.name, field));
-        return fields.some((field) => isVisible(field, formik.values)) ? (
-          <Box className="crm-entity-form-section" key={title}>
-            <Heading size="sm" className="crm-entity-form-section__title">{t(title)}</Heading>
-            <DynamicFormRenderer definition={{ ...definition, fields: fields.filter(field => moduleName !== 'Properties' || field.name !== 'propertyOwner') }} formik={formik} readOnly={readOnly} refreshKey={relatedVersion}
-              fieldActions={{
-                ...(districtPermissions?.create ? { district: <Button size="sm" variant="outline" mt={2} leftIcon={<FiPlus />} onClick={() => setCreatingRelated('Districts')}>{t('Create New District')}</Button> } : {}),
-                ...(moduleName === 'Properties' && residencePermissions?.create ? { residence: <Button size="sm" variant="outline" mt={2} leftIcon={<FiPlus />} onClick={() => setCreatingRelated('Residences')}>{t('Create New Residence')}</Button> } : {}),
-              }} />
-            {moduleName === 'Properties' && fields.filter(field => field.name === 'propertyOwner' && isVisible(field, formik.values)).map(field =>
-              <PropertyOwnerField key={field.name} field={field} formik={formik} readOnly={readOnly} />)}
-          </Box>
-        ) : null;
-      })}
-    </Stack>
-  ) : definition ? <DynamicFormRenderer definition={definition} formik={formik} readOnly={readOnly} /> : <Spinner />;
+  const form = definition ? <DynamicFormRenderer definition={definition} formik={formik} readOnly={readOnly} refreshKey={relatedVersion}
+    fieldControls={moduleName === 'Properties' ? { propertyOwner: field => <PropertyOwnerField field={field} formik={formik} readOnly={readOnly} /> } : {}}
+    fieldActions={{
+      ...(districtPermissions?.create ? { district: <Button size="sm" variant="outline" mt={2} leftIcon={<FiPlus />} onClick={() => setCreatingRelated('Districts')}>{t('Create New District')}</Button> } : {}),
+      ...(moduleName === 'Properties' && residencePermissions?.create ? { residence: <Button size="sm" variant="outline" mt={2} leftIcon={<FiPlus />} onClick={() => setCreatingRelated('Residences')}>{t('Create New Residence')}</Button> } : {}),
+    }} /> : <Spinner />;
+  const detailEditing = record?._id && { moduleName, definition, record, editable: Boolean(permissions?.update), save: async changes => {
+    const result = await saveRecordChanges({ moduleName, record }, changes);
+    if (result?.status === 200) { setRecord(result.data); await fetchData(); await outerEditing?.refresh?.(); }
+    return result;
+  } };
 
+  const fields = tableFields(definition);
+  const primaryName = moduleName === 'Properties' ? 'title' : moduleName === 'Residences' ? 'name' : 'fullName';
   const tableColumns = [
-    ...(moduleName === 'Properties' ? [{ id: 'number', label: t('estate.rowNumber') }] : []),
-    { id: 'name', label: t('Name') },
-    { id: 'summary', label: t(moduleName === 'Properties' ? 'Price' : moduleName === 'Residences' ? 'estate.section.location' : 'Phone') },
-    ...(moduleName === 'Properties' ? propertyTableColumns.map(([id, fallback]) => ({
-      id,
-      label: t(fallback),
-    })) : []),
-    ...(moduleName === 'Residences' ? [{ id: 'price', label: t('Price') }, ...residenceTableColumns.map(([id, fallback]) => ({ id, label: residenceFieldLabel(id, fallback) }))] : []),
-    ...(moduleName === 'Partner Customers' ? [{ id: 'status', label: localized(partnerStatusField?.label || 'Status', language) }] : []),
-    { id: 'createdDate', label: t('Created Date') }, { id: 'actions', label: t('Actions') },
+    ...(moduleName === 'Properties' ? [{id:'number',label:t('estate.rowNumber')}] : []),
+    ...fields.map(field=>({id:fieldPath(field),label:localized(field.label,language)||field.name,field})),
+    ...(!fields.some(field=>field.name==='createdDate')?[{id:'createdDate',label:t('Created Date'),field:{name:'createdDate',type:'date'}}]:[]),
+    {id:'actions',label:t('Actions')},
   ];
-  const { visible, setVisible } = useVisibleColumns(tableColumns);
-  const hiddenColumnStyles = Object.fromEntries(tableColumns.flatMap((column, index) => visible.includes(column.id) ? [] : [[`& tr > :nth-child(${index + 1})`, { display: 'none' }]]));
+  const {visible,order:columnOrder,orderedColumns,setVisible}=useVisibleColumns(tableColumns,moduleName);
+  const hiddenColumnStyles={};
   const download = async extension => {
     setExporting(true);
     try {
       const rows = await loadAllExportRows(getApi, base, { q: search, sort, order, ...filters });
-      await exportSpreadsheet({ jsonArray: rows, csvColumns: entityExportColumns(definition, language, t), fileName: t(moduleName), extension, rightToLeft: language === 'fa' });
+      const exportFields = new Map(entityExportColumns(definition, language, t).map(column => [column.accessor, column]));
+      const exportColumns = columnOrder.filter(id => visible.includes(id)).map(id => exportFields.get(id)).filter(Boolean);
+      await exportSpreadsheet({ jsonArray: rows, csvColumns: await prepareTableExport(exportColumns,rows,t,language), fileName: t(moduleName), extension, rightToLeft: language === 'fa' });
     } catch { setError('serverError'); }
     finally { setExporting(false); }
   };
@@ -289,7 +232,7 @@ export function EntityPage({ moduleName }) {
             </Flex>
           </GridItem>
           <GridItem colSpan={{ base: 12, lg: 2 }} display="flex" justifyContent="end" alignItems="center" textAlign="right" gap="8px" className="crm-table-toolbar__actions">
-            <TableTools columns={tableColumns} visible={visible} onColumnsChange={setVisible}
+            <TableTools columns={tableColumns} visible={visible} order={columnOrder} onColumnsChange={setVisible}
               onImport={permissions?.create && permissions?.import !== false ? () => setImportOpen(true) : undefined}
               exports={permissions?.export !== false ? [
                 { label: 'Export as CSV', disabled: busy || exporting || !definition || !total, onClick: () => download('csv') },
@@ -333,64 +276,22 @@ export function EntityPage({ moduleName }) {
           {busy ? (
             <Flex minH="360px" align="center" justify="center"><Spinner /></Flex>
           ) : (
-            <Table className="crm-entity-table crm-mobile-records" role="table" sx={hiddenColumnStyles} minW={moduleName === "Residences" ? `${Math.max(640, visible.length * 150)}px` : undefined} dir={moduleName === "Properties" ? "ltr" : direction}>
-              <Thead><Tr>{moduleName === "Properties" && <Th dir={direction} textAlign="center" w="64px">{t("estate.rowNumber")}</Th>}<Th dir={direction}>{t("Name")}</Th><Th dir={direction}>{t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")}</Th>{moduleName === "Properties" && propertyTableColumns.map(([key, fallback]) => <Th key={key} dir={direction} whiteSpace="nowrap">{t(fallback)}</Th>)}{moduleName === "Residences" && <>
-                <Th dir={direction}>{t("Price")}</Th>
-                {residenceTableColumns.map(([key, fallback]) => <Th key={key} dir={direction} whiteSpace="nowrap">{residenceFieldLabel(key, fallback)}</Th>)}
-              </>}{moduleName === "Partner Customers" && <Th>{localized(partnerStatusField?.label || "Status", language)}</Th>}<Th dir={direction}>{t("Created Date")}</Th><Th dir={direction}>{t("Actions")}</Th></Tr></Thead>
-              <Tbody>
-                {items.map((item, index) => (
-                  <Tr key={item._id} className="crm-record-row" role="row">
-                    {moduleName === "Properties" && <Td role="cell" hidden={!visible.includes("number")} data-label={t("estate.rowNumber")} data-mobile-role="index" dir="ltr" textAlign="center" fontWeight="700" data-no-translate>{(page - 1) * pageSize + index + 1}</Td>}
-                    <Td role="cell" hidden={!visible.includes("name")} data-label={t("Name")} data-mobile-role="primary" dir={direction}><Flex align="center" gap="10px"><Flex className="crm-entity-row-icon" align="center" justify="center"><Icon as={PageIcon} /></Flex><Box><Text fontWeight="800" data-no-translate>{name(item)}</Text><SharedRecordBadge module={moduleName} record={item} />{["Properties", "Residences"].includes(moduleName) && <PropertyStatusBadge property={item} />}</Box></Flex></Td>
-                    <Td role="cell" hidden={!visible.includes("summary")} data-label={t(moduleName === "Properties" ? "Price" : moduleName === "Residences" ? "estate.section.location" : "Phone")} data-mobile-role="field" dir={direction} data-no-translate>{moduleName === "Properties" ? <CurrencyAmount amount={item.price?.amount} currency={item.price?.currency} compact /> : moduleName === "Residences" ? <Box minW="210px" maxW="280px">
-                      <Text fontWeight="600">{[item.city, item.district, item.neighborhood].filter(Boolean).join(" · ") || "-"}</Text>
-                      {item.address && <Text mt={1} fontSize="xs" color="var(--crm-muted)" whiteSpace="normal">{item.address}</Text>}
-                    </Box> : item.phone || "-"}</Td>
-                    {moduleName === "Properties" && <>
-                      <Td role="cell" hidden={!visible.includes("bedroom")} data-label={localized(definition?.fields.find(field => field.name === "bedroom")?.label, language) || t("Number Of Bedrooms")} data-mobile-role="field" dir={direction} data-no-translate>{item.bedroom || "-"}</Td>
-                      <Td role="cell" hidden={!visible.includes("floor")} data-label={t("Unit Floor")} data-mobile-role="field" dir={direction}>{residenceOption("floor", item.floor)}</Td>
-                      <Td role="cell" hidden={!visible.includes("propertyAgent")} data-label={t("Assigned Property Agent")} data-mobile-role="field" dir={direction}>{item.propertyAgent && typeof item.propertyAgent === "object" ? formLabel(item.propertyAgent, "-") : "-"}</Td>
-                    </>}
-                    {moduleName === "Residences" && <>
-                      <Td role="cell" hidden={!visible.includes("price")} data-label={t("Price")} data-mobile-role="field" dir={direction} whiteSpace="nowrap" data-no-translate>{item.price?.amount != null ? <CurrencyAmount amount={item.price.amount} currency={item.price.currency} compact /> : "-"}</Td>
-                      <Td role="cell" hidden={!visible.includes("transactionType")} data-label={residenceFieldLabel("transactionType", "Transaction Type")} data-mobile-role="field" dir={direction}>{residenceOption('transactionType', item.transactionType)}</Td>
-                      <Td role="cell" hidden={!visible.includes("constructionStatus")} data-label={residenceFieldLabel("constructionStatus", "estate.residence.constructionStatus")} data-mobile-role="field" dir={direction}>{residenceOption('constructionStatus', item.constructionStatus)}</Td>
-                      <Td role="cell" hidden={!visible.includes("developer")} data-label={residenceFieldLabel("developer", "estate.residence.developer")} data-mobile-role="field" dir={direction} data-no-translate>{item.developer || '-'}</Td>
-                      <Td role="cell" hidden={!visible.includes("area.value")} data-label={residenceFieldLabel("area.value", "estate.residence.builtArea")} data-mobile-role="field" dir={direction} whiteSpace="nowrap">
-                        <Text data-no-translate>{item.area?.value != null ? `${residenceNumber(item.area.value)} m²` : '-'}</Text>
-                        {item.area?.value != null && item.area?.type && <Text fontSize="xs" color="var(--crm-muted)">{residenceOption('area.type', item.area.type)}</Text>}
-                        {item.totalArea != null && <Text mt={1} fontSize="xs">{residenceFieldLabel('totalArea', 'estate.residence.siteArea')}: <span data-no-translate>{residenceNumber(item.totalArea)} m²</span></Text>}
-                      </Td>
-                      <Td role="cell" hidden={!visible.includes("building")} data-label={residenceFieldLabel("building", "estate.section.building")} data-mobile-role="field" dir={direction} whiteSpace="nowrap">
-                        {['blockCount', 'floorCount', 'unitCount'].map(key => <Text key={key} fontSize="xs">{residenceFieldLabel(key, `estate.residence.${key}`)}: <span data-no-translate>{residenceNumber(item[key])}</span></Text>)}
-                      </Td>
-                      <Td role="cell" hidden={!visible.includes("maintenanceFee.amount")} data-label={residenceFieldLabel("maintenanceFee.amount", "estate.residence.maintenanceFee")} data-mobile-role="field" dir={direction} whiteSpace="nowrap" data-no-translate>{item.maintenanceFee?.amount != null ? <CurrencyAmount amount={item.maintenanceFee.amount} currency={item.maintenanceFee.currency} compact /> : '-'}</Td>
-                      <Td role="cell" hidden={!visible.includes("contact")} data-label={residenceFieldLabel("contact", "Contact")} data-mobile-role="field" dir={direction} data-no-translate>
-                        <Text dir="ltr" whiteSpace="nowrap">{item.phone || '-'}</Text>
-                        {item.email && <Text dir="ltr" mt={1} fontSize="xs">{item.email}</Text>}
-                      </Td>
-                    </>}
-                    {moduleName === "Partner Customers" && <Td role="cell" hidden={!visible.includes("status")} data-label={localized(partnerStatusField?.label || "Status", language)} data-mobile-role="field"><Box className="selectOpt"><Select size="sm" minW="170px"
-                      aria-label={`${localized(partnerStatusField?.label || "Status", language)} · ${name(item)}`}
-                      className={item.status === "PENDING" ? "pending" : item.status === "ACTIVE" ? "completed" : ["LOST", "INACTIVE"].includes(item.status) ? "onHold" : "inProgress"}
-                      value={item.status || ""} isDisabled={!permissions?.update || Boolean(statusSaving) || !partnerStatusField?.options?.length}
-                      onChange={event => updatePartnerStatus(item, event.target.value)}>
-                      <option value="" disabled>{t("Select")}</option>
-                      {(partnerStatusField?.options || []).map(option => <option key={option.value} value={option.value}>{localized(option.label, language)}</option>)}
-                    </Select></Box></Td>}
-                    <Td role="cell" hidden={!visible.includes("createdDate")} data-label={t("Created Date")} data-mobile-role="field" dir={direction}>{item.createdDate ? new Date(item.createdDate).toLocaleDateString(dateLocale) : "-"}</Td>
-                    <Td role="cell" hidden={!visible.includes("actions")} data-label={t("Actions")} data-mobile-role="actions" dir={direction}>
-                      <Flex className="crm-row-actions" gap="5px">
-                        <ShareRecordButton module={moduleName} record={item} />
-                        <Tooltip label={t("Details")}><IconButton size="sm" variant="ghost" colorScheme="blue" aria-label={t("Details")} icon={<FiEye />} onClick={() => open(item, true)} /></Tooltip>
-                        {permissions?.update && <Tooltip label={t("Edit")}><IconButton size="sm" variant="ghost" colorScheme="teal" aria-label={t("Edit")} icon={<FiEdit3 />} onClick={() => open(item, false)} /></Tooltip>}
-                        {permissions?.delete && <Tooltip label={t("Delete")}><IconButton size="sm" variant="ghost" colorScheme="red" aria-label={t("Delete")} icon={<FiTrash2 />} onClick={() => setDeleting(item)} /></Tooltip>}
-                      </Flex>
-                    </Td>
-                  </Tr>
-                ))}
-              </Tbody>
+            <Table className="crm-entity-table crm-mobile-records" role="table" sx={hiddenColumnStyles} minW={moduleName === "Residences" ? `${Math.max(640, visible.length * 150)}px` : undefined} dir="ltr">
+              <Thead><Tr>{orderedColumns.map(column=><Th key={column.id} hidden={!visible.includes(column.id)} data-mobile-role={column.id==='number'?'index':column.id==='actions'?'actions':'field'} dir={direction}>{column.label}</Th>)}</Tr></Thead>
+              <Tbody>{items.map((item,index)=><Tr key={item._id} className="crm-record-row" role="row">
+                {orderedColumns.map(column=><Td key={column.id} role="cell" hidden={!visible.includes(column.id)} data-label={column.label} dir={direction}
+                  data-mobile-role={column.id==='actions'?'actions':column.id==='number'?'index':column.field?.name===primaryName?'primary':'field'}>
+                  {column.id==='number'?(page-1)*pageSize+index+1:column.id==='actions'?<Flex className="crm-row-actions" gap="5px">
+                    <ShareRecordButton module={moduleName} record={item} />
+                    <Tooltip label={t('Details')}><IconButton size="sm" variant="ghost" colorScheme="blue" aria-label={t('Details')} icon={<FiEye />} onClick={()=>open(item,true)} /></Tooltip>
+                    {permissions?.update&&<Tooltip label={t('Edit')}><IconButton size="sm" variant="ghost" colorScheme="teal" aria-label={t('Edit')} icon={<FiEdit3 />} onClick={()=>open(item,false)} /></Tooltip>}
+                    {permissions?.delete&&<Tooltip label={t('Delete')}><IconButton size="sm" variant="ghost" colorScheme="red" aria-label={t('Delete')} icon={<FiTrash2 />} onClick={()=>setDeleting(item)} /></Tooltip>}
+                  </Flex>:column.field?.name==='status'&&moduleName==='Partner Customers'?<Select size="sm" minW="170px" aria-label={column.label+' · '+name(item)} value={item.status||''} isDisabled={!permissions?.update||Boolean(statusSaving)||!partnerStatusField?.options?.length} onChange={event=>updatePartnerStatus(item,event.target.value)}>
+                    <option value="" disabled>{t('Select')}</option>{(partnerStatusField?.options||[]).map(option=><option key={option.value} value={option.value}>{localized(option.label,language)}</option>)}
+                  </Select>:column.field?.name===primaryName?<Box><Button variant="link" color="brand.600" whiteSpace="normal" textAlign="start" onClick={()=>open(item,true)}><TableFieldValue field={column.field} value={tableFieldValue(item,column.field)} record={item} /></Button><SharedRecordBadge module={moduleName} record={item}/>{['Properties','Residences'].includes(moduleName)&&<PropertyStatusBadge property={item}/>}</Box>
+                    :<TableFieldValue field={column.field} value={tableFieldValue(item,column.field)} record={item} moduleName={moduleName}/>}
+                </Td>)}
+              </Tr>)}</Tbody>
             </Table>
           )}
           {!busy && !items.length && <Flex className="crm-empty-state" align="center" justify="center"><Text>{t("No Data Found")}</Text></Flex>}
@@ -407,7 +308,7 @@ export function EntityPage({ moduleName }) {
         <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}`} dir={direction}>
           <ModalHeader>{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
-          <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{readOnly ? <RecordFields definition={definition} record={record} /> : form}
+          <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{readOnly ? <RecordEditingContext.Provider value={detailEditing}><RecordFields definition={definition} record={record} /></RecordEditingContext.Provider> : form}
             {readOnly && record?.createBy && <Text mt={4}>{t("estate.createdBy")}: <RecordValue name="createBy" value={record.createBy} /></Text>}
           </ModalBody>
           <ModalFooter><Stack direction="row">{readOnly && permissions?.update && <Button variant="brand" leftIcon={<FiEdit3 />} onClick={() => setReadOnly(false)}>{t('details.edit')}</Button>}{!readOnly && <Button variant="brand" isLoading={formik.isSubmitting} isDisabled={!definition} onClick={formik.handleSubmit}>{t("Save")}</Button>}<Button onClick={() => setRecord(null)}>{t("Close")}</Button></Stack></ModalFooter>

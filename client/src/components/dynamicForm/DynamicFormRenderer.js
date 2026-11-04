@@ -12,6 +12,8 @@ import { formLabel, formValue } from 'utils/formValue';
 import PriceInput from 'components/PriceInput';
 import { isAdmin } from 'roles';
 import { useRequiredFields } from 'utils/managedForm';
+import RecordValue from 'components/relations/RecordValue';
+import { stageProbability } from 'utils/opportunityMetrics';
 
 export const fieldPath = field => field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name;
 export const isVisible = (field, values) => field.enabled !== false && Object.entries(field.condition || {}).every(([key, expected]) => (Array.isArray(expected) ? expected.includes(getIn(values, key)) : getIn(values, key) === expected));
@@ -84,36 +86,44 @@ export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, n
       onChange(next); setQuery('');
     }} />;
 }
-export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false, fieldActions = {}, refreshKey = 0, idPrefix = 'field' }) {
+export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false, fieldActions = {}, fieldControls = {}, refreshKey = 0, idPrefix = 'field' }) {
   const { language, t } = useLanguage();
   const [user] = useState(() => JSON.parse(localStorage.getItem('user')));
-  useRequiredFields(readOnly ? [] : (definition?.fields || []).filter(field => !field.external && (!customOnly || field.kind === 'CUSTOM_FIELD')), formik);
+  useRequiredFields(readOnly ? [] : (definition?.fields || []).filter(field => (!field.external || field.relation) && (!customOnly || field.kind === 'CUSTOM_FIELD')), formik);
   if (!definition) return null;
   const change = (field, value) => {
     formik.setFieldValue(fieldPath(field), value);
+    if (definition.moduleName === 'Opportunities' && field.name === 'salesStage') formik.setFieldValue('probability', stageProbability(value, field.options));
     const resets = {
       category: { subtype: '', bedroom: null },
       transactionType: { 'sale.status': 'AVAILABLE', 'sale.buyerType': null, 'sale.lead': null, 'sale.partnerCustomer': null, 'sale.soldAt': null }, isInsideResidence: { residence: null },
       'sale.status': { 'sale.buyerType': null, 'sale.lead': null, 'sale.partnerCustomer': null, 'sale.soldAt': null },
       'sale.buyerType': { 'sale.lead': null, 'sale.partnerCustomer': null },
     };
-    Object.entries(resets[field.name] || {}).forEach(([key, v]) => formik.setFieldValue(key, v));
+    if (['Properties', 'Residences'].includes(definition.moduleName)) Object.entries(resets[field.name] || {}).forEach(([key, v]) => formik.setFieldValue(key, v));
   };
   return <Grid className="crm-dynamic-form" templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={5} dir="ltr">
     {[...definition.fields].sort((a, b) => a.order - b.order).filter(field => {
       if (!readOnly && definition.moduleName === 'Tasks' && field.kind === 'SYSTEM_FIELD') {
         if (field.name === 'delegatedBy' || (field.name === 'assignedToUser' && !isAdmin(user))) return false;
       }
-      return (!customOnly || field.kind === 'CUSTOM_FIELD') && !field.external && isVisible(field, formik.values);
+      return (!customOnly || field.kind === 'CUSTOM_FIELD') && (!field.external || field.relation) && isVisible(field, formik.values);
     }).map(field => {
       const path = fieldPath(field); const value = getIn(formik.values, path); const error = getIn(formik.errors, path);
+      if (fieldControls[field.name]) return <Box key={path} order={field.order} className="crm-dynamic-field" data-field-path={path}>{fieldControls[field.name](field)}</Box>;
       const label = localized(field.label, language); const id = `${idPrefix}-${path}`;
       let options = field.options || [];
       if (field.name === 'subtype') options = options.filter(o => (formik.values.category === 'COMMERCIAL' ? ['SHOP', 'OFFICE'] : ['APARTMENT', 'RESIDENCE', 'VILLA']).includes(o.value));
       if (field.name === 'sale.status') options = options.filter(o => o.value === 'AVAILABLE' || o.value === (formik.values.transactionType === 'RENT' ? 'RENTED' : 'SOLD'));
-      const common = { id, name: path, value: formValue(value) || formLabel(value), onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly };
+      const common = { id, name: path, value: formValue(value) || formLabel(value), onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly || field.readOnly };
       let control;
-      if (field.relation || field.catalog) control = <AsyncRelationSelect id={id} name={path} moduleName={field.relation || field.catalog} value={value} onChange={v => change(field, v)} onBlur={formik.handleBlur} disabled={readOnly} refreshKey={refreshKey} />;
+      if (field.relation && (Array.isArray(value) || (field.external && field.type === 'text'))) control = <Stack>
+        <Stack direction="row" flexWrap="wrap">{(Array.isArray(value) ? value : value ? [value] : []).map(item => <Box key={formValue(item)} display="inline-flex" alignItems="center" gap={2}>
+          <RecordValue value={item} moduleName={field.relation} />{!readOnly && <Button size="xs" variant="ghost" aria-label={t('Delete')} onClick={() => change(field, (Array.isArray(value) ? value : [value]).filter(entry => formValue(entry) !== formValue(item)))}>×</Button>}
+        </Box>)}</Stack>
+        {!readOnly && <AsyncRelationSelect id={id} name={path} moduleName={field.relation} value="" onChange={next => { if (next) change(field, [...new Set([...(Array.isArray(value) ? value.map(formValue) : value ? [formValue(value)] : []), next])]); }} onBlur={formik.handleBlur} refreshKey={refreshKey} />}
+      </Stack>;
+      else if (field.relation || field.catalog) control = <AsyncRelationSelect id={id} name={path} moduleName={field.relation || field.catalog} value={value} onChange={v => change(field, v)} onBlur={formik.handleBlur} disabled={readOnly} refreshKey={refreshKey} />;
       else if (field.type === 'file') control = <FileInput value={value || []} onChange={v => change(field, v)} disabled={readOnly} />;
       else if (field.type === 'currency' && readOnly) control = <CurrencyAmount amount={value} currency={getIn(formik.values, field.name.endsWith('.amount') ? field.name.replace(/\.amount$/, '.currency') : 'currency') || 'TRY'} />;
       else if (field.type === 'currency') control = <PriceInput {...common} value={value} onValueChange={v => change(field, v)} />;
@@ -137,7 +147,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
           value={value ?? ''}
           onChange={e => change(field, type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)} />;
       }
-      return <FormControl className="crm-dynamic-field" key={path} isRequired={field.required} isInvalid={Boolean(error)} data-read-only={readOnly ? "true" : "false"}>
+      return <FormControl className="crm-dynamic-field" key={path} order={field.order} data-field-path={path} data-field-type={field.type} isRequired={field.required} isInvalid={Boolean(error)} data-read-only={readOnly ? "true" : "false"}>
         {field.type !== 'checkbox' && <FormLabel htmlFor={id}>{label}</FormLabel>}
         <Box>{control}</Box>
         {!readOnly && fieldActions[field.name]}

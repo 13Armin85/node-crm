@@ -12,6 +12,15 @@ router.get('/:module/:id', run(async (req, res) => {
   const { moduleName, record, editable } = await loadRecord(req, req.params.module, req.params.id);
   if (moduleName === 'Users') for (const key of ['password', 'authVersion', 'moduleVisibility', 'avatarFilename']) delete record[key];
   const definition = await require('../services/formDefinitions').getDefinition(moduleName);
+  if (moduleName === 'Opportunities') {
+    const { readScope } = require('../services/recordAccess');
+    const source = { ...record };
+    if (record.lead) source.leadData = await require('../model/schema/lead').Lead.findOne(readScope(req, req.actor, 'Leads', { _id:record.lead })).select('leadStatus leadState').lean();
+      if (record.contact) source.contactData = await require('../model/schema/contact').Contact.findOne(readScope(req, req.actor, 'Contacts', { _id:record.contact })).select('convertedLeads state').lean();
+    const metrics = require('../services/opportunityMetrics');
+    record.leadStage = metrics.inferLeadStage(source);
+    record.probability = metrics.decorateOpportunity(record, definition).probability;
+  }
   const { get, set } = require('../services/estateValidation');
   for (const field of definition?.fields || []) {
     if (!['date', 'datetime'].includes(field.type)) continue;

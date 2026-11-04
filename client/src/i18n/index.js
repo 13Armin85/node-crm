@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import estate from './estate';
 import recordDetails from './recordDetails';
+import finance from './finance';
 import moment from 'moment';
 import 'moment/locale/fa';
 import 'moment/locale/tr';
@@ -651,6 +652,7 @@ export const translate = (value, language = "en") => {
 };
 
 Object.keys(recordDetails).forEach(language => Object.assign(dictionaries[language], recordDetails[language]));
+Object.keys(finance).forEach(language => Object.assign(dictionaries[language], finance[language]));
 
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(

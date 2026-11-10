@@ -5,8 +5,9 @@ export const LEAD_SELECTION_ERROR = 'leadSelectionRequired';
 // Lead details and property selection are optional. Legacy customer and
 // assignee relationships remain stored without appearing as customer pickers.
 export const prepareLeadDefinition = definition => definition?.moduleName === 'Leads'
-  ? { ...definition, fields: (definition.fields || []).map(field => ({ ...field, required: false,
-      ...(field.kind !== 'CUSTOM_FIELD' && field.relation && field.name !== 'associatedListing' ? { enabled: false } : {}),
+  ? { ...definition, fields: (definition.fields || []).map(field => ({ ...field,
+      ...(!definition._id ? { required: false } : {}),
+      ...(!definition._id && field.kind !== 'CUSTOM_FIELD' && field.relation && field.name !== 'associatedListing' ? { enabled: false } : {}),
       ...(field.kind !== 'CUSTOM_FIELD' && field.name === 'associatedListing' ? { external: false, type: 'select', relation: 'Properties' } : {}),
     })) }
   : definition;

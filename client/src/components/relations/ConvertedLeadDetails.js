@@ -2,6 +2,7 @@ import { Box, Grid, Link, Text } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { tr } from 'i18n/runtime';
 import RecordValue, { isRecordId } from './RecordValue';
+import { FileInput } from 'components/dynamicForm/DynamicFormRenderer';
 
 export default function ConvertedLeadDetails({ records, title }) {
   if (!records?.length) return null;
@@ -17,9 +18,9 @@ export default function ConvertedLeadDetails({ records, title }) {
         {entries.filter(([, value]) => value !== null && value !== undefined && value !== '' && (!Array.isArray(value) || value.length)).map(([name, value]) =>
           <Box key={name} minW={0} className="crm-record-field">
             <Text fontSize="sm" fontWeight="bold"><RecordValue value={fields.find(field => field.name === name)?.label || name} /></Text>
-            <Text fontSize="sm" whiteSpace="pre-wrap" overflowWrap="anywhere">{name === 'leadName' && isRecordId(record.leadId)
+            {fields.find(field => field.name === name)?.type === 'file' && Array.isArray(value) ? <FileInput value={value} disabled /> : <Text fontSize="sm" whiteSpace="pre-wrap" overflowWrap="anywhere">{name === 'leadName' && isRecordId(record.leadId)
               ? <Link as={RouterLink} to={`/leadView/${record.leadId}`} color="var(--crm-accent)" textDecoration="underline"><RecordValue name={name} value={value} /></Link>
-              : <RecordValue name={name} field={fields.find(field => field.name === name)} value={value} />}</Text>
+              : <RecordValue name={name} field={fields.find(field => field.name === name)} value={value} />}</Text>}
           </Box>)}
       </Grid>;
     })}

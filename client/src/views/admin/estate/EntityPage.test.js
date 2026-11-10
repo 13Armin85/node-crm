@@ -247,7 +247,7 @@ test('property table uses the assigned agent and populated references normalize 
   expect(container.textContent).toContain('Assigned Agent'); expect(container.textContent).not.toContain('Creator');
   await act(async () => Simulate.click(container.querySelector('button[aria-label="Edit"]')));
   expect(document.querySelector('[name="bedroom"]').value).toBe('1+4');
-  await act(async () => Simulate.change(document.querySelector('[name="bedroom"]'), { target: { value: '4+2' } }));
+  await act(async () => Simulate.change(document.querySelector('[name="bedroom"]'), { target: { value: '0+1' } }));
   await act(async () => Simulate.click(button('Save')));
-  expect(putApi).toHaveBeenCalledWith('api/estate/Properties/property-1', expect.objectContaining({ bedroom: '4+2', propertyAgent: agentId, propertyOwner: ownerId }));
+  expect(putApi).toHaveBeenCalledWith('api/estate/Properties/property-1', expect.objectContaining({ bedroom: '0+1', propertyAgent: agentId, propertyOwner: ownerId }));
 }, 20000);

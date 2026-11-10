@@ -3953,3 +3953,47 @@ body:has(.crm-auth-shell) { min-width: 0; }
 @media (prefers-reduced-motion: reduce) {
   .crm-opportunity-card, .crm-opportunity-column__body { transition: none; }
 }
+
+/* Sectioned property form: wider dialog, numbered groups, full-width long fields. */
+.chakra-modal__content-container .crm-record-form.crm-record-form--sectioned {
+  width: min(880px, calc(var(--crm-dialog-width) - var(--crm-dialog-gap-left) - var(--crm-dialog-gap-right) - 16px)) !important;
+  max-width: 880px !important;
+  max-height: min(820px, calc(var(--crm-dialog-height) - var(--crm-dialog-gap-top) - var(--crm-dialog-gap-bottom) - 16px)) !important;
+}
+.crm-record-form--sectioned .chakra-modal__body { padding: 16px 20px 20px !important; background: var(--crm-bg); }
+.crm-form-section {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--crm-border);
+  border-radius: 12px;
+  background: var(--crm-panel-solid);
+}
+.crm-form-section__header {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--crm-border);
+}
+.crm-form-section__step {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--crm-panel-hover);
+  color: var(--crm-primary);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.crm-form-section__title { color: var(--crm-text); font-size: 14px; font-weight: 700; line-height: 1.4; }
+.crm-form-section__hint { margin-top: 2px; color: var(--crm-muted); font-size: 12px; line-height: 1.5; }
+.crm-record-form--sectioned .crm-form-section .chakra-grid { gap: 14px 16px !important; }
+.crm-record-form--sectioned .crm-dynamic-field .chakra-form__helper-text { font-size: 12px; color: var(--crm-muted); }
+.crm-record-form--sectioned .crm-dynamic-field[data-field-type="checkbox"] { align-self: end; padding-block: 8px; }
+.crm-record-form--sectioned .chakra-modal__footer { border-top: 1px solid var(--crm-border); background: var(--crm-panel-solid); }
+@media (max-width: 640px) {
+  .crm-form-section { padding: 12px; border-radius: 10px; }
+  .crm-record-form--sectioned .chakra-modal__body { padding: 12px !important; }
+}

@@ -65,6 +65,22 @@ export function normalizeFormValues(definition, values) {
   return definition?.moduleName === 'Leads' ? normalizeLeadRelations(normalized) : normalized;
 }
 
+// Apply new administrator defaults only to untouched, missing values.
+export function useFormDefaults(fields, formik, readOnly = false) {
+  const current = useRef(formik); current.current = formik;
+  const configured = (fields || []).filter(field => field.enabled !== false && field.defaultValue !== undefined);
+  const signature = JSON.stringify(configured.map(field => [field.kind, field.name, field.defaultValue]));
+  const setValue = formik?.setFieldValue;
+  useEffect(() => {
+    if (readOnly || !setValue) return;
+    for (const field of JSON.parse(signature)) {
+      const [kind, name, value] = field;
+      const path = kind === 'CUSTOM_FIELD' ? `customFields.${name}` : name;
+      if (getIn(current.current.values, path) === undefined) setValue(path, value, false);
+    }
+  }, [signature, setValue, readOnly]);
+}
+
 // Validate the fields that the configured form actually shows, including custom fields.
 export function validateFormValues(definition, values) {
   definition = prepareLeadDefinition(definition);

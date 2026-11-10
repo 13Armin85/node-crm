@@ -1,6 +1,7 @@
 import SearchableSelect from 'components/SearchableSelect';
+import BedroomSelect from 'components/BedroomSelect';
 import React, { useEffect, useState } from 'react';
-import { Alert, AlertIcon, Box, Button, Checkbox, FormControl, FormErrorMessage, FormHelperText, FormLabel, Grid, Input, Radio, RadioGroup, Select, Stack, Text, Textarea } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, Button, Checkbox, Flex, FormControl, FormErrorMessage, FormHelperText, FormLabel, Grid, Input, Radio, RadioGroup, Select, Stack, Text, Textarea } from '@chakra-ui/react';
 import { getIn } from 'formik';
 import { useLanguage, translate } from 'i18n';
 import { getApi, postApi } from 'services/api';
@@ -11,7 +12,7 @@ import CurrencyAmount from 'components/CurrencyAmount';
 import { formLabel, formValue } from 'utils/formValue';
 import PriceInput from 'components/PriceInput';
 import { isAdmin } from 'roles';
-import { useRequiredFields } from 'utils/managedForm';
+import { useRequiredFields, useFormDefaults } from 'utils/managedForm';
 import RecordValue from 'components/relations/RecordValue';
 import { stageProbability } from 'utils/opportunityMetrics';
 
@@ -86,9 +87,36 @@ export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, n
       onChange(next); setQuery('');
     }} />;
 }
-export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false, fieldActions = {}, fieldControls = {}, refreshKey = 0, idPrefix = 'field' }) {
+const wideTypes = ['textarea', 'file', 'multiselect'];
+// Groups rendered fields into titled sections. Sections follow the Form Builder
+// order of their first field and fields keep their configured order inside a
+// section; fields without a section (including new custom fields) are grouped
+// last, and empty sections — e.g. after fields are deleted — are not shown.
+function FormSections({ sections, items, t, direction }) {
+  const known = new Set(sections.flatMap(section => section.fields));
+  const groups = [...sections, { id: 'other', title: 'estate.section.other', fields: null }]
+    .map(section => ({ ...section, items: items.filter(item => section.fields ? section.fields.includes(item.field.name) : !known.has(item.field.name)) }))
+    .filter(section => section.items.length)
+    .sort((a, b) => (a.id === 'other') - (b.id === 'other') || a.items[0].field.order - b.items[0].field.order);
+  return <Stack className="crm-form-sections" spacing={4} dir={direction}>
+    {groups.map((section, index) => <Box as="section" key={section.id} className="crm-form-section" data-section={section.id} aria-labelledby={`form-section-${section.id}`}>
+      <Flex className="crm-form-section__header" align="center" gap={3}>
+        <Box className="crm-form-section__step" aria-hidden="true">{index + 1}</Box>
+        <Box minW={0}>
+          <Text id={`form-section-${section.id}`} className="crm-form-section__title">{t(section.title)}</Text>
+          {section.hint && <Text className="crm-form-section__hint">{t(section.hint)}</Text>}
+        </Box>
+      </Flex>
+      <Grid className="crm-dynamic-form" templateColumns={{ base: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }} gap={4}>
+        {section.items.map(item => item.node)}
+      </Grid>
+    </Box>)}
+  </Stack>;
+}
+export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false, fieldActions = {}, fieldControls = {}, refreshKey = 0, idPrefix = 'field', sections }) {
   const { language, t } = useLanguage();
   const [user] = useState(() => JSON.parse(localStorage.getItem('user')));
+  useFormDefaults((definition?.fields || []).filter(field => !customOnly || field.kind === 'CUSTOM_FIELD'), formik, readOnly);
   useRequiredFields(readOnly ? [] : (definition?.fields || []).filter(field => (!field.external || field.relation) && (!customOnly || field.kind === 'CUSTOM_FIELD')), formik);
   if (!definition) return null;
   const change = (field, value) => {
@@ -102,25 +130,24 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
     };
     if (['Properties', 'Residences'].includes(definition.moduleName)) Object.entries(resets[field.name] || {}).forEach(([key, v]) => formik.setFieldValue(key, v));
   };
-  return <Grid className="crm-dynamic-form" templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={5} dir="ltr">
-    {[...definition.fields].sort((a, b) => a.order - b.order).filter(field => {
+  const direction = t('direction') === 'rtl' || language === 'fa' ? 'rtl' : 'ltr';
+  const items = [...definition.fields].sort((a, b) => a.order - b.order).filter(field => {
       if (!readOnly && definition.moduleName === 'Tasks' && field.kind === 'SYSTEM_FIELD') {
         if (field.name === 'delegatedBy' || (field.name === 'assignedToUser' && !isAdmin(user))) return false;
       }
       return (!customOnly || field.kind === 'CUSTOM_FIELD') && (!field.external || field.relation) && isVisible(field, formik.values);
     }).map(field => {
       const path = fieldPath(field); const value = getIn(formik.values, path); const error = getIn(formik.errors, path);
-      if (fieldControls[field.name]) return <Box key={path} order={field.order} className="crm-dynamic-field" data-field-path={path}>{fieldControls[field.name](field)}</Box>;
+      const span = sections && wideTypes.includes(field.type) ? '1 / -1' : undefined;
+      if (fieldControls[field.name] && field.relation && ['select', 'text'].includes(field.type)) return { field, node: <Box key={path} order={field.order} gridColumn={span} className="crm-dynamic-field" data-field-path={path} data-field-type={field.type}>{fieldControls[field.name](field)}</Box> };
       const label = localized(field.label, language); const id = `${idPrefix}-${path}`;
       let options = field.options || [];
-      if (field.name === 'subtype') options = options.filter(o => (formik.values.category === 'COMMERCIAL' ? ['SHOP', 'OFFICE'] : ['APARTMENT', 'RESIDENCE', 'VILLA']).includes(o.value));
+      if (field.name === 'subtype' && formik.values.category) options = options.filter(o => !['APARTMENT', 'RESIDENCE', 'VILLA', 'SHOP', 'OFFICE'].includes(o.value) || (formik.values.category === 'COMMERCIAL' ? ['SHOP', 'OFFICE'] : ['APARTMENT', 'RESIDENCE', 'VILLA']).includes(o.value));
       if (field.name === 'sale.status') options = options.filter(o => o.value === 'AVAILABLE' || o.value === (formik.values.transactionType === 'RENT' ? 'RENTED' : 'SOLD'));
       const common = { id, name: path, value: formValue(value) || formLabel(value), onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly || field.readOnly };
       let control;
-      if (field.name === 'bedroom' && field.kind === 'SYSTEM_FIELD') control = <>
-        <Input {...common} type="text" dir="ltr" list={`${id}-suggestions`} value={value ?? ''} />
-        <datalist id={`${id}-suggestions`}>{options.map(option => <option key={option.value} value={option.value} />)}</datalist>
-      </>;
+      if (field.name === 'bedroom' && field.kind === 'SYSTEM_FIELD' && ['select', 'text'].includes(field.type)) control = <BedroomSelect id={id} name={path} value={value ?? ''} options={options}
+        placeholder={common.placeholder} onChange={next => change(field, next)} onBlur={formik.handleBlur} readOnly={readOnly || field.readOnly} />;
       else if (field.relation && (Array.isArray(value) || (field.external && field.type === 'text'))) control = <Stack>
         <Stack direction="row" flexWrap="wrap">{(Array.isArray(value) ? value : value ? [value] : []).map(item => <Box key={formValue(item)} display="inline-flex" alignItems="center" gap={2}>
           <RecordValue value={item} moduleName={field.relation} />{!readOnly && <Button size="xs" variant="ghost" aria-label={t('Delete')} onClick={() => change(field, (Array.isArray(value) ? value : [value]).filter(entry => formValue(entry) !== formValue(item)))}>×</Button>}
@@ -151,13 +178,16 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
           value={value ?? ''}
           onChange={e => change(field, type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)} />;
       }
-      return <FormControl className="crm-dynamic-field" key={path} order={field.order} data-field-path={path} data-field-type={field.type} isRequired={field.required} isInvalid={Boolean(error)} data-read-only={readOnly ? "true" : "false"}>
+      return { field, node: <FormControl className="crm-dynamic-field" key={path} order={field.order} gridColumn={span} data-field-path={path} data-field-type={field.type} isRequired={field.required} isInvalid={Boolean(error)} data-read-only={readOnly ? "true" : "false"}>
         {field.type !== 'checkbox' && <FormLabel htmlFor={id}>{label}</FormLabel>}
         <Box>{control}</Box>
         {!readOnly && fieldActions[field.name]}
         {field.helpText && <FormHelperText>{localized(field.helpText, language)}</FormHelperText>}
         <FormErrorMessage>{error ? localized(field.validationMessage, language) || (['required', 'invalid', 'relationNotFound', 'duplicate'].includes(error) ? t(`estate.${error}`) : error) : ''}</FormErrorMessage>
-      </FormControl>;
-    })}
+      </FormControl> };
+    });
+  if (sections) return <FormSections sections={sections} items={items} t={t} direction={direction} />;
+  return <Grid className="crm-dynamic-form" templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={5} dir={direction}>
+    {items.map(item => item.node)}
   </Grid>;
 }

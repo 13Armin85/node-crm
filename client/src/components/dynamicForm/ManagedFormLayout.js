@@ -1,7 +1,7 @@
 import FormFeedback from 'components/dynamicForm/FormFeedback';
 import React from 'react';
 import { Alert, AlertIcon, Box, FormControl, FormErrorMessage, FormLabel, Grid, GridItem, Select, Text } from '@chakra-ui/react';
-import { useFormDefinition, useRequiredFields } from 'utils/managedForm';
+import { useFormDefinition, useRequiredFields, useFormDefaults } from 'utils/managedForm';
 import { getIn } from 'formik';
 import { translate, useLanguage } from 'i18n';
 import DynamicFormRenderer, { AsyncRelationSelect, localized, isVisible } from './DynamicFormRenderer';
@@ -19,6 +19,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
   const definition = providedDefinition !== undefined ? providedDefinition : loadedDefinition;
   const fields = definition?.fields || [];
   const renderedNames = React.Children.toArray(children).flatMap(findNames);
+  useFormDefaults(fields, formik);
   useRequiredFields(fields.filter(field => field.kind === 'SYSTEM_FIELD' && renderedNames.includes(field.name)), formik);
   const hasControl = node => React.isValidElement(node) && (node.type === FormControl || React.Children.toArray(node.props.children).some(hasControl));
   const message = error => ['required', 'invalid', 'relationNotFound', 'duplicate'].includes(error) ? t(`estate.${error}`) : error;
@@ -65,7 +66,10 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     // A shared grid lets custom, system and relation fields obey the same order,
     // even when the original form placed them in separate visual groups.
     if (node.type === Grid || (isContainer && !field && names.some(name => fields.some(field => field.name === name)))) patch.display = 'contents';
-    if (field && typeof node.props.name === 'string' && field.placeholder) patch.placeholder = localized(field.placeholder, language);
+    if (field && typeof node.props.name === 'string') {
+      patch.placeholder = localized(field.placeholder, language);
+      if (['number', 'currency'].includes(field.type)) { patch.min = field.min; patch.max = field.max; }
+    }
     if (/^(Select|Input|Textarea|select|input|textarea)$/.test(type) && node.props.value != null) {
       patch.value = typeof node.props.value === 'object'
         ? (select ? formValue(node.props.value) : formLabel(node.props.value))
@@ -79,7 +83,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
     if (isContainer && field && !React.Children.toArray(node.props.children).some(hasControl)) {
       const error = getIn(formik?.errors, name);
       const showError = Boolean(error && (formik?.submitCount > 0 || getIn(formik?.touched, name)));
-      const content = <>{patch.children}<FormErrorMessage>{showError ? localized(field.validationMessage, language) || message(error) : ''}</FormErrorMessage></>;
+      const content = <>{patch.children}{field.helpText && <Text fontSize="xs" color="gray.500">{localized(field.helpText, language)}</Text>}<FormErrorMessage>{showError ? localized(field.validationMessage, language) || message(error) : ''}</FormErrorMessage></>;
       if (node.type === FormControl || /FormControl/.test(type)) {
         patch.isInvalid = showError; patch.isRequired = Boolean(field.required); patch.children = content;
       } else patch.children = <FormControl isInvalid={showError} isRequired={Boolean(field.required)}>{content}</FormControl>;
@@ -88,5 +92,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
   };
   return <Grid className="crm-managed-layout" templateColumns="repeat(12, minmax(0, 1fr))" gap={3}><FormFeedback formik={formik} />{(failed || definitionError) && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
     {includeCustom && definition && <Box className="crm-managed-fields" mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
+    {definition && fields.filter(field => field.kind === 'SYSTEM_FIELD' && !field.external && !renderedNames.includes(field.name)).map(field =>
+      <GridItem key={field.name} colSpan={{ base: 12, md: 6 }} order={field.order}><DynamicFormRenderer definition={{ ...definition, fields: [field] }} formik={formik} /></GridItem>)}
   </Grid>;
 }

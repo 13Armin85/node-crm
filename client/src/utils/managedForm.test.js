@@ -9,9 +9,12 @@ test('stored room aliases select the configured option and residence multiselect
     { name: 'constructionStatus', type: 'multiselect', options: [{ value: 'READY' }] },
   ] };
   const values = { bedroom: '۲ + ۱', unitTypes: ['3+1'], constructionStatus: 'READY' };
-  expect(normalizeFormValues(definition, values)).toEqual({ bedroom: '1+2', unitTypes: ['1+3'], constructionStatus: ['READY'] });
+  expect(normalizeFormValues(definition, values)).toEqual({ bedroom: '2+1', unitTypes: ['1+3'], constructionStatus: ['READY'] });
   expect(validateFormValues(definition, values)).toEqual({});
-  expect(validateFormValues(definition, { bedroom: '5+5' })).toEqual({ bedroom: 'invalid' });
+  for (const bedroom of ['0+1', '1+0', '1+2', '2+1', '12+27', '5+5', 'Studio', '1-4', '100']) {
+    expect(validateFormValues(definition, { bedroom })).toEqual({});
+    expect(normalizeFormValues(definition, { bedroom }).bedroom).toBe(bedroom);
+  }
 });
 const definition = { fields: [
   { name: 'leadName', type: 'text', required: true },

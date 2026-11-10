@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getApi } from 'services/api';
 import { useLanguage } from 'i18n';
 import { formLabel, formValue } from 'utils/formValue';
+import { isRoomPlanField, roomPlanMatches } from 'utils/roomPlans';
 
 export const isRecordId = value => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value);
 const modules = {
@@ -53,5 +54,7 @@ export default function RecordValue({ value, name, field, moduleName }) {
       <span key={key}>{index > 0 && ', '}{t(key)}: <RecordValue name={key} value={item} /></span>)}</>;
   }
   if (isRecordId(value)) return <Reference id={value} moduleName={relation} />;
+  const option = !relation && field?.options?.find(option => isRoomPlanField(field) ? roomPlanMatches(option.value, value, field) : String(option.value) === String(value));
+  if (option?.label || option?.name) return <RecordValue value={option.label || option.name} />;
   return <>{t(String(value))}</>;
 }

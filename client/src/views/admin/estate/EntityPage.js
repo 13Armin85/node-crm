@@ -1,5 +1,6 @@
 import { tableFields, TableFieldValue, tableFieldValue, prepareTableExport } from 'components/table/FormTableFields';
 import RecordPagination from "components/pagination/RecordPagination";
+import BedroomSelect from 'components/BedroomSelect';
 import TableTools, { useVisibleColumns } from 'components/table/TableTools';
 import RecordImportDialog from 'components/table/RecordImportDialog';
 import { exportSpreadsheet } from 'utils/spreadsheet';
@@ -34,6 +35,18 @@ import RecordValue from 'components/relations/RecordValue';
 import CatalogRecordDialog from './CatalogRecordDialog';
 import RecordFields from 'components/record/RecordFields';
 import { RecordEditingContext, useRecordEditing, saveRecordChanges } from 'components/record/recordEditing';
+
+// Visual grouping of the property form. Membership is by field name only, so
+// Form Builder still owns which fields exist, their order and their settings.
+export const propertySections = [
+  { id: 'basic', title: 'estate.section.basic', hint: 'estate.section.basicHint', fields: ['title', 'description', 'propertyAgent', 'propertyOwner'] },
+  { id: 'type', title: 'estate.section.type', hint: 'estate.section.typeHint', fields: ['category', 'subtype', 'transactionType', 'suitableFor'] },
+  { id: 'price', title: 'estate.section.price', fields: ['price.amount', 'price.currency'] },
+  { id: 'location', title: 'estate.section.location', fields: ['district', 'neighborhood', 'isInsideResidence', 'residence', 'location'] },
+  { id: 'details', title: 'estate.section.details', fields: ['bedroom', 'area.value', 'area.type', 'floor', 'buildingAge', 'occupancyStatus', 'yearBuilt', 'parking', 'flooringType', 'Facility', 'lrNo', 'Floor', 'propertyDescription'] },
+  { id: 'sale', title: 'estate.section.sale', fields: ['sale.status', 'sale.buyerType', 'sale.lead', 'sale.partnerCustomer', 'sale.soldAt'] },
+  { id: 'files', title: 'estate.section.files', fields: ['files'] },
+];
 
 export function EntityPage({ moduleName }) {
   const outerEditing = useRecordEditing();
@@ -155,6 +168,7 @@ export function EntityPage({ moduleName }) {
     finally { setStatusSaving(null); }
   };
   const form = definition ? <DynamicFormRenderer definition={definition} formik={formik} readOnly={readOnly} refreshKey={relatedVersion}
+    sections={moduleName === 'Properties' ? propertySections : undefined}
     fieldControls={moduleName === 'Properties' ? { propertyOwner: field => <PropertyOwnerField field={field} formik={formik} readOnly={readOnly} /> } : {}}
     fieldActions={{
       ...(districtPermissions?.create ? { district: <Button size="sm" variant="outline" mt={2} leftIcon={<FiPlus />} onClick={() => setCreatingRelated('Districts')}>{t('Create New District')}</Button> } : {}),
@@ -251,8 +265,7 @@ export function EntityPage({ moduleName }) {
                   <AsyncRelationSelect id={`filter-${key}`} moduleName={field.relation || field.catalog} value={filters[key] || ''} onChange={value => updateFilter(key, value)} />
                 </FormControl>;
                 if (key === 'bedroom') return <FormControl key={key}>
-                  <Input aria-label={localized(field.label, language)} placeholder={localized(field.label, language)} dir="ltr" list="filter-bedroom-suggestions" value={filters[key] || ''} onChange={event => updateFilter(key, event.target.value)} />
-                  <datalist id="filter-bedroom-suggestions">{field.options?.map(option => <option key={option.value} value={option.value} />)}</datalist>
+                  <BedroomSelect id="filter-bedroom" aria-label={localized(field.label, language)} placeholder={localized(field.label, language)} options={field.options} value={filters[key] || ''} onChange={value => updateFilter(key, value)} />
                 </FormControl>;
                 return field.options?.length ? (
                   <Select key={key} value={filters[key] || ""} aria-label={localized(field.label, language)} onChange={(event) => updateFilter(key, event.target.value)}>
@@ -312,7 +325,7 @@ export function EntityPage({ moduleName }) {
 
       <Modal isOpen={record !== null} onClose={() => setRecord(null)} size="5xl" scrollBehavior="inside">
         <ModalOverlay />
-        <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}`} dir={direction}>
+        <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}${!readOnly && moduleName === 'Properties' ? " crm-record-form--sectioned" : ""}`} dir={direction}>
           <ModalHeader>{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
           <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{readOnly ? <RecordEditingContext.Provider value={detailEditing}><RecordFields definition={definition} record={record} /></RecordEditingContext.Provider> : form}

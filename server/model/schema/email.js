@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const email = new mongoose.Schema({
+  opportunity: { type: mongoose.Schema.Types.ObjectId, ref: 'Opportunities' },
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
   sender: {
     type: mongoose.Schema.Types.ObjectId,

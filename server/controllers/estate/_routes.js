@@ -21,9 +21,9 @@ const { notifyRecordActivity } = require('../../services/notifications');
 const router = express.Router();
 const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const modules = {
-  Properties: { model: Property, search: ['title', 'district', 'neighborhood', 'propertyType', 'propertyAddress'], sort: ['title', 'price.amount', 'createdDate'], filters: ['category', 'subtype', 'transactionType', 'district', 'neighborhood', 'residence', 'bedroom', 'buildingAge', 'occupancyStatus', 'floor', 'area.type', 'sale.status'] },
+  Properties: { model: Property, search: ['title', 'district', 'neighborhood', 'propertyType', 'propertyAddress'], sort: ['title', 'price.amount', 'createdDate'], filters: ['category', 'subtype', 'transactionType', 'suitableFor', 'district', 'neighborhood', 'residence', 'bedroom', 'buildingAge', 'occupancyStatus', 'floor', 'area.type', 'sale.status'] },
   'Partner Customers': { model: PartnerCustomer, search: ['fullName', 'companyName', 'phone', 'email'], sort: ['fullName', 'companyName', 'createdDate'], filters: ['customerType', 'status', 'district'] },
-  Residences: { model: Residence, search: ['name', 'developer', 'city', 'district', 'neighborhood', 'address'], sort: ['name', 'price.amount', 'createdDate'], filters: ['category', 'transactionType', 'city', 'district', 'neighborhood', 'constructionStatus', 'occupancyStatus', 'sale.status'] },
+  Residences: { model: Residence, search: ['name', 'developer', 'city', 'district', 'neighborhood', 'address'], sort: ['name', 'price.amount', 'createdDate'], filters: ['category', 'transactionType', 'city', 'district', 'neighborhood', 'constructionStatus', 'occupancyStatus', 'sale.status', 'price.currency', 'paymentMethod'] },
   Leads: { model: Lead, search: ['leadName', 'leadEmail', 'leadPhoneNumber'], sort: ['leadName', 'createdDate'], filters: [] },
 };
 const fileSchema = new mongoose.Schema({ contentHash: String, name: String, storageName: String, mimeType: String, size: Number, uploadedAt: Date, createBy: mongoose.Schema.Types.ObjectId });
@@ -91,6 +91,10 @@ router.get('/dashboard/sales-summary', asyncRoute(async (req, res) => {
   if (!can(req.actor, 'Dashboard', 'view')) return res.status(403).json({ code: 'forbidden' });
   res.json(await require('../../services/commissionSummary').commissionSummary(req));
 }));
+router.get('/dashboard/finance', asyncRoute(async (req, res) => {
+  if (!can(req.actor, 'Dashboard', 'view')) return res.status(403).json({ code: 'forbidden' });
+  res.json(await require('../../services/dashboardFinance').dashboardFinance(req));
+}));
 router.get('/dashboard/exchange-rate', asyncRoute(async (req, res) => {
   try {
     res.json(await getTryUsdRate());
@@ -145,10 +149,17 @@ router.get('/:module', moduleRequired, permission('view'), asyncRoute(async (req
   const q = String(req.query.q || '').slice(0, 100);
   query.$and.push(...(searchCondition(search, q).$and || []));
   for (const key of filters) if (typeof req.query[key] === 'string' && req.query[key]) query[key] = req.query[key];
+  if (req.params.module === 'Properties') {
+    const definition = await getDefinition('Properties');
+    for (const field of definition.fields.filter(require('../../services/propertySuitability').isSuitabilityField)) {
+      const key = field.kind === 'CUSTOM_FIELD' ? 'customFields.' + field.name : field.name;
+      if (typeof req.query[key] !== 'string' || !req.query[key]) continue;
+      if (!field.options?.some(option => option.value === req.query[key])) fail(key);
+      query[key] = req.query[key];
+    }
+  }
   if (req.params.module === 'Properties' && query.bedroom) {
-    const plan = require('../../services/roomPlans').normalizeRoomPlan(query.bedroom);
-    const aliases = /^\d+\+\d+$/.test(plan) ? [plan, plan.split('+').reverse().join('+')] : [plan];
-    query.bedroom = { $in: [...new Set(aliases)] };
+    query.bedroom = require('../../services/roomPlans').normalizeBedroom(query.bedroom);
   }
   if (['Properties', 'Residences'].includes(req.params.module) && (req.query.priceMin || req.query.priceMax)) {
     query['price.amount'] = {};
@@ -197,7 +208,12 @@ async function payload(req, previous = {}) {
   if (req.params.module === 'Properties') {
     values.area ||= {};
     values.area.type ||= previous.area?.type || 'NET';
-    values = normalizeProperty(values);
+    // Retain historical values of fields removed from the editor. In particular,
+    // hiding transaction fields must never reset an existing sale or tenancy.
+    values = normalizeProperty({ ...previous, ...values,
+      price: { ...previous.price, ...values.price }, area: { ...previous.area, ...values.area },
+      sale: { ...previous.sale, ...values.sale },
+    }, definition);
     values.name = values.title;
     values.status = values.sale.status === 'SOLD' ? 'Sold' : values.sale.status === 'RENTED' ? 'Rented' : 'Available';
     if (values.residence) await related(req, 'Residences', values.residence, 'residence');
@@ -219,7 +235,7 @@ async function payload(req, previous = {}) {
     if (values.sale.partnerCustomer) await related(req, 'Partner Customers', values.sale.partnerCustomer, 'sale.partnerCustomer');
   }
   if (['Properties', 'Residences'].includes(req.params.module)) {
-    if (req.body.files) {
+    if (req.body.files && definition.fields.some(field => field.name === 'files' && field.enabled !== false)) {
       if (!Array.isArray(req.body.files) || req.body.files.length > 100) fail('files');
       const ids = req.body.files.map(item => String(item.id || item._id));
       if (new Set(ids).size !== ids.length) throw Object.assign(new InputError('duplicate', 'files'), { status: 409 });

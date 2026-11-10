@@ -90,7 +90,7 @@ const contactSchema = new mongoose.Schema({
 const initializeContactSchema = async () => {
     const schemaFieldsData = await fetchSchemaFields();
     const protectedFields = new Set(['createBy', 'assignUser', 'assignedBy', 'createdDate', 'updatedDate', 'deleted',
-        'convertedLeads', 'customFields', 'interestProperty', 'quotes', 'relatedLeads', 'relatedOpportunities', 'relatedProperties', 'partnerCustomer']);
+        'convertedLeads', 'customFields', 'interestProperty', 'quotes', 'relatedLeads', 'relatedOpportunities', 'relatedProperties', 'partnerCustomer', 'listedFor']);
     schemaFieldsData[0]?.fields?.forEach((item) => {
         if (protectedFields.has(item.name)) return;
         contactSchema.add({ [item.name]: ['phoneNumber', 'mobileNumber'].includes(item.name) ? String
@@ -102,5 +102,7 @@ const initializeContactSchema = async () => {
 };
 
 contactSchema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'Contacts' });
+contactSchema.plugin(require('../../services/customerHistory').sharedRequestType, { moduleName: 'Contacts' });
+contactSchema.index({ 'convertedLeads.leadId': 1 });
 const Contact = mongoose.model('Contacts', contactSchema, 'Contacts');
 module.exports = { Contact, initializeContactSchema };

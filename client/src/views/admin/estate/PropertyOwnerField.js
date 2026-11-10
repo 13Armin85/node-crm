@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, AlertIcon, Button, FormControl, FormErrorMessage, FormLabel, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Spinner, Stack } from '@chakra-ui/react';
+import { Alert, AlertIcon, Button, FormControl, FormErrorMessage, FormHelperText, FormLabel, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Spinner, Stack } from '@chakra-ui/react';
 import { useFormik, getIn, setIn } from 'formik';
 import DynamicFormRenderer, { AsyncRelationSelect, fieldPath, localized } from 'components/dynamicForm/DynamicFormRenderer';
 import { useFormDefinition, validateFormValues, normalizeFormValues } from 'utils/managedForm';
@@ -52,11 +52,12 @@ export default function PropertyOwnerField({ field, formik, readOnly }) {
   return <FormControl isRequired={field.required} isInvalid={Boolean(error)}>
     <FormLabel htmlFor="field-propertyOwner">{localized(field.label, language)}</FormLabel>
     <Stack>
-      <AsyncRelationSelect id="field-propertyOwner" name={path} moduleName="Contacts" value={getIn(formik.values, path)}
+      <AsyncRelationSelect id="field-propertyOwner" name={path} placeholder={localized(field.placeholder, language)} moduleName="Contacts" value={getIn(formik.values, path)}
         onChange={value => formik.setFieldValue(path, value || null)} onBlur={formik.handleBlur} disabled={readOnly} />
       {!readOnly && <Button alignSelf="start" size="sm" variant="outline" onClick={() => setCreating(true)}>{t('Create New Property Owner')}</Button>}
     </Stack>
-    <FormErrorMessage>{error ? t(`estate.${error}`) : ''}</FormErrorMessage>
+    {field.helpText && <FormHelperText>{localized(field.helpText, language)}</FormHelperText>}
+    <FormErrorMessage>{error ? localized(field.validationMessage, language) || t(`estate.${error}`) : ''}</FormErrorMessage>
     {creating && <NewOwnerDialog onClose={() => setCreating(false)} onCreated={contact => formik.setFieldValue(path, contact._id)} />}
   </FormControl>;
 }

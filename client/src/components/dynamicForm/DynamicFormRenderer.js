@@ -46,7 +46,7 @@ export function FileInput({ value = [], onChange, disabled }) {
     </Stack>)}
   </Stack>;
 }
-export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, name, disabled, refreshKey = 0 }) {
+export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, name, disabled, placeholder, refreshKey = 0 }) {
   const { t, language } = useLanguage();
   const selectedValue = formValue(value);
   const [query, setQuery] = useState('');
@@ -80,7 +80,7 @@ export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, n
     return () => { active = false; clearTimeout(timer); };
   }, [moduleName, query, disabled, refreshKey]);
   const all = selected && !options.some(option => String(formValue(option.value)) === String(selectedValue)) ? [selected, ...options] : options;
-  return <SearchableSelect id={id} name={name} value={selectedValue} disabled={disabled} busy={busy} error={error} noResults={!options.length}
+  return <SearchableSelect id={id} name={name} value={selectedValue} placeholder={placeholder} disabled={disabled} busy={busy} error={error} noResults={!options.length}
     options={all.map(option => ({ value: formValue(option.value), label: formLabel(localized(option.label, language), t('Record unavailable')) }))}
     onSearch={setQuery} onBlur={onBlur} onChange={next => {
       setSelected(all.find(option => String(formValue(option.value)) === next) || null);
@@ -88,22 +88,20 @@ export function AsyncRelationSelect({ moduleName, value, onChange, onBlur, id, n
     }} />;
 }
 const wideTypes = ['textarea', 'file', 'multiselect'];
-// Groups rendered fields into titled sections. Sections follow the Form Builder
-// order of their first field and fields keep their configured order inside a
-// section; fields without a section (including new custom fields) are grouped
-// last, and empty sections — e.g. after fields are deleted — are not shown.
+// Contiguous sections preserve the exact order chosen in Form Builder.
 function FormSections({ sections, items, t, direction }) {
-  const known = new Set(sections.flatMap(section => section.fields));
-  const groups = [...sections, { id: 'other', title: 'estate.section.other', fields: null }]
-    .map(section => ({ ...section, items: items.filter(item => section.fields ? section.fields.includes(item.field.name) : !known.has(item.field.name)) }))
-    .filter(section => section.items.length)
-    .sort((a, b) => (a.id === 'other') - (b.id === 'other') || a.items[0].field.order - b.items[0].field.order);
+  const groups = [];
+  for (const item of items) {
+    const section = sections.find(section => section.fields.includes(item.field.name)) || { id: 'other', title: 'estate.section.other' };
+    if (groups.at(-1)?.id === section.id) groups.at(-1).items.push(item);
+    else groups.push({ ...section, items: [item] });
+  }
   return <Stack className="crm-form-sections" spacing={4} dir={direction}>
-    {groups.map((section, index) => <Box as="section" key={section.id} className="crm-form-section" data-section={section.id} aria-labelledby={`form-section-${section.id}`}>
+    {groups.map((section, index) => <Box as="section" key={`${section.id}-${index}`} className="crm-form-section" data-section={section.id} aria-labelledby={`form-section-${section.id}-${index}`}>
       <Flex className="crm-form-section__header" align="center" gap={3}>
         <Box className="crm-form-section__step" aria-hidden="true">{index + 1}</Box>
         <Box minW={0}>
-          <Text id={`form-section-${section.id}`} className="crm-form-section__title">{t(section.title)}</Text>
+          <Text id={`form-section-${section.id}-${index}`} className="crm-form-section__title">{t(section.title)}</Text>
           {section.hint && <Text className="crm-form-section__hint">{t(section.hint)}</Text>}
         </Box>
       </Flex>
@@ -115,6 +113,7 @@ function FormSections({ sections, items, t, direction }) {
 }
 export default function DynamicFormRenderer({ definition, formik, readOnly = false, customOnly = false, fieldActions = {}, fieldControls = {}, refreshKey = 0, idPrefix = 'field', sections }) {
   const { language, t } = useLanguage();
+  const direction = language === 'fa' ? 'rtl' : 'ltr';
   const [user] = useState(() => JSON.parse(localStorage.getItem('user')));
   useFormDefaults((definition?.fields || []).filter(field => !customOnly || field.kind === 'CUSTOM_FIELD'), formik, readOnly);
   useRequiredFields(readOnly ? [] : (definition?.fields || []).filter(field => (!field.external || field.relation) && (!customOnly || field.kind === 'CUSTOM_FIELD')), formik);
@@ -130,7 +129,6 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
     };
     if (['Properties', 'Residences'].includes(definition.moduleName)) Object.entries(resets[field.name] || {}).forEach(([key, v]) => formik.setFieldValue(key, v));
   };
-  const direction = t('direction') === 'rtl' || language === 'fa' ? 'rtl' : 'ltr';
   const items = [...definition.fields].sort((a, b) => a.order - b.order).filter(field => {
       if (!readOnly && definition.moduleName === 'Tasks' && field.kind === 'SYSTEM_FIELD') {
         if (field.name === 'delegatedBy' || (field.name === 'assignedToUser' && !isAdmin(user))) return false;
@@ -154,7 +152,7 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
         </Box>)}</Stack>
         {!readOnly && <AsyncRelationSelect id={id} name={path} moduleName={field.relation} value="" onChange={next => { if (next) change(field, [...new Set([...(Array.isArray(value) ? value.map(formValue) : value ? [formValue(value)] : []), next])]); }} onBlur={formik.handleBlur} refreshKey={refreshKey} />}
       </Stack>;
-      else if (field.relation || field.catalog) control = <AsyncRelationSelect id={id} name={path} moduleName={field.relation || field.catalog} value={value} onChange={v => change(field, v)} onBlur={formik.handleBlur} disabled={readOnly} refreshKey={refreshKey} />;
+      else if (field.relation || field.catalog) control = <AsyncRelationSelect id={id} name={path} placeholder={common.placeholder} moduleName={field.relation || field.catalog} value={value} onChange={v => change(field, v)} onBlur={formik.handleBlur} disabled={readOnly} refreshKey={refreshKey} />;
       else if (field.type === 'file') control = <FileInput value={value || []} onChange={v => change(field, v)} disabled={readOnly} />;
       else if (field.type === 'currency' && readOnly) control = <CurrencyAmount amount={value} currency={getIn(formik.values, field.name.endsWith('.amount') ? field.name.replace(/\.amount$/, '.currency') : 'currency') || 'TRY'} />;
       else if (field.type === 'currency') control = <PriceInput {...common} value={value} onValueChange={v => change(field, v)} />;

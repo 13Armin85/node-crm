@@ -37,12 +37,12 @@ test('document uploads preserve verified property/owner and customer/property li
     const response = await fetch('http://127.0.0.1:' + server.address().port + '/api/' + route, { headers: { Authorization: token(actor) } });
     return { status: response.status, data: await response.json() };
   };
-  const upload = async (type, id, extra = {}) => {
+  const upload = async (type, id, extra = {}, actor = admin) => {
     const form = new FormData(); form.append('entityType', type); form.append('entityId', String(id));
     for (const [key, value] of Object.entries(extra)) form.append(key, String(value));
     form.append('files', new Blob(['document relation ' + crypto.randomUUID()], { type: 'text/plain' }), 'relation.txt');
     const response = await fetch('http://127.0.0.1:' + server.address().port + '/api/document/add', {
-      method: 'POST', headers: { Authorization: token(admin) }, body: form,
+      method: 'POST', headers: { Authorization: token(actor) }, body: form,
     });
     const data = await response.json();
     if (data.folder) {
@@ -95,6 +95,27 @@ test('document uploads preserve verified property/owner and customer/property li
     const result = await upload('Contact', owner._id, { linkLead: 'false' });
     assert.equal(result.status, 200, JSON.stringify(result.data));
     assert.equal(result.data.folder.file.at(-1).linkContact, String(owner._id));
+  });
+  await t.test('lead detail uploads without a folder preserve the lead link, appear in both lists and download for the assigned user', async () => {
+    const assigned = await Lead.create({ createBy: admin._id, assignUser: restricted._id });
+    const result = await upload('Lead', assigned._id, { linkLead: assigned._id, folderName: '', filename: '', customFields: '{}' }, restricted);
+    assert.equal(result.status, 200, JSON.stringify(result.data));
+    const file = result.data.folder.file.at(-1);
+    assert.equal(result.data.folder.isRoot, true);
+    assert.equal(result.data.folder.createBy, String(restricted._id));
+    assert.equal(file.category, 'LEADS'); assert.equal(file.entityType, 'Lead');
+    assert.equal(file.entityId, String(assigned._id)); assert.equal(file.linkLead, String(assigned._id));
+    for (const route of [`document?entityType=Lead&entityId=${assigned._id}`, 'document?category=LEADS']) {
+      const listing = await get(route, restricted);
+      assert.equal(listing.status, 200);
+      assert(listing.data.flatMap(folder => folder.files).some(item => item._id === file._id
+        && item.relatedRecords.some(record => record.entityType === 'Lead' && record.entityId === String(assigned._id))));
+    }
+    const downloaded = await fetch('http://127.0.0.1:' + server.address().port + '/api/document/download/' + file._id, {
+      headers: { Authorization: token(restricted) },
+    });
+    assert.equal(downloaded.status, 200); assert.match(downloaded.headers.get('content-disposition'), /attachment/);
+    assert.match(await downloaded.text(), /^document relation /);
   });
   await t.test('rejects unrelated secondary records and inaccessible primary records', async () => {
     // Test validation directly so a rejected upload does not leave test bytes on disk.

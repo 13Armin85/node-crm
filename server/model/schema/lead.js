@@ -70,7 +70,7 @@ const initializeLeadSchema = async () => {
     const schemaFieldsData = await fetchSchemaFields();
     schemaFieldsData[0]?.fields?.forEach((item) => {
         // Built-in relationships keep their types, defaults and population metadata.
-        if (['createBy', 'assignUser', 'assignedBy', 'lead', 'contact', 'partnerCustomer', 'associatedListing', 'relatedOpportunities'].includes(item.name)) return;
+        if (['createBy', 'assignUser', 'assignedBy', 'lead', 'contact', 'partnerCustomer', 'associatedListing', 'relatedOpportunities', 'listedFor'].includes(item.name)) return;
         let fieldData;
 
         if (item.ref) {
@@ -90,5 +90,10 @@ const initializeLeadSchema = async () => {
 
 leadSchema.plugin(require('../../services/duplicateRecords').duplicateRecords, { moduleName: 'Leads' });
 leadSchema.plugin(require('../../services/leadWorkflow').leadWorkflow);
+leadSchema.plugin(require('../../services/customerHistory').sharedRequestType, { moduleName: 'Leads' });
+leadSchema.index({ contact: 1 });
+leadSchema.index({ lead: 1 });
+leadSchema.index({ 'conversion.contactId': 1 });
+leadSchema.index({ 'conversion.opportunityId': 1 });
 const Lead = mongoose.model('Leads', leadSchema, 'Leads');
 module.exports = { Lead, initializeLeadSchema };

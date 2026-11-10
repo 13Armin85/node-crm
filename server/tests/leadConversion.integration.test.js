@@ -28,7 +28,7 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
   const Email = require('../model/schema/email');
   const Call = require('../model/schema/phoneCall');
   const Quote = require('../model/schema/quotes');
-  Lead.schema.add({ leadName: String, leadEmail: String, leadMobile: String, leadPhoneNumber: String, leadCampaign: String, leadState: String, leadMessage: String, communicationTool: String, listedFor: String, leadStatus: mongoose.Schema.Types.Mixed });
+  Lead.schema.add({ leadName: String, leadEmail: String, leadMobile: String, leadPhoneNumber: String, leadCampaign: String, leadState: String, leadMessage: String, leadNotes: String, leadAddress: String, leadNextAction: String, communicationTool: String, listedFor: String, leadStatus: mongoose.Schema.Types.Mixed });
   Contact.schema.add({ fullName: String, email: String, phoneNumber: String, mobileNumber: String, campaign: String, state: String, message: String, communicationTool: String, listedFor: String });
   // Exercise legacy numeric configuration: initialization must preserve phone text.
   const CustomField = require('../model/schema/customField');
@@ -44,6 +44,7 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
   const app = express(); app.use(express.json()); app.use('/api/lead', require('../controllers/lead/_routes'));
   app.use('/api/contact', require('../controllers/contact/_routes'));
   app.use('/api/form', require('../controllers/form/_routes'));
+  app.use('/api/record-workspace', require('../controllers/recordWorkspace'));
   app.use((error, req, res, next) => res.status(500).json({ error: error.message }));
   server = await new Promise(resolve => { const instance = app.listen(0, '127.0.0.1', () => resolve(instance)); });
   const api = async (id, mode, user = actor) => {
@@ -58,6 +59,38 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
     leadMobile: '+90 0555 000 ' + sequence, leadCampaign: 'Online', leadState: 'Open', leadMessage: 'All original notes',
     leadStatus: { value: 'qualified', label: 'Qualified' }, communicationTool: 'WhatsApp', listedFor: 'Buy',
     customFields: { budget: 500000, active: false, preferences: ['garden', 'pool'] }, createBy: actor._id, ...extra })).toObject();
+
+  await t.test('converted source pages are read-only, retain assignment access and never reopen deleted leads', async () => {
+    const lead = await makeLead({ createBy: other._id, assignUser: other._id });
+    const request = async (method, route, user = other, body) => {
+      const response = await fetch('http://127.0.0.1:' + server.address().port + '/api' + route, {
+        method, headers: { 'Content-Type': 'application/json', Authorization: jwt.sign({ userId: user._id }, jwtSecret, { expiresIn: '5m' }) },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      });
+      return { status: response.status, data: await response.json() };
+    };
+    const route = '/record-workspace/Leads/' + lead._id;
+    const active = await request('GET', route);
+    assert.equal(active.status, 200); assert.equal(active.data.archived, false);
+    assert.equal((await api(lead._id, 'contact', other)).status, 200);
+    const archived = await request('GET', route);
+    assert.equal(archived.status, 200, JSON.stringify(archived));
+    assert.equal(archived.data.archived, true); assert.equal(archived.data.editable, false);
+    assert.equal(archived.data.record.leadName, lead.leadName);
+    assert.deepEqual(archived.data.record.customFields, lead.customFields);
+    assert(archived.data.definition.fields.some(field => field.name === 'leadName'));
+    assert.equal((await request('GET', route, actor)).status, 200);
+    const stranger = await User.create({ username: 'stranger@example.test', password: 'unused', role: 'user' });
+    assert.equal((await request('GET', route, stranger)).status, 404);
+    assert.equal((await request('GET', route + '/notes')).status, 200);
+    assert.equal((await request('POST', route + '/notes', other, { text: 'Archived note', clientId: 'archived' })).status, 404);
+    assert.equal((await request('PUT', '/lead/edit/' + lead._id, other, { leadName: 'Changed' })).status, 404);
+    assert.equal((await request('DELETE', '/lead/delete/' + lead._id)).status, 404);
+    assert(!(await request('GET', '/lead/')).data.some(item => item._id === String(lead._id)));
+    assert.equal((await Lead.findById(lead._id)).deleted, true);
+    const deleted = await makeLead({ deleted: true });
+    assert.equal((await request('GET', '/record-workspace/Leads/' + deleted._id, actor)).status, 404);
+  });
 
   await t.test('repairs hidden converted contacts while retaining explicitly deleted records', async () => {
     const hidden = await Contact.collection.insertOne({ createBy: actor._id, convertedLeads: [{ leadId: 'legacy', values: { leadName: 'Legacy' } }] });
@@ -83,7 +116,7 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
   });
 
   await t.test('users create leads without selections or required fields and can convert them by either action', async () => {
-    for (const mode of ['contact', 'contactAndOpportunity']) {
+    for (const mode of ['contact', 'opportunity', 'contactAndOpportunity']) {
       const response = await fetch('http://127.0.0.1:' + server.address().port + '/api/form/add', {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: jwt.sign({ userId: other._id }, jwtSecret, { expiresIn: '5m' }) },
         body: JSON.stringify({ moduleId: String(leadModule._id) }),
@@ -94,8 +127,9 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
       const converted = await api(body.data._id, mode, other);
       assert.equal(converted.status, 200, JSON.stringify(converted));
       assert.equal((await Lead.findById(body.data._id)).deleted, true);
-      assert(await Contact.exists({ _id: converted.data.contactId }));
-      if (mode === 'contactAndOpportunity') assert(await Opportunity.exists({ _id: converted.data.opportunityId }));
+      if (mode !== 'opportunity') assert(await Contact.exists({ _id: converted.data.contactId }));
+      else assert.equal(converted.data.contactId, null);
+      if (mode !== 'contact') assert(await Opportunity.exists({ _id: converted.data.opportunityId }));
     }
   });
 
@@ -202,5 +236,80 @@ test('lead conversion preserves data, moves history, enforces ownership and resu
     assert.equal(results.filter(result => result.status === 200).length, 1, JSON.stringify(results));
     assert.equal(await Contact.countDocuments({ email: lead.leadEmail }), 1);
     assert.equal(await Opportunity.countDocuments({ opportunityName: lead.leadName }), 1);
+  });
+  await t.test('all three destinations preserve full source fields, choices, files, notes and activity identities', async () => {
+    const Definition = require('../model/schema/formDefinition');
+    const custom = [
+      { name: 'budget', type: 'number' }, { name: 'active', type: 'checkbox' },
+      { name: 'preferences', type: 'multiselect', options: [{ value: 'garden', label: { en: 'Garden', fa: 'باغ', tr: 'Bahçe' } }] },
+      { name: 'attachment', type: 'file' },
+    ].map(field => ({ ...field, kind: 'CUSTOM_FIELD', enabled: true, label: { en: field.name, fa: field.name, tr: field.name } }));
+    await Definition.create({ moduleName: 'Leads', fields: [...require('../services/formDefinitions').defaults.Leads, ...custom] });
+    const fileId = new mongoose.Types.ObjectId();
+    for (const mode of ['contact', 'opportunity', 'contactAndOpportunity']) {
+      const beforeContacts = await Contact.countDocuments();
+      const lead = await makeLead({ leadNotes: 'Historic notes', leadAddress: 'Complete address', leadNextAction: 'Next appointment',
+        leadState: 'Booked', assignUser: actor._id,
+        customFields: { budget: 0, active: false, preferences: ['garden'], attachment: [{ id: String(fileId), name: 'Original contract.pdf', size: 321 }] } });
+      const Note = require('../model/schema/recordNote');
+      const note = await Note.create({ module: 'Leads', record: lead._id, author: actor._id, text: 'Original authored note', clientId: 'original', createdAt: new Date('2025-01-01') });
+      const generated = await Task.findOne({ leadCallFor: lead._id, deleted: false }).lean();
+      assert(generated);
+      const task = await Task.create({ title: 'Keep full task', notes: 'Task details', assignToLead: lead._id, assignedToUser: actor._id, createBy: actor._id });
+      const meeting = await Meeting.create({ agenda: 'Meeting details', attendesLead: [lead._id], related: 'Lead', createBy: actor._id });
+      const email = await Email.create({ createByLead: lead._id, subject: 'Original subject', message: 'Original body', sender: actor._id });
+      const call = await Call.create({ createByLead: lead._id, callNotes: 'Original call', sender: actor._id });
+      const quote = await Quote.create({ lead: lead._id, amount: 123, createBy: actor._id });
+      const docs = await Document.create({ folderName: 'All document relation styles ' + mode, createBy: actor._id, file: [
+        { fileName: 'primary.pdf', path: '/test/primary.pdf', linkLead: lead._id, entityType: 'Lead', entityId: lead._id },
+        { fileName: 'entity.pdf', path: '/test/entity.pdf', entityType: 'Lead', entityId: lead._id },
+        { fileName: 'related.pdf', path: '/test/related.pdf', relatedRecords: [{ entityType: 'Lead', entityId: lead._id, label: lead.leadName }] },
+      ] });
+      const result = await api(lead._id, mode);
+      assert.equal(result.status, 200, JSON.stringify(result));
+      assert.equal((await Lead.findById(lead._id)).deleted, true);
+      assert.equal(await Contact.countDocuments(), beforeContacts + (mode === 'opportunity' ? 0 : 1));
+      for (const [Model, destinationId, module] of [[Contact, result.data.contactId, 'Contacts'], [Opportunity, result.data.opportunityId, 'Opportunities']]) {
+        if (!destinationId) continue;
+        const destination = await Model.findById(destinationId).lean();
+        assert.deepEqual(destination.customFields, lead.customFields);
+        assert.equal(String(destination.assignUser), String(actor._id));
+        const source = destination.convertedLeads.find(item => item.leadId === String(lead._id));
+        for (const [key, value] of Object.entries(lead)) {
+          if (['_id', '__v', 'conversion', '_duplicateKeys', 'deleted'].includes(key)) continue;
+          assert.deepEqual(source.values[key], value, module + ' retains ' + key);
+        }
+        assert.deepEqual(source.fields.find(field => field.name === 'preferences').options, custom[2].options);
+        const response = await fetch('http://127.0.0.1:' + server.address().port + '/api/record-workspace/' + module + '/' + destinationId + '/notes', {
+          headers: { Authorization: jwt.sign({ userId: actor._id }, jwtSecret, { expiresIn: '5m' }) },
+        });
+        assert.equal(response.status, 200);
+        const notes = (await response.json()).items;
+        assert.equal(notes.length, 1); assert.equal(notes[0]._id, String(note._id));
+        assert.equal(notes[0].createdAt, note.createdAt.toISOString());
+        assert.equal(notes[0].author._id, String(actor._id));
+      }
+      if (result.data.opportunityId) {
+        const opportunity = await Opportunity.findById(result.data.opportunityId).lean();
+        assert.equal(opportunity.leadStage, 'Booked');
+        assert.equal(opportunity.description, lead.leadMessage + '\n\n' + lead.leadNotes);
+      }
+      for (const id of [task._id, generated._id]) {
+        const moved = await Task.findById(id).lean();
+        assert.equal(moved.deleted, false); assert.equal(moved.assignToLead, undefined); assert.equal(moved.leadCallFor, undefined);
+        if (result.data.contactId) assert.equal(String(moved.assignTo), result.data.contactId);
+        if (result.data.opportunityId) assert.equal(String(moved.opportunity), result.data.opportunityId);
+      }
+      for (const [Model, id] of [[Email, email._id], [Call, call._id], [Meeting, meeting._id], [Quote, quote._id]]) {
+        const moved = await Model.findById(id).lean();
+        if (result.data.opportunityId) assert.equal(String(moved.opportunity), result.data.opportunityId);
+      }
+      for (const file of (await Document.findById(docs._id)).file) {
+        const references = [file, ...(file.relatedRecords || [])];
+        if (result.data.contactId) assert(references.some(ref => ref.entityType === 'Contact' && String(ref.entityId) === result.data.contactId));
+        if (result.data.opportunityId) assert(references.some(ref => ref.entityType === 'Opportunity' && String(ref.entityId) === result.data.opportunityId));
+        assert.equal(file.linkLead, undefined);
+      }
+    }
   });
 });

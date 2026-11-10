@@ -65,7 +65,7 @@ const normalizeTask = (body, actor, existing) => {
     const allowed = [
         'title', 'category', 'description', 'notes', 'reminder', 'start', 'end',
         'backgroundColor', 'borderColor', 'textColor', 'display', 'url', 'allDay',
-        'assignTo', 'assignToLead', 'assignedToUser', 'status', 'priority', 'customFields',
+        'assignTo', 'assignToLead', 'assignedToUser', 'status', 'priority', 'customFields', 'opportunity',
     ];
     const result = {};
     allowed.forEach((key) => {

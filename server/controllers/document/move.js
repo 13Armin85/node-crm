@@ -2,13 +2,7 @@ const Document = require('../../model/schema/document');
 const { isAdmin } = require('../../services/userRoles');
 const validId = require('../../services/estateValidation').objectId;
 
-// Serialize moves in the application's single backend process, including cycle checks.
-let pendingMove = Promise.resolve();
-const serialize = handler => (req, res, next) => {
-  const result = pendingMove.then(() => handler(req, res));
-  pendingMove = result.catch(() => {});
-  return result.catch(next);
-};
+const { serialize } = require('../../services/documentMutationQueue');
 const ownership = req => isAdmin(req.actor) ? {} : { createBy: req.actor._id };
 const destinationId = req => req.body?.folderId == null || req.body.folderId === '' ? null : req.body.folderId;
 const invalid = (res, code = 'invalid', field = 'folderId') => res.status(400).json({ code, field });

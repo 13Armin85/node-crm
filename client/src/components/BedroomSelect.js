@@ -7,10 +7,11 @@ import { normalizeBedroom } from 'utils/roomPlans';
 import './BedroomSelect.css';
 
 export default function BedroomSelect({ id, name, value = '', options = [], onChange, onBlur, placeholder, readOnly = false, disabled = false, ...props }) {
-  const { t, direction } = useLanguage();
+  const { t, language } = useLanguage();
+  const direction = language === 'fa' ? 'rtl' : 'ltr';
   const input = useRef(null);
   const [open, setOpen] = useState(false), [query, setQuery] = useState(''), [active, setActive] = useState(-1);
-  const choices = [...new Set(['0+1', '1+0', '1+1', '2+1', '3+1', '4+1', ...options.map(option => String(option.value))])];
+  const choices = [...new Set(options.map(option => String(option.value)))];
   const search = normalizeBedroom(query).toLowerCase();
   const matches = choices.filter(choice => normalizeBedroom(choice).toLowerCase().includes(search));
   const custom = query.trim() && !choices.some(choice => normalizeBedroom(choice) === normalizeBedroom(query));
@@ -19,7 +20,7 @@ export default function BedroomSelect({ id, name, value = '', options = [], onCh
   const choose = next => { onChange(next); close(); };
   const locked = readOnly || disabled;
   return <Popover isOpen={open && !locked} onClose={close} autoFocus={false} returnFocusOnClose={false} matchWidth placement="bottom-start" strategy="fixed">
-    <PopoverAnchor><InputGroup className="crm-bedroom-picker">
+    <PopoverAnchor><InputGroup className="crm-bedroom-picker" dir={direction}>
       <InputLeftElement pointerEvents="none"><MdOutlineBed size={18} /></InputLeftElement>
       <Input {...props} ref={input} id={id} name={name} type="text" dir="ltr" role="combobox" autoComplete="off"
         aria-autocomplete="list" aria-expanded={open && !locked} aria-controls={`${id}-options`}

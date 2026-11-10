@@ -3,6 +3,9 @@
 .crm-content .crm-bedroom-picker .chakra-input { padding-left: 37px !important; padding-right: 70px !important; border-radius: 7px !important; font-variant-numeric: tabular-nums; }
 .crm-bedroom-picker .chakra-input__left-element { height: 100%; color: var(--crm-muted, #697586); }
 .crm-bedroom-picker .chakra-input__right-element { height: 100%; padding-right: 4px; color: var(--crm-muted, #697586); }
+.crm-bedroom-picker[dir="rtl"] .chakra-input__right-element { right: auto !important; left: 0 !important; padding-right: 0; padding-left: 4px; }
+.crm-bedroom-picker[dir="rtl"] .chakra-input__left-element { left: auto !important; right: 0 !important; }
+.crm-bedroom-picker[dir="rtl"] .chakra-input { padding-left: 70px !important; padding-right: 37px !important; text-align: right; }
 .crm-bedroom-picker .chakra-button { min-width: 25px; color: inherit; }
 .crm-bedroom-picker .chakra-button svg { transition: transform .16s ease; }
 .crm-bedroom-picker .is-open svg { transform: rotate(180deg); }

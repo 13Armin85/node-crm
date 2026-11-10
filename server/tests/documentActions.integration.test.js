@@ -161,4 +161,57 @@ test('documents support individual sending, whole folder sending, and moving wit
     assert((await Document.findById(child._id)).file.id(nested._id));
     assert.equal((await moveFolder(own._id, null, user)).status, 200);
   });
+
+  await t.test('deleting one linked file removes it from all entity lists, downloads and previews without deleting its neighbors', async () => {
+    const file = await makeFile('Linked deletion'), neighbor = await makeFile('Kept neighbor');
+    const relations = ['Lead', 'Contact', 'Opportunity'].map(entityType => ({ entityType, entityId: new mongoose.Types.ObjectId(), label: entityType + ' deletion fixture' }));
+    const container = await Document.create({ folderName: 'Linked files', createBy: user._id, file: [{ ...file, entityType: 'Lead', entityId: relations[0].entityId, relatedRecords: relations }, neighbor] });
+    for (const relation of relations) {
+      const result = await api('GET', '/document?' + new URLSearchParams({ entityType: relation.entityType, entityId: String(relation.entityId) }), null, user);
+      assert(result.data.flatMap(folder => folder.files).some(item => item._id === String(file._id)));
+    }
+    assert.equal((await api('DELETE', '/document/delete/' + file._id, null, other)).status, 404);
+    assert.equal((await api('DELETE', '/document/delete/' + file._id, null, user)).status, 200);
+    for (const relation of relations) {
+      const result = await api('GET', '/document?' + new URLSearchParams({ entityType: relation.entityType, entityId: String(relation.entityId) }), null, user);
+      assert(!result.data.flatMap(folder => folder.files).some(item => item._id === String(file._id)));
+    }
+    assert(!(await api('GET', '/document', null, user)).data.flatMap(folder => folder.files).some(item => item._id === String(file._id)));
+    assert.equal((await api('GET', '/document/download/' + file._id, null, user)).status, 404);
+    assert.equal((await api('GET', '/document/images/' + path.basename(file.img), null, user)).status, 404);
+    assert.equal((await api('DELETE', '/document/delete/' + file._id, null, user)).status, 404);
+    assert.equal((await api('GET', '/document/download/' + neighbor._id, null, user)).status, 200);
+    assert.equal((await Document.findById(container._id)).deleted, false);
+  });
+
+  await t.test('folder deletion removes descendants and shared files everywhere while preserving siblings, roots and foreign ownership', async () => {
+    const first = await makeFile('Deleted parent'), second = await makeFile('Deleted child'), third = await makeFile('Kept sibling');
+    const parent = await Document.create({ folderName: 'Delete tree', createBy: admin._id, file: [first] });
+    const child = await Document.create({ folderName: 'Delete child', createBy: admin._id, parentFolder: parent._id, file: [second] });
+    await Document.collection.updateOne({ _id: child._id }, { $unset: { isRoot: '' } });
+    const grandchild = await Document.create({ folderName: 'Empty grandchild', createBy: admin._id, parentFolder: child._id, file: [] });
+    const sibling = await Document.create({ folderName: 'Kept folder', createBy: admin._id, file: [third] });
+    assert.equal((await send(parent._id)).status, 201); assert.equal((await send(second._id)).status, 201);
+    assert.equal((await api('DELETE', '/document/delete/folder/' + parent._id, null, user)).status, 404);
+    assert.equal((await api('DELETE', '/document/delete/folder/' + root._id)).status, 404);
+    const result = await api('DELETE', '/document/delete/folder/' + parent._id);
+    assert.equal(result.status, 200); assert.equal(result.data.deletedFolders, 3);
+    for (const folder of [parent, child, grandchild]) assert.equal((await Document.findById(folder._id)).deleted, true);
+    for (const actor of [admin, user]) {
+      const listing = (await api('GET', '/document', null, actor)).data;
+      assert(!listing.some(folder => [parent, child, grandchild].some(item => folder._id === String(item._id))));
+      for (const file of [first, second]) {
+        assert.equal((await api('GET', '/document/download/' + file._id, null, actor)).status, 404);
+        assert.equal((await api('GET', '/document/images/' + path.basename(file.img), null, actor)).status, 404);
+      }
+    }
+    assert.equal((await Document.findById(sibling._id)).deleted, false);
+    assert.equal((await api('GET', '/document/download/' + third._id)).status, 200);
+    assert.equal((await api('POST', '/document/folder', { folderName: 'Too late', parentFolder: String(parent._id) })).status, 404);
+    assert.equal((await api('DELETE', '/document/delete/folder/invalid')).status, 400);
+    assert.equal((await api('DELETE', '/document/delete/folder/' + parent._id)).status, 404);
+    const owned = await Document.create({ folderName: 'User owned', createBy: user._id, file: [] });
+    assert.equal((await api('DELETE', '/document/delete/folder/' + owned._id, null, user)).status, 200);
+    assert.equal((await Document.findById(own._id)).deleted, false);
+  });
 });

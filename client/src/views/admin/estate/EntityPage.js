@@ -325,8 +325,8 @@ export function EntityPage({ moduleName }) {
 
       <Modal isOpen={record !== null} onClose={() => setRecord(null)} size="5xl" scrollBehavior="inside">
         <ModalOverlay />
-        <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}${!readOnly && moduleName === 'Properties' ? " crm-record-form--sectioned" : ""}`} dir={direction}>
-          <ModalHeader>{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
+        <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}${!readOnly && moduleName === 'Properties' ? " crm-record-form--sectioned" : ""}`} dir={moduleName === 'Properties' && language === 'fa' ? 'rtl' : direction}>
+          <ModalHeader>{!readOnly && moduleName === 'Properties' && <Box className="crm-property-editor__icon" aria-hidden="true"><FiHome size={20} /></Box>}{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
           <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{readOnly ? <RecordEditingContext.Provider value={detailEditing}><RecordFields definition={definition} record={record} /></RecordEditingContext.Provider> : form}
             {readOnly && record?.createBy && <Text mt={4}>{t("estate.createdBy")}: <RecordValue name="createBy" value={record.createBy} /></Text>}

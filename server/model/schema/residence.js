@@ -4,6 +4,7 @@ const { ages, bedrooms } = require('../../services/estateCatalog');
 const optionalEnum = values => ({ type: String, enum: values, set: value => value === '' ? undefined : value });
 const count = min => ({ type: Number, min, validate: value => value == null || Number.isInteger(value) });
 const schema = new mongoose.Schema({
+  paymentMethod: optionalEnum(['CASH', 'INSTALLMENTS', 'BOTH']),
   name: { type: String, required: true, trim: true }, description: String, developer: String,
   constructionStatus: {
     type: mongoose.Schema.Types.Mixed,

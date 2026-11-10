@@ -102,7 +102,9 @@ test('record workspace, notes, profiles and full contact conversion enforce acce
   const opportunity = await Opportunity.findById(converted.data.opportunityId).lean(); assert.equal(opportunity.opportunityName, 'Updated Contact'); assert.equal(String(opportunity.contact), String(contact._id));
   assert.equal(opportunity.convertedContacts[0].values.state, 'Booked');
   assert.equal(opportunity.convertedContacts[0].values.physicalAddress, 'Original address'); assert.deepEqual(opportunity.customFields, contact.customFields);
-  assert.equal(opportunity.convertedLeads[0].values.leadMessage, 'Original lead message'); assert.equal(await Note.countDocuments({ module: 'Opportunities', record: opportunity._id }), 2);
+  assert.equal(opportunity.convertedLeads[0].values.leadMessage, 'Original lead message');
+  assert.equal(await Note.countDocuments({ module: 'Opportunities', record: opportunity._id }), 0);
+  assert.equal((await api(owner, 'GET', '/record-workspace/Opportunities/' + opportunity._id + '/notes')).data.items.length, 2);
   assert.equal((await Contact.findById(contact._id)).deleted, false); assert((await Contact.findById(contact._id)).relatedOpportunities.some(id => String(id) === String(opportunity._id)));
   assert.equal((await api(other, 'POST', '/contact/to-opportunity/' + contact._id, {})).status, 404);
   const bulk = await Note.insertMany(Array.from({ length: 53 }, (_, index) => ({ module: 'Contacts', record: contact._id, author: owner._id, authorName: 'Updated Owner', text: 'History ' + index, clientId: 'bulk-' + index })));

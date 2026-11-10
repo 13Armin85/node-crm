@@ -26,6 +26,7 @@ router.post('/move/folder/:id', auth, move.moveFolder)
 router.get('/download/:id', auth, document.downloadFile)
 router.post('/link-document/:id', auth, activity('document_linked', document.LinkDocument, { embeddedFile: true }))
 router.delete('/delete/:id', auth, activity('record_deleted', document.deleteFile, { embeddedFile: true }))
+router.delete('/delete/folder/:id', auth, activity('record_deleted', document.deleteFolder))
 router.get('/images/:filename', auth, document.previewFile);
 
 

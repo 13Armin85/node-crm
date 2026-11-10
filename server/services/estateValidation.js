@@ -1,6 +1,6 @@
-const { categories, ages, bedrooms, floors, fieldTypes } = require('./estateCatalog');
+const { categories, ages, floors, fieldTypes } = require('./estateCatalog');
 const { safeName } = require('./formDefinitions');
-const { normalizeRoomPlan, isRoomPlanField, roomPlanMatches } = require('./roomPlans');
+const { normalizeRoomPlan, normalizeBedroom, isBedroomField, isRoomPlanField, roomPlanMatches } = require('./roomPlans');
 class InputError extends Error {
   constructor(code, field) { super(code); this.name = 'InputError'; this.code = code; this.field = field; this.status = 400; }
 }
@@ -13,6 +13,10 @@ const oneOf = (value, allowed, field, optional = false) => { if (!(optional && e
 const objectId = value => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value);
 function validateValue(field, value) {
   if (empty(value)) { if (field.required) fail(field.name, 'required'); return; }
+  if (isBedroomField(field)) {
+    if (!['string', 'number'].includes(typeof value) || String(value).length > 20000) fail(field.name);
+    return;
+  }
   if (field.external && field.relation && field.type === 'text') {
     if (!Array.isArray(value) || value.some(id => !objectId(id))) fail(field.name);
   } else if (['number', 'currency'].includes(field.type)) {
@@ -66,7 +70,8 @@ function validateFields(definition, body, existing = {}, { partial = false } = {
       if (error instanceof InputError) error.field = path;
       throw error;
     }
-    if (isRoomPlanField(field) && value != null && value !== '') value = Array.isArray(value) ? [...new Set(value.map(normalizeRoomPlan))] : normalizeRoomPlan(value);
+    if (isBedroomField(field)) value = normalizeBedroom(value);
+    else if (isRoomPlanField(field) && value != null && value !== '') value = Array.isArray(value) ? [...new Set(value.map(normalizeRoomPlan))] : normalizeRoomPlan(value);
     if (value !== undefined) set(output, path, value);
   }
   return output;
@@ -90,20 +95,44 @@ function normalizeSale(input, transactionType) {
   return p.sale;
 }
 
-function normalizeProperty(input) {
+// Without a definition the built-in catalog applies. With the saved Form
+// Builder definition, removed, disabled or optional fields and edited option
+// lists are honoured instead of the original hard-coded rules.
+function normalizeProperty(input, definition) {
   const p = structuredClone(input);
-  oneOf(p.category, Object.keys(categories), 'category');
-  oneOf(p.subtype, categories[p.category], 'subtype');
-  oneOf(p.transactionType, ['SALE', 'RENT'], 'transactionType');
-  if (typeof p.price?.amount !== 'number' || !Number.isFinite(p.price.amount) || p.price.amount < 0) fail('price.amount');
-  oneOf(p.price?.currency, ['TRY', 'USD', 'EUR'], 'price.currency');
-  if (typeof p.area?.value !== 'number' || !Number.isFinite(p.area.value) || p.area.value <= 0) fail('area.value');
-  oneOf(p.area?.type, ['NET', 'GROSS'], 'area.type');
-  p.area.unit = 'M2';
-  oneOf(p.buildingAge, ages, 'buildingAge', true); oneOf(p.floor, floors, 'floor', true);
-  oneOf(p.occupancyStatus, ['EMPTY', 'TENANTED', 'OWNER_OCCUPIED'], 'occupancyStatus', true);
+  const configured = name => definition
+    ? definition.fields.find(field => field.kind === 'SYSTEM_FIELD' && field.name === name && field.enabled !== false)
+    : { required: true };
+  const choose = (name, builtin, builtinOptional = false) => {
+    const field = configured(name);
+    if (!field) return;
+    if (definition && !['select', 'radio'].includes(field.type)) return;
+    const allowed = definition && Array.isArray(field.options) && !field.relation ? field.options.map(option => option.value) : builtin;
+    oneOf(get(p, name), allowed, name, definition ? !field.required : builtinOptional);
+  };
+  const amount = (name, positive) => {
+    const field = configured(name); const value = get(p, name);
+    if (!field || (definition && !field.required && empty(value))) return;
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || (!definition && positive && value <= 0)) fail(name);
+  };
+  choose('category', Object.keys(categories));
+  const builtinSubtypes = Object.values(categories).flat();
+  if (definition) {
+    choose('subtype', builtinSubtypes);
+    // Keep the built-in category/subtype pairing; administrator-added values may pair freely.
+    if (configured('category') && configured('subtype') && categories[p.category] && builtinSubtypes.includes(p.subtype) && !categories[p.category].includes(p.subtype)) fail('subtype');
+  } else oneOf(p.subtype, categories[p.category], 'subtype');
+  if (definition && empty(p.transactionType)) p.transactionType = 'SALE';
+  choose('transactionType', ['SALE', 'RENT']);
+  amount('price.amount', false);
+  choose('price.currency', ['TRY', 'USD', 'EUR']);
+  amount('area.value', true);
+  choose('area.type', ['NET', 'GROSS']);
+  if (p.area) p.area.unit = 'M2';
+  choose('buildingAge', ages, true); choose('floor', floors, true);
+  choose('occupancyStatus', ['EMPTY', 'TENANTED', 'OWNER_OCCUPIED'], true);
   for (const key of ['buildingAge', 'floor', 'occupancyStatus', 'bedroom']) if (p[key] === '') p[key] = undefined;
-  if (p.category === 'COMMERCIAL') p.bedroom = null; else oneOf(p.bedroom, bedrooms, 'bedroom', true);
+  p.bedroom = p.category === 'COMMERCIAL' ? null : normalizeBedroom(p.bedroom);
   if (p.isInsideResidence !== true) { p.isInsideResidence = false; p.residence = null; }
   else if (!objectId(p.residence)) fail('residence', 'required');
   p.sale = normalizeSale(p.sale, p.transactionType);

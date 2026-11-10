@@ -63,6 +63,7 @@ async function main() {
     if (process.env.CRM_CHECK_COLUMN_ORDER) await require('./check-column-order.cjs').seed({ actor, contacts, leads, property, User });
     if (process.env.CRM_CHECK_TABLE_SPACING) await require('./check-table-spacing.cjs').seed({ actor, contacts, leads, property, User });
     if (process.env.CRM_CHECK_LEAD_SEARCH) await require('./check-lead-search-labels.cjs').seed({ actor, leads, CustomField, Property, User });
+    if (process.env.CRM_CHECK_TRANSFER_ROOMS) await require('./check-transfer-room-plans.cjs').seed({ actor, leads, property });
     if (process.env.CRM_CHECK_DASHBOARD_TASKS || process.env.CRM_CHECK_DIALOG_CONTROLS) {
       const Task = require('../server/model/schema/task');
       const assignee = await User.create({ username: 'task-assignee@example.test', firstName: 'مسئول پیگیری مشتریان و هماهنگی بازدید املاک',
@@ -91,6 +92,7 @@ async function main() {
     browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe',
       headless: true, pipe: true, timeout: 60000 });
     page = await browser.newPage();
+    if (process.env.CRM_CHECK_NAVIGATION_TIMEOUT_MS) page.setDefaultNavigationTimeout(Number(process.env.CRM_CHECK_NAVIGATION_TIMEOUT_MS));
     const errors = [], measurements = [];
     page.on('pageerror', error => {
       const detail = { route: new URL(page.url()).pathname, message: error.message, stack: error.stack };
@@ -275,8 +277,8 @@ async function main() {
         await page.evaluate(({ language, mode }) => { localStorage.setItem('crm-language', language); localStorage.setItem('chakra-ui-color-mode', mode); }, scenario);
         await page.setViewport({ width: scenario.width, height: 900 });
         await page.goto(origin + '/default', { waitUntil: 'networkidle2' });
-        await page.waitForSelector('.crm-dashboard-stats .crm-stat-card');
-        await page.waitForFunction(() => document.querySelector('.crm-finance-kpi__count')?.textContent.trim() === '0');
+        await page.waitForSelector('.crm-sales-performance .crm-finance-kpi');
+        await page.waitForFunction(() => document.querySelectorAll('[data-finance-bucket]').length === 4);
         const dashboard = await page.evaluate(() => ({
           width: innerWidth, pageWidth: document.documentElement.scrollWidth,
           stats: document.querySelectorAll('.crm-dashboard-stats .crm-stat-card').length,
@@ -320,6 +322,8 @@ async function main() {
     if (process.env.CRM_CHECK_DASHBOARD_CURRENCY) await require('./check-dashboard-currency.cjs').check({ page, origin, artifacts });
     if (process.env.CRM_CHECK_COLUMN_ORDER) await require('./check-column-order.cjs').check({ page, origin, artifacts, user });
     if (process.env.CRM_CHECK_TABLE_SPACING) await require('./check-table-spacing.cjs').check({ page, origin, artifacts });
+    if (process.env.CRM_CHECK_TRANSFER_ROOMS) await require('./check-transfer-room-plans.cjs').check({ page, origin, artifacts });
+    if (process.env.CRM_CHECK_PROPERTY_FORMS) await require('./check-property-form-builder.cjs').check({ page, origin, artifacts, measurements });
     await page.evaluate(() => { localStorage.setItem('chakra-ui-color-mode', 'dark'); localStorage.setItem('crm-language', 'en'); });
     await page.setViewport({ width: 1440, height: 960 });
     await page.goto(origin + '/documents', { waitUntil: 'networkidle2' });

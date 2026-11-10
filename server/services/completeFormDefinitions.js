@@ -24,11 +24,7 @@ module.exports = ({ field, options, required }) => {
       choice('leadCampaign', 'Lead Campaign', 'کمپین سرنخ', ['Referral', 'Online', 'Billboard', 'Activation', 'Agent']),
       choice('leadState', 'Lead State', 'مرحله سرنخ', ['Open', 'Parking', 'Waiting', 'Booked', 'Sealed']),
       choice('communicationTool', 'Communication Tool', 'روش ارتباط', ['WhatsApp', 'Email', 'Virtual Meet', 'Visit']),
-      field('listedFor', 'select', 'Transaction Type', 'نوع معامله', 'İşlem Türü', { options: [
-        { value: 'Rent', label: { en: 'Rent', fa: 'اجاره', tr: 'Kiralama' } },
-        // Keep the existing stored key for historical leads and conversions.
-        { value: 'Buy', label: { en: 'Sale', fa: 'فروش', tr: 'Satış' } },
-      ] }),
+      require('./requestTypeField'),
       choice('propertyType', 'Property Type', 'نوع ملک', ['Apartment', 'Land', 'Manssonnate']),
       f('leadMessage', 'textarea', 'Lead Message', 'پیام سرنخ'),
       relation('associatedListing', 'Related Property', 'ملک مرتبط', 'Properties'),
@@ -45,7 +41,7 @@ module.exports = ({ field, options, required }) => {
       choice('campaign', 'Campaign', 'کمپین', ['Referral', 'Online', 'Billboard', 'Activation', 'Agent']),
       field('state', 'select', 'Lead stage', 'مرحله سرنخ', 'Müşteri adayı aşaması', { options: options(['Open', 'Parking', 'Waiting', 'Booked', 'Sealed']) }),
       choice('communicationTool', 'Communication Tool', 'روش ارتباط', ['WhatsApp', 'Email', 'Virtual Meet', 'Visit']),
-      choice('listedFor', 'Listed For', 'نوع درخواست', ['Rent', 'Buy']),
+      require('./requestTypeField'),
       f('message', 'textarea', 'Message', 'پیام'),
       multiRelation('interestProperty', 'Properties of Interest', 'املاک مورد علاقه', 'Properties'),
       multiRelation('quotes', 'Quotes', 'پیشنهادهای قیمت', 'Quotes'),
@@ -55,6 +51,7 @@ module.exports = ({ field, options, required }) => {
       relation('partnerCustomer', 'Partner Customer', 'مشتری همکار', 'Partner Customers'),
     ],
     Opportunities: [
+      require('./requestTypeField'),
       f('opportunityName', 'text', 'Opportunity Name', 'نام فرصت', required),
       relation('accountName', 'Partner Customer', 'مشتری همکار', 'Partner Customers'),
       relation('contact', 'Contact', 'مخاطب', 'Contacts'),

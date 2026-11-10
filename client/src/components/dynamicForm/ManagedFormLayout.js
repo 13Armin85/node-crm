@@ -92,7 +92,7 @@ export default function ManagedFormLayout({ moduleName, formik, children, defini
   };
   return <Grid className="crm-managed-layout" templateColumns="repeat(12, minmax(0, 1fr))" gap={3}><FormFeedback formik={formik} />{(failed || definitionError) && <Alert status="error"><AlertIcon />{t('estate.serverError')}</Alert>}{React.Children.map(children, child => configure(child))}
     {includeCustom && definition && <Box className="crm-managed-fields" mt={4}><DynamicFormRenderer definition={definition} formik={formik} customOnly /></Box>}
-    {definition && fields.filter(field => field.kind === 'SYSTEM_FIELD' && !field.external && !renderedNames.includes(field.name)).map(field =>
+    {definition && fields.filter(field => field.kind === 'SYSTEM_FIELD' && !field.external && isVisible(field, formik.values) && !renderedNames.includes(field.name)).map(field =>
       <GridItem key={field.name} colSpan={{ base: 12, md: 6 }} order={field.order}><DynamicFormRenderer definition={{ ...definition, fields: [field] }} formik={formik} /></GridItem>)}
   </Grid>;
 }

@@ -41,10 +41,17 @@ test('disabled fields are hidden and reordering moves their section', () => {
   expect(sectionOrder(view)[0]).toBe('files');
 });
 
-test('new custom fields appear in an additional section after the known groups', () => {
+test('custom fields keep their configured position between system fields', () => {
   const view = render([...baseFields(), { ...field('field_view', 'select', 2), kind: 'CUSTOM_FIELD', options: [{ value: 'SEA', label: { en: 'Sea' } }] }]);
   expect(view).toContain('field-customFields.field_view');
-  expect(sectionOrder(view).at(-1)).toBe('other');
+  expect(sectionOrder(view)).toEqual(['basic', 'type', 'other', 'price', 'location', 'files']);
+  expect(view.indexOf('data-field-path="customFields.field_view"')).toBeLessThan(view.indexOf('data-field-path="price.amount"'));
+});
+
+test('moving a field across sections preserves the complete configured order', () => {
+  const fields = baseFields().map(item => item.name === 'price.amount' ? { ...item, order: -1 } : item);
+  const view = render(fields);
+  expect([...view.matchAll(/data-field-path="([^"]+)"/g)].map(match => match[1])).toEqual(['price.amount', 'title', 'description', 'category', 'price.currency', 'district', 'files']);
 });
 
 test('without sections the renderer keeps the single-grid layout used by other modules', () => {

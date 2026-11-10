@@ -22,7 +22,7 @@ const validateLeadSelection = values => {
   }
 };
 
-const optionalLeadFields = definition => definition?.moduleName === 'Leads'
+const optionalLeadFields = definition => definition?.moduleName === 'Leads' && !definition._id
   ? { ...definition, fields: definition.fields.map(field => ({ ...field, required: false })) }
   : definition;
 

@@ -17,6 +17,13 @@ module.exports = moduleName => async (req, res, next) => {
     for (const key of ['_id', '__v', 'deleted', 'roles', 'createdDate', 'updatedDate', 'authVersion', 'conversion', 'convertedLeads', 'leadCallFor', 'assignedBy']) delete req.body[key];
     if (moduleName !== 'Users' || !isAdmin(req.actor)) delete req.body.role;
     req.body.modifiedBy = req.actor._id;
+    if (['Emails', 'Calls', 'Meetings', 'Tasks'].includes(moduleName) && req.body.opportunity != null) {
+      if (req.body.opportunity === '') delete req.body.opportunity;
+      else {
+        if (!objectId(String(req.body.opportunity))) return res.status(400).json({ code: 'invalid', field: 'opportunity' });
+        await require('../services/recordWorkspace').loadRecord(req, 'Opportunities', String(req.body.opportunity));
+      }
+    }
     if (!isAdmin(req.actor) && ['Calls', 'Emails', 'Texts'].includes(moduleName)) {
       req.body.sender = req.actor._id;
       req.body.salesAgent = req.actor._id;
@@ -48,6 +55,22 @@ module.exports = moduleName => async (req, res, next) => {
     validateRequiredFields({ ...definition, fields: configuredFields.filter(field => action === 'create'
       || get(req.body, field.kind === 'CUSTOM_FIELD' ? `customFields.${field.name}` : field.name) !== undefined
       || (!visible(field, previous) && visible(field, { ...previous, ...req.body }))) }, req.body, previous);
+    // Saved system-field options, types, bounds and defaults have the same
+    // validation as custom fields, including legacy controller endpoints.
+    if (definition._id && moduleName !== 'Documents') {
+      const systemFields = definition.fields.filter(field => field.kind === 'SYSTEM_FIELD' && !field.external);
+      const draft = { ...req.body };
+      const { set } = require('../services/estateValidation');
+      for (const field of systemFields) {
+        const value = get(draft, field.name);
+        if (['number', 'currency'].includes(field.type) && typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) set(draft, field.name, Number(value));
+      }
+      const configured = validateFields({ ...definition, fields: systemFields }, draft, previous, { partial: action === 'update' });
+      for (const field of systemFields) {
+        const value = get(configured, field.name);
+        if (value !== undefined) set(req.body, field.name, value);
+      }
+    }
     if (moduleName === 'Invoices') await require('../services/invoiceProperty').validateInvoiceProperty(req, req.body, previous);
     const values = validateFields({ ...definition, fields: definition.fields.filter(f => f.kind === 'CUSTOM_FIELD') }, req.body, previous);
     for (const field of definition.fields.filter(f => f.kind === 'CUSTOM_FIELD' && f.type === 'file')) for (const file of values.customFields[field.name] || []) {

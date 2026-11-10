@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 
 const Task = new mongoose.Schema({
+    opportunity: { type: mongoose.Schema.Types.ObjectId, ref: 'Opportunities' },
     leadCallFor: { type: mongoose.Schema.Types.ObjectId, ref: 'Leads' },
     customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     title: String,

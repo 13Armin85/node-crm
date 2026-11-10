@@ -1,6 +1,7 @@
 # Publish a validated staged build without deleting assets still used by open tabs.
 param(
-    [string]$ReleaseDirectory = (Join-Path $PSScriptRoot '../layout-artifacts/mobile-pwa/release')
+    [string]$ReleaseDirectory = (Join-Path $PSScriptRoot '../layout-artifacts/mobile-pwa/release'),
+    [switch]$ValidateOnly
 )
 $ErrorActionPreference = 'Stop'
 $crmWorkspace = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -19,6 +20,7 @@ foreach ($crmAsset in $crmManifest.entrypoints) {
 }
 $crmWorker = Get-Content -LiteralPath (Join-Path $crmRelease 'service-worker.js') -Raw
 if ($crmWorker.Contains('__CRM_BUILD_VERSION__')) { throw 'Run the PWA postbuild step before deployment.' }
+if ($ValidateOnly) { Write-Output 'Staged client assets and PWA version validated.'; return }
 $crmLastFiles = @('index.html','asset-manifest.json','service-worker.js','web.config')
 Get-ChildItem -LiteralPath $crmRelease | Where-Object { $_.Name -notin $crmLastFiles } | ForEach-Object {
     Copy-Item -LiteralPath $_.FullName -Destination $crmLive -Recurse -Force

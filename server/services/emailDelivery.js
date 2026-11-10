@@ -49,7 +49,7 @@ async function createAndSendEmail(req) {
     const result = new Email({
         sender: actor._id, createBy: actor._id, recipient, subject: body.subject.trim(), type,
         message: template ? '' : body.message, html: template ? body.html : '',
-        createByContact: contactId, createByLead: leadId, salesAgent, property, startDate,
+        createByContact: contactId, createByLead: leadId, opportunity: body.opportunity, salesAgent, property, startDate,
         customFields: body.customFields, deliveryStatus: 'PENDING',
     });
     // Persist and validate before SMTP so database/validation failures cannot send a message.

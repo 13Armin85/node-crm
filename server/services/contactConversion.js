@@ -12,7 +12,7 @@ async function convertContact(req) {
   const properties = [...new Set([...(contact.interestProperty || []), ...(contact.relatedProperties || [])].map(String))];
   const payload = { sourceContact: contact._id, contact: contact._id, opportunityName: name,
     accountName: contact.partnerCustomer, properties, assignUser: contact.assignUser || req.actor._id,
-    type: 'New Business', salesStage: 'Prospecting',
+    type: 'New Business', salesStage: 'Prospecting', listedFor: contact.listedFor,
     description: [contact.message, contact.notesandComments, contact.internalNotesOrComments].filter(Boolean).join('\n\n'),
     customFields: contact.customFields || {}, convertedContacts: [snapshot], convertedLeads: contact.convertedLeads || [],
     createBy: req.actor._id, modifiedBy: req.actor._id, deleted: false };
@@ -21,11 +21,7 @@ async function convertContact(req) {
   catch (err) { if (err.code !== 11000) throw err; opportunity = await Opportunity.findOne({ sourceContact: contact._id }); }
   if (opportunity.deleted) throw error('notFound', 404);
   await syncOpportunity(opportunity);
-  const Note = require('../model/schema/recordNote');
-  for (const note of await Note.find({ module: 'Contacts', record: contact._id }).lean()) {
-    const key = { module: 'Opportunities', record: opportunity._id, author: note.author, clientId: 'contact-transfer-' + note._id };
-    await Note.updateOne(key, { $setOnInsert: { ...key, text: note.text, authorName: note.authorName, createdAt: note.createdAt, updatedAt: note.updatedAt } }, { upsert: true, timestamps: false });
-  }
+  await require('./customerHistory').syncRequestType('Contacts', contact);
   return { opportunityId: opportunity._id, contactId: contact._id };
 }
 module.exports = { convertContact };

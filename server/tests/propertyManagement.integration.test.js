@@ -71,8 +71,8 @@ test('property layouts, assigned agents, reusable owners and lead relationships 
       : field.name === 'associatedListing' ? { ...field, external: true } : field) });
   const leadDefinition = (await api('GET', '/estate/definitions/Leads')).data;
   const transactionField = leadDefinition.fields.find(field => field.name === 'listedFor');
-  assert.deepEqual(transactionField.options.map(option => option.label.fa), ['اجاره', 'فروش']);
-  assert.deepEqual(transactionField.options.map(option => option.value), ['Rent', 'Buy']);
+  assert.deepEqual(transactionField.options.map(option => option.label.fa), ['خرید', 'اجاره']);
+  assert.deepEqual(transactionField.options.map(option => option.value), ['Buy', 'Rent']);
   assert.equal(transactionField.label.fa, 'نوع درخواست');
   assert.equal(leadDefinition.fields.find(field => field.name === 'associatedListing').external, false);
 
@@ -95,7 +95,7 @@ test('property layouts, assigned agents, reusable owners and lead relationships 
     propertyAgent: String(agent._id), propertyOwner: owner.data._id, district: district.data.name };
   const property = await api('POST', '/estate/Properties', payload);
   assert.equal(property.status, 201, JSON.stringify(property));
-  assert.equal(property.data.bedroom, '4+1'); assert.equal(property.data.propertyOwner, owner.data._id);
+  assert.equal(property.data.bedroom, '1+4'); assert.equal(property.data.propertyOwner, owner.data._id);
   assert.equal(property.data.district, district.data.name);
   assert.equal((await api('DELETE', '/estate/districts/' + district.data._id)).status, 409);
   const residence = await api('POST', '/estate/Residences', { name: 'New Inline Residence', district: district.data.name });
@@ -109,18 +109,26 @@ test('property layouts, assigned agents, reusable owners and lead relationships 
   await importLegacyDistricts();
   assert.equal((await api('GET', '/estate/districts/options?q=Unused')).data.length, 0);
   const persisted = await Property.findById(property.data._id).lean();
-  assert.equal(persisted.bedroom, '4+1'); assert.equal(String(persisted.propertyAgent), String(agent._id));
+  assert.equal(persisted.bedroom, '1+4'); assert.equal(String(persisted.propertyAgent), String(agent._id));
   const list = await api('GET', '/estate/Properties');
   assert.equal(list.data.items[0].floor, '3'); assert.equal(list.data.items[0].propertyAgent.firstName, 'Property');
   assert.equal(list.data.items[0].propertyOwner.fullName, ownerPayload.fullName);
   const fetched = await api('GET', '/estate/Properties/' + property.data._id);
-  assert.equal(fetched.data.propertyAgent, String(agent._id)); assert.equal(fetched.data.bedroom, '4+1');
-  for (const [field, value] of [['bedroom', '1-4'], ['propertyAgent', 'bad-id'], ['propertyOwner', String(new mongoose.Types.ObjectId())]]) {
+  assert.equal(fetched.data.propertyAgent, String(agent._id)); assert.equal(fetched.data.bedroom, '1+4');
+  for (const [field, value] of [['propertyAgent', 'bad-id'], ['propertyOwner', String(new mongoose.Types.ObjectId())]]) {
     const invalid = await api('PUT', '/estate/Properties/' + property.data._id, { [field]: value });
     assert.equal(invalid.status, 400); assert.equal(invalid.data.field, field);
   }
   const changed = await api('PUT', '/estate/Properties/' + property.data._id, { propertyAgent: String(admin._id), bedroom: '4+2' });
   assert.equal(changed.status, 200); assert.equal(changed.data.propertyAgent, String(admin._id)); assert.equal(changed.data.bedroom, '4+2');
+  for (const value of ['0+1', '1+0', '1+2', '2+1', '19+37', 'Studio', '1-4', '100']) {
+    const saved = await api('PUT', '/estate/Properties/' + property.data._id, { bedroom: value });
+    assert.equal(saved.status, 200, JSON.stringify(saved)); assert.equal(saved.data.bedroom, value);
+    const filtered = await api('GET', '/estate/Properties?' + new URLSearchParams({ bedroom: value }));
+    assert.equal(filtered.data.items.length, 1, value); assert.equal(filtered.data.items[0].bedroom, value);
+  }
+  const localizedRooms = await api('PUT', '/estate/Properties/' + property.data._id, { bedroom: '۰ + ۱' });
+  assert.equal(localizedRooms.status, 200); assert.equal(localizedRooms.data.bedroom, '0+1');
   const second = await api('POST', '/property/add', { ...payload, title: 'Same owner, another property' });
   assert.equal(second.status, 200, JSON.stringify(second)); assert.equal(second.data.propertyOwner, owner.data._id);
   assert.equal(await Contact.countDocuments({ deleted: false }), 1);

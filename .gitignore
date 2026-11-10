@@ -31,6 +31,7 @@ serviceAccount*.json
 # User uploads and generated files
 server/uploads
 server/uploads/**
+server/.cache/
 uploads
 uploads/**
 build

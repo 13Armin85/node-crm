@@ -1,5 +1,6 @@
 const { constructionStatuses, amenities } = require('./residenceCatalog');
 module.exports = ({ field, options, required }) => [
+  field('paymentMethod', 'select', 'Payment Method', 'روش پرداخت', 'Ödeme şekli', { options: options(['CASH', 'INSTALLMENTS', 'BOTH']) }),
   field('name', 'text', 'Residence Name', 'نام رزیدانس', 'Rezidans adı', required),
   field('description', 'textarea', 'Description', 'توضیحات', 'Açıklama'),
   field('developer', 'text', 'Developer', 'شرکت سازنده', 'İnşaat firması'),

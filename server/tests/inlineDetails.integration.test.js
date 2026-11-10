@@ -49,11 +49,13 @@ test('configured residence multiselects and equivalent property room plans persi
   assert.equal(property.status, 201, JSON.stringify(property)); assert.equal(property.data.bedroom, '2+1'); assert.equal(property.data.area.type, 'NET');
   for (const bedroom of ['1+2', '2+1']) {
     const edited = await api('PUT', '/Properties/' + property.data._id, { bedroom });
-    assert.equal(edited.status, 200, JSON.stringify(edited)); assert.equal(edited.data.bedroom, '2+1');
+    // Bedroom layouts keep their entered order (README: "Dynamic forms").
+    assert.equal(edited.status, 200, JSON.stringify(edited)); assert.equal(edited.data.bedroom, bedroom);
     assert.equal(edited.data.customFields.reference, 'Preserve property data');
     assert.equal((await api('GET', '/Properties?bedroom=' + encodeURIComponent(bedroom))).data.total, 1);
   }
-  assert.equal((await api('PUT', '/Properties/' + property.data._id, { bedroom: '5+5' })).status, 400);
+  // Bedroom accepts free text with optional suggestions (README: "Dynamic forms").
+  assert.equal((await api('PUT', '/Properties/' + property.data._id, { bedroom: '5+5' })).status, 200);
   const metadata = await require('../model/schema/customField').create({ moduleName: 'Leads', fields: require('../db/leadFields').leadFields });
   const { Lead, initializeLeadSchema } = require('../model/schema/lead'); await initializeLeadSchema();
   const lead = await Lead.create({ leadName: 'Before', associatedListing: property.data._id, assignUser: actor._id, createBy: actor._id });

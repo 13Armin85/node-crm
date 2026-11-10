@@ -17,10 +17,16 @@ const inferLeadStage = record => record.leadStage || record.leadData?.leadState 
 function normalizeOpportunity(body, previous = {}, definition, requireAmounts = false) {
   const result = { ...body };
   delete result.closedAt;
+  if (body.listedFor !== undefined) {
+    const field = definition?.fields.find(field => field.name === 'listedFor' && field.kind === 'SYSTEM_FIELD');
+    if (field) require('./estateValidation').validateValue(field, body.listedFor);
+  }
   for (const field of ['opportunityAmount', 'amount', 'commission']) {
+    const configured = definition?.fields.find(item => item.name === field && item.kind === 'SYSTEM_FIELD');
+    if (definition?._id && (!configured || configured.enabled === false)) { delete result[field]; continue; }
     const value = body[field];
     if (value === undefined || value === null || value === '') {
-      if (requireAmounts || value !== undefined) fail(field, 'required');
+      if ((definition?._id ? configured?.required && requireAmounts : requireAmounts || value !== undefined)) fail(field, 'required');
     } else {
       const number = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN;
       if (!Number.isFinite(number) || number < 0) fail(field);

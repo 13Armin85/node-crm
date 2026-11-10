@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const { serialize } = require('../../services/documentMutationQueue');
 
 const uploadRoot = path.resolve(__dirname, '../../uploads/document');
 const { createUpload, validateUploads, withinRoot, fileResponseHeaders } = require('../../services/secureFiles');
@@ -66,7 +67,7 @@ const index = async (req, res) => {
     }
 };
 
-const createFolder = async (req, res) => {
+const createFolder = serialize(async (req, res) => {
     try {
         const access = await actorScope(req);
         const folderName = String(req.body.folderName || '').trim();
@@ -81,7 +82,7 @@ const createFolder = async (req, res) => {
     } catch (error) {
         res.status(400).json({ message: 'Failed to create folder', error: error.message });
     }
-};
+});
 
 const entityFields = (body) => {
     const aliases = {
@@ -106,7 +107,7 @@ const entityFields = (body) => {
     return result;
 };
 
-const file = async (req, res) => {
+const file = serialize(async (req, res) => {
     try {
         const access = await actorScope(req);
         if (!access) return res.status(401).json({ message: 'Authentication failed' });
@@ -114,6 +115,10 @@ const file = async (req, res) => {
         let folder;
         if (req.body.folderId && validId(req.body.folderId)) {
             folder = await Document.findOne({ _id: req.body.folderId, ...access.query, deleted: false });
+        } else if (typeof req.body.folderName === 'string' && req.body.folderName.trim()) {
+            folder = await Document.findOneAndUpdate({ createBy: access.actor._id, parentFolder: null,
+                folderName: req.body.folderName.trim(), deleted: false, isRoot: false },
+            { $setOnInsert: { file: [] } }, { upsert: true, new: true, runValidators: true });
         } else {
             folder = await Document.findOne({ createBy: access.actor._id, isRoot: true, deleted: false });
             if (!folder) folder = new Document({ folderName: '__ROOT__', isRoot: true, createBy: access.actor._id, parentFolder: null, file: [] });
@@ -148,7 +153,7 @@ const file = async (req, res) => {
         if (error.code === 'duplicate' || error.code === 11000) return res.status(409).json({ code: 'duplicate', field: 'files' });
         res.status(error.status || 400).json({ code: error.code || 'invalid', message: 'Failed to upload files', error: error.message });
     }
-};
+});
 
 const compatibilityUpload = (entityType) => async (req, res) => {
     req.body.entityType = entityType;
@@ -197,10 +202,10 @@ const previewFile = async (req, res) => {
     }
 };
 
-const deleteFile = async (req, res) => {
+const deleteFile = serialize(async (req, res) => {
     try {
         const result = await findFile(req, req.params.id);
-        if (!result) return res.status(404).json({ message: 'File not found' });
+        if (!result || result.found.deleted) return res.status(404).json({ message: 'File not found' });
         result.found.deleted = true;
         result.folder.updatedDate = new Date();
         await result.folder.save();
@@ -208,7 +213,27 @@ const deleteFile = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Failed to delete file', error: error.message });
     }
-};
+});
+
+const deleteFolder = serialize(async (req, res) => {
+    if (!validId(req.params.id)) return res.status(400).json({ code: 'invalid' });
+    const access = await actorScope(req);
+    if (!access) return res.status(401).json({ code: 'unauthorized' });
+    const folder = await Document.findOne({ _id: req.params.id, ...access.query, deleted: false, isRoot: { $ne: true } }).lean();
+    if (!folder) return res.status(404).json({ code: 'notFound' });
+    const ids = [folder._id], visited = new Set([String(folder._id)]);
+    let parents = [folder._id];
+    while (parents.length) {
+        const children = await Document.find({ createBy: folder.createBy, deleted: false, isRoot: { $ne: true }, parentFolder: { $in: parents } }).select('_id').lean();
+        parents = children.filter(item => !visited.has(String(item._id))).map(item => item._id);
+        for (const id of parents) { visited.add(String(id)); ids.push(id); }
+    }
+    // Files stay in their original containers. All read/download/share paths
+    // already exclude deleted containers, including independently shared files.
+    const result = await Document.updateMany({ _id: { $in: ids }, createBy: folder.createBy, deleted: false, isRoot: { $ne: true } },
+        { $set: { deleted: true, updatedDate: new Date() } });
+    res.json({ message: 'Folder deleted successfully', deletedFolders: result.modifiedCount });
+});
 
 const linkDocument = async (req, res) => {
     try {
@@ -230,6 +255,6 @@ const linkDocument = async (req, res) => {
 };
 
 module.exports = {
-    upload, validateUploads: validateUploadedDocuments, index, createFolder, file, downloadFile, previewFile, deleteFile, LinkDocument: linkDocument,
+    upload, validateUploads: validateUploadedDocuments, index, createFolder, file, downloadFile, previewFile, deleteFile, deleteFolder, LinkDocument: linkDocument,
     addDocumentContact: compatibilityUpload('Contact'), addDocumentLead: compatibilityUpload('Lead'),
 };

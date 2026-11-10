@@ -53,24 +53,11 @@ exports.check=async({page,origin,artifacts,contacts})=>{
   assert.equal(await page.$eval('input[name="probability"]',item=>item.readOnly),true);
   await page.select('select[name="salesStage"]','Negotiation/Review');await page.waitForFunction(()=>document.querySelector('input[name="probability"]').value==='90');
   const created=page.waitForResponse(r=>r.url().endsWith('/api/opportunity/add')&&r.request().method()==='POST');await clickText('.chakra-modal__content button','Save');const response=await created,result=await response.json();assert.equal(response.status(),200,JSON.stringify(result));assert.equal(result.commission,950.75);assert.equal(Number(result.amount),93000);assert.equal(Number(result.opportunityAmount),100000);
-  for(const[language,width]of[['en',1440],['fa',375],['tr',320]]){
-    await go('/default');await page.select('.crm-language-select select',language);await page.setViewport({width,height:950});
-    await page.waitForSelector('[data-finance-bucket="sold"]');
-    const labels={en:['Income period','Ranking period','Company income'],fa:['بازه درآمد','بازه رتبه‌بندی','درآمد شرکت'],tr:['Gelir dönemi','Sıralama dönemi','Şirket geliri']}[language];
-    await page.select('select[aria-label="'+labels[0]+'"]','week');await page.waitForFunction(()=>!!document.querySelector('[data-finance-bucket="sold"]'));
-    assert((await page.$eval('[data-finance-bucket="sold"]',item=>item.textContent)).includes(labels[2]));
-    await page.select('select[aria-label="'+labels[1]+'"]','6');await page.waitForFunction(()=>document.querySelector('.crm-team-sales-table tbody tr')?.textContent.includes('Second Seller'));
-    await page.select('select[aria-label="'+labels[1]+'"]','3');await page.waitForFunction(()=>document.querySelector('.crm-team-sales-table tbody tr')?.textContent.includes('Workspace Reviewer'));
-    await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+2,{timeout:4000});
-    assert(!await page.evaluate(()=>document.body.textContent.includes('finance.')),'All finance labels must be translated');
-    await page.screenshot({path:path.join(artifacts,'commission-dashboard-'+language+'.png')});
-  }
-  await (await page.$$('.crm-sales-performance select'))[1].select('USD');
-  await page.waitForFunction(()=>document.querySelector('[data-finance-bucket="sold"]')?.textContent.includes('25'));
+  await require('./check-dashboard-currency.cjs').check({ page, origin, artifacts });
   await page.setViewport({width:375,height:950});await go('/opportunities');await page.waitForSelector('.crm-record-row');await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+2,{timeout:4000});
   await page.screenshot({path:path.join(artifacts,'opportunity-table-mobile.png')});
   for(const route of ['/properties','/residences','/partner-customers','/lead','/task','/metting','/phone-call','/email','/invoices','/email-template','/user']){
     await go(route);await page.waitForSelector('.crm-content');await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+2,{timeout:4000});
   }
-  console.log('PASS: new form input auto-adds a value column, hidden columns persist, contact links navigate, three prices save, stage probability updates, commission dashboard filters/ranking/localization work on desktop and mobile.');
+  console.log('PASS: new form input auto-adds a value column, hidden columns persist, contact links navigate, three prices save, stage probability updates, four financial totals and currency conversion work on desktop and mobile.');
 };

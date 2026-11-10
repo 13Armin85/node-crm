@@ -5,6 +5,7 @@ const { categories, ages, bedrooms, floors } = require('./estateCatalog');
 const { partnerCustomerStatuses } = require('./customerStatuses');
 const { constructionStatuses, amenities } = require('./residenceCatalog');
 const labels = {
+  CASH: ['Cash', 'نقد', 'Peşin'], INSTALLMENTS: ['Installments', 'اقساط', 'Taksitli'], BOTH: ['Cash and installments', 'نقد و اقساط (هر دو)', 'Peşin ve taksitli'],
   Open: ['Open', 'باز', 'Açık'], Parking: ['Parking', 'توقف موقت', 'Bekletildi'], Waiting: ['Waiting', 'در انتظار', 'Beklemede'], Booked: ['Booked', 'رزروشده', 'Rezerve'], Sealed: ['Sealed', 'نهایی‌شده', 'Kesinleşti'],
   ...constructionStatuses, ...amenities,
   RESIDENTIAL: ['Residential', 'مسکونی', 'Konut'], COMMERCIAL: ['Commercial', 'تجاری', 'Ticari'],
@@ -35,6 +36,12 @@ const defaults = {
     field('category', 'select', 'Property Category', 'دسته‌بندی ملک', 'Gayrimenkul Kategorisi', { ...required, options: options(Object.keys(categories)), defaultValue: 'RESIDENTIAL' }),
     field('subtype', 'select', 'Property Subtype', 'نوع ملک', 'Gayrimenkul Türü', { ...required, options: options(Object.values(categories).flat()) }),
     field('transactionType', 'radio', 'Transaction Type', 'نوع معامله', 'İşlem Türü', { ...required, options: options(['SALE', 'RENT']), defaultValue: 'SALE' }),
+    field('suitableFor', 'multiselect', 'Suitable For', 'مناسب برای', 'Uygunluk', { options: [
+      { value: 'LIVING', label: localized('Living', 'سکونت', 'Yaşam') },
+      { value: 'INVESTMENT', label: localized('Investment', 'سرمایه‌گذاری', 'Yatırım') },
+      { value: 'RESIDENCY', label: localized('Residency', 'اقامت', 'İkamet') },
+      { value: 'CITIZENSHIP', label: localized('Citizenship', 'شهروندی', 'Vatandaşlık') },
+    ] }),
     field('price.amount', 'currency', 'Price', 'قیمت', 'Fiyat', { ...required, min: 0 }),
     field('price.currency', 'select', 'Currency', 'ارز', 'Para Birimi', { ...required, options: options(['TRY', 'USD', 'EUR']), defaultValue: 'TRY' }),
     ...address(), field('isInsideResidence', 'checkbox', 'Is this property inside a Residence?', 'آیا ملک داخل یک رزیدانس قرار دارد؟', 'Gayrimenkul bir rezidans içerisinde mi?', { defaultValue: false }),
@@ -176,12 +183,15 @@ async function getDefinition(moduleName) {
 }
 function opportunityFields(definition) {
   if (definition.moduleName !== 'Opportunities') return definition;
-  const mandatory = ['opportunityAmount', 'amount', 'commission'];
-  const fields = definition.fields.map(item => mandatory.includes(item.name) ? { ...item, label: defaults.Opportunities.find(field => field.name === item.name).label, type: 'currency', min: 0, required: true, enabled: true } : item.name === 'probability' ? { ...item, readOnly: true } : item);
-  for (const name of mandatory) if (!fields.some(field => field.name === name)) fields.push({ ...defaults.Opportunities.find(field => field.name === name), order: fields.length });
+  const fields = definition.fields.map(item => item.name === 'probability' ? { ...item, readOnly: true } : item);
   return { ...definition, fields };
 }
 function catalogFields(definition) {
+  // Reuse an administrator's existing suitability field and its stored codes.
+  // This installation already has one, so avoid a second empty field.
+  if (definition.moduleName === 'Properties' && definition.fields.some(field => field.kind === 'CUSTOM_FIELD' && require('./propertySuitability').isSuitabilityField(field))) {
+    definition = { ...definition, fields: definition.fields.filter(field => field.name !== 'suitableFor') };
+  }
   if (!['Properties', 'Residences', 'Partner Customers'].includes(definition.moduleName)) return definition;
   return { ...definition, fields: definition.fields.map(field => field.name === 'district' && field.kind === 'SYSTEM_FIELD'
     ? { ...field, type: 'text', storageType: 'text', catalog: 'districts', relation: undefined, options: undefined } : field) };

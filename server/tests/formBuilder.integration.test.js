@@ -85,6 +85,26 @@ test('admin field configuration persists and controls actual forms without chang
       assert.deepEqual(loaded.fields.map(field => field.name), fields.map(field => field.name));
       assert.equal(await FormDefinition.countDocuments(), 2);
     });
+    await t.test('saved lead requirements and opportunity removals control legacy creation endpoints', async () => {
+      let definition = await getDefinition('Leads');
+      let saved = await api('PUT', '/estate/definitions/Leads', { ...definition, fields: definition.fields.map(field => ({ ...field, required: field.name === 'leadEmail' })) });
+      assert.equal(saved.status, 200, JSON.stringify(saved));
+      assert.equal(saved.data.fields.find(field => field.name === 'leadEmail').required, true);
+      let result = await api('POST', '/lead/add', { leadName: 'Missing required email' });
+      assert.equal(result.status, 400); assert.equal(result.data.field, 'leadEmail');
+      result = await api('POST', '/lead/add', { leadName: 'Configured lead', leadEmail: 'lead@example.test' });
+      assert.equal(result.status, 200, JSON.stringify(result));
+      saved = await api('PUT', '/estate/definitions/Leads', { ...saved.data, fields: saved.data.fields.filter(field => field.name !== 'leadEmail') });
+      assert.equal(saved.status, 200);
+      assert.equal((await api('POST', '/lead/add', { leadName: 'After email removal' })).status, 200);
+      definition = await getDefinition('Opportunities');
+      saved = await api('PUT', '/estate/definitions/Opportunities', { ...definition, fields: definition.fields.filter(field => !['amount', 'opportunityAmount', 'commission'].includes(field.name)).map(field => ({ ...field, required: field.name === 'opportunityName' })) });
+      assert.equal(saved.status, 200, JSON.stringify(saved));
+      assert(!saved.data.fields.some(field => field.name === 'commission'));
+      result = await api('POST', '/opportunity/add', { opportunityName: 'No financial fields' });
+      assert.equal(result.status, 200, JSON.stringify(result));
+      assert.equal(result.data.commission, undefined);
+    });
     await t.test('removed system options, system fields and custom fields stay removed after saving and reloading', async () => {
       for (const [moduleName, fieldName, optionValue] of [['Properties', 'bedroom', '1+4'], ['Leads', 'listedFor', 'Buy']]) {
         const route = '/estate/definitions/' + moduleName;

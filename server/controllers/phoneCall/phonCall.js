@@ -28,6 +28,7 @@ const add = async (req, res) => {
         }
 
         const phoneCall = {
+            opportunity: req.body.opportunity,
             sender,
             recipient,
             callDuration,

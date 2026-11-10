@@ -1,4 +1,5 @@
 const https = require('https');
+const { readCachedRate, writeCachedRate } = require('./exchangeRateCache');
 
 const SOURCE_URL = process.env.TCMB_EXCHANGE_RATE_URL || 'https://www.tcmb.gov.tr/kurlar/today.xml';
 const HOURLY_BASE_URL = process.env.TCMB_HOURLY_RATE_URL || 'https://www.tcmb.gov.tr/reeskontkur';
@@ -7,6 +8,7 @@ let cached = null;
 let inFlight = null;
 let retryAfter = 0;
 let lastFailure = null;
+let initialCacheRequest = null;
 
 const tagValue = (xml, tag) => {
   const match = xml.match(new RegExp(`<${tag}>([^<]+)</${tag}>`, 'i'));
@@ -50,7 +52,7 @@ const parseTcmbHourlyUsd = xml => {
 };
 
 const requestXml = (url, deadline) => new Promise((resolve, reject) => {
-  const timeoutMS = Math.min(8000, deadline - Date.now());
+  const timeoutMS = Math.min(12000, deadline - Date.now());
   if (timeoutMS <= 0) return reject(new Error('TCMB request timed out'));
   let timer;
   const done = (error, body) => {
@@ -124,9 +126,11 @@ const getLatestHourly = async deadline => {
 };
 
 const getTryUsdRate = async () => {
+  if (!initialCacheRequest) initialCacheRequest = readCachedRate().then(value => { if (!cached && value) cached = value; });
+  await initialCacheRequest;
   const now = Date.now();
   if (cached && now - cached.cachedAt < CACHE_MS) return { ...cached.value, stale: false };
-  if (inFlight) return inFlight;
+  if (inFlight) return cached ? { ...cached.value, stale: true } : inFlight;
   if (now < retryAfter) {
     if (cached) return { ...cached.value, stale: true };
     throw lastFailure;
@@ -137,12 +141,13 @@ const getTryUsdRate = async () => {
     try {
       value = { ...await getLatestHourly(now + 12000), source: 'TCMB hourly', fetchedAt: new Date().toISOString() };
     } catch (hourlyError) {
-      const xml = await requestXml(SOURCE_URL, now + 20000);
+      const xml = await requestXml(SOURCE_URL, now + 30000);
       const usd = parseTcmbUsd(xml);
       const eur = parseTcmbCurrency(xml, 'EUR');
       value = { ...usd, tryPerEur: eur.tryPerUnit, source: 'TCMB daily', fetchedAt: new Date().toISOString() };
     }
     cached = { value, cachedAt: Date.now() };
+    await writeCachedRate(value).catch(() => {});
     retryAfter = 0;
     lastFailure = null;
     return { ...value, stale: false };
@@ -152,6 +157,8 @@ const getTryUsdRate = async () => {
     if (cached) return { ...cached.value, stale: true };
     throw error;
   } finally { inFlight = null; } })();
+  // Keep the last verified TCMB rate available during refreshes and restarts.
+  if (cached) { inFlight.catch(() => {}); return { ...cached.value, stale: true }; }
   return inFlight;
 };
 

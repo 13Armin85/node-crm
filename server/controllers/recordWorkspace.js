@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { loadUser } = require('../middelwares/permissions');
 const { loadRecord, error } = require('../services/recordWorkspace');
 const Note = require('../model/schema/recordNote');
+const { customerHistory } = require('../services/customerHistory');
 const { objectId } = require('../services/estateValidation');
 router.use(require('../middelwares/auth'), loadUser);
 const run = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
@@ -9,7 +10,7 @@ router.use(async (req, res, next) => {
   try { req.recordShares ||= await require('../services/recordSharing').loadShares(req.actor); next(); } catch (err) { next(err); }
 });
 router.get('/:module/:id', run(async (req, res) => {
-  const { moduleName, record, editable } = await loadRecord(req, req.params.module, req.params.id);
+  const { moduleName, record, editable, archived } = await loadRecord(req, req.params.module, req.params.id, { includeConvertedLead: true });
   if (moduleName === 'Users') for (const key of ['password', 'authVersion', 'moduleVisibility', 'avatarFilename']) delete record[key];
   const definition = await require('../services/formDefinitions').getDefinition(moduleName);
   if (moduleName === 'Opportunities') {
@@ -30,7 +31,7 @@ router.get('/:module/:id', run(async (req, res) => {
     if (date && Number.isFinite(date.getTime())) set(record, path, date.toISOString());
   }
   const metadata = await require('../model/schema/customField').findOne({ moduleName, deleted: false }).select('_id').lean();
-  res.json({ record, definition, editable, legacyModuleId: metadata?._id });
+  res.json({ record, definition, editable, archived, legacyModuleId: metadata?._id });
 }));
 // These activity pages historically had no update endpoint. Editing an existing
 // activity changes its stored details and never re-sends an email or makes a call.
@@ -59,20 +60,62 @@ router.put('/:module/:id', run(async (req, res) => {
   res.json(updated);
 }));
 const accessNotes = async req => {
-  if (!['Contacts', 'Opportunities'].includes(req.params.module)) throw error('notFound', 404);
-  return loadRecord(req, req.params.module, req.params.id);
+  if (!['Leads', 'Contacts', 'Opportunities'].includes(req.params.module)) throw error('notFound', 404);
+  return loadRecord(req, req.params.module, req.params.id, { includeConvertedLead: req.method === 'GET' });
 };
+router.get('/:module/:id/activities', run(async (req, res) => {
+  const { record, moduleName } = await loadRecord(req, req.params.module, req.params.id);
+  if (moduleName !== 'Opportunities') throw error('notFound', 404);
+  const { readScope } = require('../services/recordAccess');
+  const sources = {};
+  for (const [field, module, Model] of [
+    ['contact', 'Contacts', require('../model/schema/contact').Contact],
+    ['lead', 'Leads', require('../model/schema/lead').Lead],
+  ]) {
+    if (record[field]) sources[field] = await Model.findOne(readScope(req, req.actor, module, { _id: record[field], deleted: false })).lean();
+  }
+  const groups = [
+    ['Emails', require('../model/schema/email'), 'createByContact', 'createByLead'],
+    ['Calls', require('../model/schema/phoneCall'), 'createByContact', 'createByLead'],
+    ['Meetings', require('../model/schema/meeting'), 'attendes', 'attendesLead'],
+    ['Tasks', require('../model/schema/task'), 'assignTo', 'assignToLead'],
+  ];
+  const result = await Promise.all(groups.map(async ([module, Model, contactField, leadField]) => {
+    const relations = [{ opportunity: record._id }];
+    if (sources.contact) relations.push({ [contactField]: sources.contact._id });
+    if (sources.lead) relations.push({ [leadField]: sources.lead._id });
+    const items = await Model.find(readScope(req, req.actor, module, { deleted: false, $or: relations }))
+      .sort({ timestamp: -1, createdDate: -1, _id: -1 }).lean();
+    return [module, items];
+  }));
+  res.json({ ...Object.fromEntries(result), sources });
+}));
 router.get('/:module/:id/notes', run(async (req, res) => {
   await accessNotes(req);
   if (req.query.before && !objectId(req.query.before)) throw error('invalid');
-  const match = { module: req.params.module, record: req.params.id };
+  const history = await customerHistory(req.params.module, req.params.id, req);
+  const match = { $or: Object.entries(history).map(([module, records]) => ({ module,
+    record: { $in: [...records.keys()].map(id => new (require('mongoose').Types.ObjectId)(id)) } })) };
+  // Older releases copied contact notes into opportunities. Group those copies
+  // with their original before pagination so historical notes appear once.
+  const pipeline = [
+    { $match: match },
+    { $set: { historyId: { $cond: [
+      { $regexMatch: { input: '$clientId', regex: '^contact-transfer-[a-f0-9]{24}$' } },
+      { $toObjectId: { $substrBytes: ['$clientId', 17, 24] } }, '$_id',
+    ] } } },
+    { $sort: { _id: 1 } },
+    { $group: { _id: '$historyId', note: { $first: '$$ROOT' } } },
+    { $replaceRoot: { newRoot: { $mergeObjects: ['$note', { _id: '$_id' }] } } },
+    { $unset: 'historyId' },
+  ];
   if (req.query.before) {
-    const cursor = await Note.findOne({ ...match, _id: req.query.before }).select('createdAt').lean();
+    const [cursor] = await Note.aggregate([...pipeline, { $match: { _id: new (require('mongoose').Types.ObjectId)(req.query.before) } }]);
     if (!cursor) throw error('invalid');
-    match.$or = [{ createdAt: { $lt: cursor.createdAt } }, { createdAt: cursor.createdAt, _id: { $lt: cursor._id } }];
+    pipeline.push({ $match: { $or: [{ createdAt: { $lt: cursor.createdAt } }, { createdAt: cursor.createdAt, _id: { $lt: cursor._id } }] } });
   }
-  const notes = await Note.find(match).sort({ createdAt: -1, _id: -1 }).limit(51)
-    .populate('author', 'firstName lastName username jobTitle department avatarVersion').lean();
+  const notes = await Note.aggregate([...pipeline, { $sort: { createdAt: -1, _id: -1 } }, { $limit: 51 }]);
+  await Note.populate(notes, { path: 'author', select: 'firstName lastName username jobTitle department avatarVersion' });
   const more = notes.length > 50; const items = notes.slice(0, 50).reverse();
   res.json({ items, before: more ? String(items[0]._id) : null });
 }));

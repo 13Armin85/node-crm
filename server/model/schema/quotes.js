@@ -17,6 +17,7 @@ const installmentsSchema = new mongoose.Schema({
   },
 });
 const Quotes = new mongoose.Schema({
+  opportunity: { type: mongoose.Schema.Types.ObjectId, ref: 'Opportunities' },
   lead: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Leads",

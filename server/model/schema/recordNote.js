@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const schema = new mongoose.Schema({
-  module: { type: String, enum: ['Contacts', 'Opportunities'], required: true },
+  module: { type: String, enum: ['Leads', 'Contacts', 'Opportunities'], required: true },
   record: { type: mongoose.Schema.Types.ObjectId, required: true },
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   authorName: String,

@@ -75,6 +75,19 @@ npm run seed:demo
 
 This development-only command creates 30 demo records per supported data module and does not create or modify users. It upserts records with stable demo IDs, so rerunning it refreshes those demo records.
 
+## Publishing a complete release
+
+Build and validate the client in a staging directory under `layout-artifacts/releases`, then run this command from an elevated PowerShell at the repository root:
+
+```powershell
+./scripts/publish-crm.ps1 -ReleaseDirectory 'C:\sites\node-crm\layout-artifacts\releases\YOUR_RELEASE'
+node scripts/check-published-dashboard.cjs
+```
+
+The publisher validates the staged assets, restarts `NodeCRMBackend`, verifies the new API routes before publishing the client, retains existing hashed assets for open tabs, and verifies the public HTTPS response and every release asset. The browser check reads the deployed dashboard in English, Persian and Turkish at desktop and mobile widths with the live exchange rate. Both verification scripts use an existing administrator for read-only checks without changing CRM records or printing credentials.
+
+The last verified TCMB exchange rate is retained in `server/.cache/exchange-rate.json` across service restarts. Keep this cache with the deployment; during an upstream outage the API serves that verified rate with its source date and `stale: true` while retrying in the background.
+
 ## Estate data migration
 
 The estate migration is additive and idempotent. It copies legacy Accounts into Partner Customers, maps recognizable legacy property values, creates form definitions, and updates role permissions. It never drops the legacy Accounts or Payments collections.
@@ -95,6 +108,12 @@ npm run migrate:estate -- --apply
 Running `--apply` again is safe: migrated customers use `legacyAccountId`, definitions are upserted, and populated property fields are not overwritten.
 
 ## Dynamic forms
+
+Contact, lead and opportunity notes share the history of their explicitly linked customer, including converted lead sources. New notes remain live across these views; old contact-to-opportunity note copies are deduplicated before pagination. Customer request type (`listedFor`) propagates across the same links. Archived leads show this history read-only. Properties support a **Suitable For** search filter; an existing suitability field from Form Builder is reused with its stored option codes.
+
+Lead transfer supports contacts only, opportunities only, or both. Each destination retains a complete source snapshot and field metadata, including custom choices and file attachments; activity and document links follow the selected destinations. The source is archived only after transfer verification. Property bedroom values accept free text with optional suggestions. Layouts such as `0+1`, `1+0`, `1+2`, and `2+1` retain their entered order through saving and filtering.
+
+To preview an operational data reset, run `npm run reset:data` from `server`. To apply it, stop the backend service, then run `npm run reset:data -- --apply --database Prolink` (replace `Prolink` with the configured database name), and restart the service. The script first writes and verifies a BSON-safe database backup and copies uploads to `layout-artifacts/data-backups`. It preserves accounts, access settings, form definitions, validation rules, dropdown catalogs, branding and profile avatars, while clearing operational collections and uploads. It also installs the shared request type field and completes the existing property suitability choices. Each backup includes the inventory, checksums and reset report. Backups contain private application data and must remain outside the public web root.
 
 Administrators and developers can use **Form Builder** to manage fields and translated metadata for each main module. Changes, including deleting fields and options, are persisted only by clicking **Save**. Switching modules does not save; unsaved drafts remain available while the builder page stays open. Removing a form field preserves existing CRM records and their stored values. Supported field types include text, textarea, number, currency, select, multiselect, checkbox, radio, date, datetime, email, phone, file, and URL.
 

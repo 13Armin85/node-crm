@@ -13,7 +13,7 @@ const models = {
   'Opportunity Project': () => require('../model/schema/opportunityproject'),
 };
 const error = (code, status = 400) => Object.assign(new Error(code), { code, status });
-async function loadRecord(req, moduleName, id) {
+async function loadRecord(req, moduleName, id, { includeConvertedLead = false } = {}) {
   moduleName = canonicalModule(moduleName);
   if (!objectId(id)) throw error('invalid');
   let Model = modelFor(moduleName) || models[moduleName]?.() || mongoose.models[moduleName];
@@ -22,10 +22,19 @@ async function loadRecord(req, moduleName, id) {
     if (metadata) Model = require('../controllers/form/form').getModel(metadata);
   }
   if (!Model) throw error('notFound', 404);
-  const record = await Model.findOne(readScope(req, req.actor, moduleName, { _id: id, deleted: { $ne: true } })).lean();
+  let record = await Model.findOne(readScope(req, req.actor, moduleName, { _id: id, deleted: { $ne: true } })).lean();
+  let archived = false;
+  // Converted sources remain available as read-only history. Keep the lead's
+  // existing assignment scope, and never expose ordinary deleted records.
+  if (!record && includeConvertedLead && moduleName === 'Leads') {
+    record = await Model.findOne(readScope(req, req.actor, moduleName, {
+      _id: id, deleted: true, 'conversion.completedAt': { $type: 'date' },
+    })).lean();
+    archived = Boolean(record);
+  }
   if (!record) throw error('notFound', 404);
   const editable = moduleName === 'Users' ? canEditUser(req.actor, record)
     : can(req.actor, moduleName, 'update') && Boolean(await Model.exists(recordScope(req.actor, moduleName, { _id: id, deleted: { $ne: true } })));
-  return { moduleName, record, editable };
+  return { moduleName, record, editable, archived };
 }
 module.exports = { loadRecord, error };

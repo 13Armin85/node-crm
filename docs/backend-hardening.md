@@ -11,7 +11,7 @@ This change retains the CRM's forms, permissions, conversions, currencies and re
 - Form-definition reads run concurrently. User roles, session versions, permissions and record access remain freshly checked on each request; they are not cached between users.
 - API responses send `Cache-Control: private, no-store` and vary by authorization and the administrator's person filter. Rate limiting runs before JSON decompression/parsing. CORS middleware is constructed once.
 - JWT failures remain 401. Database/network/query-timeout failures return a safe 503 instead of falsely invalidating a valid session. Validation and malformed multipart errors retain safe client errors.
-- Exchange-rate refreshes are shared by simultaneous requests. XML size is bounded to 512 KiB, refresh attempts have a 20-second overall budget, failures back off for 30 seconds, and cached rates retain the existing `stale` behavior.
+- Exchange-rate refreshes are shared by simultaneous requests. XML size is bounded to 512 KiB, requests have a 12-second limit within a 30-second overall budget, and failures back off for 30 seconds. The last verified TCMB rate is saved atomically under `server/.cache` and restored after restarts. Expired rates remain available with `stale: true` while a shared background refresh runs; malformed saved rates are ignored.
 - HTTP header limits, connection pooling and operational deadlines are explicit. SIGINT/SIGTERM stop accepting connections, drain requests and close MongoDB; forced socket closure is bounded by the shutdown deadline.
 - Compatible dependency updates address the audit findings, including body-parser, Multer, Nodemailer and Puppeteer. Installed package versions are checked against the lockfile.
 

@@ -14,7 +14,7 @@ const messages = {
   'details.editHint': ['Save changes here or continue using the full edit form.', 'تغییرات را همین‌جا ذخیره کنید یا از فرم ویرایش کامل استفاده کنید.', 'Değişiklikleri burada kaydedebilir veya tam düzenleme formunu kullanabilirsiniz.'],
   'details.relationships': ['Relationships and communications', 'ارتباطات و فعالیت‌ها', 'İlişkiler ve iletişim'],
   'notes.title': ['Notes', 'نوت', 'Notlar'],
-  'notes.hint': ['A shared conversation for this record', 'گفت‌وگوی مشترک دربارهٔ این رکورد', 'Bu kayıt için ortak konuşma'],
+  'notes.hint': ['Shared history across this contact, lead and opportunities', 'تاریخچهٔ مشترک این مخاطب، لید و فرصت‌ها', 'Bu kişi, aday ve fırsatların ortak geçmişi'],
   'notes.placeholder': ['Write a note…', 'نوت خود را بنویسید…', 'Bir not yazın…'],
   'notes.empty': ['No notes yet. Start the conversation.', 'هنوز نوتی ثبت نشده است. گفت‌وگو را شروع کنید.', 'Henüz not yok. Konuşmayı başlatın.'],
   'notes.send': ['Send note', 'ارسال نوت', 'Not gönder'],

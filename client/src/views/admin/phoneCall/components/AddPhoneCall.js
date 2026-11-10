@@ -39,6 +39,7 @@ const AddPhoneCall = (props) => {
   const [salesPersonsModelOpen, setSalesPersonsModelOpen] = useState(false);
 
   const initialValues = {
+    opportunity: props.opportunityId,
     sender: user?._id,
     recipient: "",
     callDuration: "",

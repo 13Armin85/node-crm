@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, AlertIcon, Box, Button, Heading, Text } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, Button, Heading, Spinner, Text } from '@chakra-ui/react';
 import { useFormik } from 'formik';
 import { useParams } from 'react-router-dom';
 import { FiEdit3, FiCheck, FiX } from 'react-icons/fi';
@@ -13,6 +13,8 @@ import ConvertedLeadDetails from 'components/relations/ConvertedLeadDetails';
 import NotesPanel from './NotesPanel';
 import ContactToOpportunityButton from './ContactToOpportunityButton';
 import RelatedRecordPanels from './RelatedRecordPanels';
+import OpportunityActivities from './OpportunityActivities';
+import RecordFields from './RecordFields';
 import { RecordEditingContext, editableDefinition as getEditableDefinition, recordFormValues, changedRecordValues, saveRecordChanges } from './recordEditing';
 
 function InlineEditor({ moduleName, record, definition, legacyModuleId, onCancel, onSaved }) {
@@ -47,7 +49,7 @@ export default function RecordWorkspace({ moduleName, children, recordId }) {
     if (current.current !== moduleName + '/' + id) return;
     if (result?.status === 200) { setWorkspace(result.data); setError(''); return result.data; } else setError(result?.data?.code || 'serverError');
   }, [id, moduleName]);
-  useEffect(() => { setWorkspace(null); setEditing(false); setSaved(false); load(); }, [load]);
+  useEffect(() => { setWorkspace(null); setError(''); setEditing(false); setSaved(false); load(); }, [load]);
   const onSaved = () => { setEditing(false); setSaved(true); setRevision(value => value + 1); load(); };
   const context = workspace && { ...workspace, moduleName, refresh: load, save: async changes => {
     const result = await saveRecordChanges({ moduleName, ...workspace }, changes);
@@ -61,12 +63,17 @@ export default function RecordWorkspace({ moduleName, children, recordId }) {
       </div></header>
     {error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{saved && <Alert status="success"><AlertIcon />{t('Saved successfully')}</Alert>}
     {editing && workspace && <InlineEditor moduleName={moduleName} {...workspace} onCancel={() => setEditing(false)} onSaved={onSaved} />}
-    <div className="crm-detail-legacy" key={`${moduleName}/${id}/${revision}`}>{children}</div>
+    {workspace?.archived ? <>
+      <Alert status="info"><AlertIcon />{t('leadConversion.archivedHint')}</Alert>
+      <RecordFields definition={workspace.definition} record={workspace.record} title={t('leadConversion.original')} />
+    </> : moduleName === 'Leads' && !workspace ? !error && <Spinner />
+      : <div className="crm-detail-legacy" key={`${moduleName}/${id}/${revision}`}>{children}</div>}
     {moduleName === 'Opportunities' && <>
       <ConvertedLeadDetails records={workspace?.record?.convertedContacts} title={t('contactTransfer.original')} />
       <RelatedRecordPanels record={workspace?.record} />
+      <OpportunityActivities key={id} recordId={id} />
     </>}
-    {['Contacts', 'Opportunities'].includes(moduleName) && id && <NotesPanel key={id} moduleName={moduleName} recordId={id} />}
+    {['Leads', 'Contacts', 'Opportunities'].includes(moduleName) && id && (moduleName !== 'Leads' || workspace) && <NotesPanel key={id} moduleName={moduleName} recordId={id} readOnly={workspace?.archived} />}
   </Box></RecordEditingContext.Provider>;
 }
 export const withRecordWorkspace = (Component, moduleName) => function WorkspaceView(props) { return <RecordWorkspace moduleName={moduleName}><Component {...props} /></RecordWorkspace>; };

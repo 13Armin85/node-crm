@@ -1,7 +1,8 @@
 /* eslint-disable testing-library/no-node-access, testing-library/no-unnecessary-act */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { act } from 'react-dom/test-utils';
+import { act, Simulate } from 'react-dom/test-utils';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import ConvertedLeadDetails from './ConvertedLeadDetails';
 import RecordValue from './RecordValue';
 import { getApi } from 'services/api';
@@ -36,4 +37,21 @@ test('populated opportunities display their names, and unavailable relations nev
   expect(container.textContent).toContain('Named opportunity');
   expect(container.textContent).toContain('Record unavailable');
   expect(container.textContent).not.toContain(userId); expect(container.textContent).not.toContain(opportunityId);
+});
+
+test('clicking the original lead name opens that lead, without linking contact snapshots or missing source IDs', async () => {
+  function Location() { return <output>{useLocation().pathname}</output>; }
+  await act(async () => ReactDOM.render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={['/contactView/current']}>
+    <ConvertedLeadDetails records={[
+      { leadId: opportunityId, values: { leadName: 'Original Lead' } },
+      { contactId: userId, values: { leadName: 'Contact snapshot' } },
+      { contactId: 'legacy-source', values: { leadName: 'Missing source' } },
+    ]} /><Location />
+  </MemoryRouter>, container));
+  const links = container.querySelectorAll('a');
+  expect(links).toHaveLength(1);
+  expect(links[0].textContent).toBe('Original Lead');
+  expect(links[0].getAttribute('href')).toBe(`/leadView/${opportunityId}`);
+  await act(async () => Simulate.click(links[0], { button: 0 }));
+  expect(container.querySelector('output').textContent).toBe(`/leadView/${opportunityId}`);
 });

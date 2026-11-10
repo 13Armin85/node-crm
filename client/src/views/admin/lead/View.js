@@ -1,3 +1,4 @@
+import RecordDocuments from 'components/record/RecordDocuments';
 import LeadOwner from "./components/LeadOwner";
 import ConvertLeadButtons from "./components/ConvertLeadButtons";
 import { Portal } from '@chakra-ui/react';
@@ -27,11 +28,9 @@ import {
   TabPanels,
   Tabs,
   Text,
-  VStack,
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
-import FolderTreeView from "components/FolderTreeView/folderTreeView";
 import Card from "components/card/Card";
 import { HSeparator } from "components/separator/Separator";
 import Spinner from "components/spinner/Spinner";
@@ -39,7 +38,7 @@ import { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { downloadApiFile, getApi } from "services/api";
+import { getApi } from "services/api";
 import PhoneCall from "../contact/components/phonCall";
 import AddEmailHistory from "../emailHistory/components/AddEmail";
 import AddMeeting from "../meeting/components/Addmeeting";
@@ -50,7 +49,6 @@ import { formLabel } from 'utils/formValue';
 import { HasAccess } from "../../../redux/accessUtils";
 import DataNotFound from "components/notFoundData";
 import CustomView from "utils/customView";
-import AddDocumentModal from "utils/addDocumentModal";
 import CommonDeleteModel from "components/commonDeleteModel";
 import { deleteApi } from "services/api";
 import CommonCheckTable from "components/reactTable/checktable";
@@ -78,7 +76,6 @@ const View = () => {
   const [showCall, setShowCall] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
   const [showMeetings, setShowMeetings] = useState(false);
-  const [addDocument, setAddDocument] = useState(false);
   const [action, setAction] = useState(false);
   // const [leadData, setLeadData] = useState([])
   const [selectedTab, setSelectedTab] = useState(0);
@@ -336,16 +333,7 @@ const View = () => {
     }
   };
 
-  const download = async (data) => {
-    if (data) {
-      let result = await downloadApiFile(`api/document/download/${data}`);
-      if (result && result?.status === 200) {
-        toast.success(tr("file Download successful"));
-      } else if (result && result?.response?.status === 404) {
-        toast.error(tr("file Not Found"));
-      }
-    }
-  };
+
 
   const fetchData = async (i) => {
     try {
@@ -820,53 +808,7 @@ const View = () => {
                   </Grid>
                 </GridItem>
               </Box>
-              <Box className="crm-detail-section" mt={4}>
-                <GridItem colSpan={{ base: 4 }}>
-                  <Card minH={"50vh"}>
-                    <Flex
-                      alignItems={"center"}
-                      justifyContent={"space-between"}
-                      mb="2"
-                    >
-                      <Heading size="md" mb={3}><LocalizedText text="Documents" /></Heading>
-                      <Button
-                        leftIcon={<AddIcon />}
-                        size="sm"
-                        variant="brand"
-                        onClick={() => setAddDocument(true)}
-                      ><LocalizedText text="Add Document" /></Button>
-                    </Flex>
-                    <HSeparator />
-                    <VStack mt={4} alignItems="flex-start">
-                      {allData?.Document?.length > 0 ? (
-                        allData?.Document?.map((item) => (
-                          <FolderTreeView name={item?.folderName} item={item}>
-                            {item?.files?.map((file) => (
-                              <FolderTreeView
-                                download={download}
-                                data={file}
-                                name={file?.fileName}
-                                isFile
-                                from="lead"
-                              />
-                            ))}
-                          </FolderTreeView>
-                        ))
-                      ) : (
-                        <Text
-                          textAlign={"center"}
-                          width="100%"
-                          color={textColor}
-                          fontSize="sm"
-                          fontWeight="700"
-                        >
-                          <DataNotFound />
-                        </Text>
-                      )}
-                    </VStack>
-                  </Card>
-                </GridItem>
-              </Box>
+              <RecordDocuments moduleName="Leads" recordId={param.id} />
             </Box>
           </Box>
           {(isAdmin(user) ||
@@ -970,14 +912,7 @@ const View = () => {
         onClose={setAddEmailHistory}
         id={param?.id}
       />
-      <AddDocumentModal
-        addDocument={addDocument}
-        setAddDocument={setAddDocument}
-        linkId={param?.id}
-        from="lead"
-        setAction={setAction}
-        fetchData={fetchData}
-      />
+
       <CommonDeleteModel
         isOpen={deleteModel}
         onClose={() => setDelete(false)}

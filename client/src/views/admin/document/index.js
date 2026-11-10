@@ -37,12 +37,10 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import {
   FiChevronLeft,
-  FiDownload,
   FiFile,
   FiFileText,
   FiFolder,
   FiFolderPlus,
-  FiImage,
   FiMove,
   FiPlus,
   FiTrash2,
@@ -50,27 +48,14 @@ import {
 import { deleteApi, getApi, getApiBlob, postApi } from "services/api";
 import Upload from "./component/Upload";
 import MoveDocumentDialog from "./MoveDocumentDialog";
-import DocumentInformation from './DocumentInformation';
+import DocumentCard from './DocumentCard';
+import { categories, categoryOf } from './documentCategories';
 import ShareRecordButton from "components/ShareRecordButton";
 import SharedRecordBadge from "components/SharedRecordBadge";
 import { HasAccess } from "../../../redux/accessUtils";
 import { getStoredUser } from "services/authSession";
 import { isAdmin } from "roles";
-
-const categories = [
-  { value: "GENERAL", label: "General" },
-  { value: "PROPERTIES", label: "Properties", entityType: "Property" },
-  { value: "LEADS", label: "Leads", entityType: "Lead" },
-  { value: "OPPORTUNITIES", label: "Opportunities", entityType: "Opportunity" },
-  { value: "PARTNER_CUSTOMERS", label: "Partner Customers", entityType: "PartnerCustomer" },
-  { value: "CONTACTS", label: "Contacts", entityType: "Contact" },
-  { value: "INVOICES", label: "Invoices" },
-  { value: "QUOTES", label: "Quotes" },
-  { value: "TASKS", label: "Tasks" },
-  { value: "MEETINGS", label: "Meetings" },
-  { value: "CALLS", label: "Calls" },
-  { value: "EMAILS", label: "Emails" },
-];
+import { notifyDocumentsChanged, useDocumentChanges } from 'services/documentEvents';
 
 const entityEndpoint = (type) => ({
   Property: "api/property",
@@ -88,17 +73,10 @@ const optionLabel = (item, type) => {
   return item.fullName || [item.firstName, item.lastName].filter(Boolean).join(" ") || item.email;
 };
 
-const categoryOf = (file) => file.category || ({
-  Property: "PROPERTIES",
-  Lead: "LEADS",
-  Opportunity: "OPPORTUNITIES",
-  PartnerCustomer: "PARTNER_CUSTOMERS",
-  Contact: "CONTACTS",
-}[file.entityType]) || "GENERAL";
-
 const DocumentPage = () => {
   const { t } = useLanguage();
-  const canEditDocuments = !!HasAccess(["Documents"])[0]?.create;
+  const [documentPermissions] = HasAccess(["Documents"]);
+  const canEditDocuments = !!documentPermissions?.create;
   const [folders, setFolders] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
   const [moveItem, setMoveItem] = useState(null);
@@ -164,6 +142,7 @@ const DocumentPage = () => {
     // The initial request should run once; later mutations refresh explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useDocumentChanges(fetchFolders);
 
   useEffect(() => {
     let active = true;
@@ -285,9 +264,19 @@ const DocumentPage = () => {
   const removeFile = async (file) => {
     if (!window.confirm(`${file.fileName}: ${t("Delete this file?")}`)) return;
     const result = await deleteApi("api/document/delete/", file._id);
-    if (result?.status === 200) fetchFolders();
+    if (result?.status === 200) notifyDocumentsChanged();
     else toast.error(t("Failed to delete file"));
   };
+  const removeFolder = async folder => {
+    if (!window.confirm(`${folder.folderName}: ${t('Delete this folder and all its contents?')}`)) return;
+    const result = await deleteApi('api/document/delete/folder/', folder._id);
+    if (result?.status === 200) notifyDocumentsChanged();
+    else toast.error(t('Failed to delete folder'));
+  };
+  const deleteFolderButton = folder => documentPermissions?.delete && ownsFolder(folder) && (
+    <Tooltip label={t('Delete folder')}><IconButton aria-label={t('Delete folder')} icon={<FiTrash2 />} size="sm" variant="ghost" colorScheme="red"
+      onClick={event => { event.stopPropagation(); removeFolder(folder); }} /></Tooltip>
+  );
 
   return (
     <Box width="100%" minW={0}>
@@ -351,6 +340,7 @@ const DocumentPage = () => {
                     </Button>
                     <ShareRecordButton module="Documents" record={folder} compact />
                     {moveButton('folder', folder, folder)}
+                    {deleteFolderButton(folder)}
                   </Flex>
                   <Box px={3}><SharedRecordBadge module="Documents" record={folder} /></Box>
                 </Box>
@@ -378,6 +368,7 @@ const DocumentPage = () => {
               <Flex gap={2} align="center" flexWrap="wrap">
                 {currentFolder && <ShareRecordButton module="Documents" record={currentFolder} />}
                 {currentFolder && moveButton('folder', currentFolder, currentFolder)}
+                {currentFolder && deleteFolderButton(currentFolder)}
               <Select size="sm" w={{ base: "100%", sm: "210px" }} flexShrink={0} value={filterCategory} onChange={(event) => setFilterCategory(event.target.value)}>
                 <option value="">{t("All sections")}</option>
                 {categories.map((item) => <option value={item.value} key={item.value}>{t(item.label)}</option>)}
@@ -399,6 +390,7 @@ const DocumentPage = () => {
                         <Flex mt={2} justify="flex-end" onClick={event => event.stopPropagation()}>
                           <ShareRecordButton module="Documents" record={folder} compact />
                           {moveButton('folder', folder, folder)}
+                          {deleteFolderButton(folder)}
                         </Flex>
                       </Box>
                     ))}
@@ -414,31 +406,11 @@ const DocumentPage = () => {
                 ) : (
                   <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={3}>
                     {visibleFiles.map((file) => {
-                      const fileCategory = categories.find((item) => item.value === categoryOf(file));
-                      const isImage = file.mimeType?.startsWith("image/");
-                      return (
-                        <Box key={file._id} className="crm-document-card" bg={surface} border="1px solid" borderColor={border} borderRadius="16px" p={4} minW={0}>
-                          <Flex gap={3} minW={0}>
-                            <Flex w="42px" h="42px" borderRadius="12px" bg={isImage ? "purple.50" : "blue.50"} align="center" justify="center" flexShrink={0}>
-                              <Icon as={isImage ? FiImage : FiFile} color={isImage ? "purple.500" : "blue.500"} boxSize={5} />
-                            </Flex>
-                            <Box minW={0}>
-                              <Text fontWeight="800" noOfLines={1}>{file.fileName}</Text><SharedRecordBadge module="Documents" record={file} />
-                              <Text fontSize="xs" color="gray.500">{file.size ? `${Math.ceil(file.size / 1024)} KB` : t("File")}</Text>
-                            </Box>
-                          </Flex>
-                          <Badge mt={3} colorScheme="brand" borderRadius="full">{t(fileCategory?.label || "General")}</Badge>
-                          <DocumentInformation file={file} category={fileCategory?.label} definition={definition}
-                            folderName={(currentFolder || folders.find(folder => folder._id === file._folderId))?.isRoot ? ''
-                              : (currentFolder || folders.find(folder => folder._id === file._folderId))?.folderName} />
-                          <Flex mt={4} gap={2} justify="flex-end">
-                            <ShareRecordButton module="Documents" record={file} />
-                            {moveButton('file', file, currentFolder || folders.find(folder => folder._id === file._folderId))}
-                            <IconButton aria-label={t("Download")} icon={<FiDownload />} size="sm" variant="ghost" onClick={() => download(file)} />
-                            {canEditDocuments && (currentFolder ? ownsFolder(currentFolder) : file._canDelete) && <IconButton aria-label={t("Delete")} icon={<FiTrash2 />} size="sm" variant="ghost" colorScheme="red" onClick={() => removeFile(file)} />}
-                          </Flex>
-                        </Box>
-                      );
+                      const folder = currentFolder || folders.find(folder => folder._id === file._folderId);
+                      return <DocumentCard key={file._id} file={file} folder={folder} definition={definition} onDownload={download}
+                        actions={<><ShareRecordButton module="Documents" record={file} />{moveButton('file', file, folder)}</>}
+                        deleteAction={documentPermissions?.delete && (currentFolder ? ownsFolder(currentFolder) : file._canDelete)
+                          && <IconButton aria-label={t("Delete")} icon={<FiTrash2 />} size="sm" variant="ghost" colorScheme="red" onClick={() => removeFile(file)} />} />;
                     })}
                   </SimpleGrid>
                 )}

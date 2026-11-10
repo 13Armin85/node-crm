@@ -96,6 +96,7 @@ const AddEdit = (props) => {
   const contactData = useSelector((state) => state?.contactData?.data);
 
   const initialValues = {
+    opportunity: props.opportunityId,
     title: "",
     category:
       props?.leadContect === "contactView"

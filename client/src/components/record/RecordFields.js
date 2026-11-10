@@ -17,7 +17,7 @@ const relationPaths = { Users: '/userView/', Contacts: '/contactView/', Leads: '
 function RecordField({ field, value, label, record, language, t }) {
   const editing = useRecordEditing(), [open, setOpen] = useState(false);
   const editable = editing?.editable && canEditRecordField(field);
-  const optionLabel = item => field.options?.find(option => isRoomPlanField(field) ? roomPlanMatches(option.value, item) : String(option.value) === String(item));
+  const optionLabel = item => field.options?.find(option => isRoomPlanField(field) ? roomPlanMatches(option.value, item, field) : String(option.value) === String(item));
   const format = item => {
     const option = optionLabel(item);
     const display = option && !field.relation ? t(localized(option.label || option.name, language)) : <RecordValue name={field.name} field={field} value={item} />;

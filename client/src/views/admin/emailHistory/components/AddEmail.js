@@ -47,6 +47,7 @@ const AddEmailHistory = (props) => {
   const dispatch = useDispatch();
 
   const initialValues = {
+    opportunity: props.opportunityId,
     sender: user?._id,
     recipient: props?.lead !== true ? props?.contactEmail : props?.leadEmail,
     subject: "",

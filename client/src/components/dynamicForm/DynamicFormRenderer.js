@@ -117,7 +117,11 @@ export default function DynamicFormRenderer({ definition, formik, readOnly = fal
       if (field.name === 'sale.status') options = options.filter(o => o.value === 'AVAILABLE' || o.value === (formik.values.transactionType === 'RENT' ? 'RENTED' : 'SOLD'));
       const common = { id, name: path, value: formValue(value) || formLabel(value), onBlur: formik.handleBlur, onChange: e => change(field, e.target.value), placeholder: localized(field.placeholder, language), isReadOnly: readOnly || field.readOnly };
       let control;
-      if (field.relation && (Array.isArray(value) || (field.external && field.type === 'text'))) control = <Stack>
+      if (field.name === 'bedroom' && field.kind === 'SYSTEM_FIELD') control = <>
+        <Input {...common} type="text" dir="ltr" list={`${id}-suggestions`} value={value ?? ''} />
+        <datalist id={`${id}-suggestions`}>{options.map(option => <option key={option.value} value={option.value} />)}</datalist>
+      </>;
+      else if (field.relation && (Array.isArray(value) || (field.external && field.type === 'text'))) control = <Stack>
         <Stack direction="row" flexWrap="wrap">{(Array.isArray(value) ? value : value ? [value] : []).map(item => <Box key={formValue(item)} display="inline-flex" alignItems="center" gap={2}>
           <RecordValue value={item} moduleName={field.relation} />{!readOnly && <Button size="xs" variant="ghost" aria-label={t('Delete')} onClick={() => change(field, (Array.isArray(value) ? value : [value]).filter(entry => formValue(entry) !== formValue(item)))}>×</Button>}
         </Box>)}</Stack>

@@ -7,7 +7,7 @@ import { getStoredUser } from 'services/authSession';
 import { useLanguage } from 'i18n';
 import { formLabel } from 'utils/formValue';
 import ProfileAvatar from 'components/profile/ProfileAvatar';
-export default function NotesPanel({ moduleName, recordId }) {
+export default function NotesPanel({ moduleName, recordId, readOnly = false }) {
   const { t, language } = useLanguage();
   const [notes, setNotes] = useState([]), [text, setText] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [loading, setLoading] = useState(true), [before, setBefore] = useState(null);
   const pending = useRef(null), list = useRef(null), active = useRef(true), actor = getStoredUser();
@@ -46,6 +46,6 @@ export default function NotesPanel({ moduleName, recordId }) {
         </article>;
       })}
     </div>
-    <form className="crm-note-composer" onSubmit={send}><Textarea aria-label={t('notes.placeholder')} placeholder={t('notes.placeholder')} value={text} maxLength={10000} onChange={event => { pending.current = null; setText(event.target.value); }} isDisabled={busy} resize="vertical" minH="82px" /><div><Text fontSize="xs" color="var(--crm-muted)">{t('notes.identity')}</Text><Button type="submit" variant="brand" leftIcon={<FiSend />} isLoading={busy} isDisabled={!text.trim()}>{t('notes.send')}</Button></div></form>
+    {!readOnly && <form className="crm-note-composer" onSubmit={send}><Textarea aria-label={t('notes.placeholder')} placeholder={t('notes.placeholder')} value={text} maxLength={10000} onChange={event => { pending.current = null; setText(event.target.value); }} isDisabled={busy} resize="vertical" minH="82px" /><div><Text fontSize="xs" color="var(--crm-muted)">{t('notes.identity')}</Text><Button type="submit" variant="brand" leftIcon={<FiSend />} isLoading={busy} isDisabled={!text.trim()}>{t('notes.send')}</Button></div></form>}
   </section>;
 }

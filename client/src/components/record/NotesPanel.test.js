@@ -20,10 +20,16 @@ beforeEach(() => {
   container = document.createElement('div'); document.body.appendChild(container);
 });
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.clear(); });
-const render = async language => {
+const render = async (language, readOnly = false) => {
   localStorage.setItem('crm-language', language);
-  await act(async () => ReactDOM.render(<ChakraProvider><LanguageProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><NotesPanel moduleName="Contacts" recordId="record-1" /></MemoryRouter></LanguageProvider></ChakraProvider>, container));
+  await act(async () => ReactDOM.render(<ChakraProvider><LanguageProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><NotesPanel moduleName="Contacts" recordId="record-1" readOnly={readOnly} /></MemoryRouter></LanguageProvider></ChakraProvider>, container));
 };
+test('archived sources display shared history without a composer', async () => {
+  await render('en', true);
+  expect(container.textContent).toContain('Original note');
+  expect(container.querySelector('textarea')).toBeNull();
+  expect(container.querySelector('form')).toBeNull();
+});
 test.each(['en', 'fa', 'tr'])('notes preserve author names, text and a link to the author profile in %s', async language => {
   await render(language);
   expect(container.textContent).toContain('Actual Author'); expect(container.textContent).toContain('Original note');

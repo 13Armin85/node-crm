@@ -1,4 +1,7 @@
 const messages = {
+  'Delete folder': ['Delete folder', 'حذف پوشه', 'Klasörü sil'],
+  'Delete this folder and all its contents?': ['Delete this folder and all its contents?', 'این پوشه و همهٔ فایل‌ها و زیرپوشه‌های داخل آن حذف شوند؟', 'Bu klasör ve içindeki tüm dosyalar ve alt klasörler silinsin mi?'],
+  'Failed to delete folder': ['Failed to delete folder', 'حذف پوشه انجام نشد.', 'Klasör silinemedi'],
   'Record unavailable': ['Record unavailable', 'رکورد در دسترس نیست', 'Kayıt kullanılamıyor'],
   'assignedBy': ['Assigned by', 'واگذارکننده', 'Atayan'],
   'estate.optionsRequired': ['A required field must have at least one option.', 'فیلد اجباری باید حداقل یک گزینه داشته باشد.', 'Zorunlu bir alanın en az bir seçeneği olmalıdır.'],

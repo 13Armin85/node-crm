@@ -1,4 +1,5 @@
 const messages = {
+  'leadConversion.opportunity': ['Transfer to opportunities', 'انتقال فقط به فرصت‌ها', 'Fırsatlara aktar'],
   'leadConversion.contact': ['Transfer to contacts', 'انتقال فقط به مخاطبان', 'Kişilere aktar'],
   'leadConversion.both': ['Transfer to contacts and opportunities', 'انتقال به مخاطبان و فرصت‌ها', 'Kişilere ve fırsatlara aktar'],
   'leadConversion.success': ['Lead transferred successfully', 'لید با موفقیت منتقل و از فهرست لیدها حذف شد', 'Müşteri adayı başarıyla aktarıldı'],
@@ -6,6 +7,7 @@ const messages = {
   'leadConversion.busy': ['This lead is being transferred. Please wait.', 'این لید در حال انتقال است. لطفاً صبر کنید.', 'Bu müşteri adayı aktarılıyor. Lütfen bekleyin.'],
   'leadConversion.modeMismatch': ['Retry the same transfer option to finish the previous transfer.', 'برای تکمیل انتقال قبلی، همان دکمه انتقال را دوباره بزنید.', 'Önceki aktarımı tamamlamak için aynı aktarım seçeneğini kullanın.'],
   'leadConversion.original': ['Original lead information', 'اطلاعات اولیه لید', 'İlk müşteri adayı bilgileri'],
+  'leadConversion.archivedHint': ['This lead has been converted. Its original information is available to view.', 'این لید تبدیل شده است. اطلاعات اولیهٔ آن برای مشاهده در دسترس است.', 'Bu müşteri adayı dönüştürüldü. İlk bilgileri görüntülenebilir.'],
 };
 export default Object.fromEntries(['en', 'fa', 'tr'].map((language, index) => [language,
   Object.fromEntries(Object.entries(messages).map(([key, values]) => [key, values[index]]))]));

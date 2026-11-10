@@ -6,7 +6,7 @@ import { exportSpreadsheet } from 'utils/spreadsheet';
 import FormFeedback from 'components/dynamicForm/FormFeedback';
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert, AlertIcon, Box, Button, Flex, Grid, GridItem, Heading, Icon, IconButton, Input,
+  Alert, AlertIcon, Box, Button, Flex, FormControl, FormLabel, Grid, GridItem, Heading, Icon, IconButton, Input,
   InputGroup, InputLeftElement, Modal, ModalBody, ModalCloseButton,
   ModalContent, ModalFooter, ModalHeader, ModalOverlay, Select, SimpleGrid,
   Spinner, Stack, Table, Tbody, Td, Text, Th, Thead, Tooltip, Tr,
@@ -18,7 +18,7 @@ import {
   FiPlus, FiSearch, FiTrash2, FiUsers, FiX,
 } from "react-icons/fi";
 import Card from "components/card/Card";
-import DynamicFormRenderer, { fieldPath, localized } from "components/dynamicForm/DynamicFormRenderer";
+import DynamicFormRenderer, { AsyncRelationSelect, fieldPath, localized } from "components/dynamicForm/DynamicFormRenderer";
 import { useLanguage } from "i18n";
 import { getApi, postApi, putApi, deleteApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
@@ -130,8 +130,8 @@ export function EntityPage({ moduleName }) {
 
   const open = (item, view) => { setError(""); setRecord(item); setReadOnly(view); };
   const filterNames = moduleName === "Properties"
-    ? ["category", "subtype", "transactionType", "district", "neighborhood", "residence", "bedroom", "buildingAge", "occupancyStatus", "floor", "area.type", "sale.status"]
-    : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["category", "transactionType", "city", "district", "neighborhood", "constructionStatus", "occupancyStatus", "sale.status"];
+    ? ["category", "subtype", "transactionType", ...((definition?.fields || []).filter(field => field.name === 'suitableFor' || (field.kind === 'CUSTOM_FIELD' && (['مناسب', 'مناسب برای'].includes(field.label?.fa?.trim()) || /^(suitable( for)?|avalable)$/i.test(field.label?.en?.trim() || '')))).map(fieldPath)), "district", "neighborhood", "residence", "bedroom", "buildingAge", "occupancyStatus", "floor", "area.type", "sale.status"]
+    : moduleName === "Partner Customers" ? ["customerType", "status", "district"] : ["city", "district", "constructionStatus", "price.currency", "paymentMethod"];
   const name = (item) => formLabel(item) || t('Record unavailable');
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const PageIcon = ["Properties", "Residences"].includes(moduleName) ? FiHome : FiUsers;
@@ -245,19 +245,26 @@ export function EntityPage({ moduleName }) {
           <Box className="crm-entity-filters">
             <SimpleGrid columns={{ base: 1, sm: 2, lg: 4, xl: 6 }} spacing="10px">
               {filterNames.map((key) => {
-                const field = definition?.fields.find((item) => item.name === key);
-                if (!field) return null;
+                const field = definition?.fields.find((item) => fieldPath(item) === key);
+                if (!field || field.enabled === false) return null;
+                if (field.relation || field.catalog) return <FormControl key={key}><FormLabel fontSize="sm" htmlFor={`filter-${key}`}>{localized(field.label, language)}</FormLabel>
+                  <AsyncRelationSelect id={`filter-${key}`} moduleName={field.relation || field.catalog} value={filters[key] || ''} onChange={value => updateFilter(key, value)} />
+                </FormControl>;
+                if (key === 'bedroom') return <FormControl key={key}>
+                  <Input aria-label={localized(field.label, language)} placeholder={localized(field.label, language)} dir="ltr" list="filter-bedroom-suggestions" value={filters[key] || ''} onChange={event => updateFilter(key, event.target.value)} />
+                  <datalist id="filter-bedroom-suggestions">{field.options?.map(option => <option key={option.value} value={option.value} />)}</datalist>
+                </FormControl>;
                 return field.options?.length ? (
                   <Select key={key} value={filters[key] || ""} aria-label={localized(field.label, language)} onChange={(event) => updateFilter(key, event.target.value)}>
                     <option value="">{localized(field.label, language)}</option>
                     {field.options.map((option) => <option key={option.value} value={option.value}>{localized(option.label, language)}</option>)}
                   </Select>
                 ) : !field.relation ? (
-                  <Input key={key} placeholder={localized(field.label, language)} value={filters[key] || ""} onChange={(event) => updateFilter(key, event.target.value)} />
+                  <Input key={key} aria-label={localized(field.label, language)} placeholder={localized(field.label, language)} value={filters[key] || ""} onChange={(event) => updateFilter(key, event.target.value)} />
                 ) : null;
               })}
               {["Properties", "Residences"].includes(moduleName) && ["priceMin", "priceMax"].map((key) => (
-                <Input key={key} type="number" min="0" placeholder={t(`estate.${key}`)} value={filters[key] || ""} onChange={(event) => updateFilter(key, event.target.value)} />
+                <Input key={key} type="number" min="0" aria-label={t(`estate.${key}`)} placeholder={t(`estate.${key}`)} value={filters[key] || ""} onChange={(event) => updateFilter(key, event.target.value)} />
               ))}
               <Select value={sort} aria-label={t("estate.sort")} onChange={(event) => setSort(event.target.value)}>
                 <option value="createdDate">{t("Created Date")}</option>

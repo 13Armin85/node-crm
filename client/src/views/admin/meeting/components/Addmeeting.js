@@ -54,6 +54,7 @@ const AddMeeting = (props) => {
   const contactList = useSelector((state) => state?.contactData?.data);
 
   const initialValues = {
+    opportunity: props.opportunityId,
     agenda: "",
     attendes:
       props?.leadContect === "contactView" && props?.id ? [props?.id] : [],

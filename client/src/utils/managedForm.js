@@ -4,7 +4,7 @@ import { getApi } from 'services/api';
 import { formValue } from './formValue';
 import { isLeadRelationVisible, normalizeLeadRelations, hasLeadSelection, LEAD_SELECTION_ERROR, prepareLeadDefinition } from './leadRelations';
 import { FORM_DEFINITION_CHANGED, FORM_DEFINITION_STORAGE_KEY } from 'services/formDefinitionEvents';
-import { isRoomPlanField, roomPlanMatches } from './roomPlans';
+import { isRoomPlanField, roomPlanMatches, isBedroomField, normalizeBedroom } from './roomPlans';
 
 export function useFormDefinition(moduleName, enabled = true) {
   const [definition, setDefinition] = useState(null);
@@ -53,7 +53,8 @@ export function normalizeFormValues(definition, values) {
     const value = getIn(values, path);
     if (value === undefined) continue;
     let next = value;
-    if (field.relation) next = Array.isArray(value)
+    if (isBedroomField(field)) next = normalizeBedroom(value);
+    else if (field.relation) next = Array.isArray(value)
       ? value.map(formValue).filter(Boolean) : formValue(value) || null;
     else if (field.type === 'multiselect') next = (Array.isArray(value) ? value : value ? [value] : []).map(item => isRoomPlanField(field) ? field.options?.find(option => roomPlanMatches(option.value, item))?.value || item : item);
     else if (isRoomPlanField(field)) next = field.options?.find(option => roomPlanMatches(option.value, value))?.value || value;
@@ -81,7 +82,8 @@ export function validateFormValues(definition, values) {
       continue;
     }
     let invalid = false;
-    if (field.relation) invalid = (Array.isArray(value) ? value : [value]).some(id => !/^[a-f\d]{24}$/i.test(id));
+    if (isBedroomField(field)) invalid = !['string', 'number'].includes(typeof value);
+    else if (field.relation) invalid = (Array.isArray(value) ? value : [value]).some(id => !/^[a-f\d]{24}$/i.test(id));
     else if (['number', 'currency'].includes(field.type)) invalid = !Number.isFinite(value) || (field.min != null && value < field.min) || (field.max != null && value > field.max) || (field.integer && !Number.isInteger(value));
     else if (field.type === 'email') invalid = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     else if (field.type === 'phone') invalid = !/^[+\d\s().-]{3,30}$/.test(value);

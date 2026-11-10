@@ -55,6 +55,7 @@ const AddEdit = (props) => {
     accountName: type === "edit" ? formValue(opprtunityDetails?.accountName) || null : null,
     assignUser: type === "edit" ? formValue(opprtunityDetails?.assignUser) || null : null,
     type: type === "edit" ? opprtunityDetails?.type : "",
+    listedFor: type === 'edit' ? opprtunityDetails?.listedFor || '' : '',
     leadSource: type === "edit" ? opprtunityDetails?.leadSource : "",
     currency: type === "edit" ? (opprtunityDetails?.currency === "$" ? "USD" : opprtunityDetails?.currency) : "TRY",
     opportunityAmount:
@@ -212,6 +213,13 @@ const AddEdit = (props) => {
             {type === "add" ? tr("Add") : tr("Edit")}<LocalizedText text="Opportunities" /><IconButton onClick={() => handleCancel()} icon={<CloseIcon />} />
           </DrawerHeader>
           <DrawerBody><ManagedFormLayout moduleName="Opportunities" definition={definition} definitionError={definitionError} formik={formik}>
+            <GridItem colSpan={{ base: 12, md: 6 }}>
+              <FormLabel>{tr(definition?.fields.find(field => field.name === 'listedFor')?.label || 'Request Type')}</FormLabel>
+              <Select name="listedFor" value={values.listedFor || ''} onChange={handleChange} onBlur={handleBlur}>
+                <option value="">{tr('Select')}</option>
+                {(definition?.fields.find(field => field.name === 'listedFor')?.options || []).map(option => <option key={option.value} value={option.value}>{tr(option.label)}</option>)}
+              </Select>
+            </GridItem>
             <RelationFields formik={formik} definition={definition} values={values} setFieldValue={setFieldValue} contact lead properties />
             <Grid templateColumns="repeat(12, 1fr)" gap={3}>
               <GridItem colSpan={{ base: 12, md: 6 }}>

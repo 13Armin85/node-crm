@@ -29,6 +29,53 @@ beforeEach(() => {
   postApi.mockResolvedValue({ status: 201, data: {} });
 });
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.clear(); });
+test('residence filters use enabled form choices and send currency, payment and price bounds', async () => {
+  rows = [];
+  definition = { moduleName: 'Residences', fields: [field('name'), field('city'), field('district'),
+    field('constructionStatus', 'select', { label: { en: 'Building progress' }, options: [{ value: 'CUSTOM_READY', label: { en: 'Custom ready' } }] }),
+    field('price.currency', 'select', { label: { en: 'Price currency' }, options: [{ value: 'USD', label: { en: 'Dollars' } }] }),
+    field('paymentMethod', 'select', { label: { en: 'Payment plan' }, options: [{ value: 'BOTH', label: { en: 'Cash or installments' } }] }),
+    field('occupancyStatus', 'select', { enabled: false, options: [{ value: 'EMPTY', label: { en: 'Empty' } }] }),
+  ] };
+  await render('Residences');
+  await act(async () => Simulate.click(button('Filters')));
+  expect(container.querySelector('select[aria-label="Building progress"]').textContent).toContain('Custom ready');
+  expect(container.querySelector('select[aria-label="occupancyStatus"]')).toBeNull();
+  for (const [label, value] of [['Building progress', 'CUSTOM_READY'], ['Price currency', 'USD'], ['Payment plan', 'BOTH']]) {
+    await act(async () => Simulate.change(container.querySelector(`select[aria-label="${label}"]`), { target: { value } }));
+  }
+  for (const [label, value] of [['Minimum Price', '100'], ['Maximum Price', '200']]) {
+    const input = [...container.querySelectorAll('input[type="number"]')][label === 'Minimum Price' ? 0 : 1];
+    await act(async () => Simulate.change(input, { target: { value } }));
+  }
+  const url = getApi.mock.calls.filter(([url]) => url.startsWith('api/estate/Residences?')).pop()[0];
+  const params = new URLSearchParams(url.split('?')[1]);
+  expect(Object.fromEntries(params)).toMatchObject({ constructionStatus: 'CUSTOM_READY', 'price.currency': 'USD', paymentMethod: 'BOTH', priceMin: '100', priceMax: '200' });
+});
+
+test('property residence filter renders a searchable relation using the form label', async () => {
+  rows = []; definition = { moduleName: 'Properties', fields: [field('title'), field('residence', 'select', { label: { en: 'Choose a residence' }, relation: 'Residences' })] };
+  await render('Properties');
+  await act(async () => Simulate.click(button('Filters')));
+  expect(container.textContent).toContain('Choose a residence');
+  expect(container.querySelector('#filter-residence[role="combobox"]')).not.toBeNull();
+});
+
+test('property suitability search supports system and existing custom multiselect fields', async () => {
+  for (const [name, kind, path] of [['suitableFor', 'SYSTEM_FIELD', 'suitableFor'], ['field_legacy_suitability', 'CUSTOM_FIELD', 'customFields.field_legacy_suitability']]) {
+    rows = []; definition = { moduleName: 'Properties', fields: [field('title'), field(name, 'multiselect', {
+      kind, label: { en: 'Suitable For', fa: 'مناسب' }, options: [{ value: 'INVESTMENT', label: { en: 'Investment' } }],
+    })] };
+    await render('Properties');
+    if (!container.querySelector('select[aria-label="Suitable For"]')) await act(async () => Simulate.click(button('Filters')));
+    const select = container.querySelector('select[aria-label="Suitable For"]');
+    expect(select).not.toBeNull();
+    await act(async () => Simulate.change(select, { target: { value: 'INVESTMENT' } }));
+    const url = getApi.mock.calls.filter(([url]) => url.startsWith('api/estate/Properties?')).pop()[0];
+    expect(new URLSearchParams(url.split('?')[1]).get(path)).toBe('INVESTMENT');
+    act(() => { ReactDOM.unmountComponentAtNode(container); });
+  }
+});
 test('partner status dropdown saves from the table and displays the persisted value', async () => {
   await render('Partner Customers');
   const select = () => container.querySelector('select[aria-label="Status · Alice"]');

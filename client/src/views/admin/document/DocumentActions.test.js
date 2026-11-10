@@ -5,7 +5,7 @@ import { act, Simulate } from 'react-dom/test-utils';
 import { ChakraProvider } from '@chakra-ui/react';
 import DocumentPage from './index';
 import { LanguageProvider } from 'i18n';
-import { getApi, postApi } from 'services/api';
+import { deleteApi, getApi, postApi } from 'services/api';
 import { toast } from 'react-toastify';
 jest.mock('services/api', () => ({ getApi: jest.fn(), postApi: jest.fn(), deleteApi: jest.fn(), getApiBlob: jest.fn() }));
 jest.mock('react-toastify', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
@@ -86,6 +86,37 @@ test('a user cannot send or move foreign files or folders', async () => {
   expect(document.querySelector('.crm-share-record-button')).toBeNull();
   expect(document.querySelector('button[aria-label="Move file"]')).toBeNull();
   expect(document.querySelector('button[aria-label="Move folder"]')).toBeNull();
+  expect(document.querySelector('button[aria-label="Delete folder"]')).toBeNull();
+  expect(document.querySelector('button[aria-label="Delete"]')).toBeNull();
+});
+
+test('deleting the current folder confirms its contents, removes its tree and preserves neighboring documents', async () => {
+  let visible = folders;
+  getApi.mockImplementation(async path => ({ status: 200, data: path.includes('/definitions/') ? { moduleName: 'Documents', fields: [] }
+    : path === 'api/document' ? visible : [] }));
+  deleteApi.mockImplementation(async () => { visible = folders.filter(folder => !['parent', 'child'].includes(folder._id)); return { status: 200 }; });
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+  try {
+    await render(); await act(async () => Simulate.click(button('Parent')));
+    await act(async () => Simulate.click(container.querySelector('button[aria-label="Delete folder"]')));
+    expect(confirm).toHaveBeenCalledWith('Parent: Delete this folder and all its contents?');
+    expect(deleteApi).toHaveBeenCalledWith('api/document/delete/folder/', 'parent');
+    expect(button('Parent')).toBeUndefined(); expect(button('Child')).toBeUndefined();
+    expect(container.textContent).toContain('Root.txt'); expect(container.textContent).toContain('Sibling');
+  } finally { confirm.mockRestore(); }
+});
+
+test('file deletion is cancelled without a request and server failures retain the file', async () => {
+  deleteApi.mockReset(); deleteApi.mockResolvedValue({ status: 500 });
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
+  try {
+    await render();
+    await act(async () => Simulate.click(container.querySelector('.crm-document-card button[aria-label="Delete"]')));
+    expect(deleteApi).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    await act(async () => Simulate.click(container.querySelector('.crm-document-card button[aria-label="Delete"]')));
+    expect(toast.error).toHaveBeenCalledWith('Failed to delete file'); expect(container.textContent).toContain('Root.txt');
+  } finally { confirm.mockRestore(); }
 });
 
 test.each([

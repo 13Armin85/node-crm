@@ -302,12 +302,12 @@ body .crm-language-select option { color: var(--crm-text); background: var(--crm
 }
 .crm-content :is(.crm-data-table, .crm-entity-table) { border-spacing: 0 !important; }
 .crm-content :is(.crm-data-table, .crm-entity-table) thead th {
-  height: 33px; padding: 6px 10px !important; font-size: 11px !important;
+  height: 30px; padding: 5px 7px !important; font-size: 11px !important;
   background: var(--crm-panel-hover) !important; text-transform: none; letter-spacing: 0;
 }
 .crm-content :is(.crm-data-table, .crm-entity-table) thead th > div { font-size: 11px !important; font-weight: 600; }
 .crm-content :is(.crm-data-table, .crm-entity-table) tbody td {
-  height: 36px; padding: 5px 10px !important; font-size: 12px !important; vertical-align: middle;
+  height: 32px; padding: 4px 7px !important; font-size: 12px !important; vertical-align: middle;
 }
 .crm-content .crm-data-table tbody td .chakra-text { font-size: 12px !important; font-weight: 500 !important; }
 .crm-content :is(.crm-data-table, .crm-entity-table) tbody tr:hover { box-shadow: none; background: #edf4fc; }
@@ -331,11 +331,17 @@ body .crm-language-select option { color: var(--crm-text); background: var(--crm
 }
 @media (min-width: 768px) {
   .crm-content .crm-mobile-records { width: max-content; min-width: 100%; table-layout: auto; }
-  .crm-content .crm-mobile-records :is(th, td) { min-width: 180px; max-width: 320px; white-space: normal; }
-  .crm-content .crm-mobile-records :is(th, td)[data-mobile-role="index"] { width: 68px; min-width: 68px; max-width: 90px; }
+  .crm-content .crm-mobile-records :is(th, td) { min-width: 120px; max-width: 260px; white-space: normal; }
+  .crm-content .crm-mobile-records :is(th, td)[data-mobile-role="index"] { width: 44px; min-width: 44px; max-width: 56px; }
   .crm-content .crm-mobile-records thead th > .chakra-flex { min-width: 0; align-items: flex-start; gap: 6px; }
   .crm-content .crm-mobile-records thead th svg { flex-shrink: 0; }
   .crm-content .crm-mobile-records td .chakra-text { line-height: 1.7; }
+}
+/* Keep the complete value visible, including long notes, addresses and tags. */
+.crm-content :is(.crm-data-table, .crm-entity-table) :is(th, td) { overflow-wrap: anywhere; }
+.crm-content :is(.crm-data-table, .crm-entity-table) td :is(.chakra-text, a, .crm-record-value, .chakra-badge) {
+  overflow: visible; text-overflow: clip; white-space: normal; -webkit-line-clamp: unset;
+  overflow-wrap: anywhere; max-height: none;
 }
 .crm-content .crm-entity-row-icon { width: 25px; min-width: 25px; height: 25px; border-radius: 4px; }
 .crm-content .crm-entity-filters { padding: 9px 10px; background: var(--crm-panel-hover); }

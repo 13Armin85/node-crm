@@ -1,6 +1,8 @@
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
 import {
   Box,
+  Alert,
+  AlertIcon,
   Button,
   Modal,
   ModalBody,
@@ -16,9 +18,10 @@ import {
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import Spinner from "components/spinner/Spinner";
+import ManagedFormLayout from 'components/dynamicForm/ManagedFormLayout';
+import { useFormDefinition } from 'utils/managedForm';
 import { postApi } from "services/api";
 import { documentSchema } from "schema";
-import FormDataUse, { commonUtils } from "./formDataUse";
 import Upload from "../views/admin/document/component/Upload";
 
 const AddDocumentModal = ({
@@ -26,33 +29,38 @@ const AddDocumentModal = ({
   addDocument,
   linkId,
   from,
-  setAction,
   fetchData,
 }) => {
   const [isLoding, setIsLoding] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const { definition, definitionError } = useFormDefinition('Documents');
+  // A folder's name is required when creating the folder, but an uploaded
+  // document may use the same unfiled storage offered by the document center.
+  const uploadDefinition = definition && { ...definition, fields: definition.fields.map(field =>
+    field.kind === 'SYSTEM_FIELD' && field.name === 'folderName' ? { ...field, required: false } : field) };
   const user = JSON.parse(localStorage.getItem("user"));
 
   const initialValues = {
     folderName: "",
-    files: "",
+    files: [],
+    customFields: {},
     filename: "",
     linkLead: from === "lead" && linkId,
     linkContact: from === "contact" && linkId,
+    entityType: { lead: 'Lead', contact: 'Contact', opportunity: 'Opportunity' }[from],
+    entityId: linkId,
     createBy: user?._id,
   };
 
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: documentSchema,
-    onSubmit: (values, { resetForm }) => {
-      addData();
-    },
+    onSubmit: () => addData(),
   });
   const {
     errors,
     touched,
     values,
-    handleBlur,
     handleChange,
     handleSubmit,
     setFieldValue,
@@ -60,26 +68,37 @@ const AddDocumentModal = ({
   } = formik;
 
   const addData = async () => {
+    let closeOnSuccess = false;
     try {
       setIsLoding(true);
-      const payload = commonUtils?.formData(values);
+      setSubmitError('');
+      if (!values.files.length) { formik.setFieldError('files', tr('Select at least one file')); return; }
+      const payload = new FormData();
+      for (const [key, value] of Object.entries(values)) {
+        if (key === 'files') value.forEach(file => payload.append('files', file));
+        else if (key === 'customFields') payload.append(key, JSON.stringify(value));
+        else if (value !== false && value != null) payload.append(key, value);
+      }
 
       let response = await postApi(
-        from === "lead"
-          ? "api/document/addDocumentLead"
-          : "api/document/addDocumentContact",
+        "api/document/add",
         payload,
       );
       if (response && response?.status === 200) {
         formik.resetForm();
-        // setAction((pre) => !pre)
-        fetchData(2);
-        setAddDocument(false);
+        await fetchData?.(2);
+        closeOnSuccess = true;
+      } else {
+        const failure = response?.data || response?.response?.data;
+        const message = tr('estate.' + (failure?.code || 'serverError'));
+        setSubmitError(message);
+        if (failure?.field) formik.setFieldError(failure.field, message);
       }
     } catch (e) {
-      console.log(e);
+      setSubmitError(tr('estate.serverError'));
     } finally {
       setIsLoding(false);
+      if (closeOnSuccess) setAddDocument(false);
     }
   };
   return (
@@ -90,17 +109,19 @@ const AddDocumentModal = ({
     >
       <ModalOverlay />
       <ModalContent className="crm-record-form" maxWidth={"2xl"}>
-        <ModalHeader></ModalHeader>
+        <ModalHeader>{tr('Add Document')}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Box>
+          {submitError && <Alert status="error" mb={3}><AlertIcon />{submitError}</Alert>}
+          <ManagedFormLayout moduleName="Documents" formik={formik} definition={uploadDefinition} definitionError={definitionError}>
+          <Box gridColumn="1 / -1">
             <FormLabel
               display="flex"
               ms="4px"
               fontSize="sm"
               fontWeight="500"
               mb="8px"
-            ><LocalizedText text="Folder Name" /><Text color={"red"}>*</Text>
+            ><LocalizedText text="Folder Name" /> <Text as="span" ms={1} color="gray.500">({tr('Optional')})</Text>
             </FormLabel>
             <Input
               fontSize="sm"
@@ -113,12 +134,13 @@ const AddDocumentModal = ({
                 errors?.folderName && touched?.folderName ? "red.300" : null
               }
             />
+            <Text fontSize="xs" color="gray.500" mt={1}>{tr('No folder — publish directly')}</Text>
             <Text mb="10px" color={"red"}>
               {" "}
               {errors?.folderName && touched?.folderName && errors?.folderName}
             </Text>
           </Box>
-          <Box>
+          <Box gridColumn="1 / -1">
             <FormLabel
               display="flex"
               ms="4px"
@@ -142,11 +164,12 @@ const AddDocumentModal = ({
               {errors?.filename && touched?.filename && errors?.filename}
             </Text>
           </Box>
-          <Upload
+          <Box gridColumn="1 / -1"><Upload
             count={values?.files?.length}
             onFileSelect={(file) => setFieldValue("files", file)}
-          />{" "}
-        </ModalBody>
+          />
+          {errors.files && <Text color="red.500">{errors.files}</Text>}</Box>
+        </ManagedFormLayout></ModalBody>
         <ModalFooter>
           <Button
             size="sm"

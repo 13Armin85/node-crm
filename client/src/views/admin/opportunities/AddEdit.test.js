@@ -12,9 +12,13 @@ test('editing an opportunity resolves existing customer, user and property selec
   localStorage.setItem('user', JSON.stringify({ _id: 'admin', role: 'admin' }));
   const ids = { contact: '6ae380a7f48a9ea51d6e3143', user: '6ad5cede20944f7bf63f495d',
     property: '6ae1b409f48a9ea51d6dc631', partner: '6ae1b409f48a9ea51d6dc632' };
-  getApi.mockImplementation(async url => ({ status: 200, data: url.includes('/definitions/') ? { moduleName: 'Opportunities', fields: [] }
+  getApi.mockImplementation(async url => ({ status: 200, data: url.includes('/definitions/') ? { moduleName: 'Opportunities', fields: [
+    { name: 'listedFor', kind: 'SYSTEM_FIELD', type: 'select', label: { en: 'Request Type' }, options: [
+      { value: 'Buy', label: { en: 'Buy' } }, { value: 'Rent', label: { en: 'Rent' } },
+    ] },
+  ] }
     : url === 'api/opportunity/view/' ? { opportunityName: 'Villa Sale', contact: ids.contact, accountName: ids.partner,
-      assignUser: ids.user, properties: [ids.property] }
+      assignUser: ids.user, properties: [ids.property], listedFor: 'Rent' }
       : url.includes('/options?id=') ? [{ value: url.split('id=')[1], label: url.includes('Contacts') ? 'Buyer Name'
         : url.includes('Users') ? 'Assigned Agent' : url.includes('Properties') ? 'Garden Villa' : 'Partner Company' }] : [] }));
   const container = document.createElement('div'); document.body.appendChild(container);
@@ -24,6 +28,8 @@ test('editing an opportunity resolves existing customer, user and property selec
     expect(document.querySelector('#opportunity-account').value).toBe('Partner Company');
     expect(document.querySelector('#opportunity-assigned-user').value).toBe('Assigned Agent');
     expect(document.body.textContent).toContain('Garden Villa');
+    expect(document.querySelector('select[name="listedFor"]').value).toBe('Rent');
+    expect(document.body.textContent).toContain('Request Type');
     for (const id of Object.values(ids)) expect(document.body.textContent).not.toContain(id);
   } finally {
     act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.clear();

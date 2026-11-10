@@ -1,3 +1,4 @@
+import RecordDocuments from 'components/record/RecordDocuments';
 import ConvertedLeadDetails from "components/relations/ConvertedLeadDetails";
 import { Portal } from '@chakra-ui/react';
 import { safeUrl } from 'services/contentSecurity';
@@ -28,11 +29,9 @@ import {
   TabPanels,
   Tabs,
   Text,
-  VStack,
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
-import FolderTreeView from "components/FolderTreeView/folderTreeView";
 import Card from "components/card/Card";
 import { HSeparator } from "components/separator/Separator";
 import Spinner from "components/spinner/Spinner";
@@ -44,7 +43,7 @@ import { IoIosArrowBack } from "react-icons/io";
 import { LuBuilding2 } from "react-icons/lu";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { downloadApiFile, getApi } from "services/api";
+import { getApi } from "services/api";
 import AddEmailHistory from "../emailHistory/components/AddEmail";
 import AddMeeting from "../meeting/components/Addmeeting";
 import AddPhoneCall from "../phoneCall/components/AddPhoneCall";
@@ -56,7 +55,6 @@ import PropertyTable from "./components/propertyTable";
 import { HasAccess } from "../../../redux/accessUtils";
 import DataNotFound from "components/notFoundData";
 import CustomView from "utils/customView";
-import AddDocumentModal from "utils/addDocumentModal";
 import CommonDeleteModel from "components/commonDeleteModel";
 import { deleteApi } from "services/api";
 import CommonCheckTable from "components/reactTable/checktable";
@@ -98,7 +96,6 @@ const View = () => {
   const [showMeetings, setShowMeetings] = useState(false);
   const [showQuotes, setShowQuotes] = useState(false);
   const [showInvoices, setShowInvoices] = useState(false);
-  const [addDocument, setAddDocument] = useState(false);
 
   const [selectedTab, setSelectedTab] = useState(0);
   const size = "lg";
@@ -524,16 +521,7 @@ const View = () => {
     }
   };
 
-  const download = async (data) => {
-    if (data) {
-      let result = await downloadApiFile(`api/document/download/${data}`);
-      if (result && result?.status === 200) {
-        toast.success(tr("file Download successful"));
-      } else if (result && result?.response?.status === 404) {
-        toast.error(tr("file Not Found"));
-      }
-    }
-  };
+
 
   const fetchData = async (i) => {
     setIsLoding(true);
@@ -1083,53 +1071,7 @@ const View = () => {
                   </Grid>
                 </GridItem>
               </Box>
-              <Box className="crm-contact-section" id="contact-section-2" pt={4} p={0}>
-                <GridItem colSpan={{ base: 12 }}>
-                  <Card minH={"40vh"}>
-                    <Flex
-                      alignItems={"center"}
-                      justifyContent={"space-between"}
-                      mb="2"
-                    >
-                      <Heading size="md" mb={3}><LocalizedText text="Documents" /></Heading>
-                      <Button
-                        leftIcon={<AddIcon />}
-                        size="sm"
-                        variant="brand"
-                        onClick={() => setAddDocument(true)}
-                      ><LocalizedText text="Add Document" /></Button>
-                    </Flex>
-                    <HSeparator />
-                    <VStack mt={4} alignItems="flex-start">
-                      {allData?.Document?.length > 0 ? (
-                        allData?.Document?.map((item) => (
-                          <FolderTreeView name={item?.folderName} item={item}>
-                            {item?.files?.map((file) => (
-                              <FolderTreeView
-                                download={download}
-                                data={file}
-                                name={file?.fileName}
-                                isFile
-                                from="contact"
-                              />
-                            ))}
-                          </FolderTreeView>
-                        ))
-                      ) : (
-                        <Text
-                          textAlign={"center"}
-                          width="100%"
-                          color={textColor}
-                          fontSize="sm"
-                          fontWeight="700"
-                        >
-                          <DataNotFound />
-                        </Text>
-                      )}
-                    </VStack>
-                  </Card>
-                </GridItem>
-              </Box>
+              <Box id="contact-section-2" pt={4}><RecordDocuments moduleName="Contacts" recordId={param.id} /></Box>
 
               <Box className="crm-contact-section" id="contact-section-3" pt={4} p={0}>
                 <GridItem colSpan={{ base: 12 }}>
@@ -1345,14 +1287,7 @@ const View = () => {
         onClose={setAddEmailHistory}
         id={param?.id}
       />
-      <AddDocumentModal
-        addDocument={addDocument}
-        setAddDocument={setAddDocument}
-        linkId={param?.id}
-        from="contact"
-        setAction={setAction}
-        fetchData={fetchData}
-      />
+
       <AddMeeting
         fetchData={fetchData}
         leadContect={splitValue[0]}

@@ -72,7 +72,9 @@ export const postApi = async (path, data, login) => {
       data,
       getRequestConfig({ headers: dataScopeHeaders(path, 'post') }),
     );
-    if (result?.data?.token && result?.data?.token !== null) {
+    // Only the sign-in response may replace the stored session; a record field
+    // named "token" from any other endpoint must never become a credential.
+    if (path === "api/user/login" && result?.status === 200 && typeof result?.data?.token === "string") {
       saveAuthSession({
         token: result.data.token,
         user: result.data.user,
@@ -120,9 +122,6 @@ export const deleteApi = async (path, param) => {
       constant?.baseUrl + path + param,
       getRequestConfig(),
     );
-    if (result?.data?.token && result?.data?.token !== null) {
-      localStorage.setItem("token", result?.data?.token);
-    }
     return normalizeResponse(result);
   } catch (e) {
     return e;
@@ -136,9 +135,6 @@ export const deleteManyApi = async (path, data) => {
       data,
       getRequestConfig(),
     );
-    if (result?.data?.token && result?.data?.token !== null) {
-      localStorage.setItem("token", result?.data?.token);
-    }
     return normalizeResponse(result);
   } catch (e) {
     return e;

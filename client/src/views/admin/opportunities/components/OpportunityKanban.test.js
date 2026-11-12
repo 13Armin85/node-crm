@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { act, Simulate } from 'react-dom/test-utils';
 import { ChakraProvider } from '@chakra-ui/react';
+import { MemoryRouter } from 'react-router-dom';
 import OpportunityKanban from './OpportunityKanban';
 let mockDragEnd;
 jest.mock('react-beautiful-dnd', () => ({
@@ -16,7 +17,7 @@ const records = [{ _id: 'one', opportunityName: 'Deal One', salesStage: 'Open' }
   { _id: 'three', opportunityName: 'Legacy Deal', salesStage: '' }];
 beforeEach(() => { container = document.createElement('div'); document.body.appendChild(container); });
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); });
-const render = props => act(() => { ReactDOM.render(<ChakraProvider><OpportunityKanban records={records} stages={stages} canMove={() => true} onView={jest.fn()} {...props} /></ChakraProvider>, container); });
+const render = props => act(() => { ReactDOM.render(<MemoryRouter><ChakraProvider><OpportunityKanban records={records} stages={stages} canMove={() => true} onView={jest.fn()} {...props} /></ChakraProvider></MemoryRouter>, container); });
 test('columns exactly match the configured stage options, with no additional column for incomplete old records', () => {
   render();
   const columns = [...container.querySelectorAll('[data-stage]')];

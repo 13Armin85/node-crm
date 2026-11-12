@@ -2880,9 +2880,9 @@ body.crm-kanban-is-dragging * {
 }
 
 .crm-task-page-hero .chakra-button:not([class*="crm-page-hero__action"]) {
-  color: #17325f !important;
-  border-color: rgba(255, 255, 255, .45) !important;
-  background: rgba(255, 255, 255, .92) !important;
+  color: var(--crm-text) !important;
+  border-color: var(--crm-border) !important;
+  background: var(--crm-panel-solid) !important;
 }
 
 .crm-detail-page-hero {

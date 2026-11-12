@@ -33,7 +33,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { LanguageSelect, ThemeToggle } from "components/language/LanguageSelect";
 import { useLanguage } from "i18n";
 import { clearUser } from "../../redux/slices/localSlice";
-import { clearAuthSession, scheduleSessionExpiry } from "services/authSession";
+import { clearAuthSession, getStoredToken, getStoredUser, scheduleSessionExpiry } from "services/authSession";
 import { usePwa } from "components/pwa/PwaProvider";
 import NotificationsMenu from "./NotificationsMenu";
 import { postApi } from "services/api";
@@ -51,7 +51,7 @@ export default function HeaderLinks() {
   const dispatch = useDispatch();
   const userData = useSelector((state) => state?.user?.user);
   const data = typeof userData === "string" ? JSON.parse(userData) : userData;
-  const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+  const storedUser = getStoredUser();
   const loginUser = data || storedUser;
   const userName = [loginUser?.firstName, loginUser?.lastName].filter(Boolean).join(" ") || t("User");
   const userRole = loginUser?.role ? t(loginUser.role) : t("Team member");
@@ -65,7 +65,7 @@ export default function HeaderLinks() {
   }, [dispatch, navigate, t]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token = getStoredToken();
     if (!token) return undefined;
 
     return scheduleSessionExpiry(token, () => logOut(t("Token has expired")));

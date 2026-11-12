@@ -35,7 +35,7 @@ test('discount, delivery and KDV agree across form, preview, submission and remo
   await act(async () => Simulate.click(button('Add')));
   await change('input[name="items[0].qty"]', '2');
   await change('input[name="items[0].rate"]', '100');
-  await change('select[aria-label="Discount Type 1"]', 'percent');
+  await change('select[aria-label="Discount type 1"]', 'percent');
   await change('input[name="items[0].discount"]', '10');
   await change('input[name="shipping"]', '10');
   expect(container.querySelector('input[name="total"]').value).toBe('200.00');

@@ -1,7 +1,8 @@
 # Publish the API and client together, and verify the actual IIS endpoint.
 param(
     [Parameter(Mandatory=$true)][string]$ReleaseDirectory,
-    [string]$Origin = 'https://37.148.206.74'
+    [string]$Origin = 'https://37.148.206.74',
+    [switch]$OptimizeStaticCompression
 )
 $ErrorActionPreference = 'Stop'
 $crmRelease = [System.IO.Path]::GetFullPath($ReleaseDirectory)
@@ -12,7 +13,10 @@ Restart-Service -InputObject $crmService
 $crmService.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Running, [TimeSpan]::FromSeconds(30))
 & node $crmVerify --backend-only
 if ($LASTEXITCODE -ne 0) { throw 'Backend verification failed; client publication was stopped.' }
+if ($OptimizeStaticCompression) { & (Join-Path $PSScriptRoot 'enable-crm-static-compression.ps1') }
 & (Join-Path $PSScriptRoot 'deploy-client-build.ps1') -ReleaseDirectory $crmRelease
+& node (Join-Path $PSScriptRoot 'warm-client-assets.cjs') --origin $Origin --release-dir $crmRelease
+if ($LASTEXITCODE -ne 0) { throw 'Static asset warmup failed.' }
 & node $crmVerify --origin $Origin --release-dir $crmRelease
 if ($LASTEXITCODE -ne 0) { throw 'Published release verification failed.' }
 Write-Output 'Published and verified both NodeCRMBackend and the complete client release.'

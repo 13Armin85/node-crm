@@ -16,7 +16,8 @@ export const HasAccess = (actions) => {
   return actions.map(title => {
     if (!isAdmin(user) && user?.role !== 'user') return {};
     if (!canViewModule(title, user)) return {};
-    if (!isAdmin(user) && (adminModules.includes(title) || ['Tasks', 'Task', 'Completed Tasks'].includes(title))) return { view: true, export: true };
+    if (!isAdmin(user) && adminModules.includes(title)) return { view: true, export: true };
+    // Ordinary users create personal tasks; canManageTask limits edits to their own.
     return title === 'Users' ? { ...permission, create: isDeveloper(user) } : permission;
   });
 };

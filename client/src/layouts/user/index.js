@@ -22,14 +22,15 @@ import Spinner from "components/spinner/Spinner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchImage } from "../../redux/slices/imageSlice";
 import { getApi } from "services/api";
-import DynamicPage from "views/admin/dynamicPage";
-import DynamicPageview from "views/admin/dynamicPage/DynamicPageview";
 import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchModules } from "../../redux/slices/moduleSlice";
 import { useLanguage } from "i18n";
 import { isSettingsPage } from "utils/settingsWorkspace";
 import PageHelp from "components/help/PageHelp";
 import { canViewModule, useModuleVisibility } from "services/moduleVisibility";
+
+const DynamicPage = React.lazy(() => import('views/admin/dynamicPage'));
+const DynamicPageview = React.lazy(() => import('views/admin/dynamicPage/DynamicPageview'));
 
 // Custom Chakra theme
 export default function User(props) {

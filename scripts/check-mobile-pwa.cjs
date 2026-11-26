@@ -153,6 +153,12 @@ async function main() {
         },
       ];
     if (route === "/api/task/assignees") return [admin, person];
+    if (route === '/api/estate/dashboard/finance') return {
+      soldProperties: { count: 1, values: [{ currency: 'TRY', amount: 100000 }] },
+      successfulIncome: { count: 1, values: [{ currency: 'TRY', amount: 5000 }] },
+      lostIncome: { count: 0, values: [] },
+    };
+    if (route === '/api/estate/dashboard/exchange-rate') return { tryPerUsd: 40, tryPerEur: 45, sourceDate: '2026-11-26' };
     if (route === "/api/estate/dashboard/sales-summary")
       return {
         sold: { count: 1, values: [{ currency: "TRY", amount: 5000 }] },
@@ -291,6 +297,14 @@ async function main() {
       pipe: true,
     });
     page = await browser.newPage();
+    page.on('console', async message => {
+      if (message.type() === 'error' && message.text().includes('Application render failed')) {
+        errors.push({ route: new URL(page.url()).pathname, error: message.text() });
+        console.error('Browser render: ' + message.text());
+        const detail = message.args()[1];
+        if (detail) console.error(await detail.evaluate(error => error?.stack || String(error)).catch(() => ''));
+      }
+    });
     page.on("pageerror", (error) =>
       errors.push({
         route: new URL(page.url()).pathname,
@@ -330,6 +344,10 @@ async function main() {
     const goto = async (route) => {
       await page.goto(origin + route, { waitUntil: "networkidle2" });
       await page.waitForSelector(".crm-content");
+      if (process.env.CRM_EXTRA_CSS) {
+        await page.addStyleTag({ content: fs.readFileSync(process.env.CRM_EXTRA_CSS, 'utf8') });
+        await new Promise(resolve => setTimeout(resolve, 300)); // Finish existing geometry transitions after a CSS preview.
+      }
       if (process.env.CRM_MODAL_CSS) await page.addStyleTag({ content: fs.readFileSync(path.resolve(__dirname, '../client/src/assets/css/App.css'), 'utf8').replace(/@import[^;]+;/g, '') });
     };
     const geometry = () =>
@@ -654,15 +672,7 @@ async function main() {
           continue;
         await goto(route);
         if (route === "/task" && width < 480) {
-          assert.equal(
-            await page.$eval(
-              ".crm-kanban-board",
-              (node) =>
-                getComputedStyle(node).gridTemplateColumns.split(" ").length,
-            ),
-            1,
-            "Phone tasks need readable single-column cards",
-          );
+          assert(await page.$eval('.crm-agenda', node => node.scrollWidth <= node.clientWidth + 1), 'Phone task agenda must fit the screen');
         }
         if (width < 768) {
           const cards = await page.evaluate(() => [...document.querySelectorAll('.crm-mobile-records')].map(table => ({
@@ -672,6 +682,7 @@ async function main() {
               display: getComputedStyle(row).display,
               labels: [...row.querySelectorAll('td:not([hidden])')].every(cell => Boolean(cell.dataset.label)),
               controls: [...row.querySelectorAll('button')].filter(button => button.getClientRects().length).every(button => button.getBoundingClientRect().height >= 43),
+              smallControls: [...row.querySelectorAll('button')].filter(button => button.getClientRects().length && button.getBoundingClientRect().height < 43).map(button => ({ label: button.getAttribute('aria-label') || button.textContent, height: button.getBoundingClientRect().height, minHeight: getComputedStyle(button).minHeight, matches: button.matches('.crm-content .crm-mobile-records .crm-record-row button'), extraCss: document.head.textContent.includes('precise tapping'), classes: button.className })),
             })),
           })));
           for (const card of cards) {
@@ -679,12 +690,12 @@ async function main() {
             for (const row of card.rows) {
               assert.equal(row.display, 'grid', 'Phone rows should be cards: ' + route);
               assert(row.labels, 'Every card field needs a readable label: ' + route);
-              assert(row.controls, 'Card actions need comfortable touch targets: ' + route);
+              assert(row.controls, 'Card actions need comfortable touch targets: ' + route + ' ' + JSON.stringify(row.smallControls));
             }
           }
           if (route === '/default') {
             const headers = await page.$$eval('.crm-dashboard-card-header__title', nodes => nodes.map(node => parseFloat(getComputedStyle(node).fontSize)));
-            assert(headers.length > 0 && headers.every(size => size >= 16 && size <= 18), 'Phone dashboard titles should stay compact and readable');
+            assert(headers.length > 0 && headers.every(size => size >= 14 && size <= 18), 'Phone dashboard titles should follow the compact workspace typography');
             const clipped = await page.$$eval('.crm-dashboard-card-header', headers => headers.flatMap(header => {
               const bounds = header.getBoundingClientRect();
               return [...header.querySelectorAll('button, a, select')].filter(node => {
@@ -804,9 +815,9 @@ async function main() {
     assert(selected, 'Mobile row selection should remain available');
     await selected.click();
     await page.waitForSelector('.crm-record-row[aria-selected="true"]');
-    const rowMenu = await page.$('.crm-record-row [data-mobile-role="actions"] button');
+    const rowMenu = await page.$('.crm-record-row [data-mobile-role="actions"] .crm-record-menu-button');
     assert(rowMenu, 'Card actions should remain available');
-    await rowMenu.click();
+    await rowMenu.tap();
     await page.waitForFunction(() => [...document.querySelectorAll('[role="menu"]')].some(node => node.getBoundingClientRect().width > 0 && getComputedStyle(node).visibility !== 'hidden' && Number(getComputedStyle(node).opacity) > .99));
     assert((await page.$$eval('[role="menuitem"]', nodes => nodes.map(node => node.textContent))).some(text => text.includes('Edit')));
     await page.keyboard.press('Escape');

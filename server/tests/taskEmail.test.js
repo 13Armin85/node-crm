@@ -43,3 +43,42 @@ test('creating an assigned task emails the selected user', async t => {
   assert.equal(String(createNotification.mock.calls[0].arguments[0].recipient), String(assigneeId));
   assert.equal(createNotification.mock.calls[0].arguments[0].type, 'task_assigned');
 });
+
+test('notification and email failures do not report a saved task as failed', async t => {
+  const actorId = new mongoose.Types.ObjectId();
+  const assigneeId = new mongoose.Types.ObjectId();
+  const actor = { _id: actorId, username: 'manager@example.com', role: 'admin' };
+  const assignee = { _id: assigneeId, username: 'assignee@example.com' };
+
+  t.mock.method(User, 'findOne', query => {
+    if (String(query._id) === String(actorId)) return Promise.resolve(actor);
+    return { select: () => Promise.resolve(assignee) };
+  });
+  t.mock.method(User, 'exists', async () => ({ _id: assigneeId }));
+  const taskId = new mongoose.Types.ObjectId();
+  const createTask = t.mock.method(Task, 'create', async task => ({ ...task, _id: taskId }));
+  t.mock.method(Notification, 'create', async () => {
+    throw new Error('Notification storage unavailable');
+  });
+  t.mock.method(mail, 'sendEmail', async () => {
+    throw new Error('Email service unavailable');
+  });
+  t.mock.method(console, 'error', () => {});
+
+  const controller = require('../controllers/task/task');
+  const response = {
+    statusCode: null,
+    body: null,
+    status(code) { this.statusCode = code; return this; },
+    json(body) { this.body = body; return this; },
+  };
+
+  await controller.add({
+    user: { userId: String(actorId) },
+    body: { title: 'Call the customer', assignedToUser: String(assigneeId) },
+  }, response);
+
+  assert.equal(createTask.mock.callCount(), 1);
+  assert.equal(response.statusCode, 200);
+  assert.equal(String(response.body._id), String(taskId));
+});

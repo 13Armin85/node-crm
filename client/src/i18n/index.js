@@ -9,6 +9,7 @@ import React, {
 import estate from './estate';
 import recordDetails from './recordDetails';
 import finance from './finance';
+import taskAgenda from './taskAgenda';
 import moment from 'moment';
 import 'moment/locale/fa';
 import 'moment/locale/tr';
@@ -292,6 +293,8 @@ const fa = {
   "Task delegated successfully": "وظیفه با موفقیت واگذار شد",
   "Failed to delegate task": "واگذاری وظیفه ناموفق بود",
   "Failed to update task": "به‌روزرسانی وظیفه ناموفق بود",
+  "Failed to create task": "ایجاد وظیفه ناموفق بود",
+  "You can only create tasks for yourself": "فقط می‌توانید برای خودتان وظیفه ایجاد کنید",
   "Document Center": "مرکز اسناد",
   "Store documents in folders or without a folder and filter them by section.": "اسناد را داخل پوشه یا بدون پوشه ثبت و بر اساس بخش فیلتر کنید.",
   "New folder": "پوشه جدید",
@@ -559,6 +562,8 @@ const tr = {
   "Task delegated successfully": "Görev başarıyla devredildi",
   "Failed to delegate task": "Görev devredilemedi",
   "Failed to update task": "Görev güncellenemedi",
+  "Failed to create task": "Görev oluşturulamadı",
+  "You can only create tasks for yourself": "Yalnızca kendiniz için görev oluşturabilirsiniz",
   "Document Center": "Belge Merkezi",
   "Store documents in folders or without a folder and filter them by section.": "Belgeleri klasörlerde veya klasörsüz saklayın ve bölüme göre filtreleyin.",
   "New folder": "Yeni klasör",
@@ -653,6 +658,7 @@ export const translate = (value, language = "en") => {
 
 Object.keys(recordDetails).forEach(language => Object.assign(dictionaries[language], recordDetails[language]));
 Object.keys(finance).forEach(language => Object.assign(dictionaries[language], finance[language]));
+Object.keys(taskAgenda).forEach(language => Object.assign(dictionaries[language], taskAgenda[language]));
 
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(

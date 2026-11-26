@@ -12,9 +12,11 @@ test('ordinary users can read every module while administrative mutations stay r
   for (const module of ['Users', 'Roles', 'Custom Fields', 'Active Deactive Module', 'Contacts', 'Properties', 'Tasks']) {
     assert.equal(can(actor, module, 'view'), true, module);
   }
-  for (const module of ['Users', 'Roles', 'Custom Fields', 'Active Deactive Module', 'Tasks', 'Task', 'Completed Tasks']) {
+  for (const module of ['Users', 'Roles', 'Custom Fields', 'Active Deactive Module']) {
     for (const action of ['create', 'update', 'delete']) assert.equal(can(actor, module, action), false, module + ':' + action);
   }
+  // Ordinary users manage their own personal tasks; record scopes keep others' tasks read-only.
+  for (const action of ['create', 'update', 'delete']) assert.equal(can(actor, 'Tasks', action), true, 'Tasks:' + action);
   assert.deepEqual(scope({ method: 'GET', actor }), {});
   assert.deepEqual(scope({ method: 'PUT', actor }), { createBy: actor._id });
   assert.deepEqual(scope({ method: 'GET', actor }, 'Tasks'), require('../services/leadAccess').generatedTaskScope(actor));
@@ -22,13 +24,13 @@ test('ordinary users can read every module while administrative mutations stay r
 
 test('dashboard analytics apply assignment scopes to leads and generated tasks', async t => {
   t.mock.method(User, 'findOne', async () => actor);
-  const tasks = t.mock.method(Task, 'find', async query => {
+  const tasks = t.mock.method(Task, 'find', query => {
     assert.deepEqual(query, require('../services/leadAccess').generatedTaskScope(actor, { deleted: false }));
-    return [];
+    return { lean: async () => [] };
   });
-  const leads = t.mock.method(Lead, 'find', async query => {
+  const leads = t.mock.method(Lead, 'find', query => {
     assert.deepEqual(query, require('../services/leadAccess').leadScope(actor, { deleted: false }));
-    return [{ title: 'Shared lead' }];
+    return { lean: async () => [{ title: 'Shared lead' }] };
   });
   const res = { status(code) { this.code = code; return this; }, json(data) { this.data = data; } };
   await require('../controllers/status/status').index({ user: { userId: actor._id }, query: {} }, res);
@@ -42,7 +44,7 @@ test('visibility restricts data scopes while preserving page and ownership-based
   assert.equal(can(hidden, 'Opportunities', 'view'), true);
   assert.equal(can(hidden, 'Opportunities', 'update'), true);
   assert.deepEqual(scope({ method: 'GET', actor: hidden }, 'Tasks'), taskScope(hidden));
-  assert.deepEqual(scope({ method: 'PUT', actor }, 'Tasks'), taskScope(actor));
+  assert.deepEqual(scope({ method: 'PUT', actor }, 'Tasks'), require('../services/taskAccess').taskManageScope(actor));
   for (const role of ['admin', 'developer']) {
     assert.equal(can({ ...hidden, role }, 'Opportunities', 'view'), true);
   }

@@ -39,15 +39,17 @@ test('the sending API restricts modules and returns persisted recipient names to
     assert.equal((await api('POST', '/', { module, recordId: id, recipientId: recipient._id })).status, 400);
   }
   assert.equal(save.mock.callCount(), 0);
-  assert.equal((await api('POST', '/', { module: 'Leads', recordId: id, recipientId: recipient._id })).status, 201);
-  assert.equal(save.mock.callCount(), 1);
+  // Lead ownership is fixed to the creator: leads cannot be transferred to another user.
+  const locked = await api('POST', '/', { module: 'Leads', recordId: id, recipientId: recipient._id });
+  assert.equal(locked.status, 403); assert.equal(locked.body.code, 'ownerLocked');
+  assert.equal(save.mock.callCount(), 0);
   const saved = await api('GET', `/Leads/${id}`);
   assert.equal(saved.status, 200); assert.equal(saved.body[0].user.firstName, 'Ali');
   assert.equal((await api('POST', '/', { module: 'Partner Customers', recordId: id, recipientId: recipient._id })).status, 201);
-  assert.equal(save.mock.callCount(), 2);
+  assert.equal(save.mock.callCount(), 1);
   const partnerRecipients = await api('GET', `/Partner%20Customers/${id}`);
   assert.equal(partnerRecipients.status, 200);
   assert.equal(partnerRecipients.body[0].user._id, recipient._id);
-  assert.equal(save.mock.calls[1].arguments[0].module, 'Partner Customers');
+  assert.equal(save.mock.calls[0].arguments[0].module, 'Partner Customers');
   assert.deepEqual(require('../services/recordSharing').shareableModules, ['Leads', 'Opportunities', 'Documents', 'Partner Customers']);
 });

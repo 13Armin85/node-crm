@@ -31,6 +31,8 @@ router.post('/', asyncRoute(async (req, res) => {
   const [record, recipient] = await Promise.all([existingRecord(module, recordId), User.exists({ _id: recipientId, role: 'user', deleted: { $ne: true } })]);
   if (!record || !recipient) return res.status(404).json({ code: 'notFound' });
   if (module === 'Leads') {
+    // Lead ownership is fixed to its creator, so leads cannot be transferred to another user.
+    if (String(record.createBy) !== recipientId) return res.status(403).json({ code: 'ownerLocked' });
     const result = await require('../services/leadWorkflow').assignLead(recordId, recipientId, req.actor);
     return res.status(result.created ? 201 : 200).json({ shared: true, created: result.created, transferred: true });
   }

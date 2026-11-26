@@ -18,9 +18,10 @@ async function dashboardFinance(req) {
   ] };
   const [properties, income] = await Promise.all([
     Property.aggregate([
-      { $match: readScope(req, req.actor, 'Properties', { deleted: false }) },
+      // Only sold properties are reported; the unsold-property value is not shown on the dashboard.
+      { $match: readScope(req, req.actor, 'Properties', { deleted: false, 'sale.status': 'SOLD' }) },
       { $project: {
-        bucket: { $cond: [{ $eq: ['$sale.status', 'SOLD'] }, 'soldProperties', 'unsoldProperties'] },
+        bucket: 'soldProperties',
         currency, amount: amount('$price.amount'),
       } }, group,
     ]).option({ maxTimeMS: reportTimeoutMS }),
@@ -37,7 +38,7 @@ async function dashboardFinance(req) {
       { $match: { bucket: { $ne: null } } }, group,
     ]).option({ maxTimeMS: reportTimeoutMS }),
   ]);
-  const result = Object.fromEntries(['soldProperties', 'successfulIncome', 'lostIncome', 'unsoldProperties'].map(key => [key, { count: 0, values: [] }]));
+  const result = Object.fromEntries(['soldProperties', 'successfulIncome', 'lostIncome'].map(key => [key, { count: 0, values: [] }]));
   for (const row of [...properties, ...income]) {
     result[row._id.bucket].count += row.count;
     result[row._id.bucket].values.push({ currency: row._id.currency, amount: Math.round((row.amount + Number.EPSILON) * 100) / 100 });

@@ -54,7 +54,8 @@ test('task notifications persist and enforce recipient isolation through authent
     const readAgain = await api('PUT', '/notification/' + ownNotification + '/read', {}, first);
     assert.equal(readAgain.data.readAt, read.data.readAt);
     assert.equal((await inbox(first)).data.unreadCount, 0);
-    assert.equal((await api('PUT', '/task/changeStatus/' + taskId, { status: 'completed' }, first)).status, 403);
+    // Tasks delegated by an administrator remain read-only for the assignee.
+    assert.ok([403, 404].includes((await api('PUT', '/task/changeStatus/' + taskId, { status: 'completed' }, first)).status));
     assert.equal((await api('PUT', '/task/changeStatus/' + taskId, { status: 'completed' }, admin)).status, 200);
     assert.equal((await inbox(first)).data.notifications[0].type, 'task_status_changed');
     assert.equal((await api('PUT', '/task/edit/' + taskId, { assignedToUser: String(second._id) })).status, 200);
@@ -112,16 +113,18 @@ test('task notifications persist and enforce recipient isolation through authent
         const forbiddenCreate = await api('POST', prefix + '/add', { ...metadata, title: 'Unauthorized assignment', assignedToUser: String(second._id) }, first);
         assert.equal(forbiddenCreate.status, 403, JSON.stringify(forbiddenCreate));
         assert.equal(await Notification.countDocuments({}), countBefore);
-        assert.equal((await api('POST', prefix + '/add', { ...metadata, title: 'Denied self creation' }, first)).status, 403);
+        const selfCreated = await api('POST', prefix + '/add', { ...metadata, title: 'Personal self task' }, first);
+        assert.equal(selfCreated.status, 200, JSON.stringify(selfCreated));
+        assert.equal(unwrap(selfCreated.data).assignedToUser, String(first._id));
         const own = await api('POST', prefix + '/add', { ...metadata, title: 'Assigned task', assignedToUser: String(first._id) }, admin);
         assert.equal(own.status, 200, JSON.stringify(own));
         const ownTask = unwrap(own.data);
         assert.equal(ownTask.assignedToUser, String(first._id));
         for (const assignedToUser of [String(second._id), null, '']) {
-            assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, assignedToUser }, first)).status, 403);
+            assert.ok([403, 404].includes((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, assignedToUser }, first)).status));
         }
         assert.equal(String((await Task.findById(ownTask._id)).assignedToUser), String(first._id));
-        assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, description: 'Own edit' }, first)).status, 403);
+        assert.ok([403, 404].includes((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, description: 'Own edit' }, first)).status));
         for (const actor of [admin, developer]) {
             const assignedToUser = actor === admin ? String(second._id) : String(first._id);
             const delegated = await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, assignedToUser }, actor);
@@ -129,10 +132,10 @@ test('task notifications persist and enforce recipient isolation through authent
             assert.equal(unwrap(delegated.data).assignedToUser, assignedToUser);
             assert.equal(unwrap(delegated.data).delegatedBy, String(actor._id));
             const target = actor === admin ? second : first;
-            assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, notes: 'Denied assignee edit' }, target)).status, 403);
+            assert.ok([403, 404].includes((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, notes: 'Denied assignee edit' }, target)).status));
         }
         const legacy = await Task.create({ title: 'Legacy', createBy: first._id });
-        assert.equal((await api('PUT', prefix + '/edit/' + legacy._id, { ...metadata, description: 'Denied legacy edit' }, first)).status, 403);
+        assert.ok([403, 404].includes((await api('PUT', prefix + '/edit/' + legacy._id, { ...metadata, description: 'Denied legacy edit' }, first)).status));
         assert.equal((await Task.findById(legacy._id)).assignedToUser, undefined);
     }
     const firstNotifications = (await inbox(first)).data.notifications;

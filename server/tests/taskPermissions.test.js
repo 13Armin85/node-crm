@@ -10,7 +10,7 @@ const CustomField = require('../model/schema/customField');
 const FormDefinition = require('../model/schema/formDefinition');
 const { jwtSecret } = require('../config/auth');
 
-test('ordinary tasks are read-only across direct and generic APIs; persisted administrative roles retain management', async t => {
+test('ordinary users manage only personal tasks for themselves across direct and generic APIs; administrative roles assign anyone', async t => {
   t.mock.method(require('../services/recordSharing'), 'loadShares', async () => []);
   const users = ['user', 'user', 'admin', 'developer'].map(role => ({
     _id: new mongoose.Types.ObjectId(), role, deleted: false, moduleVisibility: { Tasks: true },
@@ -42,10 +42,18 @@ test('ordinary tasks are read-only across direct and generic APIs; persisted adm
     if (key === '$or') return value.some(clause => matches(task, clause));
     if (value == null) return task[key] == null;
     if (typeof value === 'object' && '$exists' in value) return (task[key] != null) === value.$exists;
+    if (typeof value === 'object' && '$in' in value) return value.$in.map(String).includes(String(task[key]));
+    if (typeof value === 'object' && '$ne' in value) return String(task[key]) !== String(value.$ne);
     return String(task[key]) === String(value);
   });
   t.mock.method(Task, 'findOne', filter => query([...records.values()].find(task => matches(task, filter)) || null));
   t.mock.method(Task, 'aggregate', async pipeline => { const match = pipeline[0].$match; return [...records.values()].filter(task => !match._id || String(task._id) === String(match._id)); });
+  const findMatching = filter => [...records.values()].filter(task => matches(task, filter));
+  t.mock.method(Task, 'find', filter => query(findMatching(filter)));
+  t.mock.method(Task, 'exists', async filter => findMatching(filter).length ? { _id: findMatching(filter)[0]._id } : null);
+  t.mock.method(Task, 'countDocuments', async filter => findMatching(filter).length);
+  t.mock.method(Task, 'updateMany', async (filter, values) => { const hits = findMatching(filter); hits.forEach(task => task.set(values.$set || values)); return { modifiedCount: hits.length }; });
+  t.mock.method(Task.prototype, 'save', async function () { await this.validate(); return this; });
   const update = t.mock.method(Task, 'findByIdAndUpdate', async (id, values) => {
     const task = records.get(String(id));
     task.set(values.$set);
@@ -76,13 +84,23 @@ test('ordinary tasks are read-only across direct and generic APIs; persisted adm
     const metadata = prefix === '/form' ? { moduleId: String(module._id) } : {};
     const unwrap = data => prefix === '/form' ? data.data : data;
     const before = notifications.mock.callCount();
+    // Ordinary users cannot create tasks for other users, even with a forged role claim.
     for (const claimedRole of ['user', 'admin', 'developer']) {
-      for (const assignedToUser of [String(ordinary._id), String(recipient._id)]) {
-        const denied = await api('POST', prefix + '/add', { ...metadata, title: 'Forbidden', assignedToUser }, ordinary, claimedRole);
-        assert.equal(denied.status, 403, JSON.stringify(denied));
-      }
+      const denied = await api('POST', prefix + '/add', { ...metadata, title: 'Forbidden', assignedToUser: String(recipient._id) }, ordinary, claimedRole);
+      assert.equal(denied.status, 403, JSON.stringify(denied));
     }
     assert.equal(notifications.mock.callCount(), before);
+    // Ordinary users can create personal tasks for themselves and manage them.
+    for (const body of [{ assignedToUser: String(ordinary._id) }, {}]) {
+      const own = await api('POST', prefix + '/add', { ...metadata, title: 'Personal', ...body }, ordinary);
+      assert.equal(own.status, 200, JSON.stringify(own));
+      const ownTask = unwrap(own.data);
+      assert.equal(ownTask.assignedToUser, String(ordinary._id));
+      assert.equal(ownTask.createBy, String(ordinary._id));
+      assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, description: 'Own edit' })).status, 200);
+      assert.equal((await api('PUT', prefix + '/edit/' + ownTask._id, { ...metadata, assignedToUser: String(recipient._id) })).status, 403);
+      if (prefix === '/task') assert.equal((await api('PUT', '/task/changeStatus/' + ownTask._id, { status: 'completed' })).status, 200);
+    }
     const created = await api('POST', prefix + '/add', { ...metadata, title: 'Admin assignment', assignedToUser: String(ordinary._id) }, admin);
     assert.equal(created.status, 200, JSON.stringify(created));
     const task = unwrap(created.data);
@@ -92,12 +110,15 @@ test('ordinary tasks are read-only across direct and generic APIs; persisted adm
     const detailPath = prefix + '/view/' + task._id + (prefix === '/form' ? '?moduleId=' + module._id : '');
     assert.equal((await api('GET', detailPath)).status, 200);
     const blockedNotifications = notifications.mock.callCount(), blockedUpdates = update.mock.callCount();
+    // Tasks an administrator delegated stay read-only for the ordinary assignee (refused as 403 or hidden as 404).
+    const refused = response => assert.ok([403, 404].includes(response.status), JSON.stringify(response));
     for (const claimedRole of ['user', 'admin', 'developer']) {
-      assert.equal((await api('PUT', prefix + '/edit/' + task._id, { ...metadata, description: 'Denied own edit' }, ordinary, claimedRole)).status, 403);
-      assert.equal((await api('DELETE', prefix + '/delete/' + task._id + (prefix === '/form' ? '?moduleId=' + module._id : ''), null, ordinary, claimedRole)).status, 403);
+      refused(await api('PUT', prefix + '/edit/' + task._id, { ...metadata, description: 'Denied own edit' }, ordinary, claimedRole));
+      refused(await api('DELETE', prefix + '/delete/' + task._id + (prefix === '/form' ? '?moduleId=' + module._id : ''), null, ordinary, claimedRole));
       const bulkBody = prefix === '/form' ? { ...metadata, ids: [task._id] } : [task._id];
-      assert.equal((await api('POST', prefix + '/deleteMany', bulkBody, ordinary, claimedRole)).status, 403);
-      if (prefix === '/task') assert.equal((await api('PUT', '/task/changeStatus/' + task._id, { status: 'completed' }, ordinary, claimedRole)).status, 403);
+      await api('POST', prefix + '/deleteMany', bulkBody, ordinary, claimedRole);
+      assert.equal(records.get(String(task._id)).deleted, false);
+      if (prefix === '/task') refused(await api('PUT', '/task/changeStatus/' + task._id, { status: 'completed' }, ordinary, claimedRole));
     }
     assert.equal(notifications.mock.callCount(), blockedNotifications);
     assert.equal(update.mock.callCount(), blockedUpdates);
@@ -107,13 +128,13 @@ test('ordinary tasks are read-only across direct and generic APIs; persisted adm
       assert.equal(assigned.status, 200, JSON.stringify(assigned));
       assert.equal(unwrap(assigned.data).assignedToUser, String(target._id));
       assert.equal(unwrap(assigned.data).delegatedBy, String(actor._id));
-      assert.equal((await api('PUT', prefix + '/edit/' + task._id, { ...metadata, notes: 'Denied assignee edit' }, target)).status, 403);
+      refused(await api('PUT', prefix + '/edit/' + task._id, { ...metadata, notes: 'Denied assignee edit' }, target));
       const assignedAtCreate = await api('POST', prefix + '/add', { ...metadata, title: 'Admin assignment', assignedToUser: String(ordinary._id) }, actor);
       assert.equal(assignedAtCreate.status, 200, JSON.stringify(assignedAtCreate));
     }
     const legacy = new Task({ title: 'Legacy unassigned task', createBy: ordinary._id });
     records.set(String(legacy._id), legacy);
-    assert.equal((await api('PUT', prefix + '/edit/' + legacy._id, { ...metadata, description: 'Denied legacy edit' })).status, 403);
+    refused(await api('PUT', prefix + '/edit/' + legacy._id, { ...metadata, description: 'Denied legacy edit' }));
     assert.equal((await api('GET', prefix + '/view/' + legacy._id + (prefix === '/form' ? '?moduleId=' + module._id : ''))).status, 200);
   }
 

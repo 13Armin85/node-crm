@@ -180,6 +180,7 @@ test('authenticated user routes enforce the developer hierarchy with database ad
       }
       return originalFindOne(filter);
     });
+    t.mock.method(require('../model/schema/session'), 'create', async doc => doc);
     const response = await api('POST', '/user/login', { username: developer.username, password: 'developer-password' }, null);
     assert.equal(response.status, 200);
     assert.equal(response.data.user.role, 'developer');

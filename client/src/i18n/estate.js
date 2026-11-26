@@ -84,7 +84,8 @@ const messages = {
   'estate.section.files': ['Files', 'فایل‌ها', 'Dosyalar'],
   'estate.section.sale': ['Transaction Information', 'اطلاعات معامله', 'İşlem Bilgileri'],
   'estate.section.additional': ['Additional Information', 'اطلاعات تکمیلی', 'Ek Bilgiler'],
-  Residences: ['Residences', 'رزیدانس‌ها', 'Rezidanslar'],
+  // Shown as "Projects" in the sidebar and page heading; the module key stays "Residences".
+  Residences: ['Projects', 'پروژه‌ها', 'Projeler'],
   'estate.formBuilder': ['Form Builder', 'مدیریت فرم‌ها', 'Form Düzenleyici'],
   'estate.formBuilderDescription': ['Build and organize multilingual forms without changing code.', 'فرم‌های چندزبانه را بدون تغییر کد بسازید و مرتب کنید.', 'Çok dilli formları kod değiştirmeden oluşturun ve düzenleyin.'],
   'estate.selectModule': ['Select a module', 'انتخاب ماژول', 'Modül seçin'],

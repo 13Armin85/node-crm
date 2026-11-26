@@ -13,7 +13,7 @@ jest.mock('react-redux', () => ({ useSelector: selector => selector({ modules: {
 jest.mock('../../reports/components/reportChart', () => () => <div data-testid="communication-chart" />);
 jest.mock('components/CurrencyAmount', () => ({ values }) => <span data-values={JSON.stringify(values)}>TRY / USD</span>);
 let container;
-const data = Object.fromEntries(['soldProperties', 'successfulIncome', 'lostIncome', 'unsoldProperties'].map((key, index) => [key, { count: 1, values: [{ currency: 'USD', amount: index + 1 }, { currency: 'TRY', amount: 100 }] }]));
+const data = Object.fromEntries(['soldProperties', 'successfulIncome', 'lostIncome'].map((key, index) => [key, { count: 1, values: [{ currency: 'USD', amount: index + 1 }, { currency: 'TRY', amount: 100 }] }]));
 const ranking = { bySeller: [{ userId: 'seller-1', rank: 1, name: 'Seller One', soldCount: 2, salesValues: [{ currency: 'TRY', amount: 10000 }], values: [{ currency: 'TRY', amount: 500 }] }] };
 beforeEach(() => {
   container = document.createElement('div'); document.body.appendChild(container); getApi.mockReset();
@@ -22,15 +22,15 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.clear(); });
 const render = (Component = CommissionPerformance) => act(async () => { ReactDOM.render(<ChakraProvider><LanguageProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><Component /></MemoryRouter></LanguageProvider></ChakraProvider>, container); });
-test('financial section shows the four requested values and preserves the team ranking', async () => {
+test('financial section shows sold value and commission income without unsold value and preserves the team ranking', async () => {
   await render();
   expect(getApi).toHaveBeenCalledWith('api/estate/dashboard/finance');
-  expect(container.querySelectorAll('[data-finance-bucket]')).toHaveLength(4);
+  expect(container.querySelectorAll('[data-finance-bucket]')).toHaveLength(3);
   for (const key of Object.keys(data)) expect(JSON.parse(container.querySelector(`[data-finance-bucket="${key}"] [data-values]`).dataset.values)).toEqual(data[key].values);
   expect(container.textContent).toContain('Total value of sold properties');
   expect(container.textContent).toContain('Successful income');
   expect(container.textContent).toContain('Lost income');
-  expect(container.textContent).toContain('Value of unsold properties');
+  expect(container.textContent).not.toContain('Value of unsold properties');
   expect(container.querySelector('.crm-team-sales-table').textContent).toContain('Seller One');
 });
 test('failed financial summaries display an error without presenting false zero totals', async () => {
@@ -51,7 +51,7 @@ test('previous dashboard counters, reports, charts and status sections remain al
   expect(container.querySelector('.crm-lead-chart .crm-radial-chart')).not.toBeNull();
   expect(container.textContent).toContain('Lead Statistics'); expect(container.textContent).toContain('Task Statistics');
   expect(container.querySelectorAll('.crm-dashboard-task-status')).toHaveLength(5);
-  expect(container.querySelectorAll('[data-finance-bucket]')).toHaveLength(4);
+  expect(container.querySelectorAll('[data-finance-bucket]')).toHaveLength(3);
   expect(container.querySelector('.crm-team-sales-table').textContent).toContain('Seller One');
 });
 test('income period filters commissions while ranking controls make independent requests', async () => {
@@ -61,5 +61,5 @@ test('income period filters commissions while ranking controls make independent 
   await act(async () => Simulate.change(container.querySelector('select[aria-label="Ranking period"]'), { target: { value: '6' } }));
   await act(async () => Simulate.change(container.querySelector('select[aria-label="Currency"]'), { target: { value: 'USD' } }));
   expect(getApi).toHaveBeenCalledWith('api/estate/dashboard/sales-summary?period=year&teamMonths=6&currency=USD');
-  expect(container.querySelectorAll('[data-finance-bucket]')).toHaveLength(4);
+  expect(container.querySelectorAll('[data-finance-bucket]')).toHaveLength(3);
 });

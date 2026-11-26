@@ -12,7 +12,8 @@ const schema = new mongoose.Schema({
     // Form Builder owns the permitted choices, including administrator-added ones.
     validate: value => value == null || (Array.isArray(value) ? value : [value]).every(item => typeof item === 'string' && item.length > 0 && item.length <= 20000),
   },
-  category: optionalEnum(['RESIDENTIAL', 'COMMERCIAL']),
+  // Form Builder owns the permitted categories (e.g. an added "COMMERCIAL /RESIDENTIAL").
+  category: { type: String, trim: true, maxlength: 200, set: value => value === '' ? undefined : value },
   transactionType: { type: String, enum: ['SALE', 'RENT'], default: 'SALE' },
   price: { amount: { type: Number, min: 0 }, currency: { type: String, enum: ['TRY', 'USD', 'EUR', ''], default: 'TRY' } },
   area: { value: { type: Number, min: 0.01 }, type: optionalEnum(['NET', 'GROSS']), unit: { type: String, default: 'M2' } },

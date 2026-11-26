@@ -1,6 +1,5 @@
-import { Suspense, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import routes from "routes.js";
 
 // Chakra imports
 import { Box, Flex, useColorModeValue } from "@chakra-ui/react";
@@ -10,6 +9,8 @@ import { SidebarContext } from "contexts/SidebarContext";
 import Spinner from "components/spinner/Spinner";
 import { useLanguage } from "i18n";
 
+const SignIn = lazy(() => import('views/auth/signIn'));
+
 // Custom Chakra theme
 export default function Auth({ setIsLogin }) {
   // states and functions
@@ -18,27 +19,6 @@ export default function Auth({ setIsLogin }) {
   // functions for changing the states from components
   const getRoute = () => {
     return window.location.pathname !== "/auth/full-screen-maps";
-  };
-  const getRoutes = (routes) => {
-    return routes.map((prop, key) => {
-      if (prop.layout === "/auth") {
-        return (
-          <Route
-            path={prop.layout + prop.path}
-            element={<prop.component />}
-            key={key}
-          />
-        );
-      }
-      if (prop.collapse) {
-        return getRoutes(prop.items);
-      }
-      if (prop.category) {
-        return getRoutes(prop.items);
-      } else {
-        return null;
-      }
-    });
   };
 
   const authBg = useColorModeValue("transparent", "transparent");
@@ -75,7 +55,7 @@ export default function Auth({ setIsLogin }) {
                 }
               >
                 <Routes>
-                  {getRoutes(routes)}
+                  <Route path="/auth/sign-in" element={<SignIn />} />
                   <Route path="/*" element={<Navigate to="/auth/sign-in" />} />
                 </Routes>
               </Suspense>

@@ -1,4 +1,3 @@
-import ExcelJS from 'exceljs';
 import Papa from 'papaparse';
 import { Inflate } from 'fflate';
 
@@ -70,6 +69,7 @@ export const parseImportSpreadsheet = async file => {
   if (extension !== 'xlsx') throw invalid();
   const buffer = await file.arrayBuffer();
   validateXlsxArchive(buffer);
+  const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
   const sheet = workbook.getWorksheet(1);

@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { jwtSecret } = require('../config/auth');
+const { jwtSecret, allowSessionlessTokens } = require('../config/auth');
 
 const auth = async (req, res, next) => {
     const authorization = req.headers.authorization;
@@ -14,6 +14,9 @@ const auth = async (req, res, next) => {
         const User = require('../model/schema/user');
         req.actor = await User.findOne({ _id: decode.userId, deleted: false }).select('-password +authVersion +moduleVisibility');
         if (!req.actor || Number(decode.sv || 0) !== Number(req.actor.authVersion || 0)) return res.status(401).json({ code: 'unauthorized' });
+        if (decode.sid !== undefined || !allowSessionlessTokens) {
+            if (!await require('../services/sessions').isActiveSession(decode.sid, req.actor._id)) return res.status(401).json({ code: 'unauthorized' });
+        }
         req.user = decode;
         const subjectId = req.headers['x-crm-data-user'];
         const isRead = req.method === 'GET' || (req.method === 'POST' && req.baseUrl === '/api/reporting' && req.path === '/index');

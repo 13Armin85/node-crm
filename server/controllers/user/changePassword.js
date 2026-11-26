@@ -31,6 +31,8 @@ const handle = async (req, res, next) => {
       ...(version === 0 ? { $or: [{ authVersion: 0 }, { authVersion: { $exists: false } }] } : { authVersion: version }),
     }, { $set: { password: hash, updatedDate: new Date() }, $inc: { authVersion: 1 } }, { runValidators: true });
     if (result.modifiedCount !== 1) return res.status(409).json({ code: 'passwordChangeConflict' });
+    // authVersion already rejects old tokens; also close their stored sessions.
+    await require('../../services/sessions').revokeUserSessions(account._id);
     res.status(200).json({ code: 'passwordChanged' });
   } catch (error) { next(error); }
 };

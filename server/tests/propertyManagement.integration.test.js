@@ -140,7 +140,8 @@ test('property layouts, assigned agents, reusable owners and lead relationships 
   assert.equal(lead.status, 200, JSON.stringify(lead));
   const leads = await api('GET', '/lead');
   const row = leads.data.find(item => item._id === lead.data.data._id);
-  assert.equal(row.leadName, 'Interested Customer'); assert.equal(row.assignUser.firstName, 'Property');
+  // A submitted owner is ignored: the lead creator is always the lead owner.
+  assert.equal(row.leadName, 'Interested Customer'); assert.equal(String(row.assignUser._id), String(row.createBy._id));
   assert.equal(row.associatedListing.title, payload.title); assert.equal(row.leadMobile, '+905559876543');
   assert.equal(row.listedFor, 'Rent'); assert(Number.isFinite(Date.parse(row.createdDate)));
   assert((await Property.findById(property.data._id)).relatedLeads.some(id => String(id) === row._id));

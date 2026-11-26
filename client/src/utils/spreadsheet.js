@@ -1,4 +1,3 @@
-import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { exportValue, recordValue } from './exportRecords';
 
@@ -29,6 +28,7 @@ export async function exportSpreadsheet({ jsonArray = [], csvColumns = [], fileN
     saveAs(new Blob([text], { type: 'text/csv;charset=utf-8' }), filename);
     return;
   }
+  const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Arad CRM';
   const usedNames = new Set();

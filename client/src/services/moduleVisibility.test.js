@@ -18,7 +18,8 @@ test('page and create permissions do not depend on general visibility or existin
   localStorage.setItem('user', JSON.stringify(user));
   for (const name of [...defaultHidden].filter(name => name !== 'Tasks')) expect(HasAccess([name])[0]).toEqual({ create: true, update: true, delete: true, view: true, import: true, export: true });
   expect(HasAccess(['Users'])[0].create).toBeUndefined();
-  for (const name of ['Tasks', 'Task', 'Completed Tasks']) expect(HasAccess([name])[0]).toEqual({ view: true, export: true });
+  // Ordinary users can add personal tasks; canManageTask limits edits to their own tasks.
+  for (const name of ['Tasks', 'Task', 'Completed Tasks']) expect(HasAccess([name])[0]).toMatchObject({ view: true, create: true });
   for (const role of ['admin', 'developer']) {
     localStorage.setItem('user', JSON.stringify({ ...user, role }));
     expect(HasAccess(['Tasks'])[0]).toMatchObject({ create: true, update: true, delete: true });

@@ -168,7 +168,7 @@ export function EntityPage({ moduleName }) {
     finally { setStatusSaving(null); }
   };
   const form = definition ? <DynamicFormRenderer definition={definition} formik={formik} readOnly={readOnly} refreshKey={relatedVersion}
-    sections={moduleName === 'Properties' ? propertySections : undefined}
+    // The property form is a single plain grid: no section boxes or section titles.
     fieldControls={moduleName === 'Properties' ? { propertyOwner: field => <PropertyOwnerField field={field} formik={formik} readOnly={readOnly} /> } : {}}
     fieldActions={{
       ...(districtPermissions?.create ? { district: <Button size="sm" variant="outline" mt={2} leftIcon={<FiPlus />} onClick={() => setCreatingRelated('Districts')}>{t('Create New District')}</Button> } : {}),
@@ -325,7 +325,7 @@ export function EntityPage({ moduleName }) {
 
       <Modal isOpen={record !== null} onClose={() => setRecord(null)} size="5xl" scrollBehavior="inside">
         <ModalOverlay />
-        <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}${!readOnly && moduleName === 'Properties' ? " crm-record-form--sectioned" : ""}`} dir={moduleName === 'Properties' && language === 'fa' ? 'rtl' : direction}>
+        <ModalContent className={`crm-entity-modal${readOnly ? "" : " crm-record-form"}`} dir={moduleName === 'Properties' && language === 'fa' ? 'rtl' : direction}>
           <ModalHeader>{!readOnly && moduleName === 'Properties' && <Box className="crm-property-editor__icon" aria-hidden="true"><FiHome size={20} /></Box>}{t(readOnly ? "Details" : record?._id ? "Edit" : "Add")} · {t(moduleName)}</ModalHeader>
           <ModalCloseButton aria-label={t("Close")} />
           <ModalBody><FormFeedback formik={readOnly ? null : formik} />{error && <Alert status="error"><AlertIcon />{t(`estate.${error}`)}</Alert>}{readOnly && ["Properties", "Residences"].includes(moduleName) && <Box mb={4}><PropertyStatusBadge property={record} /></Box>}{readOnly ? <RecordEditingContext.Provider value={detailEditing}><RecordFields definition={definition} record={record} /></RecordEditingContext.Provider> : form}

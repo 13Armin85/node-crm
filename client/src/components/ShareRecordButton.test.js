@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom';
 import { act, Simulate } from 'react-dom/test-utils';
 import { ChakraProvider } from '@chakra-ui/react';
 import ShareRecordButton from './ShareRecordButton';
-import SharedRecordBadge from './SharedRecordBadge';
 import { getApi, postApi, deleteApi } from 'services/api';
 import { toast } from 'react-toastify';
 jest.mock('services/api', () => ({ getApi: jest.fn(), postApi: jest.fn(), deleteApi: jest.fn() }));
@@ -25,11 +24,11 @@ beforeEach(() => {
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); localStorage.clear(); });
 const modal = () => document.querySelector('.crm-share-record-modal');
 const button = name => [...modal().querySelectorAll('button')].find(item => item.textContent === name);
-const render = (module = "Leads") => act(() => { ReactDOM.render(<ChakraProvider><ShareRecordButton module={module} record={{ _id: 'record' }} /></ChakraProvider>, container); });
+const render = (module = "Partner Customers") => act(() => { ReactDOM.render(<ChakraProvider><ShareRecordButton module={module} record={{ _id: 'record' }} /></ChakraProvider>, container); });
 const open = () => act(async () => Simulate.click(container.querySelector('.crm-share-record-button')));
 const choose = value => act(async () => Simulate.change(modal().querySelector('select'), { target: { value } }));
 
-test.each(['Leads', 'Partner Customers'])('admins send a single %s record to the selected user and can revoke exactly that grant', async module => {
+test.each(['Opportunities', 'Partner Customers'])('admins send a single %s record to the selected user and can revoke exactly that grant', async module => {
   render(module); await open();
   await act(async () => Simulate.change(modal().querySelector('input'), { target: { value: 'IPEK YILMAZ' } }));
   expect([...modal().querySelectorAll('option')].map(item => item.value)).toEqual(['', 'two']);
@@ -69,14 +68,8 @@ test.each(['Contacts', 'Invoices', 'Meetings', 'Calls', 'Emails', 'Properties'])
   expect(getApi).not.toHaveBeenCalled();
 });
 
-test('a transferred lead shows only its current recipient and clears that recipient after revocation', async () => {
-  getApi.mockImplementation(async path => ({ status: 200, data: path.endsWith('/users') ? users : [{ user: users[0] }] }));
-  await act(async () => { ReactDOM.render(<ChakraProvider><div data-testid="item"><SharedRecordBadge module="Leads" record={{ _id: 'record' }} />
-    <ShareRecordButton module="Leads" record={{ _id: 'record' }} /></div></ChakraProvider>, container); });
-  expect(container.querySelector('.crm-sent-record-label').textContent).toContain('علی کریمی');
-  await open(); await choose('two'); await act(async () => Simulate.click(button('Send')));
-  expect(container.querySelector('.crm-sent-record-label').textContent).toContain('İpek Yılmaz');
-  expect(container.querySelector('.crm-sent-record-label').textContent).not.toContain('علی کریمی');
-  await act(async () => Simulate.click(button('Revoke access')));
-  expect(container.querySelector('.crm-sent-record-label')).toBeNull();
+test('leads are owned by their creator, so administrators get no lead sending action', () => {
+  render('Leads');
+  expect(container.querySelector('.crm-share-record-button')).toBeNull();
+  expect(getApi).not.toHaveBeenCalled();
 });

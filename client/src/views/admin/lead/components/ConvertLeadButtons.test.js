@@ -20,16 +20,17 @@ beforeEach(() => {
 afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); });
 const render = element => act(() => { ReactDOM.render(<ChakraProvider>{element}</ChakraProvider>, container); });
 
-test.each(['contact', 'opportunity', 'contactAndOpportunity'])('icon-only button submits %s and refreshes after success', async mode => {
+test.each(['contact', 'contactAndOpportunity'])('icon-only button submits %s and refreshes after success', async mode => {
   const onConverted = jest.fn();
   postApi.mockResolvedValue({ status: 200, data: { contactId: 'contact' } });
   render(<ConvertLeadButtons leadId="lead" onConverted={onConverted} />);
   const buttons = container.querySelectorAll('button');
-  expect(buttons).toHaveLength(3);
+  expect(buttons).toHaveLength(2);
+  expect([...buttons].map(button => button.getAttribute('aria-label'))).not.toContain('Transfer to opportunities');
   expect(buttons[0].textContent).toBe('');
   expect(buttons[1].textContent).toBe('');
   expect(buttons[0].getAttribute('aria-label')).toBeTruthy();
-  await act(async () => { Simulate.click(buttons[['contact', 'opportunity', 'contactAndOpportunity'].indexOf(mode)]); });
+  await act(async () => { Simulate.click(buttons[['contact', 'contactAndOpportunity'].indexOf(mode)]); });
   expect(postApi).toHaveBeenCalledWith('api/lead/convert/lead', { mode });
   expect(onConverted).toHaveBeenCalledWith({ contactId: 'contact' });
 });
@@ -47,8 +48,8 @@ test('destination permissions control available conversion buttons', () => {
   expect(container.querySelectorAll('button')).toHaveLength(1);
   HasAccess.mockReturnValue([{ update: true, delete: true }, {}, { create: true }]);
   render(<ConvertLeadButtons leadId="lead" />);
-  expect(container.querySelectorAll('button')).toHaveLength(1);
-  expect(container.querySelector('button').getAttribute('aria-label')).toBe('Transfer to opportunities');
+  // The opportunities-only transfer button was removed.
+  expect(container.querySelectorAll('button')).toHaveLength(0);
   HasAccess.mockReturnValue([{ update: true }, { create: true }, { create: true }]);
   render(<ConvertLeadButtons leadId="lead" />);
   expect(container.querySelectorAll('button')).toHaveLength(0);

@@ -89,6 +89,15 @@ test('individual grants expose only own and explicitly sent records with sending
         assert.deepEqual(ids(rows(await api('GET', route))), ids([own]), module);
         continue;
       }
+      if (module === 'Leads') {
+        // Lead ownership is fixed to the creator, so administrators cannot send (transfer) leads.
+        const locked = await send(module, sent._id);
+        assert.equal(locked.status, 403, module); assert.equal(locked.data.code, 'ownerLocked');
+        assert.equal(String((await sharing.modelFor('Leads').findById(sent._id)).assignUser || sent.createBy), String(admin._id));
+        assert.deepEqual(ids(rows(await api('GET', route))), ids([own]), module);
+        assert.equal((await api('GET', detailPath(module, sent._id))).status, 404, module);
+        continue;
+      }
       assert.equal((await send(module, sent._id)).status, 201, module);
       assert.equal((await send(module, sent._id)).data.created, false);
       assert.equal(await Share.countDocuments({ module, recipient: user._id }), 1);
@@ -101,11 +110,7 @@ test('individual grants expose only own and explicitly sent records with sending
       assert(!ids(rows(await api('GET', route, null, other))).includes(String(sent._id)), module);
       assert.equal((await api('GET', route + (module === 'Partner Customers' ? '?q=Foreign' : '?_id=' + foreign._id))).status, 200);
       assert.deepEqual(rows(await api('GET', route + (module === 'Partner Customers' ? '?q=Foreign' : '?_id=' + foreign._id))), [], module);
-      if (module === 'Leads') {
-        // Lead sending transfers responsibility; only managers may transfer it again.
-        assert.equal(String((await sharing.modelFor('Leads').findById(sent._id)).assignUser), String(user._id));
-        assert.equal((await api('PUT', route + '/edit/' + sent._id, { assignUser: String(other._id) })).status, 403);
-      } else if (['Contacts', 'Opportunities', 'Invoices'].includes(module)) {
+      if (['Contacts', 'Opportunities', 'Invoices'].includes(module)) {
         assert.equal((await api('PUT', route + '/edit/' + sent._id, { title: 'Denied' })).status, 404, module);
         assert.equal((await api('DELETE', route + '/delete/' + sent._id)).status, 404, module);
       }
@@ -113,7 +118,7 @@ test('individual grants expose only own and explicitly sent records with sending
     assert.equal(await Notification.countDocuments({ recipient: user._id, type: 'record_shared' }), 2);
     const metadata = await CustomField.create({ moduleName: 'Leads', fields: [] });
     const generic = await api('GET', '/form?moduleId=' + metadata._id);
-    assert.deepEqual(ids(generic.data.data), ids([fixtures.Leads.own, fixtures.Leads.sent]));
+    assert.deepEqual(ids(generic.data.data), ids([fixtures.Leads.own]));
     assert.equal((await api('GET', '/form/view/' + fixtures.Leads.foreign._id + '?moduleId=' + metadata._id)).status, 404);
     const internal = await CustomField.create({ moduleName: 'RecordShare', fields: [] });
     assert.equal((await api('GET', '/form?moduleId=' + internal._id, null, admin)).status, 404);
@@ -141,24 +146,20 @@ test('individual grants expose only own and explicitly sent records with sending
     assert.deepEqual(ids(sharedFolder.file), ids([sentFile])); assert.deepEqual(ids(sharedFolder.files), ids([sentFile]));
     assert.equal(sharedFolder.files[0]._receivedFromAdmin, true); assert.equal(sharedFolder.parentFolder, null);
     assert(!JSON.stringify(listed).includes(uploadRoot));
-    for (const [module, item] of [['Leads', fixtures.Leads.sent]]) {
-      const related = (await api('GET', detailPath(module, item._id))).data.Document.flatMap(row => row.files);
-      assert.deepEqual(ids(related), ids([sentFile, ownFile]), module);
-      assert(!ids(related).includes(String(neighbor._id)));
-      assert(!JSON.stringify(related).includes(uploadRoot));
-    }
+    // The linked lead belongs to its creator and is not sent, so its history stays hidden.
+    assert.equal((await api('GET', detailPath('Leads', fixtures.Leads.sent._id))).status, 404);
   });
   await t.test('notification counts and read operations follow individual visibility and recipient isolation', async () => {
     const invisible = await Notification.create({ recipient: user._id, module: 'Leads', entityId: fixtures.Leads.foreign._id, type: 'record_created', message: 'Private' });
     await Notification.create({ recipient: other._id, module: 'Leads', entityId: fixtures.Leads.sent._id, type: 'record_shared', message: 'Other inbox' });
     const inbox = (await api('GET', '/notification')).data;
-    assert.equal(inbox.unreadCount, 4); assert.equal(inbox.notifications.length, 4);
+    assert.equal(inbox.unreadCount, 3); assert.equal(inbox.notifications.length, 3);
     assert(inbox.notifications.every(row => ['record_shared', 'task_assigned'].includes(row.type)));
     assert.equal((await api('PUT', '/notification/' + invisible._id + '/read')).status, 404);
     const item = inbox.notifications[0];
     assert.equal((await api('PUT', '/notification/' + item._id + '/read', null, other)).status, 404);
     assert.equal((await api('PUT', '/notification/' + item._id + '/read')).status, 200);
-    assert.equal((await api('GET', '/notification')).data.unreadCount, 3);
+    assert.equal((await api('GET', '/notification')).data.unreadCount, 2);
     const all = await api('PUT', '/notification/read-all'); assert.equal(all.status, 200, JSON.stringify(all));
     assert.equal(all.data.unreadCount, 0);
     assert.equal((await Notification.findById(invisible._id)).readAt, null);
@@ -191,7 +192,7 @@ test('individual grants expose only own and explicitly sent records with sending
     assert.equal((await send('Leads', removed._id)).status, 404);
     assert.equal((await api('PUT', '/visibility/' + user._id, { visibility: { Leads: true } })).status, 403);
     assert.equal((await api('PUT', '/visibility/' + user._id, { visibility: { Leads: true } }, developer)).status, 200);
-    assert.deepEqual(ids((await api('GET', '/lead')).data), ids([fixtures.Leads.own, fixtures.Leads.sent]));
+    assert.deepEqual(ids((await api('GET', '/lead')).data), ids([fixtures.Leads.own]));
     assert.equal((await api('PUT', '/visibility/' + user._id, { visibility: { Leads: false } }, admin)).status, 200);
     await api('PUT', '/user/edit/' + user._id, { moduleVisibility: { Leads: true } });
     assert.equal((await api('GET', '/visibility/me')).data.visibility.Leads, false);
@@ -201,9 +202,7 @@ test('individual grants expose only own and explicitly sent records with sending
     assert.deepEqual(ids((await api('GET', '/lead')).data), ids([fixtures.Leads.own]));
     assert.equal((await api('GET', detailPath('Leads', fixtures.Leads.sent._id))).status, 404);
     assert((await api('GET', '/notification')).data.notifications.every(item => item.entityId !== String(fixtures.Leads.sent._id)));
-    assert.equal((await send('Leads', fixtures.Leads.sent._id, admin, empty)).status, 201);
-    assert((await api('GET', '/visibility/me', null, empty)).data.accessibleModules.includes('Leads'));
-    await api('DELETE', '/record-sharing/Leads/' + fixtures.Leads.sent._id + '/' + empty._id, null, admin);
+    assert.equal((await send('Leads', fixtures.Leads.sent._id, admin, empty)).status, 403);
     assert(!(await api('GET', '/visibility/me', null, empty)).data.accessibleModules.includes('Leads'));
     assert.equal((await api('GET', '/lead', null, user, { 'X-CRM-Data-User': String(admin._id) })).status, 403);
     assert.equal((await send('Documents', sentFile._id, admin, empty)).status, 201);
@@ -240,16 +239,23 @@ test('individual grants expose only own and explicitly sent records with sending
         assert.equal((await api('DELETE', route + '/delete/' + fixtures[module].sent._id, null, actor)).status, 404, module + ' foreign mutation denied');
       }
     }
-    assert.equal((await api('POST', '/task/add', { title: 'Denied new own task' }, actor)).status, 403);
+    // Ordinary users can create personal tasks only for themselves.
+    const personal = await api('POST', '/task/add', { title: 'New own task' }, actor);
+    assert.equal(personal.status, 200, JSON.stringify(personal));
+    assert.equal(String(personal.data.assignedToUser), String(actor._id));
+    assert.equal((await api('PUT', '/task/changeStatus/' + personal.data._id, { status: 'completed' }, actor)).status, 200);
+    assert.equal((await api('POST', '/task/add', { title: 'Denied foreign task', assignedToUser: String(user._id) }, actor)).status, 403);
     const task = await api('POST', '/task/add', { title: 'Admin-assigned task', assignedToUser: String(actor._id) }, admin);
     assert.equal(task.status, 200, JSON.stringify(task));
     const newTask = task.data.result || task.data;
     assert.equal(String(newTask.assignedToUser), String(actor._id));
     assert.equal((await api('GET', '/task/view/' + newTask._id, null, actor)).status, 200);
-    assert.equal((await api('PUT', '/task/changeStatus/' + newTask._id, { status: 'completed' }, actor)).status, 403);
-    assert.equal((await api('DELETE', '/task/delete/' + newTask._id, null, actor)).status, 403);
-    assert.equal((await api('PUT', '/task/edit/' + newTask._id, { title: 'Denied own edit' }, actor)).status, 403);
-    assert.equal((await api('PUT', '/task/edit/' + foreignTask._id, { title: 'Denied edit' }, actor)).status, 403);
+    // Tasks delegated by an administrator stay read-only for the assignee (refused or hidden).
+    const refused = response => assert.ok([403, 404].includes(response.status), JSON.stringify(response));
+    refused(await api('PUT', '/task/changeStatus/' + newTask._id, { status: 'completed' }, actor));
+    refused(await api('DELETE', '/task/delete/' + newTask._id, null, actor));
+    refused(await api('PUT', '/task/edit/' + newTask._id, { title: 'Denied own edit' }, actor));
+    refused(await api('PUT', '/task/edit/' + foreignTask._id, { title: 'Denied edit' }, actor));
     const newFolder = await api('POST', '/document/folder', { folderName: 'New own folder' }, actor);
     assert.equal(newFolder.status, 201, JSON.stringify(newFolder));
     assert.equal(newFolder.data.createBy, String(actor._id));

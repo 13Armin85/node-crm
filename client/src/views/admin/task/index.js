@@ -1,47 +1,19 @@
 import useRecordRefresh from "utils/useRecordRefresh";
-import RecordMenuButton from "components/table/RecordMenuButton";
-import { Portal } from '@chakra-ui/react';
 import { isAdmin } from 'roles';
 import { canManageTask } from 'services/taskAccess';
 import { LocalizedText, tr, withLocalization } from 'i18n/runtime';
-import { useEffect, useState } from "react";
-import { DeleteIcon, EditIcon, ViewIcon } from "@chakra-ui/icons";
-import {
-  Button,
-  ButtonGroup,
-  Badge,
-  Flex,
-  Box,
-  Menu,
-  MenuItem,
-  MenuList,
-  Select,
-  Text,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  useDisclosure,
-} from "@chakra-ui/react";
-import { getApi } from "services/api";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Button, Flex, Box, Spinner, useDisclosure } from "@chakra-ui/react";
+import { getApi, putApi } from "services/api";
 import { HasAccess } from "../../../redux/accessUtils";
-import CommonCheckTable from "../../../components/reactTable/checktable";
-import TaskAdvanceSearch from "./components/TaskAdvanceSearch";
-import ImportModal from "../lead/components/ImportModal";
-import { putApi } from "services/api";
-import { useLocation } from "react-router-dom";
-import CommonDeleteModel from "components/commonDeleteModel";
-import { deleteManyApi } from "services/api";
-import AddEdit from "./components/AddEdit";
+import TaskAgenda from "./components/TaskAgenda";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { filterTasks } from "services/taskSearch";
-import { setGetTagValues, setSearchValue } from "../../../redux/slices/advanceSearchSlice";
+import { useDispatch } from "react-redux";
 import { fetchTaskData } from "../../../redux/slices/taskSlice";
 import { toast } from "react-toastify";
-import { FiColumns, FiFilter, FiList, FiPlus, FiSearch } from "react-icons/fi";
-import TaskKanban from "./components/TaskKanban";
-import ExcelExportButton from "components/ExcelExportButton";
-import { exportColumns } from "utils/exportRecords";
+import { FiPlus } from "react-icons/fi";
+
+const AddEdit = lazy(() => import('./components/AddEdit'));
 
 const selectionValue = (value) => {
   if (!value || typeof value !== "object") return value || "";
@@ -60,7 +32,7 @@ const taskPriority = (task) => {
   return ["low", "normal", "high", "urgent"].includes(priority) ? priority : "normal";
 };
 
-const normalizeTaskRecord = (task) => ({
+export const normalizeTaskRecord = (task) => ({
   ...task,
   category: selectionValue(task?.category) || "None",
   status: taskStatus(task?.status),
@@ -71,165 +43,18 @@ const normalizeTaskRecord = (task) => ({
   createBy: selectionValue(task?.createBy),
 });
 
+// Tasks are shown as an agenda grouped by due time; selecting a task opens its full details.
 const Task = () => {
-  const [action, setAction] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [selectedId, setSelectedId] = useState();
-  const [selectedValues, setSelectedValues] = useState([]);
-  const [advanceSearch, setAdvanceSearch] = useState(false);
-  const [searchboxOutside, setSearchboxOutside] = useState("");
   const [user] = useState(() => JSON.parse(localStorage.getItem("user")));
-  const [deleteMany, setDeleteMany] = useState(false);
-  const [isImportLead, setIsImportLead] = useState(false);
-  const [isLoding, setIsLoding] = useState(false);
+  const [isLoding, setIsLoding] = useState(true);
   const [data, setData] = useState([]);
-  const [displaySearchData, setDisplaySearchData] = useState(false);
-  const searchFilters = useSelector(state => state?.advanceSearchData?.searchValue) || {};
-  const [userAction, setUserAction] = useState("");
-  const [viewMode, setViewMode] = useState("kanban");
   const [assignees, setAssignees] = useState([]);
+  const [action, setAction] = useState(false);
   const [permission] = HasAccess(["Tasks"]);
-  const location = useLocation();
-  const state = location?.state;
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  const handleEditOpen = (row) => {
-    onOpen();
-    setUserAction("edit");
-    setSelectedId(row?.values?._id);
-  };
-  const actionHeader = {
-    Header: tr("Action"),
-    isSortable: false,
-    center: true,
-    cell: ({ row }) => (
-      <Text fontSize="md" fontWeight="900" textAlign={"center"}>
-        <Menu isLazy strategy="fixed" placement="bottom-end" preventOverflow>
-          <RecordMenuButton />
-          <Portal><MenuList
-            minW={"fit-content"}
-           zIndex="popover">
-            {permission?.update && canManageTask(row.original, user) && (
-              <MenuItem
-                py={2.5}
-                icon={<EditIcon fontSize={15} mb={1} />}
-                onClick={() => handleEditOpen(row)}
-              ><LocalizedText text="Edit" /></MenuItem>
-            )}
-            {permission?.view && (
-              <MenuItem
-                py={2.5}
-                color={"green"}
-                icon={<ViewIcon mb={1} fontSize={15} />}
-                onClick={() => {
-                  handleViewOpen(row?.values?._id);
-                }}
-              ><LocalizedText text="View" /></MenuItem>
-            )}
-            {permission?.delete && canManageTask(row.original, user) && (
-              <MenuItem
-                py={2.5}
-                color={"red"}
-                icon={<DeleteIcon fontSize={15} mb={1} />}
-                onClick={() => {
-                  setDeleteMany(true);
-                  setSelectedValues([row?.values?._id]);
-                }}
-              ><LocalizedText text="Delete" /></MenuItem>
-            )}
-          </MenuList></Portal>
-        </Menu>
-      </Text>
-    ),
-  };
-  const tableColumns = [
-    {
-      Header: tr("#"),
-      accessor: "_id",
-      isSortable: false,
-      width: 5,
-    },
-    {
-      Header: tr("Title"),
-      accessor: "title",
-      type: "text",
-      formikType: "",
-      cell: (cell) => (
-        <div className="selectOpt">
-          <Text
-            onClick={() => handleViewOpen(cell?.row?.original?._id)}
-            me="10px"
-            sx={{
-              "&:hover": { color: "blue.500", textDecoration: "underline" },
-              cursor: "pointer",
-            }}
-            color="brand.600"
-            fontSize="sm"
-            fontWeight="700"
-          >
-            {cell?.value}
-          </Text>
-        </div>
-      ),
-    },
-    {
-      Header: tr("Related"),
-      accessor: "category",
-      type: "text",
-      formikType: "",
-      cell: ({ value }) => <LocalizedText text={selectionValue(value) || "None"} />,
-    },
-    {
-      Header: tr("Status"),
-      accessor: "status",
-      type: "select",
-      formikType: "",
-      cell: (cell) => (
-        <div className="selectOpt">
-          <Select
-            data-task-select="status"
-            isDisabled={!canManageTask(cell?.row?.original, user)}
-            className={changeStatus(cell)}
-            onChange={(e) => setStatusData(cell, e)}
-            height={7}
-            width={130}
-            value={taskStatus(cell?.value)}
-            style={{ fontSize: "14px" }}
-          >
-            <option value="todo" label={tr("Todo")}>{tr("Todo")}</option>
-            <option value="inProgress" label={tr("In Progress")}>{tr("In Progress")}</option>
-            <option value="pending" label={tr("Pending")}>{tr("Pending")}</option>
-            <option value="onHold" label={tr("On Hold")}>{tr("On Hold")}</option>
-            <option value="completed" label={tr("Completed")}>{tr("Completed")}</option>
-          </Select>
-        </div>
-      ),
-    },
-    {
-      Header: tr("Assign To"),
-      accessor: "assignedToUserName",
-      type: "text",
-      formikType: "",
-    },
-    {
-      Header: tr("Priority"),
-      accessor: "priority",
-      type: "text",
-      formikType: "",
-      cell: ({ row }) => {
-        const priority = taskPriority(row.original);
-        const schemes = { low: "green", normal: "blue", high: "red", urgent: "red" };
-        return <Badge colorScheme={schemes[priority]}><LocalizedText text={priority} /></Badge>;
-      },
-    },
-    { Header: tr("Related"), accessor: "assignToName", type: "text", formikType: "" },
-    { Header: tr("Start Date"), accessor: "start", type: "date", formikType: "" },
-    { Header: tr("End Date"), accessor: "end", type: "date", formikType: "" },
-    ...(permission?.update || !isAdmin(user) || permission?.view || permission?.delete
-      ? [actionHeader]
-      : []),
-  ];
+  const admin = isAdmin(user);
 
   const fetchData = async () => {
     setIsLoding(true);
@@ -245,188 +70,51 @@ const Task = () => {
     const result = await getApi('api/task');
     if (result?.status === 200) setData((result.data || []).map(normalizeTaskRecord));
   });
-  const setStatusData = async (cell, e) => {
-    try {
-      setIsLoding(true);
-      let response = await putApi(
-        `api/task/changeStatus/${cell?.row?.original?._id}`,
-        { status: e?.target?.value },
-      );
-      if (response?.status === 200) {
-        setAction((pre) => !pre);
-      }
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoding(false);
-    }
-  };
-  const updateKanbanStatus = async (taskId, status) => {
+
+  const changeStatus = async (taskId, status) => {
     if (!canManageTask(data.find(task => task._id === taskId), user)) return;
     const previous = data;
-    setData((items) => items.map((item) => item._id === taskId ? { ...item, status } : item));
+    setData(items => items.map(item => item._id === taskId ? { ...item, status, updatedDate: new Date().toISOString() } : item));
     const response = await putApi(`api/task/changeStatus/${taskId}`, { status });
     if (response?.status !== 200) {
       setData(previous);
       toast.error(tr("Failed to update task"));
     }
   };
-  const delegateTask = async (taskId, assignedToUser) => {
-    if (!isAdmin(user)) return;
-    const response = await putApi(`api/task/edit/${taskId}`, { assignedToUser });
-    if (response?.status === 200) {
-      toast.success(tr("Task delegated successfully"));
-      fetchData();
-    } else toast.error(tr("Failed to delegate task"));
-  };
-  const changeStatus = (cell) => {
-    switch (taskStatus(cell?.value)) {
-      case "pending":
-        return "pending";
-      case "completed":
-        return "completed";
-      case "todo":
-        return "toDo";
-      case "onHold":
-        return "onHold";
-      case "inProgress":
-        return "inProgress";
-      default:
-        return "";
-    }
-  };
 
-  const handleDeleteTask = async (ids) => {
-    try {
-      setIsLoding(true);
-      let response = await deleteManyApi("api/task/deleteMany", ids);
-      if (response?.status === 200) {
-        setSelectedValues([]);
-        setDeleteMany(false);
-        setAction((pre) => !pre);
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsLoding(false);
-    }
-  };
-
-  // const [selectedColumns, setSelectedColumns] = useState([...tableColumns]);
-  // const dataColumn = tableColumns?.filter(item => selectedColumns?.find(colum => colum?.Header === item.Header))
-
-  const handleViewOpen = (id) => {
-    navigate(`/view/${id}`);
-  };
-
-  const addBtn = () => {
-    onOpen();
-    setUserAction("add");
-  };
-
-  const handleClose = () => {
-    onClose();
-    setSelectedId("");
-  };
-  useEffect(() => {
-    fetchData();
-  }, [action]);
+  useEffect(() => { fetchData(); }, [action]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!isAdmin(user)) return;
+    if (!admin) return;
     getApi("api/task/assignees").then((result) => {
       if (result?.status === 200) setAssignees(result.data || []);
     });
-  }, [user]);
-
-  const visibleData = filterTasks(data, searchboxOutside, displaySearchData ? searchFilters : {});
+  }, [admin]);
 
   return (
     <Box width="100%" minW={0}>
-      <Flex className="crm-page-hero crm-task-page-hero" mb={4} justify="space-between" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={3}>
-        <Box>
-          <Text className="crm-page-hero__title" fontSize={{ base: "xl", md: "2xl" }} fontWeight="900"><LocalizedText text="Task Management" /></Text>
-          <Text className="crm-page-hero__subtitle" fontSize="sm"><LocalizedText text="Assign tasks to users and change work status with drag and drop." /></Text>
-        </Box>
-        <Flex gap={2} wrap="wrap" width={{ base: "100%", md: "auto" }}>
-
-          <ButtonGroup size="sm" isAttached variant="outline" flex={{ base: "1 1 auto", sm: "initial" }}>
-            <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiColumns />} colorScheme={viewMode === "kanban" ? "brand" : "gray"} onClick={() => setViewMode("kanban")}><LocalizedText text="Kanban" /></Button>
-            <Button flex={{ base: 1, sm: "initial" }} leftIcon={<FiList />} colorScheme={viewMode === "list" ? "brand" : "gray"} onClick={() => setViewMode("list")}><LocalizedText text="List" /></Button>
-          </ButtonGroup>
-          {viewMode === "kanban" && permission?.export !== false && <ExcelExportButton rows={visibleData} columns={exportColumns(tableColumns, tr)} fileName={tr("Tasks")} isDisabled={isLoding} />}
-          {permission?.create && <Button flex={{ base: "1 1 auto", sm: "initial" }} size="sm" variant="brand" leftIcon={<FiPlus />} onClick={addBtn}><LocalizedText text="New Task" /></Button>}
-        </Flex>
-      </Flex>
-      {viewMode === "kanban" && <Flex className="crm-task-searchbar" align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap="10px">
-          <InputGroup><InputLeftElement h="100%" pointerEvents="none"><FiSearch /></InputLeftElement><Input value={searchboxOutside} onChange={(event) => setSearchboxOutside(event.target.value)} placeholder={tr("Search tasks or names...")} aria-label={tr("Search tasks or names...")} /></InputGroup>
-          <Button variant="outline" colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setAdvanceSearch(true)}><LocalizedText text="Filters" /></Button>
-          {(searchboxOutside || displaySearchData) && <Button variant="ghost" onClick={() => {
-            setSearchboxOutside(""); setDisplaySearchData(false);
-            dispatch(setSearchValue({})); dispatch(setGetTagValues([]));
-          }}><LocalizedText text="Clear" /></Button>}
-        </Flex>}
-      {viewMode === "kanban" ? (
-        <TaskKanban tasks={visibleData} assignees={assignees} canDelegate={isAdmin(user)} onDelegate={delegateTask} onStatusChange={updateKanbanStatus} onView={handleViewOpen} />
-      ) : <CommonCheckTable
-                preservePage
-        pageHeader={false}
-        uniformToolbar
-        title={tr("Tasks")}
-        isLoding={isLoding}
-        columnData={tableColumns ?? []}
-        // dataColumn={dataColumn ?? []}
-        allData={data ?? []}
-        filteredData={visibleData}
-        customSearch={true}
-        searchFilterType="Tasks"
-        searchDisplay={displaySearchData}
-        setSearchDisplay={setDisplaySearchData}
-        tableCustomFields={[]}
-        access={permission}
-        // selectedColumns={selectedColumns}
-        // setSelectedColumns={setSelectedColumns}
-        state={state}
-        onOpen={addBtn}
-        selectedValues={selectedValues}
-        setSelectedValues={setSelectedValues}
-        setDelete={setDeleteMany}
-        AdvanceSearch={<Button variant="outline" size="sm" colorScheme="brand" leftIcon={<FiFilter />} onClick={() => setAdvanceSearch(true)}><LocalizedText text="Filters" /></Button>}
-        searchboxOutside={searchboxOutside}
-        setSearchboxOutside={setSearchboxOutside}
-        handleSearchType="TasksSearch"
-      />}
-
-      <TaskAdvanceSearch
-        advanceSearch={advanceSearch}
-        setAdvanceSearch={setAdvanceSearch}
-        state={state}
-        setDisplaySearchData={setDisplaySearchData}
-        allData={data ?? []}
-        setAction={setAction}
-        setSearchbox={setSearchboxOutside}
-      />
-      <AddEdit
+      {isLoding && !data.length ? (
+        <Flex justify="center" py={10}><Spinner /></Flex>
+      ) : (
+        <TaskAgenda
+          title={tr("Task Management")}
+          subtitle={tr("taskAgenda.subtitle")}
+          actions={permission?.create && <Button size="md" variant="brand" leftIcon={<FiPlus />} onClick={onOpen}><LocalizedText text="New Task" /></Button>}
+          tasks={data}
+          user={user}
+          isAdmin={admin}
+          assignees={assignees}
+          onOpen={id => navigate(`/view/${id}`)}
+          onStatusChange={changeStatus}
+        />
+      )}
+      {isOpen && <Suspense fallback={<Spinner />}><AddEdit
         isOpen={isOpen}
         fetchData={fetchData}
-        onClose={handleClose}
-        userAction={userAction}
-        id={selectedId}
+        onClose={onClose}
+        userAction="add"
         setAction={setAction}
-      />
-      <CommonDeleteModel
-        isOpen={deleteMany}
-        onClose={() => setDeleteMany(false)}
-        type="Tasks"
-        handleDeleteData={handleDeleteTask}
-        ids={selectedValues}
-      />
-      <ImportModal
-        text="Lead file"
-        fetchData={fetchData}
-        isOpen={isImportLead}
-        onClose={setIsImportLead}
-      />
+      /></Suspense>}
     </Box>
   );
 };

@@ -11,7 +11,7 @@ const requestSecurity = (req, res, next) => {
   try {
     assertSafeInput(req.query); assertSafeInput(req.body);
     // Credential fields must never become user-controlled database filters.
-    if (Object.keys(req.query || {}).some(key => /(^|\.)(password|passwordHash|token|secret)$/i.test(key))) return res.status(400).json({ code: 'invalid' });
+    if (Object.keys(req.query || {}).some(key => /(^|\.)(password|passwordHash|token|secret|authVersion|moduleVisibility)$/i.test(key))) return res.status(400).json({ code: 'invalid' });
     next();
   } catch { res.status(400).json({ code: 'invalid' }); }
 };

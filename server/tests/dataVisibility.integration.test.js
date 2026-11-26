@@ -123,8 +123,8 @@ test('explicit full visibility and per-user controls cover all HTTP surfaces', {
     assert.equal((await api('GET', '/task/view/' + foreignTask._id)).status, 200);
     assert.equal((await api('GET', '/task/assignees')).status, 403);
     assert.equal((await api('POST', '/task/add', { title: 'Denied', assignedToUser: String(other._id) })).status, 403);
-    assert.equal((await api('PUT', '/task/edit/' + foreignTask._id, { title: 'Denied edit' })).status, 403);
-    assert.equal((await api('DELETE', '/form/delete/' + foreignTask._id + '?moduleId=' + module._id)).status, 403);
+    assert.ok([403, 404].includes((await api('PUT', '/task/edit/' + foreignTask._id, { title: 'Denied edit' })).status));
+    assert.ok([403, 404].includes((await api('DELETE', '/form/delete/' + foreignTask._id + '?moduleId=' + module._id)).status));
     assert.equal((await Task.findById(foreignTask._id)).deleted, false);
   });
   const genericModule = await CustomField.create({ moduleName: 'Opportunities', fields: [] });

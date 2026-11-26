@@ -64,64 +64,45 @@ test('lead ownership, automatic call tasks, exclusive transfers and configured o
     assert.equal(await Task.countDocuments({ leadCallFor: lead._id, deleted: false }), 1);
     assert.equal((await Task.findById(firstTask._id)).title, 'تماس با لید Renamed');
   });
-  await t.test('administrator transfer removes both items from the former assignee, even with visible modules', async () => {
+  await t.test('the lead owner is fixed to its creator: administrators cannot transfer it', async () => {
     const sent = await api('POST', '/record-sharing', { module: 'Leads', recordId: lead._id, recipientId: String(second._id) }, admin);
-    assert.equal(sent.status, 201, JSON.stringify(sent));
-    assert.equal((await api('GET', '/lead')).data.length, 0);
-    assert.equal((await api('GET', '/task')).data.length, 0);
-    assert.equal((await api('GET', '/lead/view/' + lead._id)).status, 404);
-    assert.equal((await api('PUT', '/lead/edit/' + lead._id, { leadName: 'Unauthorized' })).status, 404);
-    const next = await api('GET', '/lead', null, second);
-    assert.equal(next.data.length, 1); assert.equal(next.data[0].createBy.firstName, 'First');
-    const tasks = await api('GET', '/task', null, second);
-    assert.equal(tasks.data.length, 1);
-    assert.equal((await Task.findById(firstTask._id)).deleted, true);
-    assert.notEqual(tasks.data[0]._id, String(firstTask._id));
-    assert.equal(String((await Lead.findById(lead._id)).createBy), String(first._id));
-    assert.equal(await Share.countDocuments({ module: 'Leads', recordId: lead._id }), 1);
-    const duplicateSend = await api('POST', '/record-sharing', { module: 'Leads', recordId: lead._id, recipientId: String(second._id) }, admin);
-    assert.equal(duplicateSend.status, 200);
-    assert.equal(await Task.countDocuments({ leadCallFor: lead._id, deleted: false }), 1);
-  });
-  await t.test('users cannot transfer their lead; another administrator transfer and revocation reconcile tasks', async () => {
-    assert.equal((await api('POST', '/record-sharing', { module: 'Leads', recordId: lead._id, recipientId: String(third._id) }, second)).status, 403);
-    const forbidden = await api('PUT', '/form/edit/' + lead._id, { moduleId: String(module._id), assignUser: String(third._id) }, second);
-    assert.equal(forbidden.status, 403, JSON.stringify(forbidden));
-    assert.equal((await api('POST', '/record-sharing', { module: 'Leads', recordId: lead._id, recipientId: String(third._id) }, admin)).status, 201);
-    assert.equal((await api('GET', '/lead', null, second)).data.length, 0);
-    assert.equal((await api('GET', '/task', null, second)).data.length, 0);
-    assert.equal((await api('GET', '/task', null, third)).data.length, 1);
-    assert.equal((await api('DELETE', '/record-sharing/Leads/' + lead._id + '/' + third._id, null, admin)).status, 200);
+    assert.equal(sent.status, 403, JSON.stringify(sent)); assert.equal(sent.data.code, 'ownerLocked');
+    const adminEdit = await api('PUT', '/form/edit/' + lead._id, { moduleId: String(module._id), assignUser: String(second._id) }, admin);
+    assert.equal(adminEdit.status, 403, JSON.stringify(adminEdit));
+    const legacyEdit = await api('PUT', '/lead/edit/' + lead._id, { assignUser: String(second._id) }, admin);
+    assert.equal(legacyEdit.status, 403, JSON.stringify(legacyEdit));
+    const sameOwner = await api('PUT', '/form/edit/' + lead._id, { moduleId: String(module._id), assignUser: String(first._id), leadName: 'Renamed' }, admin);
+    assert.equal(sameOwner.status, 200, JSON.stringify(sameOwner));
+    assert.equal(String((await Lead.findById(lead._id)).assignUser), String(first._id));
     assert.equal((await api('GET', '/lead')).data.length, 1);
-    assert.equal((await api('GET', '/task')).data.length, 1);
-    assert.equal((await api('GET', '/task', null, third)).data.length, 0);
+    assert.equal((await api('GET', '/lead', null, second)).data.length, 0);
+    assert.equal(await Share.countDocuments({ module: 'Leads', recordId: lead._id }), 0);
   });
-  await t.test('delegating the generated task also transfers its lead', async () => {
+  await t.test('users cannot transfer their lead either', async () => {
+    assert.equal((await api('POST', '/record-sharing', { module: 'Leads', recordId: lead._id, recipientId: String(third._id) })).status, 403);
+    const forbidden = await api('PUT', '/form/edit/' + lead._id, { moduleId: String(module._id), assignUser: String(third._id) });
+    assert.equal(forbidden.status, 403, JSON.stringify(forbidden));
+    assert.equal(String((await Lead.findById(lead._id)).assignUser), String(first._id));
+  });
+  await t.test('an administrator creating a lead owns it even when another owner is submitted', async () => {
+    const created = await api('POST', '/form/add', { moduleId: String(module._id), leadName: 'Admin lead', assignUser: String(second._id) }, admin);
+    assert.equal(created.status, 200, JSON.stringify(created));
+    assert.equal(created.data.data.createBy, String(admin._id)); assert.equal(created.data.data.assignUser, String(admin._id));
+    assert.equal((await api('GET', '/lead', null, second)).data.length, 0);
+  });
+  await t.test('delegating the generated call task cannot transfer its lead', async () => {
     const task = await Task.findOne({ leadCallFor: lead._id, deleted: false }).lean();
     const moved = await api('PUT', '/task/edit/' + task._id, { assignedToUser: String(second._id) }, admin);
-    assert.equal(moved.status, 200, JSON.stringify(moved));
-    assert.equal(String((await Lead.findById(lead._id)).assignUser), String(second._id));
-    assert.equal((await api('GET', '/lead')).data.length, 0);
-    assert.equal((await api('GET', '/task')).data.length, 0);
-  });
-
-  await t.test('simultaneous transfers leave the task and recipient consistent with the final lead assignee', async () => {
-    await Promise.all([second, third].map(actor => api('POST', '/record-sharing', {
-      module: 'Leads', recordId: lead._id, recipientId: String(actor._id),
-    }, admin)));
-    const current = await Lead.findById(lead._id);
-    const tasks = await Task.find({ leadCallFor: lead._id, deleted: false });
-    assert.equal(tasks.length, 1);
-    assert.equal(String(tasks[0].assignedToUser), String(current.assignUser));
-    assert.equal(String((await Share.findOne({ module: 'Leads', recordId: lead._id })).recipient), String(current.assignUser));
-    await api('POST', '/record-sharing', { module: 'Leads', recordId: lead._id, recipientId: String(second._id) }, admin);
+    assert.equal(moved.status, 403, JSON.stringify(moved));
+    assert.equal(String((await Lead.findById(lead._id)).assignUser), String(first._id));
+    assert.equal(String((await Task.findById(task._id)).assignedToUser), String(first._id));
   });
 
   await t.test('conversion and deletion retire automatic call tasks', async () => {
-    const converted = await api('POST', '/lead/convert/' + lead._id, { mode: 'contactAndOpportunity' }, second);
+    const converted = await api('POST', '/lead/convert/' + lead._id, { mode: 'contactAndOpportunity' });
     assert.equal(converted.status, 200, JSON.stringify(converted));
     assert.equal(await Task.countDocuments({ leadCallFor: lead._id, deleted: false }), 0);
-    assert.equal(String((await Opportunity.findById(converted.data.opportunityId)).createBy), String(second._id));
+    assert.equal(String((await Opportunity.findById(converted.data.opportunityId)).createBy), String(first._id));
     const other = await makeLead('To delete');
     assert.equal((await api('DELETE', '/lead/delete/' + other._id)).status, 200);
     assert.equal(await Task.countDocuments({ leadCallFor: other._id, deleted: false }), 0);

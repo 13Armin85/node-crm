@@ -74,11 +74,12 @@ export default function useNotifications(userId) {
   useEffect(() => {
     mounted.current = true;
     reset();
-    const refresh = () => { if (!document.hidden) load(); };
+    const refresh = () => { if (!document.hidden && navigator.onLine !== false) load(); };
     const authChanged = () => { reset(); load(); };
     load();
     const timer = window.setInterval(refresh, 5000);
     window.addEventListener('focus', refresh);
+    window.addEventListener('online', refresh);
     document.addEventListener('visibilitychange', refresh);
     window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, refresh);
     window.addEventListener(AUTH_CHANGED_EVENT, authChanged);
@@ -88,6 +89,7 @@ export default function useNotifications(userId) {
       sequence.current += 1;
       window.clearInterval(timer);
       window.removeEventListener('focus', refresh);
+      window.removeEventListener('online', refresh);
       document.removeEventListener('visibilitychange', refresh);
       window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, refresh);
       window.removeEventListener(AUTH_CHANGED_EVENT, authChanged);

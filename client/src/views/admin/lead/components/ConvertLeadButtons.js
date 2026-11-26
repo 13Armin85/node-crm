@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { HStack, IconButton, Tooltip } from '@chakra-ui/react';
-import { FiUserCheck, FiTrendingUp, FiCopy } from 'react-icons/fi';
+import { FiUserCheck, FiCopy } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { HasAccess } from '../../../../redux/accessUtils';
 import { tr } from 'i18n/runtime';
@@ -35,10 +35,6 @@ export default function ConvertLeadButtons({ leadId, onConverted }) {
     {contactAccess?.create && <Tooltip label={tr('leadConversion.contact')} hasArrow>
       <IconButton aria-label={tr('leadConversion.contact')} icon={<FiUserCheck />} size="sm" variant="ghost" colorScheme="teal"
         isLoading={busy === 'contact'} isDisabled={Boolean(busy)} onClick={() => convert('contact')} />
-    </Tooltip>}
-    {opportunityAccess?.create && <Tooltip label={tr('leadConversion.opportunity')} hasArrow>
-      <IconButton aria-label={tr('leadConversion.opportunity')} icon={<FiTrendingUp />} size="sm" variant="ghost" colorScheme="blue"
-        isLoading={busy === 'opportunity'} isDisabled={Boolean(busy)} onClick={() => convert('opportunity')} />
     </Tooltip>}
     {opportunityAccess?.create && contactAccess?.create && <Tooltip label={tr('leadConversion.both')} hasArrow>
       <IconButton aria-label={tr('leadConversion.both')} icon={<FiCopy />} size="sm" variant="ghost" colorScheme="purple"

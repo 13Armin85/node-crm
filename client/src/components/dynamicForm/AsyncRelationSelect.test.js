@@ -9,7 +9,11 @@ import { getApi } from 'services/api';
 jest.mock('services/api', () => ({ getApi: jest.fn(), postApi: jest.fn() }));
 let container;
 beforeEach(() => { jest.useFakeTimers(); container = document.createElement('div'); document.body.appendChild(container); getApi.mockReset(); });
-afterEach(() => { act(() => { ReactDOM.unmountComponentAtNode(container); }); container.remove(); jest.useRealTimers(); });
+afterEach(async () => {
+  await act(async () => { ReactDOM.unmountComponentAtNode(container); jest.runOnlyPendingTimers(); });
+  container.remove();
+  jest.useRealTimers();
+});
 const render = props => act(async () => ReactDOM.render(<ChakraProvider><LanguageProvider><AsyncRelationSelect id="contact" name="contact" moduleName="Contacts" onChange={jest.fn()} {...props} /></LanguageProvider></ChakraProvider>, container));
 const tick = () => act(async () => { jest.advanceTimersByTime(300); });
 const open = () => act(async () => Simulate.focus(container.querySelector('input')));

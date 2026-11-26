@@ -3,7 +3,8 @@ const { isAdmin, isDeveloper } = require('../services/userRoles');
 const ADMIN_ONLY_MODULES = new Set(['Users', 'Roles', 'Custom Fields', 'Active Deactive Module']);
 const can = (user, title, action) => (title === 'Users' && action === 'create'
   ? isDeveloper(user)
-  : isAdmin(user) || (user?.role === 'user' && (action === 'view' || (!ADMIN_ONLY_MODULES.has(title) && require('../services/moduleVisibility').canonicalModule(title) !== 'Tasks'))));
+  : isAdmin(user) || (user?.role === 'user' && (action === 'view' || !ADMIN_ONLY_MODULES.has(title))));
+// Ordinary users manage only their own personal tasks; record scopes enforce that.
 const loadUser = async (req, res, next) => {
   try {
     if (req.actor) return next();
@@ -21,7 +22,7 @@ const scope = (req, moduleName) => {
   moduleName ||= requestModule(req);
   if (moduleName === 'Leads' && req.method !== 'GET') return require('../services/recordAccess').recordScope(req.actor, 'Leads');
   if (req.method === 'GET') return readScope(req, req.actor, moduleName || requestModule(req));
-  if (moduleName === 'Tasks') return require('../services/taskAccess').taskScope(req.actor);
+  if (moduleName === 'Tasks') return require('../services/taskAccess').taskManageScope(req.actor);
   return isAdmin(req.actor) ? {} : { createBy: req.actor._id };
 };
 module.exports = { loadUser, permit, adminOnly, developerOnly, scope, can, isAdmin, isDeveloper };

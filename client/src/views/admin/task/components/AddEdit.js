@@ -36,6 +36,7 @@ import { putApi } from "services/api";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { formLabel } from 'utils/formValue';
+import { toast } from "react-toastify";
 
 const selectionValue = (value) => {
   if (!value || typeof value !== "object") return value || "";
@@ -68,6 +69,11 @@ const priorityColors = {
   urgent: { backgroundColor: "#FFEBEE", borderColor: "#EF5350", textColor: "#8E1010" },
 };
 
+const formatTaskDate = (value, allDay) => {
+  if (!value) return "";
+  return dayjs(value).format(allDay ? "YYYY-MM-DD" : "YYYY-MM-DDTHH:mm");
+};
+
 const AddEdit = (props) => {
   const {
     onClose,
@@ -81,6 +87,7 @@ const AddEdit = (props) => {
   } = props;
 
   const [user] = useState(() => JSON.parse(localStorage.getItem("user")));
+  const [initialStart] = useState(() => dayjs().format("YYYY-MM-DDTHH:mm"));
   const userId = user?._id;
   const [assignToLeadData, setAssignToLeadData] = useState([]);
   const [assignToContactData, setAssignToContactData] = useState([]);
@@ -97,7 +104,7 @@ const AddEdit = (props) => {
 
   const initialValues = {
     opportunity: props.opportunityId,
-    title: "",
+    title: tr("New Task"),
     category:
       props?.leadContect === "contactView"
         ? "Contact"
@@ -110,7 +117,7 @@ const AddEdit = (props) => {
     assignToLead: props?.leadContect === "leadView" && id ? id : "",
     assignedToUser: userId,
     reminder: "",
-    start: "",
+    start: initialStart,
     end: "",
     priority: "normal",
     status: "todo",
@@ -142,7 +149,12 @@ const AddEdit = (props) => {
   } = formik;
 
   const AddData = async () => {
-    const payload = { ...values };
+    const payload = {
+      ...values,
+      title: String(values.title || "").trim() || tr("New Task"),
+      start: formatTaskDate(values.start, values.allDay) || initialStart,
+      end: formatTaskDate(values.end, values.allDay),
+    };
     if (!isAdmin(user)) {
       delete payload.assignedToUser;
       delete payload.delegatedBy;
@@ -151,26 +163,17 @@ const AddEdit = (props) => {
       try {
         setIsLoding(true);
 
-        if (values?.start) {
-          values.start = values?.allDay
-            ? moment(values?.start)?.format("YYYY-MM-DD")
-            : moment(values?.start)?.format("YYYY-MM-DD HH:mm");
-        }
-        if (values?.end) {
-          values.end = values?.allDay
-            ? moment(values?.end)?.format("YYYY-MM-DD")
-            : moment(values?.end)?.format("YYYY-MM-DD HH:mm");
-        }
-
-        let response = await postApi("api/task/add", { ...payload, start: values.start, end: values.end });
+        let response = await postApi("api/task/add", payload);
         if (response?.status === 200) {
           formik.resetForm();
           onClose();
           fetchData?.(1);
           setAction?.((pre) => !pre);
+        } else {
+          toast.error(tr(response?.status === 403 ? "You can only create tasks for yourself" : "Failed to create task"));
         }
       } catch (e) {
-        console.log(e);
+        toast.error(tr("Failed to create task"));
       } finally {
         setIsLoding(false);
       }
@@ -194,6 +197,8 @@ const AddEdit = (props) => {
           formik.resetForm();
           onClose();
           setAction?.((pre) => !pre);
+        } else {
+          toast.error(tr("Failed to update task"));
         }
       } catch (e) {
         console.log(e);
@@ -322,7 +327,7 @@ const AddEdit = (props) => {
   }, [userAction, id, data]);
 
   return (
-    <Modal isOpen={isOpen && isAdmin(user)} size={"xl"} isCentered scrollBehavior="inside">
+    <Modal isOpen={isOpen} size={"xl"} isCentered scrollBehavior="inside">
       {!props.from && <ModalOverlay />}
       <ModalContent className="crm-record-form" maxH={{ base: "calc(100vh - 24px)", md: "calc(100vh - 64px)" }} mx={{ base: 3, md: 0 }}>
         <ModalHeader justifyContent="space-between" display="flex">
@@ -591,7 +596,7 @@ const AddEdit = (props) => {
                   min={
                     values?.allDay
                       ? dayjs(today).format("YYYY-MM-DD")
-                      : dayjs(todayTime).format("YYYY-MM-DD HH:mm")
+                  : dayjs(todayTime).format("YYYY-MM-DDTHH:mm")
                   }
                   value={
                     values?.allDay
@@ -599,7 +604,7 @@ const AddEdit = (props) => {
                           dayjs(values?.start).format("YYYY-MM-DD")) ||
                         null
                       : (values?.start &&
-                          dayjs(values?.start).format("YYYY-MM-DD HH:mm")) ||
+                          dayjs(values?.start).format("YYYY-MM-DDTHH:mm")) ||
                         null
                   }
                   name="start"
@@ -633,7 +638,7 @@ const AddEdit = (props) => {
                           dayjs(values?.end).format("YYYY-MM-DD")) ||
                         null
                       : (values?.end &&
-                          dayjs(values?.end).format("YYYY-MM-DD HH:mm")) ||
+                          dayjs(values?.end).format("YYYY-MM-DDTHH:mm")) ||
                         null
                   }
                   name="end"

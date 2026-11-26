@@ -13,7 +13,11 @@ router.post('/login', require('../../middelwares/securityHeaders').loginLimiter,
 const changePassword = require('./changePassword');
 router.post('/change-password', auth, loadUser, changePassword.limiter, changePassword.handle)
 router.post('/logout', auth, async (req, res, next) => {
-    try { await require('../../services/auditLog').recordEvent(req, 'logout'); res.json({ success: true }); } catch (error) { next(error); }
+    try {
+        await require('../../services/sessions').revokeSession(req.user.sid, req.actor._id);
+        await require('../../services/auditLog').recordEvent(req, 'logout');
+        res.json({ success: true });
+    } catch (error) { next(error); }
 });
 router.post('/deleteMany', auth, loadUser, permit('Users', 'delete'), user.deleteMany)
 router.get('/view/:id', auth, loadUser, user.view)

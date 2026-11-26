@@ -7,15 +7,20 @@ const id = value => String(value?._id || value || '');
 const error = (code, status = 400) => Object.assign(new Error(code), { code, status, field: 'assignUser' });
 const ownerOf = lead => id(lead.assignUser || lead.createBy);
 
+// The lead owner is always the user who created the lead; nobody (admins included) can change it.
 async function normalizeLeadAssignment(body, previous, actor) {
   delete body.assignedBy;
-  const before = ownerOf(previous) || id(actor);
-  const target = body.assignUser === undefined ? before : id(body.assignUser) || id(previous.createBy || actor);
-  if (!/^[a-f\d]{24}$/i.test(target)) throw error('invalid');
-  if (!isAdmin(actor) && target !== before) throw error('forbidden', 403);
-  if (target !== before && !await User.exists({ _id: target, deleted: false })) throw error('relationNotFound');
-  body.assignUser = target;
-  if (!previous._id || target !== before) body.assignedBy = actor._id;
+  const creator = id(previous?.createBy) || id(actor);
+  if (!/^[a-f\d]{24}$/i.test(creator)) throw error('invalid');
+  if (!previous?._id) {
+    // New leads are always owned by their creator, whatever owner a form submits.
+    body.assignUser = creator;
+    body.assignedBy = actor._id;
+    return body;
+  }
+  const requested = body.assignUser === undefined || body.assignUser === null || body.assignUser === '' ? creator : id(body.assignUser);
+  if (requested !== creator && requested !== ownerOf(previous)) throw error('forbidden', 403);
+  delete body.assignUser;
   return body;
 }
 
@@ -86,6 +91,11 @@ function leadWorkflow(schema) {
 }
 async function assignLead(leadId, recipientId, actor) {
   if (!isAdmin(actor)) throw error('forbidden', 403);
+  // Lead ownership is fixed to the creator, so transfers to anyone else are refused.
+  const { Lead: LeadModel } = require('../model/schema/lead');
+  const existing = await LeadModel.findOne({ _id: leadId, deleted: false }).select('createBy').lean();
+  if (!existing) throw error('notFound', 404);
+  if (id(existing.createBy) !== id(recipientId)) throw error('ownerLocked', 403);
   if (!await User.exists({ _id: recipientId, deleted: false })) throw error('relationNotFound', 404);
   const { Lead } = require('../model/schema/lead');
   const previous = await Lead.findOne({ _id: leadId, deleted: false }).lean();

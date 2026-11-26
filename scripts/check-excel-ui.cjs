@@ -59,12 +59,14 @@ async function main(){
    assert(workbook.worksheets.length>0);assert(workbook.worksheets[0].rowCount>1,'Empty workbook');return workbook;
   };
   const goto=route=>page.goto(origin+route,{waitUntil:'networkidle0'});
-  for(const route of (process.env.CRM_EXCEL_FOCUSED ? [] : ['/lead','/contacts','/invoices','/opportunities','/task','/metting','/phone-call','/email','/email-template','/user','/documents','/calender','/reporting-analytics','/properties','/partner-customers','/residences'])){
+  const requestedRoutes=process.env.CRM_EXCEL_ROUTES?.split(',').map(route=>route.trim()).filter(Boolean);
+  for(const route of (requestedRoutes || (process.env.CRM_EXCEL_FOCUSED ? [] : ['/lead','/contacts','/invoices','/opportunities','/task','/metting','/phone-call','/email','/email-template','/user','/documents','/calender','/reporting-analytics','/properties','/partner-customers','/residences']))){
    await goto(route);const workbook=await download();
    if(['/properties','/partner-customers','/residences'].includes(route))assert.equal(workbook.worksheets[0].rowCount,206,'Export must include all 205 records: '+route);
    
    console.log('PASS: '+route+' / '+workbook.worksheets.length+' sheet(s), '+workbook.worksheets[0].rowCount+' rows');
   }
+  if(requestedRoutes){assert.deepEqual(errors,[],'Browser runtime errors');console.log('PASS: selected routes download valid workbooks, including complete estate pagination.');return;}
   if(!process.env.CRM_EXCEL_FOCUSED){
   await goto('/properties');const input=await page.$('input');assert(input,'Property search missing');
   await input.type('Property 204');await page.waitForFunction(()=>[...document.querySelectorAll('tbody tr')].length===1);

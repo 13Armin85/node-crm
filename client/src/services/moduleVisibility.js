@@ -31,7 +31,7 @@ export function useModuleVisibility() {
       setState(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
     };
     const refresh = async () => {
-      if (pending) return;
+      if (pending || document.visibilityState === 'hidden' || navigator.onLine === false) return;
       pending = true;
       try {
         const response = await getApi('api/visibility/me');
@@ -43,9 +43,11 @@ export function useModuleVisibility() {
     const changed = event => event.detail ? consume(event.detail) : refresh();
     refresh();
     window.addEventListener('focus', refresh);
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', refresh);
     window.addEventListener(VISIBILITY_CHANGED, changed);
     const timer = window.setInterval(refresh, 30000);
-    return () => { active = false; window.removeEventListener('focus', refresh); window.removeEventListener(VISIBILITY_CHANGED, changed); window.clearInterval(timer); };
+    return () => { active = false; window.removeEventListener('focus', refresh); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', refresh); window.removeEventListener(VISIBILITY_CHANGED, changed); window.clearInterval(timer); };
   }, []);
   return state;
 }

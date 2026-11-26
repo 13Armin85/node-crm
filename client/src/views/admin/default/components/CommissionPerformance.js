@@ -35,8 +35,8 @@ export default function CommissionPerformance({ onData }) {
     </Flex>
     {financeError&&<Alert status="error"><AlertIcon/>{t('estate.serverError')}</Alert>}
     {financeBusy?<Flex minH="180px" justify="center" align="center"><Spinner/></Flex>:finance&&<>
-      <SimpleGrid className="crm-dashboard-financial-totals" columns={{base:1,sm:2,xl:4}} spacing={3} mb={5}>
-        {['soldProperties','successfulIncome','lostIncome','unsoldProperties'].map(key=><Box key={key} className="crm-finance-kpi" data-finance-bucket={key}>
+      <SimpleGrid className="crm-dashboard-financial-totals" columns={{base:1,sm:3}} spacing={3} mb={5}>
+        {['soldProperties','successfulIncome','lostIncome'].map(key=><Box key={key} className="crm-finance-kpi" data-finance-bucket={key}>
           <Text className="crm-finance-kpi__label">{t('finance.'+key)}</Text><Box className="crm-finance-kpi__value">{money(finance[key].values)}</Box>
         </Box>)}
       </SimpleGrid>

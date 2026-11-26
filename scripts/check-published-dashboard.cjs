@@ -1,12 +1,13 @@
 // Read-only browser verification against the deployed dashboard and live exchange rate.
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
 const mongoose = require('../server/node_modules/mongoose');
 const puppeteer = require('../server/node_modules/puppeteer');
 require('../server/node_modules/dotenv').config({ path: path.resolve(__dirname, '../server/.env'), quiet: true });
 async function main() {
-  let browser;
+  let browser, verificationSessionId;
   const artifacts = path.resolve(__dirname, '../layout-artifacts/published-dashboard');
   const origin = process.env.CRM_UI_ORIGIN || 'https://37.148.206.74';
   try {
@@ -14,7 +15,9 @@ async function main() {
     await mongoose.connect(process.env.DB_URL || 'mongodb://127.0.0.1:27017', { dbName: process.env.DB || 'Prolink', autoIndex: false, autoCreate: false });
     const actor = await mongoose.connection.collection('User').findOne({ role: { $in: ['developer', 'admin'] }, deleted: false }, { projection: { _id: 1, role: 1, authVersion: 1 } });
     assert(actor, 'An active administrator is required');
-    const token = require('../server/node_modules/jsonwebtoken').sign({ userId: actor._id, sv: actor.authVersion || 0 }, require('../server/config/auth').jwtSecret, { expiresIn: '5m' });
+    verificationSessionId = crypto.randomBytes(32).toString('hex');
+    await mongoose.connection.collection('Session').insertOne({ _id: verificationSessionId, userId: actor._id, rememberMe: false, createdAt: new Date(), expiresAt: new Date(Date.now() + 5 * 60 * 1000), revokedAt: null, userAgent: 'CRM dashboard release verifier' });
+    const token = require('../server/node_modules/jsonwebtoken').sign({ userId: actor._id, sv: actor.authVersion || 0, sid: verificationSessionId }, require('../server/config/auth').jwtSecret, { expiresIn: '5m' });
     browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe',
       headless: true, pipe: true, args: ['--no-sandbox', '--disable-gpu'], userDataDir: path.join(artifacts, 'profile') });
     const page = await browser.newPage();
@@ -40,7 +43,7 @@ async function main() {
         const language = localStorage.getItem('crm-language');
         const locale = { fa: 'fa-IR', tr: 'tr-TR', en: 'en-US' }[language];
         const money = (value, currency) => new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-        const keys = ['soldProperties', 'successfulIncome', 'lostIncome', 'unsoldProperties'];
+        const keys = ['soldProperties', 'successfulIncome', 'lostIncome'];
         const totalsCorrect = keys.every(key => {
           let lira = 0, dollar = 0;
           for (const value of finance[key].values) {
@@ -57,12 +60,12 @@ async function main() {
           teamRanking: Boolean(document.querySelector('.crm-team-sales-table')),
           untranslated: document.querySelector('.crm-sales-performance').textContent.includes('finance.'), rateAvailable: rate.tryPerUsd > 0 && rate.tryPerEur > 0 };
       });
-      assert.equal(result.cards, 4); assert(result.totalsCorrect); assert(result.rateAvailable); assert(!result.overflow); assert(!result.untranslated);
+      assert.equal(result.cards, 3); assert(result.totalsCorrect); assert(result.rateAvailable); assert(!result.overflow); assert(!result.untranslated);
       assert(result.hero); assert.equal(result.counters, 4); assert.equal(result.charts, 2); assert(result.statistics > 0);
       assert(result.leadStatistics); assert.equal(result.taskStatuses, 5); assert(result.teamRanking);
       await page.screenshot({ path: path.join(artifacts, language + '-' + width + '.png'), fullPage: true });
       checked.push({ language, width, mode, ...result });
-      console.log('PASS: published dashboard', language, width, 'all original sections, four financial totals, live TRY/USD conversion, no overflow');
+      console.log('PASS: published dashboard', language, width, 'all current sections, three financial totals, live TRY/USD conversion, no overflow');
     }
     const selects = await page.$$('.crm-sales-performance select');
     assert.equal(selects.length, 3, 'Income and team ranking filters must remain available');
@@ -75,12 +78,13 @@ async function main() {
     changed = page.waitForResponse(response => response.url().includes('/api/estate/dashboard/sales-summary?') && response.url().includes('teamMonths=6'));
     await selects[2].select('6');
     assert.equal((await changed).status(), 200, 'Ranking period filter failed');
-    assert.equal(await page.$$eval('[data-finance-bucket]', nodes => nodes.length), 4);
+    assert.equal(await page.$$eval('[data-finance-bucket]', nodes => nodes.length), 3);
     console.log('PASS: restored income period, team currency and ranking period controls');
     assert.deepEqual(errors, []); assert.deepEqual(failedApi, []);
     await fs.writeFile(path.join(artifacts, 'verification.json'), JSON.stringify({ origin, checkedAt: new Date().toISOString(), checked, browserErrors: errors, failedApi }, null, 2));
   } finally {
     if (browser) await browser.close();
+    if (verificationSessionId) await mongoose.connection.collection('Session').deleteOne({ _id: verificationSessionId }).catch(() => {});
     await mongoose.disconnect();
   }
 }

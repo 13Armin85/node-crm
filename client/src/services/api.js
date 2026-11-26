@@ -7,6 +7,14 @@ import { dataScopeHeaders } from "./adminDataScope";
 import { readVisibilityPath } from "./readVisibility";
 import { NOTIFICATIONS_CHANGED_EVENT } from "./notificationEvents";
 
+// Share only requests that are currently running. Responses are never retained
+// between reads, users, person filters or successful mutations.
+const pendingReads = new Map();
+let readGeneration = 0;
+const copyData = data => data && typeof data === 'object'
+  ? (typeof structuredClone === 'function' ? structuredClone(data) : JSON.parse(JSON.stringify(data)))
+  : data;
+
 const getRequestConfig = (config = {}) => ({
   ...config,
   headers: {
@@ -54,6 +62,8 @@ const normalizeResponse = (result) => {
   }
   if (result?.status >= 200 && result?.status < 300) {
     if (["post", "put", "patch", "delete"].includes(result.config?.method) && !result.config?.url?.includes("/notification")) {
+      readGeneration += 1;
+      pendingReads.clear();
       window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED_EVENT));
     }
     return result;
@@ -143,20 +153,21 @@ export const deleteManyApi = async (path, data) => {
 
 export const getApi = async (path, id, options = {}) => {
   path = readVisibilityPath(path, getStoredUser());
+  const url = constant?.baseUrl + path + (id || '');
+  const config = getRequestConfig({ headers: options.dataScope === false ? {} : dataScopeHeaders(path) });
+  const key = JSON.stringify([url, config.headers, readGeneration]);
   try {
-    if (id) {
-      let result = await axios?.get(
-        constant?.baseUrl + path + id,
-        getRequestConfig({ headers: options.dataScope === false ? {} : dataScopeHeaders(path) }),
-      );
-      return normalizeResponse(result);
-    } else {
-      let result = await axios?.get(
-        constant?.baseUrl + path,
-        getRequestConfig({ headers: options.dataScope === false ? {} : dataScopeHeaders(path) }),
-      );
-      return normalizeResponse(result);
+    let request = pendingReads.get(key);
+    if (!request) {
+      request = axios.get(url, config);
+      pendingReads.set(key, request);
+      const cleanup = () => { if (pendingReads.get(key) === request) pendingReads.delete(key); };
+      request.then(cleanup, cleanup);
     }
+    const result = await request;
+    // Consumers may sort, edit or freeze their result without changing another
+    // component's copy of the same simultaneous response.
+    return normalizeResponse({ ...result, data: copyData(result.data) });
   } catch (e) {
     return e;
   }

@@ -5,6 +5,7 @@ const db = require('./db/config')
 const route = require('./controllers/route');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const compression = require('compression');
 
 
 const port = Number(process.env.PORT || 5001)
@@ -26,6 +27,12 @@ app.use(cors((req, callback) => {
     callback(null, { origin: sameOrigin || allowedOrigins.includes(origin) });
 }));
 app.use('/api', privateResponse, mutationLimiter);
+// Moderate compression reduces mobile transfer without maximizing server CPU.
+// Authentication responses remain uncompressed; private/no-store is preserved.
+app.use('/api', compression({
+    level: 3, threshold: 1024,
+    filter: (req, res) => !/^\/user\/(login|logout)(\/|$)/i.test(req.path) && compression.filter(req, res),
+}));
 app.use(bodyParser.json({ limit: '1mb' }));
 //API Routes
 app.use('/api', route);

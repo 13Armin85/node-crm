@@ -10,4 +10,13 @@ const taskScope = (actor, extra = {}) => isAdmin(actor) ? { ...extra } : {
     ],
 };
 
-module.exports = { taskScope };
+// Ordinary users may change only the personal tasks they created for themselves;
+// tasks delegated by an administrator and generated lead-call tasks stay read-only.
+const taskManageScope = (actor, extra = {}) => isAdmin(actor) ? { ...extra } : {
+    $and: [
+        ...(Object.keys(extra).length ? [extra] : []),
+        { createBy: actor._id, assignedToUser: actor._id, leadCallFor: null },
+    ],
+};
+
+module.exports = { taskScope, taskManageScope };

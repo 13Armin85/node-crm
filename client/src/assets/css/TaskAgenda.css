@@ -1,0 +1,505 @@
+/* Task agenda: tasks grouped by due time (overdue, today, tomorrow, ...). */
+.crm-agenda {
+  --agenda-radius: 14px;
+  --agenda-pad: 20px;
+  --agenda-row-h: 98px;
+  --agenda-danger-bg: color-mix(in srgb, var(--crm-danger) 10%, var(--crm-panel-solid));
+  --agenda-danger-border: color-mix(in srgb, var(--crm-danger) 35%, var(--crm-border));
+  --agenda-primary-soft: color-mix(in srgb, var(--crm-primary) 14%, var(--crm-panel-solid));
+  --agenda-tile: color-mix(in srgb, var(--crm-text) 6%, var(--crm-panel-solid));
+  --agenda-done: #16a34a;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  min-width: 0;
+}
+
+/* Header */
+.crm-agenda__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.crm-agenda__heading { min-width: 0; }
+.crm-agenda__title {
+  margin: 0;
+  color: var(--crm-text);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.crm-agenda__subtitle {
+  margin: 4px 0 0;
+  color: var(--crm-muted);
+  font-size: 14px;
+}
+.crm-agenda__actions { flex: none; display: flex; gap: 8px; }
+
+/* Toolbar: segmented scope filter + advisor picker */
+.crm-agenda__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.crm-agenda__scopes {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--crm-border);
+  border-radius: 12px;
+  background: var(--crm-panel-solid);
+}
+.crm-agenda-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--crm-muted);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.crm-agenda-segment:hover { color: var(--crm-text); }
+.crm-agenda-segment.is-active { background: var(--agenda-primary-soft); color: var(--crm-primary); }
+.crm-agenda-segment__count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--agenda-tile);
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.crm-agenda-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--crm-border);
+  background: var(--crm-panel-solid);
+  color: var(--crm-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.crm-agenda-chip:hover { background: var(--crm-panel-hover); }
+.crm-agenda-chip.is-active {
+  background: var(--agenda-primary-soft);
+  border-color: color-mix(in srgb, var(--crm-primary) 40%, transparent);
+  color: var(--crm-primary);
+}
+.crm-agenda__advisor { margin-inline-start: auto; }
+.crm-agenda-chip--advisor span { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-agenda-chip--advisor > span { display: inline-flex; align-items: center; gap: 8px; }
+.crm-agenda-chip--advisor svg { flex: none; }
+
+.crm-agenda__filters { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.crm-agenda__search { display: flex; align-items: center; gap: 10px; flex: 1 1 280px; min-width: 0; min-height: 42px; padding-inline: 12px; border: 1px solid var(--crm-border); border-radius: 11px; background: var(--crm-panel-solid); color: var(--crm-muted); }
+.crm-agenda__search > svg { flex: none; }
+.crm-agenda__search:focus-within { border-color: var(--crm-primary); box-shadow: 0 0 0 1px var(--crm-primary); }
+.crm-agenda .crm-agenda__search input { width: 100%; min-width: 0; min-height: 40px; border: 0 !important; outline: 0; background: transparent !important; font-size: 13px; }
+.crm-agenda__filters > .chakra-select__wrapper { flex: 0 1 160px; width: 160px; }
+.crm-agenda__filters .chakra-select { font-size: 13px; }
+.crm-agenda__clear { display: inline-flex; align-items: center; gap: 5px; padding: 8px; border-radius: 8px; color: var(--crm-muted); font-size: 12px; }
+.crm-agenda__clear:hover { color: var(--crm-primary); background: var(--agenda-primary-soft); }
+
+.crm-agenda-segment:focus-visible,
+.crm-agenda-chip:focus-visible,
+.crm-agenda__clear:focus-visible,
+.crm-agenda-group__header:focus-visible,
+.crm-agenda-row__main:focus-visible,
+.crm-agenda-row__check:focus-visible {
+  outline: 2px solid var(--crm-primary);
+  outline-offset: 2px;
+}
+
+/* Groups */
+.crm-agenda-group {
+  border: 1px solid var(--crm-border);
+  border-radius: var(--agenda-radius);
+  background: var(--crm-panel-solid);
+  overflow: hidden;
+}
+.crm-agenda-group[data-group="overdue"] { border-color: var(--agenda-danger-border); }
+
+.crm-agenda-group__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--agenda-pad);
+  background: transparent;
+  border: 0;
+  color: var(--crm-text);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+}
+.crm-agenda-group__header:hover { background: var(--crm-panel-hover); }
+.crm-agenda-group[data-group="overdue"] .crm-agenda-group__header { background: var(--agenda-danger-bg); color: var(--crm-danger); }
+.crm-agenda-group__icon { flex: none; width: 18px; height: 18px; color: var(--crm-muted); }
+.crm-agenda-group[data-group="overdue"] .crm-agenda-group__icon { color: var(--crm-danger); }
+.crm-agenda-group[data-group="today"] .crm-agenda-group__icon { color: var(--crm-primary); }
+.crm-agenda-group__count {
+  min-width: 26px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--agenda-tile);
+  color: var(--crm-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.crm-agenda-group[data-group="overdue"] .crm-agenda-group__count {
+  background: color-mix(in srgb, var(--crm-danger) 16%, transparent);
+  color: var(--crm-danger);
+}
+.crm-agenda-group__chevron {
+  flex: none;
+  margin-inline-start: auto;
+  width: 18px;
+  height: 18px;
+  color: var(--crm-muted);
+  transform: rotate(-90deg);
+  transition: transform 150ms ease;
+}
+.crm-agenda[dir="rtl"] .crm-agenda-group__chevron { transform: rotate(90deg); }
+.crm-agenda .crm-agenda-group__chevron.is-open { transform: none; }
+.crm-agenda-group[data-group="overdue"] .crm-agenda-group__chevron { color: var(--crm-danger); }
+
+.crm-agenda-group__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--crm-border); }
+
+/* Rows: the same column grid in every group keeps times, titles and people aligned. */
+.crm-agenda-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-inline: var(--agenda-pad);
+}
+.crm-agenda-row + .crm-agenda-row { border-top: 1px solid var(--crm-border); }
+.crm-agenda-row:hover { background: var(--crm-panel-hover); }
+
+/* The app styles every input's background and border with !important, so the
+   checkbox rules below need !important and the extra "input" in the selector. */
+.crm-agenda input.crm-agenda-row__check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid color-mix(in srgb, var(--crm-muted) 60%, transparent) !important;
+  border-radius: 7px;
+  background: transparent !important;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.crm-agenda input.crm-agenda-row__check:hover:not(:disabled) { border-color: var(--crm-primary) !important; }
+.crm-agenda input.crm-agenda-row__check:checked {
+  border-color: var(--agenda-done) !important;
+  background-color: var(--agenda-done) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") !important;
+  background-position: center !important;
+  background-size: 14px 14px !important;
+  background-repeat: no-repeat !important;
+}
+.crm-agenda-row__check:disabled { cursor: not-allowed; opacity: 0.4; }
+/* A done task always shows a clear tick, even when the box is locked (e.g. assigned by an admin). */
+.crm-agenda-row__check:checked:disabled { opacity: 1; }
+.crm-agenda-row.is-completing .crm-agenda-row__check:disabled { opacity: 1; cursor: default; }
+.crm-agenda-row.is-completing { background: color-mix(in srgb, var(--crm-primary) 6%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .crm-agenda-row__check:checked { animation: crm-agenda-check-pop 220ms ease-out; }
+  .crm-agenda-row.is-completing .crm-agenda-row__title { transition: color 200ms ease; }
+}
+@keyframes crm-agenda-check-pop {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.crm-agenda-row__main {
+  display: grid;
+  grid-template-columns: 90px 40px minmax(0, 1fr) minmax(100px, 160px);
+  align-items: center;
+  column-gap: 12px;
+  flex: 1;
+  min-width: 0;
+  min-height: var(--agenda-row-h);
+  padding: 10px 0;
+  background: transparent;
+  border: 0;
+  color: var(--crm-text);
+  text-align: start;
+  cursor: pointer;
+}
+.crm-agenda-row__when {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--crm-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.crm-agenda-row__when[data-group="overdue"] { color: var(--crm-danger); }
+.crm-agenda-row__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: color-mix(in srgb, currentColor 10%, var(--crm-panel-solid));
+  color: var(--crm-primary);
+}
+.crm-agenda-row__icon > svg { width: 19px; height: 19px; }
+.crm-agenda-row[data-kind="call"] .crm-agenda-row__icon { color: #0d9488; }
+.crm-agenda-row[data-kind="visit"] .crm-agenda-row__icon { color: #d97706; }
+.crm-agenda-row[data-kind="meeting"] .crm-agenda-row__icon { color: #8b5cf6; }
+.crm-agenda-row[data-kind="document"] .crm-agenda-row__icon { color: #6366f1; }
+.crm-agenda-row[data-kind="payment"] .crm-agenda-row__icon { color: #16a34a; }
+.crm-agenda-row[data-kind="followup"] .crm-agenda-row__icon { color: #0891b2; }
+.crm-agenda-row[data-kind="reminder"] .crm-agenda-row__icon { color: #d97706; }
+.crm-agenda-row__content { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.crm-agenda-row__headline { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.crm-agenda-row__title {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crm-agenda-row[data-priority="low"] { --agenda-priority-color: #047857; --agenda-priority-bg: #ecfdf5; --agenda-priority-border: #a7f3d0; }
+.crm-agenda-row[data-priority="normal"] { --agenda-priority-color: #1d4ed8; --agenda-priority-bg: #eff6ff; --agenda-priority-border: #bfdbfe; }
+.crm-agenda-row[data-priority="high"] { --agenda-priority-color: #9a3412; --agenda-priority-bg: #fff7ed; --agenda-priority-border: #fed7aa; }
+.crm-agenda-row[data-priority="urgent"] { --agenda-priority-color: #b91c1c; --agenda-priority-bg: #fef2f2; --agenda-priority-border: #fecaca; }
+.chakra-ui-dark .crm-agenda-row[data-priority="low"] { --agenda-priority-color: #6ee7b7; --agenda-priority-bg: #123c32; --agenda-priority-border: #236b53; }
+.chakra-ui-dark .crm-agenda-row[data-priority="normal"] { --agenda-priority-color: #93c5fd; --agenda-priority-bg: #1b355c; --agenda-priority-border: #345d91; }
+.chakra-ui-dark .crm-agenda-row[data-priority="high"] { --agenda-priority-color: #fdba74; --agenda-priority-bg: #4a2c18; --agenda-priority-border: #8b4c24; }
+.chakra-ui-dark .crm-agenda-row[data-priority="urgent"] { --agenda-priority-color: #fca5a5; --agenda-priority-bg: #4b222b; --agenda-priority-border: #8c3f4d; }
+.crm-agenda-row[data-priority] { border-inline-start: 3px solid var(--agenda-priority-color); }
+.crm-agenda-row__priority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: none;
+  min-width: 54px;
+  padding: 3px 8px;
+  border: 1px solid var(--agenda-priority-border);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--agenda-priority-color);
+  background: var(--agenda-priority-bg);
+}
+.crm-agenda-row__description { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--crm-muted); font-size: 12px; line-height: 1.6; }
+.crm-agenda-row__details { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 10px; min-width: 0; color: var(--crm-muted); font-size: 11px; }
+.crm-agenda-row__kind { padding-inline-end: 10px; border-inline-end: 1px solid var(--crm-border); }
+.crm-agenda-row__status { display: inline-flex; align-items: center; gap: 5px; }
+.crm-agenda-row__status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.crm-agenda-row__status[data-status="inProgress"] { color: var(--crm-primary); }
+.crm-agenda-row__status[data-status="completed"] { color: var(--agenda-done); }
+.crm-agenda-row__person {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+.crm-agenda-row__related {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--crm-primary);
+  font-size: 11px;
+  font-weight: 500;
+}
+.crm-agenda-row__related > svg { flex: none; }
+.crm-agenda-row__related > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crm-agenda-row__assignee { display: flex; flex-direction: column; gap: 3px; min-width: 0; color: var(--crm-text); font-size: 12px; }
+.crm-agenda-row__assignee > span { color: var(--crm-muted); font-size: 10px; }
+.crm-agenda-row__assignee > bdi { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-agenda-row__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--agenda-primary-soft);
+  color: var(--crm-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  direction: ltr;
+}
+.crm-agenda-row.is-done .crm-agenda-row__title { color: var(--crm-muted); text-decoration: line-through; }
+.crm-agenda .crm-agenda-row.is-done input.crm-agenda-row__check { border-color: var(--agenda-done) !important; }
+.crm-agenda-row.is-done .crm-agenda-row__icon,
+.crm-agenda-row.is-done .crm-agenda-row__avatar { opacity: 0.6; }
+
+/* Empty state */
+.crm-agenda__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 48px 16px;
+  border: 1px dashed var(--crm-border);
+  border-radius: var(--agenda-radius);
+  background: var(--crm-panel-solid);
+  color: var(--crm-muted);
+  text-align: center;
+}
+.crm-agenda__empty strong { color: var(--crm-text); font-size: 16px; }
+
+/* Keep contact, status and priority visible on narrow screens. */
+@media (min-width: 641px) and (max-width: 900px) {
+  .crm-agenda-row__main { grid-template-columns: 72px 40px minmax(0, 1fr); }
+  .crm-agenda-row__person { grid-column: 3; justify-content: flex-start; margin-top: 8px; }
+  .crm-agenda-row__assignee { flex-direction: row; align-items: center; gap: 6px; }
+  .crm-agenda-row__avatar { width: 24px; height: 24px; font-size: 10px; }
+}
+@media (max-width: 640px) {
+  .crm-agenda { --agenda-pad: 14px; }
+  .crm-agenda__header { align-items: flex-start; flex-wrap: wrap; }
+  .crm-agenda__title { font-size: 20px; }
+  .crm-agenda__subtitle { font-size: 13px; }
+  .crm-agenda__toolbar { flex-wrap: wrap; }
+  .crm-agenda__scopes { flex: 1; min-width: 0; }
+  .crm-agenda-segment { padding: 0 10px; }
+  .crm-agenda-chip { min-height: 46px; padding: 0 12px; }
+  .crm-agenda-chip--advisor span { max-width: 90px; }
+  .crm-agenda-segment { flex: 1; justify-content: center; }
+  .crm-agenda__search { flex-basis: 100%; }
+  .crm-agenda__filters > .chakra-select__wrapper { flex: 1 1 120px; width: auto; }
+  .crm-agenda-row { gap: 12px; }
+  .crm-agenda-row__main {
+    grid-template-columns: 34px minmax(0, 1fr);
+    grid-template-areas: "icon when" "content content" "person person";
+    column-gap: 10px;
+    row-gap: 8px;
+    padding-block: 14px;
+  }
+  .crm-agenda-row__icon { grid-area: icon; width: 34px; height: 34px; }
+  .crm-agenda-row__when { grid-area: when; font-size: 12px; }
+  .crm-agenda-row__content { grid-area: content; }
+  .crm-agenda-row__headline { align-items: flex-start; }
+  .crm-agenda-row__title { flex: 1; font-size: 14px; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .crm-agenda-row__person { grid-area: person; justify-content: flex-start; }
+  .crm-agenda-row__assignee { flex-direction: row; align-items: center; gap: 6px; }
+  .crm-agenda-row__avatar { width: 24px; height: 24px; font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crm-agenda-segment, .crm-agenda-chip, .crm-agenda-group__chevron, .crm-agenda-row__check { transition: none; }
+}
+
+/* Dashboard: today's tasks summary box */
+.crm-today-tasks {
+  --agenda-primary-soft: color-mix(in srgb, var(--crm-primary) 14%, var(--crm-panel-solid));
+  --agenda-tile: color-mix(in srgb, var(--crm-text) 6%, var(--crm-panel-solid));
+}
+.crm-today-tasks__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.crm-today-tasks__title { margin: 0; color: var(--crm-text); font-size: 16px; font-weight: 800; }
+.crm-today-tasks__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 4px 0 0;
+  color: var(--crm-muted);
+  font-size: 13px;
+}
+.crm-today-tasks__overdue { color: var(--crm-danger); font-weight: 600; }
+.crm-today-tasks__all,
+.crm-today-tasks__more {
+  flex: none;
+  color: var(--crm-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.crm-today-tasks__all:hover,
+.crm-today-tasks__more:hover { text-decoration: underline; }
+.crm-today-tasks__more { display: inline-block; margin-top: 10px; }
+.crm-today-tasks__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--crm-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.crm-today-tasks__list li + li { border-top: 1px solid var(--crm-border); }
+.crm-today-tasks__row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--crm-text);
+  text-align: start;
+  cursor: pointer;
+}
+.crm-today-tasks__row:hover { background: var(--crm-panel-hover); }
+.crm-today-tasks__row:focus-visible { outline: 2px solid var(--crm-primary); outline-offset: -2px; }
+.crm-today-tasks__time { color: var(--crm-muted); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.crm-today-tasks__task { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
+.crm-today-tasks__related { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--crm-primary); font-size: 13px; font-weight: 600; }
+.crm-today-tasks__avatar { width: 30px; height: 30px; font-size: 11px; }
+.crm-today-tasks__empty {
+  margin: 0;
+  padding: 20px 12px;
+  border: 1px dashed var(--crm-border);
+  border-radius: 12px;
+  color: var(--crm-muted);
+  font-size: 14px;
+  text-align: center;
+}
+@media (max-width: 640px) {
+  .crm-today-tasks__row { grid-template-columns: 52px minmax(0, 1fr) auto; }
+  .crm-today-tasks__related { display: none; }
+}

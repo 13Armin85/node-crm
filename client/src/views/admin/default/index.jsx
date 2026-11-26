@@ -1,4 +1,5 @@
 import CommissionPerformance from './components/CommissionPerformance';
+import TodayTasks from './components/TodayTasks';
 import { isAdmin } from 'roles';
 import { canViewModule } from "services/moduleVisibility";
 import { LocalizedText } from 'i18n/runtime';
@@ -144,7 +145,7 @@ export default function UserReports() {
   const [contactsView, taskView, leadView, proprtyView] = HasAccess(["Contacts", "Tasks", "Leads", "Properties"]);
 
   const fetchData = async () => {
-    let responseData = await getApi('api/status/');
+    let responseData = await getApi('api/status/?summary=1');
     setAllData(responseData?.data?.data);
   };
 
@@ -168,10 +169,12 @@ export default function UserReports() {
   }
 
   const findLeadStatus = (title) => {
+    if (allData?.leadCounts) return allData.leadCounts[title] || 0;
     const filterData = allData?.leadData?.filter(item => item?.leadStatus === title)
     return filterData?.length || 0
   }
   const findTaskStatus = (title) => {
+    if (allData?.taskCounts) return allData.taskCounts[title] || 0;
     const filterData = allData?.taskData?.filter(item => item?.status === title)
     return filterData?.length || 0
   }
@@ -337,6 +340,8 @@ export default function UserReports() {
             value={findModuleData("Properties")}
           />}
       </SimpleGrid>
+
+      {taskView?.view && (isAdmin(user) || tasksModule?.isActive) && <TodayTasks user={user} isAdmin={isAdmin(user)} />}
 
       <CommissionPerformance />
 

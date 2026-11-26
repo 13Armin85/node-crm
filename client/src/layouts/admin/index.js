@@ -15,8 +15,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchImage } from "../../redux/slices/imageSlice";
 import { getApi } from "services/api";
 import { MdHome, MdLock } from "react-icons/md";
-import DynamicPage from "views/admin/dynamicPage";
-import DynamicPageview from "views/admin/dynamicPage/DynamicPageview";
 import { fetchRouteData } from "../../redux/slices/routeSlice";
 import { LuChevronRightCircle } from "react-icons/lu";
 import { fetchModules } from "../../redux/slices/moduleSlice";
@@ -24,6 +22,9 @@ import { useLanguage } from "i18n";
 import AdminDataFilter from "components/admin/AdminDataFilter";
 import { isSettingsPage } from "utils/settingsWorkspace";
 import PageHelp from "components/help/PageHelp";
+
+const DynamicPage = React.lazy(() => import('views/admin/dynamicPage'));
+const DynamicPageview = React.lazy(() => import('views/admin/dynamicPage/DynamicPageview'));
 
 const MainDashboard = React.lazy(() => import("views/admin/default"));
 

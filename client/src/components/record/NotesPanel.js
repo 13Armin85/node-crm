@@ -20,7 +20,25 @@ export default function NotesPanel({ moduleName, recordId, readOnly = false }) {
     else setError(result?.data?.code || 'serverError');
     setLoading(false);
   }, [base, merge]);
-  useEffect(() => { active.current = true; setNotes([]); setLoading(true); setBefore(null); load(null, true); const timer = setInterval(() => load(), 15000); return () => { active.current = false; clearInterval(timer); }; }, [load]);
+  useEffect(() => {
+    active.current = true; setNotes([]); setLoading(true); setBefore(null); load(null, true);
+    let refreshing = false;
+    const refresh = async () => {
+      if (refreshing || document.hidden || navigator.onLine === false) return;
+      refreshing = true;
+      try { await load(); } finally { refreshing = false; }
+    };
+    const timer = setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      active.current = false; clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('online', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [load]);
   const send = async event => {
     event.preventDefault(); if (!text.trim() || busy) return;
     const body = text.trim(); pending.current ||= crypto.randomUUID(); setBusy(true); setError('');

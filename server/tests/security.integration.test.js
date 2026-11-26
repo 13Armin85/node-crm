@@ -47,6 +47,26 @@ test('security boundaries withstand unauthorized records, injection, uploads and
     let data; try { data = JSON.parse(raw); } catch { data = raw; }
     return { status: response.status, headers: response.headers, data };
   };
+  await t.test('logout revokes exactly the signed-in server session', async () => {
+    const login = async () => {
+      const response = await api('POST', '/user/login', { username: 'admin@example.test', password: 'test-password-123' }, null);
+      assert.equal(response.status, 200);
+      const claims = jwt.verify(response.data.token, jwtSecret);
+      assert.match(claims.sid, /^[a-f\d]{64}$/);
+      return response.data.token;
+    };
+    const [current, other] = [await login(), await login()];
+    assert.equal((await api('GET', '/notification', null, current)).status, 200);
+    assert.equal((await api('POST', '/user/logout', {}, current)).status, 200);
+    assert.equal((await api('GET', '/notification', null, current)).status, 401);
+    assert.equal((await api('GET', '/notification', null, other)).status, 200);
+    const claims = jwt.verify(other, jwtSecret);
+    const forged = jwt.sign({ userId: first._id, sv: 0, sid: claims.sid }, jwtSecret, { expiresIn: '5m' });
+    assert.equal((await api('GET', '/notification', null, forged)).status, 401);
+    const unknown = jwt.sign({ userId: admin._id, sv: 0, sid: crypto.randomBytes(32).toString('hex') }, jwtSecret, { expiresIn: '5m' });
+    assert.equal((await api('GET', '/notification', null, unknown)).status, 401);
+    assert.equal((await api('GET', '/user?authVersion=0', null, admin)).status, 400);
+  });
   await t.test('authentication verifies algorithm, active account and session version', async () => {
     for (const actor of [null, 'garbage', token(removed), jwt.sign({ userId: new mongoose.Types.ObjectId() }, jwtSecret, { expiresIn: '5m' }), jwt.sign({ userId: first._id }, jwtSecret), jwt.sign({ userId: first._id }, jwtSecret, { algorithm: 'HS384', expiresIn: '5m' }), jwt.sign({ userId: first._id }, jwtSecret, { expiresIn: -1 })]) {
       assert.equal((await api('GET', '/notification', null, actor)).status, 401);

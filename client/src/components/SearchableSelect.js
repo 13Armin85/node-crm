@@ -18,7 +18,7 @@ export default function SearchableSelect({ id, name, value = '', options = [], o
   const close = () => { setOpen(false); search(''); };
   const choose = option => { onChange(String(option?.value || '')); close(); };
   return <Popover isOpen={open && !disabled} onClose={close} autoFocus={false} returnFocusOnClose={false} matchWidth placement="bottom-start" strategy="fixed">
-    <PopoverAnchor><InputGroup dir={direction}>
+    <PopoverAnchor><InputGroup className="crm-searchable-select" dir={direction}>
       <Input {...props} ref={input} id={id} name={name} role="combobox" autoComplete="off" aria-autocomplete="list"
         aria-expanded={Boolean(open && !disabled)} aria-controls={`${id}-options`} aria-activedescendant={open && matches.length ? `${id}-option-${Math.min(active, matches.length - 1)}` : undefined}
         aria-busy={busy} isDisabled={disabled} value={open ? query : selected?.label || ''} placeholder={placeholder || t('Search...')} pe="4.5rem"
@@ -34,7 +34,7 @@ export default function SearchableSelect({ id, name, value = '', options = [], o
           if (event.key === 'Tab') close();
         }} />
       <InputRightElement width="4.5rem" height="100%" gap={1} left={direction === 'rtl' ? 0 : 'auto'} right={direction === 'rtl' ? 'auto' : 0}>
-        {!!value && !disabled && <Button aria-label={t('Clear selection')} size="xs" variant="ghost" onMouseDown={event => event.preventDefault()} onClick={() => choose(null)}><CloseIcon boxSize={2} /></Button>}
+        {!!value && !disabled && <Button type="button" aria-label={t('Clear selection')} size="xs" variant="ghost" onMouseDown={event => event.preventDefault()} onClick={() => choose(null)}><CloseIcon boxSize={2} /></Button>}
         <ChevronDownIcon cursor="pointer" aria-hidden onMouseDown={event => event.preventDefault()} onClick={() => { if (!disabled) { setOpen(!open); if (document.activeElement !== input.current) input.current?.focus(); } }} />
       </InputRightElement>
     </InputGroup></PopoverAnchor>

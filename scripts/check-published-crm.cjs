@@ -9,17 +9,28 @@ const args = process.argv.slice(2);
 const option = name => args.includes(name) ? args[args.indexOf(name) + 1] : undefined;
 const backendOnly = args.includes('--backend-only');
 const origin = option('--origin') || (backendOnly ? 'http://127.0.0.1:5001' : 'https://37.148.206.74');
-const keys = ['soldProperties', 'successfulIncome', 'lostIncome', 'unsoldProperties'];
+const keys = ['soldProperties', 'successfulIncome', 'lostIncome'];
 const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 
 async function main() {
+  let verificationSessionId;
   try {
     await mongoose.connect(process.env.DB_URL || 'mongodb://127.0.0.1:27017', {
       dbName: process.env.DB || 'Prolink', autoIndex: false, autoCreate: false, serverSelectionTimeoutMS: 5000,
     });
     const actor = await mongoose.connection.collection('User').findOne({ role: { $in: ['developer', 'admin'] }, deleted: false }, { projection: { _id: 1, authVersion: 1 } });
     assert(actor, 'An active administrator is required for verification');
-    const token = require('../server/node_modules/jsonwebtoken').sign({ userId: actor._id, sv: actor.authVersion || 0 }, require('../server/config/auth').jwtSecret, { expiresIn: '5m' });
+    verificationSessionId = crypto.randomBytes(32).toString('hex');
+    await mongoose.connection.collection('Session').insertOne({
+      _id: verificationSessionId,
+      userId: actor._id,
+      rememberMe: false,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      revokedAt: null,
+      userAgent: 'NodeCRM deployment verifier',
+    });
+    const token = require('../server/node_modules/jsonwebtoken').sign({ userId: actor._id, sv: actor.authVersion || 0, sid: verificationSessionId }, require('../server/config/auth').jwtSecret, { expiresIn: '5m' });
     const get = async route => {
       const response = await fetch(origin + '/api' + route, { headers: { Authorization: token }, signal: AbortSignal.timeout(25000) });
       assert.equal(response.status, 200, 'Published API unavailable: ' + route.replace(/[a-f\d]{24}/gi, ':id'));
@@ -32,6 +43,8 @@ async function main() {
       catch (error) { if (attempt === 14) throw error; await new Promise(resolve => setTimeout(resolve, 1000)); }
     }
     assert.deepEqual(Object.keys(finance).sort(), [...keys].sort());
+    const statusSummary = await get('/status/?summary=1');
+    assert(statusSummary.data?.taskCounts && statusSummary.data?.leadCounts, 'Published backend lacks grouped dashboard counts');
     for (const key of keys) {
       assert(Number.isInteger(finance[key].count) && finance[key].count >= 0);
       assert(Array.isArray(finance[key].values));
@@ -62,6 +75,9 @@ async function main() {
       }
     }
     console.log(JSON.stringify({ verified: true, origin, backend: true, financialCards: keys.length, residencePaymentField: true, leadNotes: Boolean(lead), opportunityActivities: Boolean(opportunity), clientAssets: !backendOnly, currencyConversion: !backendOnly }));
-  } finally { await mongoose.disconnect(); }
+  } finally {
+    if (verificationSessionId) await mongoose.connection.collection('Session').deleteOne({ _id: verificationSessionId }).catch(() => {});
+    await mongoose.disconnect();
+  }
 }
 main().catch(error => { console.error(error.message); process.exitCode = 1; });

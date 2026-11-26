@@ -48,7 +48,6 @@ test('dashboard values, form filters, lead notes and opportunity activities/docu
     soldProperties: { count: 1, values: [{ currency: 'USD', amount: 1000 }] },
     successfulIncome: { count: 1, values: [{ currency: 'USD', amount: 25 }] },
     lostIncome: { count: 1, values: [{ currency: 'TRY', amount: 9 }] },
-    unsoldProperties: { count: 1, values: [{ currency: 'TRY', amount: 3400 }] },
   });
   await Opportunity.create({ opportunityName: 'Historical sale', createBy: admin._id, salesStage: 'Closed/Won', commission: 999, currency: 'TRY', closedAt: new Date('2000-01-01'), createdDate: new Date('2000-01-01') });
   const recent = await api('GET', '/estate/dashboard/finance?period=week');
@@ -57,7 +56,7 @@ test('dashboard values, form filters, lead notes and opportunity activities/docu
   assert.equal(allTime.successfulIncome.count, 2);
   assert.equal(allTime.successfulIncome.values.find(value => value.currency === 'TRY').amount, 999);
   assert.deepEqual(allTime.soldProperties, finance.data.soldProperties);
-  assert.deepEqual(allTime.unsoldProperties, finance.data.unsoldProperties);
+  assert.equal(allTime.unsoldProperties, undefined);
   assert.equal((await api('GET', '/estate/dashboard/finance?period=invalid')).status, 400);
   const params = new URLSearchParams({ city: 'Istanbul', district: 'Kadikoy', constructionStatus: 'READY', 'price.currency': 'USD', paymentMethod: 'CASH', priceMin: '90', priceMax: '110' });
   const filtered = await api('GET', '/estate/Residences?' + params);

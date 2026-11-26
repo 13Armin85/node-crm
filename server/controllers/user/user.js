@@ -86,7 +86,9 @@ const options = async (req, res) => {
 const index = async (req, res) => {
   try {
     // Older accounts may not have the deleted flag stored in MongoDB.
-    const query = { ...req.query, deleted: { $ne: true },  };
+    // Only documented filters; arbitrary query keys must not probe hidden account fields.
+    const query = { deleted: { $ne: true } };
+    if (typeof req.query.role === 'string' && USER_ROLES.includes(req.query.role)) query.role = req.query.role;
 
     let user = await User.find(query).select('-password -authVersion').exec();
 
@@ -244,9 +246,12 @@ const login = async (req, res) => {
         .json({ code: 'invalidCredentials', message: 'Invalid username or password' });
       return;
     }
-    // Create a JWT token
-    const token = jwt.sign({ userId: user._id, sv: Number(user.authVersion || 0) }, jwtSecret, {
-      expiresIn: req.body.rememberMe === true ? "30d" : "1d",
+    // Each login gets its own server session so logout can revoke exactly this token.
+    const rememberMe = req.body.rememberMe === true;
+    const { sid } = await require('../../services/sessions').createSession(req, user, rememberMe);
+    const token = jwt.sign({ userId: user._id, sv: Number(user.authVersion || 0), sid }, jwtSecret, {
+      algorithm: 'HS256',
+      expiresIn: rememberMe ? "30d" : "1d",
     });
 
     req.actor = user;

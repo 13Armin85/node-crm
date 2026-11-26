@@ -9,22 +9,12 @@ import {
 } from "react-icons/md";
 // icon
 import React from "react";
-import { PropertiesPage, PartnerCustomersPage, ResidencesPage } from 'views/admin/estate/EntityPage';
-import DistrictsPage from 'views/admin/estate/DistrictsPage';
-import ProfilePage from 'views/admin/profile/ProfilePage';
-import { withRecordWorkspace } from 'components/record/RecordWorkspace';
-import FormBuilder from 'views/admin/estate/FormBuilder';
 import { AiFillFolderOpen, AiOutlineMail } from "react-icons/ai";
 import { FaCalendarAlt, FaRupeeSign, FaTasks, FaWpforms , FaPiggyBank} from "react-icons/fa";
 import { LuBuilding2 } from "react-icons/lu";
 import { PiPhoneCallBold } from "react-icons/pi";
 import { SiGooglemeet } from "react-icons/si";
 import { ROLE_PATH } from "./roles";
-import ChangeImage from "views/admin/image";
-import Validation from "views/admin/validation";
-import CustomField from "views/admin/customField";
-import TableField from "views/admin/tableField";
-import activeDeactiveModule from "views/admin/activeDeactiveModule";
 import { TbExchange, TbTableColumn } from "react-icons/tb";
 import { GrValidate } from "react-icons/gr";
 import { VscFileSubmodule } from "react-icons/vsc";
@@ -34,6 +24,19 @@ import { FaDiagramProject } from "react-icons/fa6";
 import { BsBlockquoteRight } from "react-icons/bs";
 import { RiAccountCircleFill } from "react-icons/ri";
 import { TbFileInvoice } from "react-icons/tb";
+const PropertiesPage = React.lazy(() => import('views/admin/estate/EntityPage').then(module => ({ default: module.PropertiesPage })));
+const PartnerCustomersPage = React.lazy(() => import('views/admin/estate/EntityPage').then(module => ({ default: module.PartnerCustomersPage })));
+const ResidencesPage = React.lazy(() => import('views/admin/estate/EntityPage').then(module => ({ default: module.ResidencesPage })));
+const DistrictsPage = React.lazy(() => import('views/admin/estate/DistrictsPage'));
+const ProfilePage = React.lazy(() => import('views/admin/profile/ProfilePage'));
+const FormBuilder = React.lazy(() => import('views/admin/estate/FormBuilder'));
+const ChangeImage = React.lazy(() => import('views/admin/image'));
+const Validation = React.lazy(() => import('views/admin/validation'));
+const CustomField = React.lazy(() => import('views/admin/customField'));
+const TableField = React.lazy(() => import('views/admin/tableField'));
+const activeDeactiveModule = React.lazy(() => import('views/admin/activeDeactiveModule'));
+const withRecordWorkspace = (Component, moduleName) => React.lazy(() => import('components/record/RecordWorkspace')
+  .then(module => ({ default: module.withRecordWorkspace(Component, moduleName) })));
 // Admin Imports
 const DataVisibility = React.lazy(() => import('views/admin/adminSetting/DataVisibility'));
 const MainDashboard = React.lazy(() => import("views/admin/default"));

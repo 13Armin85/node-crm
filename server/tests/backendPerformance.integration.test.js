@@ -98,6 +98,29 @@ test('backend optimizations preserve financial totals, report permissions and fo
     assert.deepEqual(await loadShares(user), []);
   });
 
+  await t.test('dashboard status counts match scoped legacy records without sending entire records', async () => {
+    const Task = require('../model/schema/task');
+    const { Lead } = require('../model/schema/lead');
+    const fixture = Array.from({ length: 300 }, (_, i) => ({
+      createBy: i % 2 ? user._id : other._id, assignedToUser: i % 2 ? user._id : other._id,
+      title: 'Performance fixture', description: 'Details '.repeat(100), status: i % 3 ? 'todo' : 'completed', deleted: i % 13 === 0,
+    }));
+    await Task.collection.insertMany(fixture);
+    await Lead.collection.insertMany(fixture.map((row, i) => ({ ...row, leadName: row.title, leadStatus: i % 3 ? 'active' : 'pending', assignUser: row.assignedToUser })));
+    for (const actor of [admin, user, other]) {
+      const legacy = await api('/status/', null, actor);
+      const summary = await api('/status/?summary=1', null, actor);
+      assert.equal(summary.status, 200);
+      const count = (rows, field) => rows.reduce((counts, row) => { if (typeof row[field] === 'string') counts[row[field]] = (counts[row[field]] || 0) + 1; return counts; }, {});
+      assert.deepEqual(summary.data.data.taskCounts, count(legacy.data.data.taskData, 'status'));
+      assert.deepEqual(summary.data.data.leadCounts, count(legacy.data.data.leadData, 'leadStatus'));
+      assert(Buffer.byteLength(JSON.stringify(summary.data)) < Buffer.byteLength(JSON.stringify(legacy.data)) / 10);
+      assert.match(legacy.headers.get('content-encoding'), /gzip|br/);
+      assert.match(legacy.headers.get('cache-control'), /private, no-store/);
+      assert.match(legacy.headers.get('vary'), /Accept-Encoding/);
+    }
+  });
+
   await t.test('large financial reports match the previous calculation with bounded transfer and indexed dates', async () => {
     const { commissionSummary, since } = require('../services/commissionSummary');
     const { outcome } = require('../services/opportunityMetrics');

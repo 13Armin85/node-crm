@@ -16,7 +16,7 @@ const PRIORITY_COLORS = {
     high: { backgroundColor: '#FFEBEE', borderColor: '#EF5350', textColor: '#8E1010' },
     urgent: { backgroundColor: '#FFEBEE', borderColor: '#EF5350', textColor: '#8E1010' },
 };
-const currentUser = (req) => User.findOne({ _id: req.user.userId, deleted: false });
+const currentUser = (req) => req.actor || User.findOne({ _id: req.user.userId, deleted: false });
 const isValidId = (value) => !value || mongoose.Types.ObjectId.isValid(value);
 const escapeHtml = (value = '') => String(value)
     .replace(/&/g, '&amp;')
@@ -59,7 +59,7 @@ const notifyTaskUsers = async (task, actor, type, recipients, status) => {
     })));
 };
 
-const { taskScope: accessFilter } = require('../../services/taskAccess');
+const { taskManageScope: accessFilter } = require('../../services/taskAccess');
 
 const normalizeTask = (body, actor, existing) => {
     const allowed = [
@@ -73,6 +73,12 @@ const normalizeTask = (body, actor, existing) => {
             result[key] = body[key] === '' ? null : body[key];
         }
     });
+    if (Object.prototype.hasOwnProperty.call(result, 'title')) {
+        result.title = String(result.title || '').trim() || 'Untitled task';
+    } else if (!existing) {
+        result.title = 'Untitled task';
+    }
+    if (!existing && !result.start) result.start = new Date().toISOString();
     result.updatedDate = new Date();
     if (!existing && !result.assignedToUser) result.assignedToUser = actor._id;
     if (result.assignedToUser && String(result.assignedToUser) !== String(existing?.assignedToUser || actor._id)) {
@@ -175,8 +181,12 @@ const add = async (req, res) => {
         taskData.createBy = user._id;
         taskData.createdDate = new Date();
         const result = await Task.create(taskData);
-        await notifyTaskUsers(result, user, 'task_assigned', [result.assignedToUser]);
-        await sendTaskAssignmentEmail(result, user);
+        // The task is already saved. Notification delivery must not turn a
+        // successful create into an API error (and encourage a duplicate retry).
+        await Promise.allSettled([
+            notifyTaskUsers(result, user, 'task_assigned', [result.assignedToUser]),
+            sendTaskAssignmentEmail(result, user),
+        ]);
         res.status(200).json(result);
     } catch (error) {
         res.status(400).json({ message: 'Failed to create task', error: error.message });
@@ -212,6 +222,12 @@ const edit = async (req, res) => {
         if (validationError) return res.status(400).json({ message: validationError });
         const assigneeChanged = Object.prototype.hasOwnProperty.call(taskData, 'assignedToUser') && String(taskData.assignedToUser || '') !== String(access.task.assignedToUser || '');
         if (access.task.leadCallFor && assigneeChanged) {
+            // Lead-call tasks follow the lead owner, which is fixed to the lead creator.
+            const { Lead } = require('../../model/schema/lead');
+            const lead = await Lead.findById(access.task.leadCallFor).select('createBy').lean();
+            if (String(lead?.createBy || '') !== String(taskData.assignedToUser || '')) {
+                return res.status(403).json({ message: 'The lead owner is the lead creator and cannot be changed', code: 'ownerLocked' });
+            }
             const transferred = await require('../../services/leadWorkflow').assignLead(access.task.leadCallFor, taskData.assignedToUser, access.user);
             const details = Object.fromEntries(['notes', 'description', 'start', 'end', 'reminder', 'priority'].filter(key => key in taskData).map(key => [key, taskData[key]]));
             const result = await Task.findByIdAndUpdate(transferred.task._id, { $set: details }, { new: true, runValidators: true });

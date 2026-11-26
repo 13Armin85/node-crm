@@ -5,17 +5,14 @@ import "assets/css/App.css";
 import "assets/css/CompactWorkspace.css";
 import "assets/css/SettingsWorkspace.css";
 import "assets/css/RecordWorkspace.css";
+import "assets/css/MobilePerformance.css";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
 } from "react-router-dom";
-import AuthLayout from "./layouts/auth";
-import AdminLayout from "layouts/admin";
-import UserLayout from "layouts/user";
-import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
+import { ChakraProvider, ColorModeScript, Spinner } from "@chakra-ui/react";
 import theme from "theme/theme";
-import { ThemeEditorProvider } from "@hypertheme-editor/chakra-ui";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Provider } from "react-redux";
@@ -31,6 +28,10 @@ import {
   clearAuthSession,
   getAuthSession,
 } from "services/authSession";
+
+const AuthLayout = React.lazy(() => import('./layouts/auth'));
+const AdminLayout = React.lazy(() => import('layouts/admin'));
+const UserLayout = React.lazy(() => import('layouts/user'));
 
 function App() {
   React.useEffect(() => { window.crmAppStarted?.(); }, []);
@@ -70,6 +71,7 @@ function App() {
     <>
       <ModalViewport />
       <ToastContainer />
+      <React.Suspense fallback={<div className="crm-route-loading" role="status"><Spinner /></div>}>
       <Routes>
         {token && user?.role ? (
           user.role === "user" ? (
@@ -83,6 +85,7 @@ function App() {
           <Route path="/*" element={<AuthLayout />} />
         )}
       </Routes>
+      </React.Suspense>
     </>
   );
 }
@@ -94,13 +97,11 @@ ReactDOM.render(
         <ColorModeScript initialColorMode={theme.config.initialColorMode} />
         <RtlProvider><ChakraProvider theme={theme}>
           <React.StrictMode>
-            <ThemeEditorProvider>
               <TranslationBoundary>
                 <Router>
                   <PwaProvider><App /></PwaProvider>
                 </Router>
               </TranslationBoundary>
-            </ThemeEditorProvider>
           </React.StrictMode>
         </ChakraProvider></RtlProvider>
       </LanguageProvider>
